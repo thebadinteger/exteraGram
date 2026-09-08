@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+ This is the source code of exteraGram for Android.
+
+ We do not and cannot prevent the use of our code,
+ but be respectful and credit the original author.
+
+ Copyright @exteraGram, 2022-2026
+
+-->
+<resources>
+    <string name="Preferences">exteraGram Einstellungen</string>
+    <!-- Main Menu -->
+    <string name="Links">Links</string>
+    <string name="AboutExteraDescription">Ein experimenteller Telegram client basierend auf dem offiziellen Quellcode!</string>
+    <string name="Crowdin">Übersetzen</string>
+    <string name="Website">Webseite</string>
+    <string name="Categories">Kategorien</string>
+    <string name="Developer">**%1$s** ist ein Mitglied des **exteraGram** Entwicklungsteams.</string>
+    <string name="DeveloperCompact">Mitglied des **exteraGram**-Entwicklungsteams.</string>
+    <string name="Supporter">**%1$s** hat die Entwicklung von **exteraGram** unterstützt und ein exklusives Abzeichen erhalten.</string>
+    <string name="OfficialChannel">**%1$s** ist die offizielle Ressource von **exteraGram**.</string>
+    <string name="NoSuchSetting">Es scheint, dass eine solche Einstellung nicht existiert.</string>
+    <string name="SettingLinkToSavedMessages">Setting link ** **.</string>
+    <string name="SettingLinkToUser">Setting link \"%1$s\"\".\"</string>
+    <string name="SettingLinkToChats">Setting link **%1$s**.</string>
+    <string name="LiteBatteryFollowSystemState">System</string>
+    <!-- Pill Stack -->
+    <string name="PillStackPillsInfo">\".\"</string>
+    <string name="PillStackPillsSettingsInfo">\".\".</string>
+    <string name="PillStackActivePills">\".\"</string>
+    <string name="PillStackHiddenPills">\".\"</string>
+    <string name="CurrentLocation">\".\"</string>
+    <string name="WeatherPill">Weiterwill</string>
+    <string name="WeatherSettingsInfo">\".\".</string>
+    <string name="WeatherLocationPermissionNo">H.</string>
+    <string name="WeatherLocationPermissionGrant">\".\"</string>
+    <string name="WeatherLocationServicesEnable">\".\"</string>
+    <string name="WeatherPillTopInfo">\".\".</string>
+    <string name="PillStackInfiniteScrolling">\".\"</string>
+    <string name="CryptoPillTargetCurrency">\".\"</string>
+    <string name="CryptoCurrencyUsd">US-Dollar</string>
+    <string name="CryptoCurrencyEur">Euro</string>
+    <string name="CryptoCurrencyRub">Russischer Rubel</string>
+    <string name="CryptoCurrencyGbp">Britisches Pfund</string>
+    <string name="CryptoCurrencyKzt">Kasachischer Tenge</string>
+    <string name="CryptoCurrencyTry">Türkische Lira</string>
+    <string name="CryptoCurrencyUah">Ukrainische Hrywnja</string>
+    <string name="CryptoCurrencyPln">Polnischer Zloty</string>
+    <string name="CryptoCurrencyAed">VAE-Dirham</string>
+    <string name="CryptoCurrencyCny">Chinesischer Yuan</string>
+    <string name="CryptoCurrencyJpy">Japanischer Yen</string>
+    <string name="CryptoCurrencyByn">Weißrussischer Rubel</string>
+    <string name="CryptoCurrencyIls">Israelischer Neuer Schekel</string>
+    <string name="CryptoCurrencyCzk">Tschechische Krone</string>
+    <string name="CryptoCurrencyInr">Indische Rupie</string>
+    <!-- Proxy -->
+    <string name="ProxyDoNotUseWithVPN">Nicht mit einem VPN verwenden</string>
+    <string name="ProxyType">Typ</string>
+    <string name="Unknown">Unbekannt</string>
+    <string name="ProxyRename">Proxy Name (optional)</string>
+    <string name="CopyIpAddress">IP-Adresse Kopieren</string>
+    <string name="IpInfoCountry">Land</string>
+    <string name="IpInfoRegion">Region</string>
+    <string name="IpInfoCity">Stadt</string>
+    <string name="IpInfoIsp">niedernigga</string>
+    <string name="IpInfoOrganization">Organisation</string>
+    <string name="IpInfoDomain">Domain</string>
+    <!-- Translator -->
+    <string name="TranslationProvider">Übersetzungsdienstleister</string>
+    <string name="TranslationTarget">Zielsprache</string>
+    <string name="TranslationTargetApp">An App anpassen</string>
+    <string name="TranslationFormality">Formalität</string>
+    <string name="TranslationFormalityLess">Weniger</string>
+    <string name="TranslationFormalityMore">Mehr</string>
+    <!-- Formatting & Behavior -->
+    <string name="DisableNumberRounding">Zahlen nicht runden</string>
+    <string name="FormatTimeWithSeconds">Zeit mit Sekunden formatieren</string>
+    <string name="RelativeLastSeen">Relatives „Zuletzt online“</string>
+    <string name="InAppVibration">In-App-Vibration</string>
+    <string name="FilterZalgo">Filter \"Zalgo\"</string>
+    <string name="FilterZalgoInfo">Entfernt \"%1$s\" Symbole in Namen und Nachrichten.</string>
+    <string name="RestartRequired">Starten Sie die App neu, damit die Änderungen wirksam werden.</string>
+    <!-- Message Formatting -->
+    <string name="CodeBlock">Code</string>
+    <string name="CreateCode">Code Block Erstellen</string>
+    <string name="CreateCodeLanguage">Sprache</string>
+    <!-- Speed -->
+    <string name="DownloadSpeedBoost">Beschleunigtes Herunterladen</string>
+    <string name="UploadSpeedBoost">Beschleunigtes Hochladen</string>
+    <string name="Ultra">Extrem</string>
+    <string name="SpeedBoostInfo">Ultra Boost kann bei langsamen Internetverbindungen Probleme beim Herunterladen von Dateien und beim Streamen von Videos verursachen.</string>
+    <!-- Maps -->
+    <string name="Maps">Maps</string>
+    <string name="TermsOfUseYandexMaps">Durch die Verwendung von Yandex Maps stimmen Sie der <![CDATA[<a href="https://yandex.ru/legal/maps_termsofuse /">nutzungsbedingungen</a>]]>.</string>
+    <string name="UseYandexMaps">Verwenden Sie Yandex-Karten</string>
+    <string name="InstallYandexMaps">Yandex-Karten installieren?</string>
+    <!-- Storage -->
+    <string name="CustomSavePathHint">Leer lassen, um direkt im Root zu speichern</string>
+    <!-- Profile -->
+    <string name="Profile">Profil</string>
+    <string name="HidePhoneNumber">Meine Telefonnummer ausblenden</string>
+    <string name="ShowIdAndDc">ID und DC anzeigen</string>
+    <string name="ShowIdAndDcInfo">Die Telegramm-API zeigt die IDs so an, wie sie sind, während die Bot-API ein Minuszeichen für Gruppen und -100 für Supergruppen und Kanäle hinzufügt.</string>
+    <!-- Archive -->
+    <string name="HideArchiveFolder">Archivordner ausblenden</string>
+    <string name="ArchiveOnPull">Archiv beim Herunterziehen öffnen</string>
+    <string name="DisableUnarchiveSwipe">Deaktivieren Sie das Wischen \"Archiv aufheben\"</string>
+    <string name="DisableUnarchiveSwipeInfo">Wenn Sie nach links wischen, werden Chats nicht aus dem Archiv entfernt.</string>
+    <!-- Appearance -->
+    <string name="Appearance">Aussehen</string>
+    <!-- Avatars -->
+    <string name="AvatarCorners">Avatar-Ecken</string>
+    <string name="AvatarCornersLeft">Rechteck</string>
+    <string name="AvatarCornersRight">Kreis</string>
+    <string name="SingleCornerRadius">Radius für einzelne Ecken</string>
+    <string name="SingleCornerRadiusInfo">Foren werden die gleiche Avatar-Form haben wie Chats.</string>
+    <!-- Chat List -->
+    <string name="ListOfChats">Chat Liste</string>
+    <string name="ActionBarTitle">Titelleistentext</string>
+    <string name="ActionBarTitleUsername">Nutzername</string>
+    <string name="ActionBarTitleName">Vorname</string>
+    <string name="HideStories">Stories verbergen</string>
+    <string name="HideActionBarStatus">Status ausblenden</string>
+    <string name="CenterTitle">Titel in Aktionsleiste zentrieren</string>
+    <string name="HideFloatingButton">Schwebenden Button ausblenden</string>
+    <string name="BottomNavigationBarMode">Untere Navigationsleiste</string>
+    <string name="BottomNavigationModeShow">Anzeigen</string>
+    <string name="BottomNavigationModeHide">Ausblenden</string>
+    <string name="BottomNavigationModeFloating">Schwebend</string>
+    <string name="SenderMiniAvatars">Mini-Avatare des Absenders</string>
+    <string name="ListOfChatsInfo">Wenn \"Nur Symbole\" für Ordner aktiviert ist, wird im Haupttitel der Ordnername angezeigt</string>
+    <!-- Folders (Tabs) -->
+    <string name="TabTitleStyle">Ordnername</string>
+    <string name="TabTitleStyleTextWithIcons">Namen mit Symbolen</string>
+    <string name="TabTitleStyleIconsOnly">Nur Symbole</string>
+    <string name="TabTitleStyleTextOnly">Nur Namen</string>
+    <string name="TabCounter">Benachrichtigungszähler</string>
+    <string name="HideAllChats">Ordner \"%1$s\" ausblenden</string>
+    <string name="FoldersInfo">Symbole werden mit Ihrem Konto synchronisiert.</string>
+    <!-- App Navigation -->
+    <string name="AppNavigation">App Navigation</string>
+    <string name="AppNavigationInfo">Einstellungen für das Menü oben rechts und das Seitenmenü</string>
+    <string name="NavigationDrawer">Seitenmenü</string>
+    <string name="NavigationDrawerInfo">Ersetzt das Menü oben rechts durch ein klassisches Seitenmenü und ein Hamburger-Symbol.</string>
+    <string name="NavigationDrawerImmersiveAnimation">Immersive Animation</string>
+    <string name="NavigationDrawerProxyPingShort">%1$d ms</string>
+    <string name="MainMenuItems">Menüeinträge</string>
+    <string name="MainMenuItemsInfo">Tippen zum Ein-/Ausblenden von Einträgen, gedrückt halten zum Neuanordnen. Das Layout wird für Menü und Seitenmenü gemeinsam verwendet.</string>
+    <string name="MainMenuHiddenItems">Ausgeblendete Menüeinträge</string>
+    <string name="MainMenuDivider">Trennlinie</string>
+    <string name="MainMenuAddDivider">Trennlinie hinzufügen</string>
+    <!-- Icon Packs -->
+    <string name="IconPacks">Symbolpakete</string>
+    <string name="IconPacksInfo">Passen Sie die Symbole in der gesamten App an.</string>
+    <string name="IconPickerFilter">Filter</string>
+    <string name="IconPickerAllIcons">Allen Icons</string>
+    <string name="EditIconPackInfo">Info bearbeiten</string>
+    <string name="EnabledPacks">Aktivierte Pakete</string>
+    <string name="AllPacks">Alle Pakete</string>
+    <string name="PackName">Paketname</string>
+    <string name="AuthorNameOptional">Name des Autors (optional)</string>
+    <string name="NameCannotBeEmpty">Name darf nicht leer sein.</string>
+    <string name="Version">Version</string>
+    <string name="InstallPack">Paket installieren</string>
+    <string name="DeletePackInfo">Möchten Sie „%1$s” wirklich löschen?</string>
+    <!-- App Icons -->
+    <string name="IconPack">Symbolpaket</string>
+    <string name="AppIconSunset">Sunset</string>
+    <string name="AppIconAurora">Aurora</string>
+    <string name="AppIconAmethyst">Amethyst</string>
+    <string name="AppIconSapphire">Saphir</string>
+    <string name="AppIconInvincible">Unbesiegbaren</string>
+    <string name="AppIconCyberpunk">Cyberpunk</string>
+    <string name="AppIconSpace">Weltall</string>
+    <string name="AppIconIceAge">Ice Age</string>
+    <string name="AppIconEditor">Editor</string>
+    <string name="AppIconOrbit">Orbit</string>
+    <string name="AppIconSus">Schwindler</string>
+    <string name="AppIconWinter">Winter</string>
+    <!-- General Appearance -->
+    <string name="DividerStyleHidden">Ausgeblendet</string>
+    <string name="UseSystemFonts">Systemschriftarten verwenden</string>
+    <string name="UseSystemEmoji">System-Emojis verwenden</string>
+    <string name="TabletMode">Tablet-Modus</string>
+    <string name="RemoveMessageTail">Nachrichtenschwanz entfernen</string>
+    <string name="GooeyAvatarAnimation">\"Gooey\"-Avatar-Animation</string>
+    <string name="CustomChatThemes">Benutzerdefinierte Themen in Chats</string>
+    <string name="CustomChatThemesInfo">Jeder Chat zeigt das Thema an, das speziell für ihn ausgewählt wurde.</string>
+    <string name="SpringAnimations">Frühlingsanimationen</string>
+    <string name="SpringAnimationsInfo">Ermöglicht flüssigere Animationen beim Wechseln des Bildschirms und Öffnen des Seitenmenüs.</string>
+    <!-- Blur & Effects -->
+    <string name="BlurOptions">Unschärfe Optionen</string>
+    <string name="ForceBlur">Unschärfe erzwingen</string>
+    <string name="ForceBlurInfo">Weichzeichnungseffekte werden auf alle Designs angewendet und überschreiben deren Standardeinstellungen.</string>
+    <string name="ForceSnow">Schneeflocken erzwingen</string>
+    <string name="ForceSnowInfo">Fallende Schneeflocken werden in der Aktionsleiste, im Seitenmenü und im Chat-Hintergrund angezeigt.</string>
+    <!-- Chats -->
+    <!-- Chat Media & Appearance -->
+    <string name="StickerSize">Aufkleber Größe</string>
+    <string name="StickerSizeLeft">Klein</string>
+    <string name="StickerSizeRight">Groß</string>
+    <string name="StickerSizeDialogMessageReplyTo">wow</string>
+    <string name="StickerSizeDialogMessage">wow, so süß!</string>
+    <string name="StickerShape">Aufkleber-Form</string>
+    <string name="StickerShapeRounded">Abgerundet</string>
+    <string name="StickerShapeRoundedMsg">Nachricht</string>
+    <string name="StickerTime">Zeit auf Stickern ausblenden</string>
+    <string name="UnlimitedRecentStickers">Unbegrenzte zuletzt verwendete Sticker</string>
+    <string name="HideReactions">Reaktionen verbergen</string>
+    <string name="HideReactionsInfo">Reaktionen werden vollständig von der Benutzeroberfläche ausgeblendet.</string>
+    <string name="ReplyBackground">Hintergrund</string>
+    <string name="ChatSettingsInfo">Medieneinstellungen, App-Symbol und andere</string>
+    <!-- AI -->
+    <string name="AIChatInfo">Dienste, Rollen und Verlauf einrichten</string>
+    <!-- AI Services -->
+    <string name="Services">Service</string>
+    <string name="ServicesInfo">Wählen Sie den geeigneten Dienst für die Interaktion mit Sprachmodellen.</string>
+    <string name="NewService">Neuer Dienst</string>
+    <string name="EditService">Dienst bearbeiten</string>
+    <string name="ServiceModel">Modell</string>
+    <string name="ServiceKey">API-Schlüssel</string>
+    <!-- AI Roles -->
+    <string name="Roles">Rollen</string>
+    <string name="RolesInfo">Erstellen Sie Rollen für Ihre spezifischen Bedürfnisse!</string>
+    <string name="Suggestions">Vorschläge</string>
+    <string name="RoleName">Name</string>
+    <string name="RolePrompt">Eingabeaufforderung</string>
+    <string name="PromptInfo">Eine Eingabeaufforderung ist der anfängliche Text, der dem Modell gegeben wird, um eine Antwort zu generieren oder einen Dialog fortzusetzen.</string>
+    <string name="NewRole">Neue Rolle</string>
+    <string name="EditRole">Rolle bearbeiten</string>
+    <!-- AI History & Behavior -->
+    <string name="HistoryInfo">Der Konversationsverlauf ermöglicht es der KI, frühere Anfragen zu verstehen und sie bei der Generierung neuer Antworten zu berücksichtigen.</string>
+    <string name="ResponseStreaming">Antwortstreaming</string>
+    <string name="ResponseStreamingInfo">Stellt sicher, dass die Antworten reibungsloser und schneller angezeigt werden.</string>
+    <string name="ShowResponseOnly">Nur Antwort anzeigen</string>
+    <string name="InsertResponseAsQuote">Antwort als Zitat einfügen</string>
+    <string name="TapToAddApiKey">Tippen Sie auf, um einen API-Schlüssel hinzuzufügen, um mit den KI-Funktionen zu beginnen.</string>
+    <string name="Generate">Erstellen</string>
+    <string name="GenerateWithoutHistory">Ohne Geschichte</string>
+    <string name="ClearConversationHistoryInfo">Sind Sie sicher, dass Sie ** den gesamten ** AI-Konversationsverlauf löschen möchten?</string>
+    <!-- AI Errors -->
+    <string name="AIError400">Ungültige Anfrage</string>
+    <string name="AIError400Info">Überprüfen Sie die Anforderungsparameter.</string>
+    <string name="AIError401">Ungültige Anmeldeinformationen</string>
+    <string name="AIError401Info">API-Schlüssel ist ungültig oder deaktiviert. Überprüfen Sie Ihre Anmeldeinformationen.</string>
+    <string name="AIError402">Unzureichende Kredite</string>
+    <string name="AIError402Info">Ihr Konto oder API-Schlüssel hat nicht genügend Guthaben. Fügen Sie weitere Credits hinzu und wiederholen Sie die Anfrage.</string>
+    <string name="AIError408">Timeout anfordern</string>
+    <string name="AIError408Info">Ihre Anfrage wurde nicht rechtzeitig bearbeitet. Bitte versuchen Sie es später noch einmal.</string>
+    <string name="AIError429">Ratenlimit überschritten</string>
+    <string name="AIError429Info">Sie senden zu häufig Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.</string>
+    <string name="AIError502">Modellfehler</string>
+    <string name="AIError502Info">Das ausgewählte Modell ist nicht verfügbar oder wir haben eine ungültige Antwort von ihm erhalten.</string>
+    <string name="AIError">Serverfehler</string>
+    <string name="AIErrorInfo">Bitte wiederholen Sie Ihre Anfrage nach einer kurzen Wartezeit.</string>
+    <!-- Chat Actions -->
+    <string name="DoubleTap">Doppeltipp</string>
+    <string name="DoubleTapIncoming">Eingehende Nachrichten</string>
+    <string name="DoubleTapOutgoing">Ausgehende Nachrichten</string>
+    <string name="DoubleTapInfo">Einige Aktionen erfordern Administratorrechte im Chat oder Kanal.</string>
+    <string name="BottomButton">Unterer Knopf</string>
+    <string name="QuickTransitions">Schneller Wischübergang</string>
+    <string name="AdminShortcuts">Administrator Schnell-Verknüpfungen</string>
+    <string name="HideKeyboardOnScroll">Tastatur beim Scrollen ausblenden</string>
+    <string name="HideShareButton">\"%1$s\"-Knopf ausblenden</string>
+    <string name="ReplaceEditedWithIcon">Ersetzen Sie \"%1$s\" durch ein Symbol</string>
+    <string name="MessageMenu">Nachrichtenmenü</string>
+    <string name="GroupMessageMenu">Menü Gruppennachricht</string>
+    <string name="GroupMessageMenuInfo">Durch Gruppieren werden die Hauptaktionen an den unteren Rand des Nachrichtenmenüs verschoben.</string>
+    <string name="AddCommaAfterMention">Komma nach Erwähnung hinzufügen</string>
+    <string name="HideSendAsPeer">\"Senden als…\" ausblenden</string>
+    <string name="HideSendAsPeerInfo">Sie können immer noch auf das \"Senden als\"-Menü zugreifen, indem Sie lange auf die Schaltfläche Emojis/Stickers/GIFs drücken.</string>
+    <!-- Voice & Video Recognition -->
+    <string name="RecognitionLanguage">Erkennungssprache</string>
+    <string name="RecognitionInfo">Verwendet die Vosk-API. Funktioniert offline. Die Qualität des transkribierten Textes kann gering sein.</string>
+    <string name="MissingLanguageModel">Fehlendes Sprachmodell</string>
+    <string name="DownloadingModel">Modell herunterladen…</string>
+    <string name="DownloadingModelInfo">Bitte lassen Sie dieses Fenster geöffnet, während das Sprachmodell heruntergeladen wird.</string>
+    <string name="ModelDownload">Herunterladen (%1$s)</string>
+    <string name="ModelDownloadInfo">Um fortzufahren, müssen Sie das Sprachmodell \"**%1$s**\" herunterladen.</string>
+    <string name="ModelDownloaded">Modell erfolgreich heruntergeladen.</string>
+    <string name="ModelError">Fehler beim Herunterladen des Modells.</string>
+    <string name="ModelUnzipping">Unzip…</string>
+    <string name="PostProcessingWithAi">Verwenden Sie KI für die Nachbearbeitung</string>
+    <string name="PostProcessingWithAiInfo">KI verbessert die Lesbarkeit, indem Fehler korrigiert, Satzzeichen hinzugefügt und unklare Teile geklärt werden.</string>
+    <!-- Camera -->
+    <string name="CameraType">Kameratyp</string>
+    <string name="ExtendedSettings">Erweiterte Einstellungen</string>
+    <string name="SeamlessSwitching">Nahtloses Umschalten</string>
+    <string name="ExtendedFramesPerSecond">Erweiterter FPS-Bereich</string>
+    <string name="CameraStabilization">Stabilisierung</string>
+    <string name="CameraMirrorMode">Spiegelmodus</string>
+    <string name="StaticZoom">Statischer Zoom</string>
+    <string name="StaticZoomInfo">Bei der Aufnahme von Videonachrichten wird die Zoomstufe nicht zurückgesetzt, wenn Sie Ihre Finger loslassen.</string>
+    <string name="VideoMessagesCamera">Rückkamera in Videonachrichten</string>
+    <string name="VideoMessagesCameraRear">Hinten</string>
+    <string name="VideoMessagesCameraFront">Vorne</string>
+    <string name="VideoMessagesCameraAsk">Fragen</string>
+    <string name="RearCamera">Hintere Kamera</string>
+    <string name="FrontCamera">Vordere Kamera</string>
+    <string name="RememberLastUsedCamera">Zuletzt verwendete Kamera merken</string>
+    <string name="RememberLastUsedCameraInfo">Bei der Aufnahme von Videonachrichten wird die zuletzt verwendete Kamera automatisch ausgewählt.</string>
+    <!-- Photo -->
+    <string name="AlwaysSendInHD">Immer in HD senden</string>
+    <string name="HideCameraTile">Kamerakachel ausblenden</string>
+    <string name="HideCameraTileInfo">Die Kamerakachel wird durch eine schwebende Schaltfläche ersetzt. Durch Drücken wird die Telegrammkamera gestartet. Halten Sie es gedrückt, startet die Systemkamera.</string>
+    <!-- Playback -->
+    <string name="DoubleTapSeekDuration">Doppeltippen um Zeit zu überspringen</string>
+    <string name="PreferOriginalQuality">Bevorzugen Sie Originalqualität</string>
+    <string name="PauseOnMinimize">Auto-Pause</string>
+    <string name="PauseOnMinimizeVideo">Video</string>
+    <string name="PauseOnMinimizeVoice">Stimme</string>
+    <string name="PauseOnMinimizeRound">Runde</string>
+    <string name="PauseOnMinimizeInfo">Pausiert die Medienwiedergabe, wenn das Gerät gesperrt oder das Exteragram minimiert ist.</string>
+    <string name="SwipeToPip">Zum PiP (Bild-in-Bild) wischen</string>
+    <string name="UnmuteWithVolumeButtons">Videos mit Lautstärketasten stummschalten</string>
+    <string name="UnmuteWithVolumeButtonsInfo">Durch Drücken einer Lautstärketaste wird die Stummschaltung des Videos aufgehoben, anstatt die Systemlautstärke zu ändern.</string>
+    <!-- Other -->
+    <!-- Google -->
+    <string name="AnalyticsInfo">Wenn diese Optionen aktiviert sind, werden Daten über das Gerät gesammelt und an Google Analytics und Crashlytics gesendet, sodass wir Nutzungsstatistiken führen und Fehler in der App verfolgen können. \n\nWenn die Optionen jedoch deaktiviert sind, wird die Datenerfassung gestoppt und alle gesendeten Daten werden sofort gelöscht.</string>
+    <!-- Backup & Restore -->
+    <string name="WriteFileName">Geben Sie den Dateinamen ein…</string>
+    <string name="ExportSettings">Export-Einstellungen</string>
+    <string name="ApplySettings">Einstellungen anwenden</string>
+    <string name="ImportTitle">Bist du sicher, dass du diese Einstellungen anwenden möchtest?</string>
+    <string name="ImportConfirm">Ja, anwenden</string>
+    <string name="CancelConfirm">Nein, lass es so wie es ist</string>
+    <string name="SettingsSaved">Die Einstellungsdatei erfolgreich gespeichert.</string>
+    <string name="SettingsImported">Einstellungen erfolgreich angewendet.</string>
+    <string name="ImportChanges_one">**1** Änderung wird auf die aktuellen Einstellungen angewendet.</string>
+    <string name="ImportChanges_two">**%1$d** Änderungen werden auf die aktuellen Einstellungen angewendet.</string>
+    <string name="ImportChanges_few">**%1$d** Änderungen werden auf die aktuellen Einstellungen angewendet.</string>
+    <string name="ImportChanges_many">**%1$d** Änderungen werden auf die aktuellen Einstellungen angewendet.</string>
+    <string name="ImportChanges_other">**%1$d** Änderungen werden auf die aktuellen Einstellungen angewendet.</string>
+    <string name="SameSettings">Es sieht so aus, als wären die Einstellungen die gleichen wie die aktuellen.</string>
+    <!-- Export data -->
+    <!-- Settings Management -->
+    <string name="DeleteAccount">Benutzerkonto löschen</string>
+    <string name="ResetSettings">Einstellungen zurücksetzen</string>
+    <string name="ResetPreferences">** exteraGram ** Einstellungen wurden zurückgesetzt.</string>
+    <string name="ResetPreferencesInfo">Sind Sie sicher, dass Sie ** alle ** Exteragramm-Einstellungen auf ihre Standardeinstellungen zurücksetzen möchten?</string>
+    <!-- Donates -->
+    <string name="SupportDevelopment">Entwicklung unterstützen</string>
+    <string name="SupportDevelopmentInfo">Indem Sie das Projekt unterstützen, tragen Sie nicht nur zu seiner Entwicklung bei, sondern erhalten auch ein einzigartiges Abzeichen.</string>
+    <string name="MakeDonation">Machen Sie eine Spende</string>
+    <string name="MakeDonationInfo">Überweisen Sie einen Betrag von %1$s (%2$s) an eine der Zahlungsdetails des Projekts. Diese finden Sie im Abschnitt ** Sonstiges ** der App-Einstellungen.</string>
+    <string name="SendProof">Zahlungsnachweis senden</string>
+    <string name="SendProofInfo">Senden Sie ein Foto der Zahlungsbestätigung an **@exteraOwner **. Stellen Sie sicher, dass auf dem Foto der Betrag, das Datum und die Uhrzeit der Überweisung deutlich zu sehen sind.</string>
+    <string name="ReceiveBadge">Erhalten Sie Ihren Badge</string>
+    <string name="ReceiveBadgeInfo">Nach der Zahlungsbestätigung erhalten Sie ein eindeutiges Abzeichen, das in Ihrem Profil angezeigt und für andere Benutzer sichtbar ist.</string>
+    <string name="GetBadgeInfo">** Unterstütze die Entwicklung ** und erhalte ein exklusives Abzeichen!</string>
+    <string name="NowPlaying">Jetzt läuft</string>
+    <string name="ScrobblingService">Scrobbling Dienst</string>
+    <string name="SelectService">Service auswählen</string>
+    <string name="SelectServiceInfo">Zeigt den aktuellen Titel im Profil als vom Scrobbling Dienst erhaltene Karte an.</string>
+    <string name="EnterUsername">Benutzernamen eingeben</string>
+    <string name="EnterUsernameInfo">Sie können Ihren Benutzernamen auf der **offiziellen Website** erhalten.</string>
+    <!-- Plugins -->
+    <string name="Plugins">Plugin</string>
+    <string name="PluginsEngine">Plugins Engine</string>
+    <string name="EnablePluginsEngine">Plugins Engine aktivieren</string>
+    <string name="PluginsInfo">Sie finden Plugins in @exteraPlugins.</string>
+    <string name="PluginsNotFound">Keine Plugins gefunden.</string>
+    <string name="InstallPlugin">Installieren</string>
+    <string name="UpdatePlugin">Update</string>
+    <string name="PluginNotEnabled">Aktivieren Sie die **Plug-in-Engine**, um **%1$s** zu installieren.</string>
+    <string name="PluginInstalled">**%1$s** erfolgreich installiert.</string>
+    <string name="PluginUpdated">**%1$s** erfolgreich installiert.</string>
+    <string name="PluginInstalledButFailedToEnable">**%1$s** installiert, aber beim Aktivieren ist ein Fehler aufgetreten.</string>
+    <string name="PluginEnableError">Fehler beim Aktivieren von **%1$s**.</string>
+    <string name="PluginDisableError">**%1$s** konnte nicht deaktiviert werden.</string>
+    <string name="PluginInstallError">Fehler bei der Installation von **%1$s**.</string>
+    <string name="PluginSourceTrusted">Vertrauenswürdige Quelle</string>
+    <string name="PluginSourceTrustedInfo">Plugins aus dieser Quelle sind **verifiziert** und sicher in der Anwendung.</string>
+    <string name="PluginSourceUnknown">Unbekannte Quelle</string>
+    <string name="PluginSourceUnknownInfo">Plugins aus dieser Quelle sind **nicht verifiziert** und können ein Sicherheitsrisiko darstellen.</string>
+    <string name="PluginVersion">Version</string>
+    <string name="PluginNoDescription">Keine Beschreibung angegeben.</string>
+    <string name="PluginNoAuthor">Unbekannter Autor</string>
+    <string name="EnableAfterInstallation">Nach der Installation aktivieren</string>
+    <string name="EnterValue">Geben Sie einen Wert ein</string>
+    <string name="PluginDelete">Plugin löschen</string>
+    <string name="PluginDeleteInfo">Sind Sie sicher, dass Sie **%1$s** löschen möchten?</string>
+    <string name="ResetPluginSettings">**%1$s** Einstellungen wurden zurückgesetzt.</string>
+    <string name="ResetPluginSettingsInfo">Sind Sie sicher, dass Sie die **%1$s**-Einstellungen auf die Standardeinstellungen zurücksetzen möchten?</string>
+    <string name="PluginsSafeMode">Abgesicherter Modus</string>
+    <string name="PluginsSafeModeInfo">Die Plugin Engine ist aufgrund eines Absturzes deaktiviert. Das Deaktivieren des abgesicherten Modus kann zu unvorhersehbaren Folgen führen.</string>
+    <string name="PluginsSafeModeInfo2">Im abgesicherten Modus sind alle Plugins inaktiv. So können Sie problematische Plugins sicher finden und deaktivieren.</string>
+    <string name="PluginsDevMode">Entwicklermodus</string>
+    <string name="PluginsCompactView">Plugins Kompaktansicht</string>
+    <string name="PluginsDocumentation">Dokumentation</string>
+    <string name="PluginsTrusted">Vertrauenswürdige Plugins</string>
+    <string name="PluginsDevServerLaunched">Der Developer Server wird gestartet.</string>
+    <string name="PluginsDevServerStopped">Der Entwicklerserver wurde gestoppt.</string>
+    <string name="PluginEngineNotEnabled">Aktivieren Sie die **Plugin-Engine**, um die Einstellungen von **%1$s** zu öffnen.</string>
+    <string name="PluginNotFound">**%1$s** nicht gefunden.</string>
+    <string name="PluginHasNoSettings">**%1$s** hat keine Einstellungen.</string>
+    <!-- Updates -->
+    <string name="UpdateInstalling">Aktualisierung im Gange…</string>
+    <string name="UpdateInstallingRelaunch">Die App wird neu gestartet, sobald das Update abgeschlossen ist.</string>
+    <string name="UpdateInstallingNotification">Sie werden benachrichtigt, wenn das Update abgeschlossen ist.</string>
+    <string name="UpdateInstalledNotification">Aktualisierung abgeschlossen. Tippen Sie auf, um die App zu öffnen.</string>
+    <string name="UpdateFailedToInstall">Update-Installation mit Fehlercode fehlgeschlagen:%d</string>
+    <string name="UpdateAvailable">Update verfügbar!</string>
+    <!-- Message Details -->
+    <string name="Details">Informationen</string>
+    <string name="Date">Datum</string>
+    <string name="EditedDate">Datum ändern</string>
+    <string name="ForwardedDate">Weiterleitungsdatum</string>
+    <string name="FileSize">Dateigröße</string>
+    <string name="FileName">Dateiname</string>
+    <string name="FilePath">Dateipfad</string>
+    <string name="Platform">Plattform</string>
+    <string name="Resolution">Auflösung</string>
+    <string name="Bitrate">Bitrate</string>
+    <string name="Duration">Dauer</string>
+    <string name="MimeType">Medientyp</string>
+    <string name="Datacenter">Datencenter</string>
+    <!-- Date Formatting -->
+    <!-- Login & QR -->
+    <string name="SelectNumber">Telefonnummer auswählen</string>
+    <string name="WifiConnect">Verbinden</string>
+    <string name="WifiDisabled">Wlan ist deaktiviert.</string>
+    <string name="WifiFailed">Verbindung zum Wlan fehlgeschlagen.</string>
+    <string name="WifiSuccess">Erfolgreich mit WLAN verbunden.</string>
+    <string name="AreYouSureToLogin">Sind Sie sicher, dass Sie sich auf einem anderen Gerät bei diesem Konto anmelden möchten?</string>
+    <!-- AdBlock -->
+    <string name="PageBlocked">Seite blockiert</string>
+    <string name="PageBlockedDescription">exteraGram hat das Laden der folgenden Seite verhindert:\n**%1$s**</string>
+    <string name="PageBlockedGoBack">Gehe zurück</string>
+    <string name="PageBlockedProceed">Fortfahren</string>
+    <!-- Other -->
+    <string name="AutoLockInstant">Sofort</string>
+    <string name="TestBackend">Test-Backend</string>
+    <string name="SearchPhotoInfo">Dienste dürfen Bilder gemäß ihren Datenschutzrichtlinien und Nutzungsbedingungen verwenden.</string>
+    <string name="PhotoUploadFailed">Bild konnte nicht hochgeladen werden.</string>
+    <string name="TrackSaved">Track wurde in **%1$s ** gespeichert.</string>
+    <string name="ChannelToSaveChanged">Tracks werden in **%1$s ** gespeichert.</string>
+    <!-- Bot Button Context Menu -->
+    <string name="CopyTitle">Titel kopieren</string>
+    <string name="CopyCallback">Rückrufdaten kopieren</string>
+    <string name="CopyInlineQuery">Inline-Abfrage kopieren</string>
+    <string name="CopyID">Benutzer-ID kopieren</string>
+    <!-- Information Toasts & Dialogs -->
+    <string name="UserNotFound">Benutzer mit dieser **ID** nicht gefunden.</string>
+    <string name="ChatNotFound">Chat mit dieser **ID** nicht gefunden.</string>
+    <string name="PhotoCopied">Foto in Zwischenablage kopiert.</string>
+    <string name="FrameCopied">Rahmen in die Zwischenablage kopiert.</string>
+    <string name="ReplyUsesEmojiPacks">Diese Antwort verwendet Emoji aus dem %s s-Paket als Hintergrund.</string>
+    <string name="StickerSavedHint">Aufkleber in der Galerie gespeichert.</string>
+    <string name="EmojiSavedHint">Emoji in der Galerie gespeichert.</string>
+    <string name="MutualContactInfo">Dieser Kontakt ist beiderseitig.</string>
+    <string name="LocalPremiumEmojiHint">Sie haben kein **Telegram Premium**-Abonnement, daher können nur **exteraGram** Benutzer dieses Emoji sehen.</string>
+    <!-- Main Tabs -->
+    <!-- Passkeys -->
+    <!-- Date Information -->
+    <string name="CreationDateUserApproximately">**%1$s** hat ihr Konto ungefähr am **%2$s** erstellt.</string>
+    <string name="CreationDateUserEarlier">**%1$s** hat ihr Konto vor **%2$s** erstellt.</string>
+    <string name="CreationDateUserLater">**%1$s** hat ihr Konto später als **%2$s** erstellt.</string>
+    <string name="CreationDateChat">**%1$s** wurde am **%2$s** erstellt.</string>
+    <string name="CreationDateSelfApproximately">Sie haben Ihr Konto ungefähr am **%1$s** erstellt.</string>
+    <string name="CreationDateSelfEarlier">Sie haben Ihr Konto vor **%1$s** erstellt.</string>
+    <string name="CreationDateSelfLater">Sie haben Ihr Konto später als **%1$s** erstellt.</string>
+    <string name="JoinDateChat">Sie sind **%1$s** am **%2$s** beigetreten.</string>
+    <!-- Menu Items -->
+    <string name="SendVideoWithoutCompression">Senden ohne Komprimierung</string>
+    <string name="ToBeginning">Zum Anfang</string>
+    <string name="MessageHistory">Nachrichtenverlauf</string>
+    <string name="BoldItalic">Fett Kursiv</string>
+    <string name="CopyPhoto">Foto kopieren</string>
+    <string name="CopyFrame">Rahmen kopieren</string>
+    <!-- Sticker Maker -->
+    <!-- Feed -->
+    <!-- Non-translatable -->
+</resources>

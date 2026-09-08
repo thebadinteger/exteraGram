@@ -1,0 +1,699 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+ Это исходный код exteraGram для Android.
+
+ Мы не запрещаем и не можем запретить использовать наш код,
+ но имейте уважение и указывайте оригинального автора.
+
+ Copyright @exteraGram, 2022-2026
+
+-->
+
+<resources>
+    <string name="exteraAppName" translatable="false">exteraGram</string>
+    <string name="Preferences">Настройки exteraGram</string>
+
+    <!-- Главное меню -->
+    <string name="Links">Ссылки</string>
+    <string name="AboutExteraDescription">Экспериментальный Telegram-клиент, основанный на официальном исходном коде!</string>
+    <string name="Crowdin">Перевод</string>
+    <string name="Website">Веб-сайт</string>
+    <string name="Categories">Категории</string>
+    <string name="Developer">**%1$s** является членом команды разработчиков **exteraGram**.</string>
+    <string name="DeveloperCompact">Участник команды разработчиков **exteraGram**.</string>
+    <string name="Supporter">**%1$s** поддержал(а) разработку **exteraGram** и получил(а) уникальный значок.</string>
+    <string name="OfficialChannel">**%1$s** является официальным ресурсом **exteraGram**.</string>
+    <string name="NoSuchSetting">Похоже, что такой настройки пока нет.</string>
+    <string name="SettingLinkToSavedMessages">Ссылка на настройку отправлена в **Избранное**.</string>
+    <string name="SettingLinkToUser">Ссылка на настройку отправлена **%1$s**.</string>
+    <string name="SettingLinkToChats">Ссылка на настройку отправлена в **%1$s**.</string>
+    <string name="LiteBatteryFollowSystem">Системное энергосбережение</string>
+    <string name="LiteBatteryFollowSystemState">Система</string>
+    <string name="LiteBatteryFollowSystemInfo">Управляется режимом энергосбережения системы.</string>
+
+    <!-- Pill Stack -->
+    <string name="PillStackPills">Pill Stack</string>
+    <string name="PillStackPillsInfo">Интерактивные виджеты в поле поиска</string>
+    <string name="PillStackPillsSettingsInfo">Настройте видимые виджеты. Нажмите, чтобы показать или скрыть, удерживайте и перетаскивайте для изменения порядка.</string>
+    <string name="PillStackActivePills">Активные виджеты</string>
+    <string name="PillStackHiddenPills">Скрытые виджеты</string>
+    <string name="CurrentLocation">Текущая геопозиция</string>
+    <string name="SelectLocation">Выбрать на карте</string>
+    <string name="WeatherPill">Погода</string>
+    <string name="WeatherSettingsInfo">Выберите способ определения местоположения для получения данных о погоде.</string>
+    <string name="WeatherLocation">Определение местоположения</string>
+    <string name="WeatherLocationPermissionNo">Для отображения погоды exteraGram требуется доступ к вашей геопозиции.</string>
+    <string name="WeatherLocationPermissionGrant">Предоставить доступ</string>
+    <string name="WeatherLocationServicesEnable">Включить геолокацию</string>
+    <string name="WeatherPillTopInfo">Настройки виджета погоды для Pill Stack.</string>
+    <string name="PillStackInfiniteScrolling">Бесконечная прокрутка</string>
+    <string name="CryptoPillTargetCurrency">Целевая валюта</string>
+    <string name="CryptoCurrencyUsd">Доллар США</string>
+    <string name="CryptoCurrencyEur">Евро</string>
+    <string name="CryptoCurrencyRub">Российский рубль</string>
+    <string name="CryptoCurrencyGbp">Британский фунт</string>
+    <string name="CryptoCurrencyKzt">Казахстанский тенге</string>
+    <string name="CryptoCurrencyTry">Турецкая лира</string>
+    <string name="CryptoCurrencyUah">Украинская гривна</string>
+    <string name="CryptoCurrencyPln">Польский злотый</string>
+    <string name="CryptoCurrencyAed">Дирхам ОАЭ</string>
+    <string name="CryptoCurrencyCny">Китайский юань</string>
+    <string name="CryptoCurrencyJpy">Японская иена</string>
+    <string name="CryptoCurrencyByn">Белорусский рубль</string>
+    <string name="CryptoCurrencyIls">Израильский шекель</string>
+    <string name="CryptoCurrencyCzk">Чешская крона</string>
+    <string name="CryptoCurrencyInr">Индийский рупий</string>
+
+    <!-- Proxy -->
+    <string name="ProxyDoNotUseWithVPN">Не использовать с VPN</string>
+    <string name="ProxyDisableOn">Отключать прокси</string>
+    <string name="ProxyDisableNever">Никогда</string>
+    <string name="ProxyDisableAlways">Всегда</string>
+    <string name="ProxyDisableOnMobileData">Мобильная сеть</string>
+    <string name="ProxyType">Тип</string>
+    <string name="Unknown">Неизвестно</string>
+    <string name="ProxyRename">Название прокси (опционально)</string>
+    <string name="ProxyPinLimitReached">Можно закрепить не более %1$d прокси.</string>
+    <string name="CopyIpAddress">Скопировать IP-адрес</string>
+    <string name="IpInfoUnavailable">Не удалось загрузить информацию об IP-адресе.</string>
+    <string name="IpInfoCountry">Страна</string>
+    <string name="IpInfoRegion">Регион</string>
+    <string name="IpInfoCity">Город</string>
+    <string name="IpInfoIsp">Провайдер</string>
+    <string name="IpInfoOrganization">Организация</string>
+    <string name="IpInfoDomain">Домен</string>
+    <string name="IpInfoTimezone">Часовой пояс</string>
+
+    <!-- Внешний вид -->
+    <string name="Appearance">Внешний вид</string>
+
+    <!-- Icon Packs -->
+    <string name="IconPacks">Наборы иконок</string>
+    <string name="IconPacksInfo">Настройка иконок во всём приложении</string>
+    <string name="IconPickerFilter">Фильтр</string>
+    <string name="IconPickerAllIcons">Все иконки</string>
+    <string name="IconPickerReplacedIcons">Заменённые иконки</string>
+    <string name="IconPickerNotReplacedIcons">Незаменённые иконки</string>
+    <string name="IconPickerSaveAndExit">Сохранить и выйти</string>
+    <string name="BasePacks">Базовые наборы</string>
+    <string name="BaseIconPackInfo">Базовый набор иконок используется для значков, которые не заменены другими наборами.</string>
+    <string name="IconPacksHint">Нажмите, чтобы включить или отключить набор. Удерживайте, чтобы изменить или удалить.</string>
+    <string name="NewIconPack">Новый набор иконок</string>
+    <string name="EditIconPackInfo">Редактировать информацию</string>
+    <string name="EnabledPacks">Включённые наборы</string>
+    <string name="AllPacks">Все наборы</string>
+    <string name="PackName">Название набора</string>
+    <string name="AuthorNameOptional">Имя автора (необязательно)</string>
+    <string name="NameCannotBeEmpty">Название не может быть пустым.</string>
+    <string name="Version">Версия</string>
+    <string name="InstallPack">Установить набор</string>
+    <string name="IconCount_one">%1$d иконка</string>
+    <string name="IconCount_few">%1$d иконки</string>
+    <string name="IconCount_many">%1$d иконок</string>
+    <string name="IconCount_other">%1$d иконки</string>
+    <string name="UpdatePack">Обновить набор</string>
+    <string name="DeletePack">Удалить набор</string>
+    <string name="DeletePackInfo">Вы уверены, что хотите удалить «%1$s»?</string>
+    <string name="IconPackErrorInvalidArchive">Архив набора иконок повреждён или имеет неверный формат.</string>
+    <string name="IconPackErrorMissingMetadata">В архиве набора нет metadata.json.</string>
+    <string name="IconPackErrorMetadataTooLarge">Метаданные набора иконок слишком большие.</string>
+    <string name="IconPackErrorInvalidMetadata">Метаданные набора иконок некорректны.</string>
+    <string name="IconPackErrorTooManyFiles">В наборе иконок слишком много файлов.</string>
+    <string name="IconPackErrorArchiveTooLarge">Набор иконок слишком большой.</string>
+    <string name="IconPackErrorFileTooLarge">Один из файлов иконок слишком большой.</string>
+    <string name="IconPackErrorCompressionRatioTooHigh">Архив набора иконок сжат слишком сильно.</string>
+    <string name="IconPackErrorStorage">Не удалось сохранить набор иконок.</string>
+
+    <!-- Аватары -->
+    <string name="AvatarCorners">Закругление аватарок</string>
+    <string name="AvatarCornersLeft">Квадрат</string>
+    <string name="AvatarCornersRight">Круг</string>
+    <string name="SingleCornerRadius">Единое закругление</string>
+    <string name="SingleCornerRadiusInfo">Форумы будут иметь ту же форму, что и чаты.</string>
+
+    <!-- Список чатов -->
+    <string name="ListOfChats">Список чатов</string>
+    <string name="ActionBarTitle">Текст в заголовке</string>
+    <string name="ActionBarTitleUsername">Имя пользователя</string>
+    <string name="ActionBarTitleName">Имя</string>
+    <string name="HideStories">Скрыть истории</string>
+    <string name="HideActionBarStatus">Скрыть статус</string>
+    <string name="CenterTitle">Заголовок по центру</string>
+    <string name="ChatHeader">Заголовок чата</string>
+    <string name="HideFloatingButton">Скрыть плавающую кнопку</string>
+    <string name="HideDialogsSearchBar">Скрыть строку поиска</string>
+    <string name="BottomNavigationBarMode">Нижняя панель навигации</string>
+    <string name="BottomNavigationModeShow">Показывать</string>
+    <string name="BottomNavigationModeHide">Скрывать</string>
+    <string name="BottomNavigationModeFloating">Плавающая</string>
+    <string name="SenderMiniAvatars">Мини-аватарки отправителей</string>
+    <string name="ListOfChatsInfo">Когда для папок включён режим \"Только иконки\", в заголовке будет отображаться название папки.</string>
+
+    <!-- Папки -->
+    <string name="TabTitleStyle">Заголовки папок</string>
+    <string name="TabTitleStyleTextWithIcons">Названия и иконки</string>
+    <string name="TabTitleStyleIconsOnly">Только иконки</string>
+    <string name="TabTitleStyleTextOnly">Только названия</string>
+    <string name="TabCounter">Счётчик уведомлений</string>
+    <string name="HideAllChats">Скрыть вкладку \"%1$s\"</string>
+    <string name="FoldersInfo">Иконки папок синхронизируются с вашим аккаунтом.</string>
+
+    <!-- Иконки приложения -->
+    <string name="IconPack">Набор иконок</string>
+    <string name="AppIconMonet" translatable="false">Monet</string>
+    <string name="AppIconSunset">Закат</string>
+    <string name="AppIconAurora">Аврора</string>
+    <string name="AppIconGoogle" translatable="false">Google</string>
+    <string name="AppIconAmethyst">Аметист</string>
+    <string name="AppIconSapphire">Сапфир</string>
+    <string name="AppIcon480DSGN" translatable="false">480 DSGN</string>
+    <string name="AppIconInvincible">Неуязвимый</string>
+    <string name="AppIconCyberpunk">Киберпанк</string>
+    <string name="AppIconSpace">Космос</string>
+    <string name="AppIconIceAge">Ледник</string>
+    <string name="AppIconEditor">Редактор</string>
+    <string name="AppIconOrbit">Орбита</string>
+    <string name="AppIconSus">Предатель</string>
+    <string name="AppIconWinter">Зима</string>
+
+    <!-- Размытие -->
+    <string name="BlurOptions">Настройки размытия</string>
+    <string name="GlassOutlineStyle">Обводка стекла</string>
+    <string name="GlassOutlineGlare">Блики</string>
+    <string name="GlassOutlineSolid">Сплошная</string>
+    <string name="GlassOutlineHidden">Скрыта</string>
+    <string name="ForceBlur">Принудительное размытие</string>
+    <string name="ForceBlurInfo">Эффекты размытия будут применяться ко всем темам, переопределяя их стандартные настройки.</string>
+    <string name="ForceSnow">Принудительный снег</string>
+    <string name="ForceSnowInfo">Падающий снег появится в верхней панели, боковом меню и на фоне чатов.</string>
+
+    <!-- Общий внешний вид -->
+    <string name="Sections">Секции</string>
+    <string name="SeparateHeaders">Отделить заголовки</string>
+    <string name="DividerStyle">Тип разделителей</string>
+    <string name="DividerStyleHidden">Скрыть</string>
+    <string name="DividerStyleLine">Линия</string>
+    <string name="DividerStyleSegments">Сегменты</string>
+    <string name="UseSystemFonts">Системные шрифты</string>
+    <string name="UseSystemEmoji">Системные эмодзи</string>
+    <string name="NewLoadingStyle">Индикаторы загрузки</string>
+    <string name="NewSliderStyle">Стиль слайдера</string>
+    <string name="NewSwitchStyle">Стиль переключателей</string>
+    <string name="TabletMode">Планшетный режим</string>
+    <string name="RemoveMessageTail">Убрать хвост у сообщений</string>
+    <string name="GooeyAvatarAnimation">\"Липкая\" анимация аватарок</string>
+    <string name="CustomChatThemes">Различные темы в чатах</string>
+    <string name="CustomChatThemesInfo">Каждый чат будет отображаться с той темой, которая была выбрана специально для него.</string>
+    <string name="PredictiveBackIntensity">Амплитуда предиктивного жеста</string>
+    <string name="PredictiveBackMax">Макс</string>
+    <string name="PredictiveBackInfo">Настраивает, насколько далеко сдвигается экран при жесте назад.</string>
+    <string name="SpringAnimations">Spring-анимации</string>
+    <string name="SpringAnimationsInfo">Включает более плавные анимации при переключении между экранами и открытии бокового меню.</string>
+
+    <!-- Боковое меню -->
+    <string name="AppNavigation">Навигация в приложении</string>
+    <string name="AppNavigationInfo">Настройки верхнего меню и боковой панели</string>
+    <string name="NavigationDrawer">Боковое меню</string>
+    <string name="NavigationDrawerInfo">Заменяет меню в правом верхнем углу на боковую панель, открывающуюся свайпом.</string>
+    <string name="NavigationDrawerImmersiveAnimation">Иммерсивная анимация</string>
+    <string name="NavigationDrawerProxyPingShort">%1$d мс</string>
+    <string name="MainMenuItems">Элементы меню</string>
+    <string name="MainMenuItemsInfo">Нажмите, чтобы скрыть или показать пункты, удерживайте для изменения порядка. Изменения применяются к верхнему меню и боковой панели.</string>
+    <string name="MainMenuHiddenItems">Скрытые элементы</string>
+    <string name="MainMenuDivider">Разделитель</string>
+    <string name="MainMenuAddDivider">Добавить разделитель</string>
+    <string name="MainMenuRemoveSettingsInfo">Настройки нельзя скрыть, если отключена нижняя панель навигации.</string>
+
+    <!-- Перевод -->
+    <string name="TranslationProvider">Провайдер перевода</string>
+    <string name="TranslationTarget">Целевой язык</string>
+    <string name="TranslationTargetApp">Язык приложения</string>
+    <string name="TranslationFormality">Формальность</string>
+    <string name="TranslationFormalityLess">Менее формально</string>
+    <string name="TranslationFormalityMore">Более формально</string>
+
+    <!-- Форматирование и поведение -->
+    <string name="DisableNumberRounding">Отключить округление чисел</string>
+    <string name="FormatTimeWithSeconds">Форматировать время с секундами</string>
+    <string name="RelativeLastSeen">Относительное время онлайна</string>
+    <string name="InAppVibration">Вибрация в приложении</string>
+    <string name="FilterZalgo">Фильтр \"Zalgo\"</string>
+    <string name="FilterZalgoInfo">Убирает искажающие текст символы \"%1$s\" в именах и сообщениях.</string>
+    <string name="RestartRequired">Перезапустите приложение, чтобы изменения вступили в силу.</string>
+
+    <!-- Форматирование сообщений -->
+    <string name="CodeBlock">Код</string>
+    <string name="CreateCode">Создать блок кода</string>
+    <string name="CreateCodeLanguage">Язык</string>
+
+    <!-- Скорость -->
+    <string name="DownloadSpeedBoost">Ускорение загрузки</string>
+    <string name="UploadSpeedBoost">Ускорение отправки</string>
+    <string name="Ultra">Ультра</string>
+    <string name="SpeedBoostInfo">Ультра-ускорение может вызывать проблемы с загрузкой файлов и просмотром видео на медленном интернет-соединении.</string>
+
+    <!-- Карты -->
+    <string name="Maps">Карты</string>
+    <string name="TermsOfUseYandexMaps">Используя Яндекс Карты, вы соглашаетесь с <![CDATA[<a href="https://yandex.ru/legal/maps_termsofuse/">условиями использования</a>]]>.</string>
+    <string name="UseYandexMaps">Использовать Яндекс Карты</string>
+    <string name="InstallYandexMaps">Установить Яндекс Карты?</string>
+
+    <!-- Хранилище -->
+    <string name="StorageSettings">Хранилище</string>
+    <string name="CustomSavePath">Папка для сохранения</string>
+    <string name="CustomSavePathHint">Оставьте пустым для сохранения в корень</string>
+    <string name="CustomSavePathDefault">Сохранять в корень</string>
+    <string name="CustomSavePathInfo">Сохранённые файлы будут сохранены напрямую в Pictures, Downloads и т.д.</string>
+    <string name="CustomSavePathInfoFolder">Сохранённые файлы будут в Pictures/%1$s, Downloads/%1$s и т.д.</string>
+
+    <!-- Профиль -->
+    <string name="Profile">Профиль</string>
+    <string name="HidePhoneNumber">Скрыть номер телефона</string>
+    <string name="ShowIdAndDc">Показывать ID и DC</string>
+    <string name="ShowIdAndDcInfo">Telegram API показывает ID как есть, а Bot API добавляет минус для групп и -100 для супергрупп и каналов.</string>
+
+    <!-- Архив -->
+    <string name="HideArchiveFolder">Скрыть архив из списка чатов</string>
+    <string name="ArchiveOnPull">Открывать архив при вытягивании</string>
+    <string name="DisableUnarchiveSwipe">Отключить жест \"Вернуть\"</string>
+    <string name="DisableUnarchiveSwipeInfo">Свайп влево не будет убирать чаты из архива.</string>
+
+    <!-- Медиа -->
+    <string name="StickerSize">Размер стикеров</string>
+    <string name="StickerSizeLeft">Маленький</string>
+    <string name="StickerSizeRight">Большой</string>
+    <string name="StickerSizeDialogMessageReplyTo">вау</string>
+    <string name="StickerSizeDialogMessage">ого, какой милый!</string>
+    <string name="StickerShape">Форма стикеров</string>
+    <string name="StickerShapeRounded">Закруглённая</string>
+    <string name="StickerShapeRoundedMsg">Сообщение</string>
+    <string name="StickerTime">Скрыть время на стикерах</string>
+    <string name="ViewEmojiSet">Открыть набор</string>
+    <string name="UnlimitedRecentStickers">Бесконечные недавние стикеры</string>
+    <string name="HideReactions">Скрыть реакции</string>
+    <string name="HideReactionsInfo">Реакции будут полностью скрыты из интерфейса.</string>
+    <string name="ReplyBackground">Фон</string>
+    <string name="ChatSettingsInfo">Настройки медиа, иконки приложения и другое</string>
+
+    <!-- Действия в чате -->
+    <string name="DoubleTap">Двойное нажатие</string>
+    <string name="DoubleTapIncoming">Входящие сообщения</string>
+    <string name="DoubleTapOutgoing">Исходящие сообщения</string>
+    <string name="DoubleTapInfo">Некоторые действия требуют прав администратора в чате или канале.</string>
+    <string name="BottomButton">Нижняя кнопка</string>
+    <string name="AIFeatures">ИИ-функции</string>
+    <string name="AIFeaturesEditor">Редактор</string>
+    <string name="AIFeaturesSummaries">Краткие сводки</string>
+    <string name="ChannelDiscussNoCaps">Обсудить</string>
+    <string name="QuickTransitions">Быстрый переход свайпом</string>
+    <string name="DisableGreetingSticker">Скрыть приветственный стикер</string>
+    <string name="AdminShortcuts">Быстрые админ-действия</string>
+    <string name="HideKeyboardOnScroll">Скрывать клавиатуру при прокрутке</string>
+    <string name="HideShareButton">Скрыть боковую кнопку \"%1$s\"</string>
+    <string name="ReplaceEditedWithIcon">Заменять \"%1$s\" иконкой</string>
+    <string name="MessageMenu">Меню сообщения</string>
+    <string name="GroupMessageMenu">Группировать меню сообщения</string>
+    <string name="GroupMessageMenuInfo">Группировка перемещает основные действия в нижнюю часть меню сообщения.</string>
+    <string name="GlassMessageMenu">Стеклянное меню сообщения</string>
+    <string name="GlassMessageMenuInfo">Меню сообщения и панель реакций становятся матовым стеклом.</string>
+    <string name="GlassMessageMenuBlurOff">Стеклянным меню нужно размытие, а оно сейчас выключено.</string>
+    <string name="AddCommaAfterMention">Запятая после упоминания</string>
+    <string name="HideSendAsPeer">Скрыть кнопку \"Отправить как…\"</string>
+    <string name="HideSendAsPeerInfo">Вы по-прежнему сможете открыть меню выбора отправителя долгим нажатием на кнопку Эмодзи/Стикеров/GIF.</string>
+    <string name="ShowPollResultsBeforeVoting">Итоги до голосования</string>
+    <string name="ShowPollResultsBeforeVotingHint">Показывать результаты голосов около каждого пункта опроса до вашего голосования.</string>
+    <string name="ShowOnlineStatus">Показывать индикатор онлайна</string>
+    <string name="MessagePreviewDialogMessage">Я могу есть стекло, оно мне не вредит.</string>
+
+    <!-- Фото -->
+    <string name="AlwaysSendInHD">Всегда отправлять в HD</string>
+    <string name="HideCameraTile">Скрыть плитку камеры</string>
+    <string name="HideCameraTileInfo">Плитка камеры будет заменена плавающей кнопкой. Нажатие на неё запускает камеру Telegram, удержание — системную камеру.</string>
+
+    <!-- Vosk -->
+    <string name="RecognitionLanguage">Язык распознавания</string>
+    <string name="RecognitionInfo">Используется Vosk API. Работает офлайн. Качество расшифрованного текста может быть низким.</string>
+    <string name="MissingLanguageModel">Отсутствует языковая модель</string>
+    <string name="DownloadingModel">Загрузка модели…</string>
+    <string name="DownloadingModelInfo">Пожалуйста, не закрывайте это окно, пока загружается языковая модель.</string>
+    <string name="ModelDownload">Скачать (%1$s)</string>
+    <string name="ModelDownloadInfo">Для продолжения необходимо скачать языковую модель \"**%1$s**\".</string>
+    <string name="ModelDownloaded">Модель успешно загружена.</string>
+    <string name="ModelError">Ошибка при загрузке модели.</string>
+    <string name="ModelUnzipping">Распаковка…</string>
+    <string name="DeleteRecognitionModel">Удалить модель</string>
+    <string name="DeleteRecognitionModelInfo">Вы уверены, что хотите удалить языковую модель \"**%1$s**\"?</string>
+    <string name="RecognitionModelDeleted">Модель успешно удалена.</string>
+    <string name="RecognitionModelDeleteError">Ошибка при удалении модели.</string>
+    <string name="PostProcessingWithAi">Использовать ИИ для постобработки</string>
+    <string name="PostProcessingWithAiInfo">ИИ улучшит читаемость, исправив ошибки, добавив пунктуацию и уточнив непонятные моменты.</string>
+
+    <!-- Камера -->
+    <string name="CameraType">Тип камеры</string>
+    <string name="ExtendedSettings">Расширенные настройки</string>
+    <string name="SeamlessSwitching">Бесшовное переключение</string>
+    <string name="ExtendedFramesPerSecond">Расширенный диапазон FPS</string>
+    <string name="CameraStabilization">Стабилизация</string>
+    <string name="CameraMirrorMode">Зеркальный режим</string>
+    <string name="StartWithWideAngleCamera">Начинать с широкого угла</string>
+    <string name="ZoomSlider">Слайдер зума</string>
+    <string name="ZoomSliderInfo">Показывать регулятор приближения под камерой видеосообщений.</string>
+    <string name="StaticZoom">Статичный зум</string>
+    <string name="StaticZoomInfo">При записи видеосообщений уровень приближения не будет сбрасываться, если отпустить пальцы.</string>
+    <string name="VideoMessagesCamera">Камера в видеосообщениях</string>
+    <string name="VideoMessagesCameraRear">Основная</string>
+    <string name="VideoMessagesCameraFront">Фронтальная</string>
+    <string name="VideoMessagesCameraAsk">Спрашивать</string>
+    <string name="RearCamera">Основная</string>
+    <string name="FrontCamera">Фронтальная</string>
+    <string name="RememberLastUsedCamera">Запоминать последнюю камеру</string>
+    <string name="RememberLastUsedCameraInfo">При записи видеосообщений будет автоматически выбрана последняя использованная камера.</string>
+
+    <!-- Воспроизведение -->
+    <string name="DoubleTapSeekDuration">Перемотка двойным нажатием</string>
+    <string name="PreferOriginalQuality">Предпочитать исходное качество</string>
+    <string name="PauseOnMinimize">Автопауза</string>
+    <string name="PauseOnMinimizeVideo">Видео</string>
+    <string name="PauseOnMinimizeVoice">Голосовых</string>
+    <string name="PauseOnMinimizeRound">Кружков</string>
+    <string name="PauseOnMinimizeInfo">Приостанавливает воспроизведение медиа, когда устройство заблокировано или приложение свёрнуто.</string>
+    <string name="SwipeToPip">Картинка-в-картинке по свайпу</string>
+    <string name="UnmuteWithVolumeButtons">Включение звука кнопками громкости</string>
+    <string name="UnmuteWithVolumeButtonsInfo">Нажатие кнопки громкости будет включать звук в видео вместо изменения системной громкости.</string>
+
+    <!-- Плагины -->
+    <string name="PluginsNotSupported">Установка плагинов доступна только в **Full**-версии **exteraGram**.</string>
+    <string name="Plugins">Плагины</string>
+    <string name="PluginsEngine">Система плагинов</string>
+    <string name="EnablePluginsEngine">Включить систему плагинов</string>
+    <string name="PluginsInfo">Вы можете найти плагины в @exteraPlugins.</string>
+    <string name="PluginsNotFound">Плагины не найдены.</string>
+    <string name="InstallPlugin">Установить</string>
+    <string name="UpdatePlugin">Обновить</string>
+    <string name="PluginNotEnabled">Включите **Систему плагинов**, чтобы установить **%1$s**.</string>
+    <string name="PluginInstalled">**%1$s** успешно установлен.</string>
+    <string name="PluginUpdated">**%1$s** успешно обновлён.</string>
+    <string name="PluginInstalledButFailedToEnable">**%1$s** установлен, но при включении произошла ошибка.</string>
+    <string name="PluginEnableError">Не удалось включить **%1$s**.</string>
+    <string name="PluginDisableError">Не удалось выключить **%1$s**.</string>
+    <string name="PluginInstallError">Не удалось установить **%1$s**.</string>
+    <string name="PluginSourceTrusted">Надёжный источник</string>
+    <string name="PluginSourceTrustedInfo">Плагины из этого источника **проверены** и безопасны для использования.</string>
+    <string name="PluginSourceUnknown">Неизвестный источник</string>
+    <string name="PluginSourceUnknownInfo">Плагины из этого источника **не проверены** и могут представлять угрозу безопасности.</string>
+    <string name="PluginVersion">Версия</string>
+    <string name="PluginNoDescription">Описание отсутствует.</string>
+    <string name="PluginIsNotResponding">Плагин не отвечает.</string>
+    <string name="PluginIsNotRespondingAlert">%1$s не отвечает</string>
+    <string name="PluginNoAuthor">Неизвестный автор</string>
+    <string name="EnableAfterInstallation">Включить после установки</string>
+    <string name="EnterValue">Введите значение</string>
+    <string name="PluginDelete">Удалить плагин</string>
+    <string name="PluginDeleteInfo">Вы уверены, что хотите удалить **%1$s**?</string>
+    <string name="ResetPluginSettings">Настройки **%1$s** были сброшены.</string>
+    <string name="ResetPluginSettingsInfo">Вы уверены, что хотите сбросить настройки **%1$s** до стандартных?</string>
+    <string name="PluginsSafeMode">Безопасный режим</string>
+    <string name="PluginsSafeModeShortcut">Запустить в безопасном режиме</string>
+    <string name="PluginsSafeModeInfo">Система плагинов отключена из-за сбоя. Отключение безопасного режима может привести к непредсказуемым последствиям.</string>
+    <string name="PluginsSafeModeInfo2">В безопасном режиме все плагины неактивны. Это позволяет безопасно найти и отключить проблемный плагин.</string>
+    <string name="PluginsDevMode">Режим разработчика</string>
+    <string name="PluginsCompactView">Компактный вид плагинов</string>
+    <string name="PluginsDocumentation">Документация</string>
+    <string name="PluginsTrusted">Проверенные плагины</string>
+    <string name="PluginsDevServerLaunched">Developer Server запущен.</string>
+    <string name="PluginsDevServerStopped">Developer Server остановлен.</string>
+    <string name="PluginEngineNotEnabled">Включите **Систему плагинов**, чтобы открыть настройки **%1$s**.</string>
+    <string name="PluginNotFound">**%1$s** не найден.</string>
+    <string name="PluginHasNoSettings">**%1$s** не имеет настроек.</string>
+    <string name="PluginsPySdkAutoUpdate">Обновлять автоматически</string>
+    <string name="PluginsPySdkEnableBetaVersion">Устанавливать бета-версии</string>
+    <string name="PluginsPySdkCheckUpdates">Проверить наличие обновлений</string>
+    <string name="CheckingForUpdates">Проверка обновлений…</string>
+    <string name="LatestVersionInstalled">Установлена последняя версия</string>
+    <string name="RestartPluginSystemToApplyUpdate">Обновление загружено, перезапустите систему плагинов для применения</string>
+    <string name="LoadingUpdate">Загрузка обновления…</string>
+    <string name="RestoreSdkFromApk">Восстановить SDK из APK</string>
+    <string name="EnableAutoUpdate">Обновлять автоматически</string>
+    <string name="PluginsDisableArt">Режим совместимости</string>
+    <string name="PluginsDisableArtInfo">Отключает ART Profile Saver для предотвращения сбоев хуков плагинов.</string>
+
+    <!-- Обновления -->
+    <string name="UpdateInstalling">Идёт установка обновления…</string>
+    <string name="UpdateInstallingRelaunch">Приложение перезапустится после завершения обновления.</string>
+    <string name="UpdateInstallingNotification">Вы получите уведомление, когда обновление будет завершено.</string>
+    <string name="UpdateInstalledNotification">Обновление завершено. Нажмите, чтобы открыть приложение.</string>
+    <string name="UpdateFailedToInstall">Не удалось установить обновление: %d</string>
+    <string name="UpdateAvailable">Доступно обновление!</string>
+
+    <!-- Детали сообщения -->
+    <string name="Details">Детали</string>
+    <string name="Date">Дата</string>
+    <string name="EditedDate">Дата изменения</string>
+    <string name="ForwardedDate">Дата пересылки</string>
+    <string name="FileSize">Размер файла</string>
+    <string name="FileName">Имя файла</string>
+    <string name="FilePath">Путь к файлу</string>
+    <string name="Platform">Платформа</string>
+    <string name="Resolution">Разрешение</string>
+    <string name="Bitrate">Битрейт</string>
+    <string name="Duration">Длительность</string>
+    <string name="MimeType">Тип MIME</string>
+    <string name="Datacenter">Дата-центр</string>
+
+    <!-- Резервное копирование и восстановление -->
+    <string name="WriteFileName">Введите имя файла…</string>
+    <string name="ExportSettings">Экспортировать настройки</string>
+    <string name="ApplySettings">Применить настройки</string>
+    <string name="ImportTitle">Вы уверены, что хотите применить эти настройки?</string>
+    <string name="ImportConfirm">Да, применить</string>
+    <string name="CancelConfirm">Нет, оставить как есть</string>
+    <string name="SettingsSaved">Файл настроек успешно сохранён.</string>
+    <string name="SettingsImported">Настройки успешно применены.</string>
+    <string name="ImportChanges_one">**1** изменение будет применено к текущим настройкам.</string>
+    <string name="ImportChanges_few">**%1$d** изменения будет применено к текущим настройкам.</string>
+    <string name="ImportChanges_many">**%1$d** изменений будет применено к текущим настройкам.</string>
+    <string name="ImportChanges_other">**%1$d** изменений будет применено к текущим настройкам.</string>
+    <string name="SameSettings">Похоже, эти настройки не отличаются от текущих.</string>
+
+    <!-- Управление настройками -->
+    <string name="AnalyticsInfo">Когда эти опции включены, данные об устройстве собираются и отправляются в Google Analytics и Crashlytics, что позволяет нам вести статистику использования и отслеживать ошибки в приложении. \n\nОднако если опции выключены, сбор данных прекращается, а отправленные данные мгновенно удаляются.</string>
+    <string name="DeleteAccount">Удалить аккаунт</string>
+    <string name="ResetSettings">Сбросить настройки</string>
+    <string name="ResetPreferences">Настройки **exteraGram** были сброшены.</string>
+    <string name="ResetPreferencesInfo">Вы уверены, что хотите сбросить **все** настройки exteraGram до стандартных?</string>
+
+    <!-- Вход и QR -->
+    <string name="LoginQrTitle">Вход по QR-коду</string>
+    <string name="LoginQrSubtitle">Используйте другое устройство, чтобы отсканировать этот QR-код.</string>
+    <string name="SelectNumber">Выберите номер телефона</string>
+    <string name="WifiConnect">Подключиться</string>
+    <string name="WifiDisabled">Wi-Fi выключен.</string>
+    <string name="WifiFailed">Не удалось подключиться к сети Wi-Fi.</string>
+    <string name="WifiSuccess">Успешно подключено к сети Wi-Fi.</string>
+    <string name="AreYouSureToLogin">Вы уверены, что хотите войти в этот аккаунт на другом устройстве?</string>
+
+    <!-- Блокировщик рекламы -->
+    <string name="PageBlocked">Страница заблокирована</string>
+    <string name="PageBlockedDescription">exteraGram предотвратил загрузку следующей страницы:\n**%1$s**</string>
+    <string name="PageBlockedGoBack">Назад</string>
+    <string name="PageBlockedProceed">Продолжить</string>
+
+    <!-- Прочее -->
+    <string name="SetAsBadge">Установить как бейдж</string>
+    <string name="AutoLockInstant">Сразу</string>
+    <string name="TestBackend">Тестовый сервер</string>
+    <string name="SearchPhotoInfo">Сервисы могут использовать изображения в соответствии со своими политиками конфиденциальности и условиями использования.</string>
+    <string name="PhotoUploadFailed">Не удалось загрузить фото.</string>
+    <string name="TrackSaved">Трек сохранён в **%1$s**.</string>
+    <string name="ChannelToSaveChanged">Треки будут сохраняться в **%1$s**.</string>
+    <string name="DeletedMessage">Удаленное сообщение</string>
+
+    <!-- ИИ -->
+    <string name="AIChatInfo">Настройка сервисов, ролей и истории</string>
+    <string name="AIChatInfo2">Генерируйте текст по сообщениям или перед отправкой.</string>
+
+    <!-- Сервисы ИИ -->
+    <string name="Services">Сервисы</string>
+    <string name="ServicesInfo">Выберите подходящий сервис для взаимодействия с языковыми моделями.</string>
+    <string name="NewService">Новый сервис</string>
+    <string name="EditService">Изменить сервис</string>
+    <string name="ServiceURL" translatable="false">URL</string>
+    <string name="ServiceModel">Модель</string>
+    <string name="ServiceKey">API-ключ</string>
+    <string name="ServiceInfo">Данные сервиса</string>
+    <string name="ServiceProvider">Провайдер</string>
+    <string name="ServiceProviderCustom">Свой</string>
+    <string name="ServiceTestAndSave">Проверить и сохранить</string>
+    <string name="ServicePasteService">Вставить сервис</string>
+    <string name="ServicePasteKey">Вставить API-ключ</string>
+    <string name="DeleteServiceInfo">Вы уверены, что хотите удалить **%1$s**?</string>
+
+    <!-- Роли ИИ -->
+    <string name="Roles">Роли</string>
+    <string name="RolesInfo">Создавайте роли для ваших нужд!</string>
+    <string name="Suggestions">Предложения</string>
+    <string name="RoleName">Название</string>
+    <string name="RolePrompt">Промпт</string>
+    <string name="PromptInfo">Промпт — это начальный текст, который подаётся модели для генерации ответа или продолжения диалога.</string>
+    <string name="NewRole">Новая роль</string>
+    <string name="EditRole">Изменить роль</string>
+    <string name="DeleteRoleInfo">Вы уверены, что хотите удалить **%1$s**?</string>
+
+    <!-- Поведение ИИ -->
+    <string name="HistoryInfo">История диалога позволяет ИИ понимать предыдущие запросы и учитывать их при генерации новых ответов.</string>
+    <string name="AIGeneration">Генерация</string>
+    <string name="AIReasoning">Рассуждения</string>
+    <string name="AIReasoningInfo">Позволяет поддерживаемым моделям этого сервиса тратить больше токенов на обдумывание ответа.</string>
+    <string name="AITemperature">Температура</string>
+    <string name="AITemperatureInfo">Температура управляет случайностью ответа: чем выше значение, тем креативнее ответ; чем ниже — тем точнее.</string>
+    <string name="ResponseStreaming">Потоковая передача ответа</string>
+    <string name="ResponseStreamingInfo">Обеспечивает более плавное и быстрое отображение ответов.</string>
+    <string name="ShowResponseOnly">Показывать только ответ</string>
+    <string name="InsertResponseAsQuote">Вставлять ответ как цитату</string>
+    <string name="TapToAddApiKey">Нажмите, чтобы добавить API-ключ и начать использовать функции ИИ.</string>
+    <string name="Generate">Генерировать</string>
+    <string name="GenerateWithoutHistory">Без истории</string>
+    <string name="ClearConversationHistoryInfo">Вы уверены, что хотите очистить **всю** историю диалогов с ИИ?</string>
+
+    <!-- Ошибки ИИ -->
+    <string name="AIError400">Неверный запрос</string>
+    <string name="AIError400Info">Проверьте параметры запроса.</string>
+    <string name="AIError401">Неверные учётные данные</string>
+    <string name="AIError401Info">API-ключ недействителен или отключён. Проверьте ваши данные.</string>
+    <string name="AIError402">Недостаточно средств</string>
+    <string name="AIError402Info">На вашем счёте или API-ключе недостаточно средств. Пополните баланс и повторите запрос.</string>
+    <string name="AIError403">Доступ запрещён</string>
+    <string name="AIError403Info">У вас нет прав для доступа к этой модели или ресурсу. Проверьте ключ API и права аккаунта.</string>
+    <string name="AIError408">Тайм-аут запроса</string>
+    <string name="AIError408Info">Ваш запрос не был обработан вовремя. Пожалуйста, попробуйте позже.</string>
+    <string name="AIError429">Превышен лимит запросов</string>
+    <string name="AIError429Info">Вы отправляете запросы слишком часто. Подождите немного и попробуйте снова.</string>
+    <string name="AIError502">Сбой модели</string>
+    <string name="AIError502Info">Выбранная модель недоступна, или мы получили от неё недействительный ответ.</string>
+    <string name="AIError503">Сервис недоступен</string>
+    <string name="AIError503Info">Сервис временно недоступен или перегружен. Попробуйте позже.</string>
+    <string name="AIError">Ошибка сервера</string>
+    <string name="AIErrorInfo">Пожалуйста, повторите ваш запрос через некоторое время.</string>
+
+    <!-- Поддержка разработки -->
+    <string name="SupportDevelopment">Поддержать разработку</string>
+    <string name="SupportDevelopmentInfo">Поддерживая проект, вы не только вносите вклад в его развитие, но и получаете уникальный значок.</string>
+    <string name="MakeDonation">Сделать пожертвование</string>
+    <string name="MakeDonationInfo">Переведите сумму в размере %1$s (%2$s) на любой из указанных реквизитов проекта. Эти реквизиты можно найти в настройках приложения в разделе **Другое**.</string>
+    <string name="SendProof">Отправить подтверждение платежа</string>
+    <string name="SendProofInfo">Отправьте фото подтверждения платежа в личные сообщения **@exteraOwner**. Убедитесь, что на фото чётко видны сумма, дата и время перевода.</string>
+    <string name="ReceiveBadge">Получить значок</string>
+    <string name="ReceiveBadgeInfo">После проверки платежа вы получите уникальный значок, который будет отображаться в вашем профиле и будет виден другим пользователям.</string>
+    <string name="GetBadgeInfo">**Поддержите разработку** и получите уникальный значок!</string>
+    <string name="NowPlaying">Сейчас играет</string>
+    <string name="ScrobblingService">Сервис скробблинга</string>
+    <string name="SelectService">Выберите сервис</string>
+    <string name="SelectServiceInfo">Отображает в профиле текущий трек из сервиса скробблинга в виде карточки.</string>
+    <string name="EnterUsername">Введите имя пользователя</string>
+    <string name="EnterUsernameInfo">Вы можете узнать ваше имя пользователя на **официальном сайте**.</string>
+    <string name="BoostyPeopleCount_one">%1$d человек</string>
+    <string name="BoostyPeopleCount_few">%1$d человека</string>
+    <string name="BoostyPeopleCount_many">%1$d человек</string>
+    <string name="BoostyPeopleCount_other">%1$d человек</string>
+    <string name="BoostyInfo">Активно поддерживают **exteraGram** на **Boosty**.</string>
+    <string name="BoostyInfo2">Спасибо за вашу поддержку!</string>
+
+    <!-- Контекстное меню кнопок бота -->
+    <string name="CopyTitle">Копировать название</string>
+    <string name="CopyCallback">Копировать Callback-данные</string>
+    <string name="CopyInlineQuery">Копировать Inline-запрос</string>
+    <string name="CopyID">Копировать ID пользователя</string>
+
+    <!-- Информационные сообщения и диалоги -->
+    <string name="SetAsBadgeStatusInfo">Бейдж изменён.</string>
+    <string name="UserNotFound">Пользователь с таким **ID** не найден.</string>
+    <string name="ChatNotFound">Чат с таким **ID** не найден.</string>
+    <string name="PhotoCopied">Фото скопировано в буфер обмена.</string>
+    <string name="FrameCopied">Кадр скопирован в буфер обмена.</string>
+    <string name="TapToCopy">Нажмите, чтобы скопировать</string>
+    <string name="ProfileUsesEmojiPack">В качестве фона профиля используются эмодзи из набора %s.</string>
+    <string name="ProfileUsesEmojiPacks">В качестве фона профиля используются эмодзи из **%d наборов**.</string>
+    <string name="ReplyUsesEmojiPacks">В качестве фона ответа используются эмодзи из набора %s.</string>
+    <string name="StickerSavedHint">Стикер сохранён в галерею.</string>
+    <string name="EmojiSavedHint">Эмодзи сохранён в галерею.</string>
+    <string name="GifGallerySavedHint">GIF сохранена в галерею.</string>
+    <string name="MutualContactInfo">Этот контакт является взаимным.</string>
+    <string name="LocalPremiumEmojiHint">У вас нет подписки **Telegram Premium**, поэтому этот эмодзи будут видеть только пользователи **exteraGram**.</string>
+
+    <!-- Main Tabs -->
+    <string name="HideContactsTab">Скрыть вкладку «Контакты»</string>
+    <string name="ShowContactsTab">Отображать вкладку «Контакты»</string>
+    <string name="ContactsTabWasShownTitle">Вкладка «Контакты» добавлена.</string>
+    <string name="ContactsTabWasHiddenTitle">Вкладка «Контакты» скрыта.</string>
+
+    <!-- Passkeys -->
+    <string name="PasskeyInfo2">Эта функция работает только с менеджерами паролей, которые позволяют пользователю управлять настройками доверия для привилегированных приложений, такими как **Bitwarden** или **KeePassDX**.</string>
+    <string name="PasskeyUnsupportedTitle">Неподдерживаемый менеджер паролей</string>
+    <string name="PasskeyUnsupportedMessage">Попробуйте другие менеджеры паролей, например **Bitwarden** или **KeePassDX**.</string>
+
+    <!-- Информация о датах -->
+    <string name="CreationDateUserApproximately">**%1$s** создал(а) свой аккаунт примерно **%2$s**.</string>
+    <string name="CreationDateUserEarlier">**%1$s** создал(а) свой аккаунт раньше **%2$s**.</string>
+    <string name="CreationDateUserLater">**%1$s** создал(а) свой аккаунт позже **%2$s**.</string>
+    <string name="CreationDateChat">**%1$s** был создан **%2$s**.</string>
+    <string name="CreationDateSelfApproximately">Вы создали свой аккаунт примерно **%1$s**.</string>
+    <string name="CreationDateSelfEarlier">Вы создали свой аккаунт раньше **%1$s**.</string>
+    <string name="CreationDateSelfLater">Вы создали свой аккаунт позже **%1$s**.</string>
+    <string name="JoinDateChat">Вы присоединились к **%1$s** **%2$s**.</string>
+    <string name="GroupMemberJoined">присоединился %1$s</string>
+
+    <!-- Пункты меню -->
+    <string name="SendVideoWithoutCompression">Отправить без сжатия</string>
+    <string name="ToBeginning">В начало</string>
+    <string name="MessageHistory">История сообщений</string>
+    <string name="BoldItalic">Жирный курсив</string>
+    <string name="CopyPhoto">Копировать фото</string>
+    <string name="CopyFrame">Копировать кадр</string>
+    <string name="Repeat">Повторить</string>
+    <string name="Subtitles">Субтитры</string>
+    <string name="ChooseSubtitles">Выбрать субтитры</string>
+    <string name="DisableSubtitles">Выключить субтитры</string>
+    <string name="SubtitlesAdded">Субтитры включены.</string>
+    <string name="SubtitlesRemoved">Субтитры выключены.</string>
+    <string name="SubtitlesLoadError">Не удалось загрузить субтитры.</string>
+    <string name="SubtitlesUnsupportedFormat">Неподдерживаемый формат субтитров.</string>
+
+    <!-- Редактор стикеров -->
+    <string name="StickerCornerRadius">Углы стикера</string>
+    <string name="StickerCornerRadiusInfo">Выберите, насколько закруглёнными будут углы стикера.</string>
+    <string name="StickerCornerRadiusLarge">Большие</string>
+    <string name="StickerCornerRadiusMedium">Средние</string>
+    <string name="StickerCornerRadiusSmall">Маленькие</string>
+    <string name="StickerCornerRadiusNone">Без закругления</string>
+
+    <!-- Лента постов -->
+    <string name="Feed">Лента</string>
+    <string name="FeedShownChannels">Показаны в ленте</string>
+    <string name="FeedHiddenChannels">Скрытые</string>
+    <string name="FeedChannels">Каналы</string>
+    <string name="FeedChannelsInfo">Снимите галочку, чтобы скрыть посты канала из ленты. Новые каналы показываются автоматически.</string>
+    <string name="FeedSettings">Настройки ленты</string>
+    <string name="FeedNoPosts">В ленте пока нет постов.</string>
+    <string name="FeedAllChannelsExcluded">Все каналы исключены из ленты.</string>
+    <string name="FeedMarkAllRead">Отметить всё прочитанным</string>
+    <string name="FeedMarkAllReadConfirm">Отметить все посты в каналах ленты прочитанными? Они также будут отмечены прочитанными в исходных каналах.</string>
+    <string name="FeedMarkAllReadDone">Все посты отмечены прочитанными</string>
+    <string name="FeedIncludeArchived">Показывать чаты из архива</string>
+    <string name="FeedIncludeArchivedInfo">Также добавлять в ленту каналы из архивированных чатов.</string>
+    <string name="FeedHideChannel">Скрыть из ленты</string>
+    <string name="FeedChannelHidden">**%1$s** скрыт из ленты</string>
+    <string name="FeedBottomTab">Показывать в нижних вкладках</string>
+    <string name="FeedBottomTabInfo">Лента появится на нижней панели вместо вкладки «Контакты».</string>
+    <string name="FeedUnreadCounter">Счётчик непрочитанных постов</string>
+    <string name="HideFeedTab">Скрыть вкладку ленты</string>
+    <string name="DisableMarkdown">Отключить Markdown</string>
+    <string name="EnableMarkdown">Включить Markdown</string>
+
+    <!-- Непереводимые строки -->
+    <string name="formatterDay24HSec" translatable="false">HH:mm:ss</string>
+    <string name="formatterDay12HSec" translatable="false">h:mm:ss a</string>
+    <string name="PhotoEditorTypefaceImpact" translatable="false">Impact</string>
+
+</resources>

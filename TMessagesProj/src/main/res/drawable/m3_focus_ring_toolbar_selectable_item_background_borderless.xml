@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.focus.FocusRingDrawable xmlns:android="http://schemas.android.com/apk/res/android">
+    <ripple android:color="@color/m3_control_ripple_color_selector"/>
+</com.google.android.material.focus.FocusRingDrawable>

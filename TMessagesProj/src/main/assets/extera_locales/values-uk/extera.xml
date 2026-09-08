@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+ This is the source code of exteraGram for Android.
+
+ We do not and cannot prevent the use of our code,
+ but be respectful and credit the original author.
+
+ Copyright @exteraGram, 2022-2026
+
+-->
+<resources>
+    <string name="Preferences">Налаштування exteraGram</string>
+    <!-- Main Menu -->
+    <string name="Links">Посилання</string>
+    <string name="AboutExteraDescription">Експериментальний клієнт Telegram на основі офіційного вихідного коду!</string>
+    <string name="Crowdin">Переклад</string>
+    <string name="Website">Вебсайт</string>
+    <string name="Categories">Категорії</string>
+    <string name="Developer">**%1$s** є членом команди розробників **exteraGram**.</string>
+    <string name="DeveloperCompact">Учасник команди розробників **exteraGram**.</string>
+    <string name="Supporter">**%1$s** підтримав розробку **exteraGram** та отримав(ла) унікальний значок.</string>
+    <string name="OfficialChannel">**%1$s** — офіційний ресурс **exteraGram**.</string>
+    <string name="NoSuchSetting">Такого налаштування не існує.</string>
+    <string name="SettingLinkToSavedMessages">Посилання на налаштування відправлено у **Збережене**.</string>
+    <string name="SettingLinkToUser">Посилання на налаштування відправлено до **%1$s**.</string>
+    <string name="SettingLinkToChats">Посилання на налаштування відправлено до **%1$s**.</string>
+    <string name="LiteBatteryFollowSystem">Системне енергозбереження</string>
+    <string name="LiteBatteryFollowSystemState">Система</string>
+    <string name="LiteBatteryFollowSystemInfo">Керується системним енергозбереженням.</string>
+    <!-- Pill Stack -->
+    <string name="PillStackPills">Pill Stack</string>
+    <string name="PillStackPillsInfo">Інтерактивні віджети у полі пошуку</string>
+    <string name="PillStackPillsSettingsInfo">Налаштуйте видимі віджети. Натисніть, щоб показати або приховати, утримуйте і перетягніть для зміни порядку.</string>
+    <string name="PillStackActivePills">Активні віджети</string>
+    <string name="PillStackHiddenPills">Приховані віджети</string>
+    <string name="CurrentLocation">Поточна геолокація</string>
+    <string name="SelectLocation">Вибрати на мапі</string>
+    <string name="WeatherPill">Погода</string>
+    <string name="WeatherSettingsInfo">Виберіть спосіб визначення розташування для отримання даних о погоді.</string>
+    <string name="WeatherLocation">Визначення розташування</string>
+    <string name="WeatherLocationPermissionNo">Для показу погоди exteraGram потребує доступ до вашої геолокації.</string>
+    <string name="WeatherLocationPermissionGrant">Надати дозвіл</string>
+    <string name="WeatherLocationServicesEnable">Увімкнути геолокацію</string>
+    <string name="WeatherPillTopInfo">Налаштування віджета погоди для Pill Stack.</string>
+    <string name="PillStackInfiniteScrolling">Нескінченна прокрутка</string>
+    <string name="CryptoPillTargetCurrency">Цільова валюта</string>
+    <string name="CryptoCurrencyUsd">Долар США</string>
+    <string name="CryptoCurrencyEur">Євро</string>
+    <string name="CryptoCurrencyRub">Російський рубль</string>
+    <string name="CryptoCurrencyGbp">Британський фунт</string>
+    <string name="CryptoCurrencyKzt">Казахстанський тенге</string>
+    <string name="CryptoCurrencyTry">Турецька ліра</string>
+    <string name="CryptoCurrencyUah">Українська гривня</string>
+    <string name="CryptoCurrencyPln">Польський злотий</string>
+    <string name="CryptoCurrencyAed">Дирхам ОАЕ</string>
+    <string name="CryptoCurrencyCny">Китайський юань</string>
+    <string name="CryptoCurrencyJpy">Японська єна</string>
+    <string name="CryptoCurrencyByn">Білоруський рубль</string>
+    <string name="CryptoCurrencyIls">Ізраїльський шекель</string>
+    <string name="CryptoCurrencyCzk">Чеська крона</string>
+    <string name="CryptoCurrencyInr">Індійська рупія</string>
+    <!-- Proxy -->
+    <string name="ProxyDoNotUseWithVPN">Не використовувати з VPN</string>
+    <string name="ProxyType">Тип</string>
+    <string name="Unknown">Невідомо</string>
+    <string name="ProxyRename">Назва проксі (необов\'язково)</string>
+    <string name="ProxyPinLimitReached">Ви можете закріпити до %1$d проксі.</string>
+    <string name="CopyIpAddress">Скопіювати IP-адресу</string>
+    <string name="IpInfoUnavailable">Не вдалося завантажити інформацію про IP-адресу.</string>
+    <string name="IpInfoCountry">Країна</string>
+    <string name="IpInfoRegion">Регіон</string>
+    <string name="IpInfoCity">Місто</string>
+    <string name="IpInfoIsp">Провайдер</string>
+    <string name="IpInfoOrganization">Організація</string>
+    <string name="IpInfoDomain">Домен</string>
+    <string name="IpInfoTimezone">Часовий пояс</string>
+    <!-- Translator -->
+    <string name="TranslationProvider">Постачальник перекладу</string>
+    <string name="TranslationTarget">Цільова мова</string>
+    <string name="TranslationTargetApp">Мова додатку</string>
+    <string name="TranslationFormality">Формальність</string>
+    <string name="TranslationFormalityLess">Менш формально</string>
+    <string name="TranslationFormalityMore">Більш формально</string>
+    <!-- Formatting & Behavior -->
+    <string name="DisableNumberRounding">Вимкнути округлення чисел</string>
+    <string name="FormatTimeWithSeconds">Форматувати час із секундами</string>
+    <string name="RelativeLastSeen">Відносні відвідини</string>
+    <string name="InAppVibration">Вібрація в додатку</string>
+    <string name="FilterZalgo">Фільтр \"Zalgo\"</string>
+    <string name="FilterZalgoInfo">Видаляє символи \"%1$s\" в іменах і повідомленнях.</string>
+    <string name="RestartRequired">Перезапустіть додаток, щоб зміни набули чинності.</string>
+    <!-- Message Formatting -->
+    <string name="CodeBlock">Код</string>
+    <string name="CreateCode">Створити блок коду</string>
+    <string name="CreateCodeLanguage">Мова</string>
+    <!-- Speed -->
+    <string name="DownloadSpeedBoost">Прискорення завантаження</string>
+    <string name="UploadSpeedBoost">Збільшення швидкості відправки</string>
+    <string name="Ultra">Ультра</string>
+    <string name="SpeedBoostInfo">Ультраприскорення може викликати проблеми при завантаженні файлів і потокових відео при повільному з\'єднанні з інтернетом.</string>
+    <!-- Maps -->
+    <string name="Maps">Карти</string>
+    <string name="TermsOfUseYandexMaps">Використовуючи Yandex Maps Ви погоджуєтесь з <![CDATA[<a href="https://yandex.ru/legal/maps_termsofuse/">умовами використання</a>]]>.</string>
+    <string name="UseYandexMaps">Використовувати Яндекс Карти</string>
+    <string name="InstallYandexMaps">Встановити Яндекс Карти?</string>
+    <!-- Storage -->
+    <string name="StorageSettings">Сховище</string>
+    <string name="CustomSavePath">Папка для збереження</string>
+    <string name="CustomSavePathHint">Залиште порожнім, щоб зберегти безпосередньо в root</string>
+    <string name="CustomSavePathDefault">Зберегти в root</string>
+    <string name="CustomSavePathInfo">Збережені файли будуть знаходитися безпосередньо в Фотографіях, Завантаженнях, і т. д.</string>
+    <string name="CustomSavePathInfoFolder">Завантаженні файли будуть зберігатися в папках Фотографії/%1$s, Завантаження/%1$s, і т. д.</string>
+    <!-- Profile -->
+    <string name="Profile">Профіль</string>
+    <string name="HidePhoneNumber">Приховати номер телефону</string>
+    <string name="ShowIdAndDc">Показати ID та DC</string>
+    <string name="ShowIdAndDcInfo">Telegram API показує ID такими, як вони є, в той час, як API бота додає знак мінус для груп і -100 для супергруп і каналів.</string>
+    <!-- Archive -->
+    <string name="HideArchiveFolder">Приховати архів зі списку чатів</string>
+    <string name="ArchiveOnPull">Відкрити архів при витягуванні</string>
+    <string name="DisableUnarchiveSwipe">Вимкнути свайп «Розархівувати»</string>
+    <string name="DisableUnarchiveSwipeInfo">Свайп вліво не призведе до видалення чатів з архіву.</string>
+    <!-- Appearance -->
+    <string name="Appearance">Оформлення</string>
+    <!-- Avatars -->
+    <string name="AvatarCorners">Закруглення аватарок</string>
+    <string name="AvatarCornersLeft">Квадрат</string>
+    <string name="AvatarCornersRight">Коло</string>
+    <string name="SingleCornerRadius">Єдине закруглення</string>
+    <string name="SingleCornerRadiusInfo">Форуми матимуть таку ж форму аватарів, як і чати.</string>
+    <!-- Chat List -->
+    <string name="ListOfChats">Список чатів</string>
+    <string name="ActionBarTitle">Текст заголовку</string>
+    <string name="ActionBarTitleUsername">Ім\'я користувача</string>
+    <string name="ActionBarTitleName">Ім’я</string>
+    <string name="HideStories">Приховати історії</string>
+    <string name="HideActionBarStatus">Приховати статус</string>
+    <string name="CenterTitle">Центрувати заголовок</string>
+    <string name="ChatHeader">Заголовок чату</string>
+    <string name="HideFloatingButton">Приховати плаваючу кнопку</string>
+    <string name="HideDialogsSearchBar">Приховати панель пошуку</string>
+    <string name="BottomNavigationBarMode">Нижня панель навігації</string>
+    <string name="BottomNavigationModeShow">Показувати</string>
+    <string name="BottomNavigationModeHide">Приховувати</string>
+    <string name="BottomNavigationModeFloating">Плаваюча</string>
+    <string name="SenderMiniAvatars">Міні-аватарки відправника</string>
+    <string name="ListOfChatsInfo">Якщо для папок увімкнено режим \"Тільки значки\", у головному заголовку відображається назва папки.</string>
+    <!-- Folders (Tabs) -->
+    <string name="TabTitleStyle">Заголовки папок</string>
+    <string name="TabTitleStyleTextWithIcons">Назви з іконками</string>
+    <string name="TabTitleStyleIconsOnly">Тільки іконки</string>
+    <string name="TabTitleStyleTextOnly">Тільки назви</string>
+    <string name="TabCounter">Лічильник повідомлень</string>
+    <string name="HideAllChats">Сховати папку \"%1$s\"</string>
+    <string name="FoldersInfo">Іконки синхронізовано з вашим акаунтом.</string>
+    <!-- App Navigation -->
+    <string name="AppNavigation">Навігація по додатку</string>
+    <string name="AppNavigationInfo">Налаштування верхнього меню і бокової панелі</string>
+    <string name="NavigationDrawer">Бокове меню</string>
+    <string name="NavigationDrawerInfo">Заміняє меню у правому верхньому куті на бокову панель, що відкривається свайпом.</string>
+    <string name="NavigationDrawerImmersiveAnimation">Іммерсивна анімація</string>
+    <string name="NavigationDrawerProxyPingShort">%1$d мс</string>
+    <string name="MainMenuItems">Елементи меню</string>
+    <string name="MainMenuItemsInfo">Натисніть, щоб показати або приховати пункти, утримуйте, щоб змінити порядок. Зміни пристосовуються до верхнього меню та бокової панелі.</string>
+    <string name="MainMenuHiddenItems">Приховані елементи</string>
+    <string name="MainMenuDivider">Розділювач</string>
+    <string name="MainMenuAddDivider">Додати розділювач</string>
+    <string name="MainMenuRemoveSettingsInfo">Налаштування не можна приховати, поки нижня панель навігації вимкнена.</string>
+    <!-- Icon Packs -->
+    <string name="IconPacks">Набори іконок</string>
+    <string name="IconPacksInfo">Налаштування іконок всього додатку</string>
+    <string name="IconPickerFilter">Фільтр</string>
+    <string name="IconPickerAllIcons">All Icons</string>
+    <string name="IconPickerReplacedIcons">Замінені іконки</string>
+    <string name="IconPickerNotReplacedIcons">Не замінені іконки</string>
+    <string name="IconPickerSaveAndExit">Save &amp; Exit</string>
+    <string name="BasePacks">Base Packs</string>
+    <string name="BaseIconPackInfo">Базові набори використовуються для іконок, котрі не замінені іншими наборами.</string>
+    <string name="IconPacksHint">Торкніться, щоб увімкнути чи вимкнути набір. Утримуйте для редагування чи видалення.</string>
+    <string name="NewIconPack">Create a new Icon Pack</string>
+    <string name="EditIconPackInfo">Edit Info</string>
+    <string name="EnabledPacks">Enabled Packs</string>
+    <string name="AllPacks">All Packs</string>
+    <string name="PackName">Pack Name</string>
+    <string name="AuthorNameOptional">Author Name (optional)</string>
+    <string name="NameCannotBeEmpty">Name cannot be empty.</string>
+    <string name="Version">Version</string>
+    <string name="InstallPack">Install Pack</string>
+    <string name="IconCount_one">%1$d icon</string>
+    <string name="IconCount_two">%1$d іконки</string>
+    <string name="IconCount_few">%1$d іконки</string>
+    <string name="IconCount_many">%1$d іконок</string>
+    <string name="IconCount_other">%1$d icons</string>
+    <string name="UpdatePack">Update Pack</string>
+    <string name="DeletePack">Delete Pack</string>
+    <string name="DeletePackInfo">Are you sure you want to delete **%1$s**?</string>
+    <string name="IconPackErrorInvalidArchive">Набір іконок недійсний.</string>
+    <string name="IconPackErrorMissingMetadata">Набір іконок не містить metadata.json.</string>
+    <string name="IconPackErrorMetadataTooLarge">Метадані набору іконок завеликі.</string>
+    <string name="IconPackErrorInvalidMetadata">Метадані набору іконок недійсні.</string>
+    <string name="IconPackErrorTooManyFiles">Набір іконок містить забагато файлів.</string>
+    <string name="IconPackErrorArchiveTooLarge">Набір іконок завеликий.</string>
+    <string name="IconPackErrorFileTooLarge">Один з файлів іконок завеликий.</string>
+    <string name="IconPackErrorCompressionRatioTooHigh">Архів набору іконок занадто сильно стиснуто.</string>
+    <string name="IconPackErrorStorage">Не вдалося зберегти набір іконок.</string>
+    <!-- App Icons -->
+    <string name="IconPack">Набір іконок</string>
+    <string name="AppIconSunset">Захід</string>
+    <string name="AppIconAurora">Аврора</string>
+    <string name="AppIconAmethyst">Аметист</string>
+    <string name="AppIconSapphire">Сапфір</string>
+    <string name="AppIconInvincible">Нездоланний</string>
+    <string name="AppIconCyberpunk">Кіберпанк</string>
+    <string name="AppIconSpace">Космос</string>
+    <string name="AppIconIceAge">Ice Age</string>
+    <string name="AppIconEditor">Editor</string>
+    <string name="AppIconOrbit">Орбіта</string>
+    <string name="AppIconSus">Самозванець</string>
+    <string name="AppIconWinter">Зима</string>
+    <!-- General Appearance -->
+    <string name="Sections">Розділи</string>
+    <string name="SeparateHeaders">Окремі заголовки</string>
+    <string name="DividerStyle">Стиль роздільника</string>
+    <string name="DividerStyleHidden">Прихований</string>
+    <string name="DividerStyleLine">Лінія</string>
+    <string name="DividerStyleSegments">Сегменти</string>
+    <string name="UseSystemFonts">Системні шрифти</string>
+    <string name="UseSystemEmoji">Системні емодзі</string>
+    <string name="NewLoadingStyle">Індикатори завантаження</string>
+    <string name="NewSliderStyle">Стиль слайдера</string>
+    <string name="NewSwitchStyle">Стиль перемикачів</string>
+    <string name="TabletMode">Планшетний режим</string>
+    <string name="RemoveMessageTail">Прибрати хвіст повідомлення</string>
+    <string name="GooeyAvatarAnimation">\"Липка\" анімація аватарок</string>
+    <string name="CustomChatThemes">Кастомнi теми у чатах</string>
+    <string name="CustomChatThemesInfo">Кожен чат буде показуватися з темою, яка була спеціально обрана для нього.</string>
+    <string name="PredictiveBackIntensity">Предиктивний жест назад</string>
+    <string name="PredictiveBackMax">Максимум</string>
+    <string name="PredictiveBackInfo">Регулює відстань, на яку зміщується екран під час свайпу.</string>
+    <string name="SpringAnimations">Spring-анімації</string>
+    <string name="SpringAnimationsInfo">Забезпечує плавнішу анімацію під час перемикання екранів та відкриття бічного меню.</string>
+    <!-- Blur & Effects -->
+    <string name="BlurOptions">Параметри розмиття</string>
+    <string name="GlassOutlineStyle">Скляний контур</string>
+    <string name="GlassOutlineGlare">Відблиск</string>
+    <string name="GlassOutlineSolid">Суцільний</string>
+    <string name="GlassOutlineHidden">Приховати</string>
+    <string name="ForceBlur">Примусове розмиття</string>
+    <string name="ForceBlurInfo">Ефекти розмиття будуть застосовані до всіх тем, замінюючи їхні стандартні налаштування.</string>
+    <string name="ForceSnow">Примусовий сніг</string>
+    <string name="ForceSnowInfo">З\'являться сніжинки у верхній панелі, бічному меню та на фоні чату.</string>
+    <!-- Chats -->
+    <!-- Chat Media & Appearance -->
+    <string name="StickerSize">Розмір наліпок</string>
+    <string name="StickerSizeLeft">Маленький</string>
+    <string name="StickerSizeRight">Великий</string>
+    <string name="StickerSizeDialogMessageReplyTo">вау</string>
+    <string name="StickerSizeDialogMessage">ого, такий милий!</string>
+    <string name="StickerShape">Форма наліпки</string>
+    <string name="StickerShapeRounded">Закруглено</string>
+    <string name="StickerShapeRoundedMsg">Повідомлення</string>
+    <string name="StickerTime">Сховати час на наліпках</string>
+    <string name="ViewEmojiSet">Перегляд набору емодзі</string>
+    <string name="UnlimitedRecentStickers">Необмежені недавні наліпки</string>
+    <string name="HideReactions">Сховати реакції</string>
+    <string name="HideReactionsInfo">Реакції будуть повністю приховані з інтерфейсу.</string>
+    <string name="ReplyBackground">Фон</string>
+    <string name="ChatSettingsInfo">Налаштування медіа, іконка додатку та інше</string>
+    <!-- AI -->
+    <string name="AIChatInfo">Налаштувати сервіси, ролі та історію</string>
+    <string name="AIChatInfo2">Генерувати текст із повідомлень або перед надсиланням.</string>
+    <!-- AI Services -->
+    <string name="Services">Сервіси</string>
+    <string name="ServicesInfo">Виберіть відповідний сервіс для взаємодії з мовними моделями.</string>
+    <string name="NewService">Новий сервіс</string>
+    <string name="EditService">Редагувати сервіс</string>
+    <string name="ServiceModel">Модель</string>
+    <string name="ServiceKey">API Ключ</string>
+    <string name="ServiceInfo">Інформація про сервіс</string>
+    <string name="ServiceProvider">Провайдер</string>
+    <string name="ServiceProviderCustom">Власний</string>
+    <string name="ServiceTestAndSave">Перевірити та зберегти</string>
+    <string name="ServicePasteService">Вставити службу</string>
+    <string name="ServicePasteKey">Вставити API-ключ</string>
+    <string name="DeleteServiceInfo">Ви впевнені, що хочете видалити **%1$s**?</string>
+    <!-- AI Roles -->
+    <string name="Roles">Ролі</string>
+    <string name="RolesInfo">Створюйте ролі для своїх потреб!</string>
+    <string name="Suggestions">Пропозиції</string>
+    <string name="RoleName">Назва</string>
+    <string name="RolePrompt">Промпт</string>
+    <string name="PromptInfo">Промпт є початковим текстом, що надається моделі для створення відповіді або продовження діалогу.</string>
+    <string name="NewRole">Нова роль</string>
+    <string name="EditRole">Редагувати роль</string>
+    <string name="DeleteRoleInfo">Ви впевнені, що хочете видалити **%1$s**?</string>
+    <!-- AI History & Behavior -->
+    <string name="HistoryInfo">Історія розмов дозволяє ШІ розуміти попередні запити та враховувати їх під час створення нових відповідей.</string>
+    <string name="AIGeneration">Генерація</string>
+    <string name="AIReasoning">Міркування</string>
+    <string name="AIReasoningInfo">Дає можливість моделям, що підтримуються цим сервісом, витрачати додаткові токени на обдумування відповіді перед тим, як її надати.</string>
+    <string name="AITemperature">Температура</string>
+    <string name="AITemperatureInfo">Температура визначає ступінь випадковості реакції: чим вище значення, тим більше творчості; чим нижче — тим більше зосередженості.</string>
+    <string name="ResponseStreaming">Потокова передача відповіді</string>
+    <string name="ResponseStreamingInfo">Забезпечує більш плавне та швидке зображення відповідей.</string>
+    <string name="ShowResponseOnly">Показати лише відповідь</string>
+    <string name="InsertResponseAsQuote">Вставляти відповідь як цитату</string>
+    <string name="TapToAddApiKey">Натисніть, щоб додати ключ API й розпочати використовувати функції ШІ.</string>
+    <string name="Generate">Згенерувати</string>
+    <string name="GenerateWithoutHistory">Без історії</string>
+    <string name="ClearConversationHistoryInfo">Ви впевнені, що хочете очистити **всю** історію розмов з ШІ?</string>
+    <!-- AI Errors -->
+    <string name="AIError400">Невірний запит</string>
+    <string name="AIError400Info">Перевірте параметри запиту.</string>
+    <string name="AIError401">Недійсні облікові дані</string>
+    <string name="AIError401Info">Ключ API недійсний або вимкнений. Перевірте ваші дані.</string>
+    <string name="AIError402">Недостатньо коштів</string>
+    <string name="AIError402Info">У вашому обліковому записі або API ключі недостатньо коштів. Поповнить рахунок і повторіть запит.</string>
+    <string name="AIError403">Доступ заборонено</string>
+    <string name="AIError403Info">Ви не маєте дозволу на доступ до цієї моделі чи ресурсу. Перевірте ваш API-ключ та дозволи для облікового запису.</string>
+    <string name="AIError408">Таймаут запиту</string>
+    <string name="AIError408Info">Ваш запит не було оброблено вчасно. Спробуйте пізніше.</string>
+    <string name="AIError429">Перевищено ліміт запитів</string>
+    <string name="AIError429Info">Ви відправляєте запити занадто часто. Будь ласка, зачекайте трохи та спробуйте ще раз.</string>
+    <string name="AIError502">Збій моделі</string>
+    <string name="AIError502Info">Обрана модель недоступна або ми отримали недійсну відповідь від неї.</string>
+    <string name="AIError503">Сервіс недоступний</string>
+    <string name="AIError503Info">Сервіс тимчасово недоступний або перевантажений. Будь ласка, спробуйте пізніше.</string>
+    <string name="AIError">Помилка сервера</string>
+    <string name="AIErrorInfo">Будь ласка, спробуйте ще раз через деякий час.</string>
+    <!-- Chat Actions -->
+    <string name="DoubleTap">Подвійний дотик</string>
+    <string name="DoubleTapIncoming">Вхідні повідомлення</string>
+    <string name="DoubleTapOutgoing">Вихідні повідомлення</string>
+    <string name="DoubleTapInfo">Деякі дії потребують прав адміністратора в чаті або каналі.</string>
+    <string name="BottomButton">Нижня кнопка</string>
+    <string name="ChannelDiscussNoCaps">Обговорити</string>
+    <string name="QuickTransitions">Швидкий перехід свайпом</string>
+    <string name="DisableGreetingSticker">Сховати наліпку привітання</string>
+    <string name="AdminShortcuts">Швидкі адмін-дії</string>
+    <string name="HideKeyboardOnScroll">Ховати клавіатуру під час прокрутки</string>
+    <string name="HideShareButton">Приховати бокову кнопку \"%1$s\"</string>
+    <string name="ReplaceEditedWithIcon">Замінити \"%1$s\" на іконку</string>
+    <string name="MessageMenu">Меню повідомлення</string>
+    <string name="GroupMessageMenu">Згрупувати меню повідомлення</string>
+    <string name="GroupMessageMenuInfo">Групування переміщує основні дії в нижню частину меню повідомлення.</string>
+    <string name="GlassMessageMenu">Скляне меню повідомлення</string>
+    <string name="GlassMessageMenuInfo">Меню повідомлень і панель реакцій набувають ефекту матового скла.</string>
+    <string name="GlassMessageMenuBlurOff">Для скляних меню потрібне розмиття, яке зараз вимкнено.</string>
+    <string name="AddCommaAfterMention">Кома після згадки</string>
+    <string name="HideSendAsPeer">Приховати кнопку \"Надіслати як…\"</string>
+    <string name="HideSendAsPeerInfo">Ви все ще можете відкрити меню «Надіслати як…», утримуючи кнопку Емодзі/Наліпок/GIF.</string>
+    <string name="ShowPollResultsBeforeVoting">Результати до голосування</string>
+    <string name="ShowPollResultsBeforeVotingHint">Показувати результати голосів біля кожного варіанта опитування до вашого голосування.</string>
+    <string name="ShowOnlineStatus">Показувати індикатор онлайну</string>
+    <string name="MessagePreviewDialogMessage">Я можу їсти скло, і це не зашкодить мені.</string>
+    <!-- Voice & Video Recognition -->
+    <string name="RecognitionLanguage">Мова розпізнавання</string>
+    <string name="RecognitionInfo">Використовується Vosk API. Працює офлайн. Якість розшифрованого тексту може бути низькою.</string>
+    <string name="MissingLanguageModel">Відсутня модель мови</string>
+    <string name="DownloadingModel">Завантаження моделі…</string>
+    <string name="DownloadingModelInfo">Будь ласка, не закривайте це вікно доки не закінчиться завантаження мовної моделі.</string>
+    <string name="ModelDownload">Завантажити (%1$s)</string>
+    <string name="ModelDownloadInfo">Для продовження вам потрібно завантажити мовну модель \"**%1$s**\".</string>
+    <string name="ModelDownloaded">Модель успішно завантажена.</string>
+    <string name="ModelError">Помилка під час завантаження моделі.</string>
+    <string name="ModelUnzipping">Розпакування…</string>
+    <string name="DeleteRecognitionModel">Видалити модель</string>
+    <string name="DeleteRecognitionModelInfo">Ви впевнені, що хочете видалити мовну модель \"**%1$s**\"?</string>
+    <string name="RecognitionModelDeleted">Модель успішно видалено.</string>
+    <string name="RecognitionModelDeleteError">Помилка під час завантаження моделі.</string>
+    <string name="PostProcessingWithAi">Використовуйте ШІ для постобробки</string>
+    <string name="PostProcessingWithAiInfo">ШІ покращує читабельність коригуючи помилки, додаючи пунктуацію та уточнюючи незрозумілі частини.</string>
+    <!-- Camera -->
+    <string name="CameraType">Тип камери</string>
+    <string name="ExtendedSettings">Розширені налаштування</string>
+    <string name="SeamlessSwitching">Плавне перемикання</string>
+    <string name="ExtendedFramesPerSecond">Розширений діапазон FPS</string>
+    <string name="CameraStabilization">Стабілізація</string>
+    <string name="CameraMirrorMode">Дзеркальний режим</string>
+    <string name="StartWithWideAngleCamera">Запуск із ширококутової камери</string>
+    <string name="ZoomSlider">Повзунок масштабу</string>
+    <string name="ZoomSliderInfo">Показує повзунок масштабування під камерою відеоповідомлень.</string>
+    <string name="StaticZoom">Статичний зум</string>
+    <string name="StaticZoomInfo">Під час запису відеоповідомлень зум не скинеться, якщо ви відпустите пальці.</string>
+    <string name="VideoMessagesCamera">Камера в відеоповідомленнях</string>
+    <string name="VideoMessagesCameraRear">Задня</string>
+    <string name="VideoMessagesCameraFront">Фронтальна</string>
+    <string name="VideoMessagesCameraAsk">Запитувати</string>
+    <string name="RearCamera">Основна</string>
+    <string name="FrontCamera">Фронтальна</string>
+    <string name="RememberLastUsedCamera">Пам\'ятати останню камеру</string>
+    <string name="RememberLastUsedCameraInfo">При записі відеоповідомлень буде автоматично обрана остання використана камера.</string>
+    <!-- Photo -->
+    <string name="AlwaysSendInHD">Завжди надсилати в HD</string>
+    <string name="HideCameraTile">Приховати плитку камери</string>
+    <string name="HideCameraTileInfo">Плитка камери буде замінена плавучою кнопкою. Натиск на неї запустить камеру Telegram; утримання - системну.</string>
+    <string name="ShortStandardQuality">SD</string>
+    <!-- Playback -->
+    <string name="DoubleTapSeekDuration">Подвійний дотик для перемотки</string>
+    <string name="PreferOriginalQuality">Перевага оригінальній якості</string>
+    <string name="PauseOnMinimize">Автопауза</string>
+    <string name="PauseOnMinimizeVideo">Відео</string>
+    <string name="PauseOnMinimizeVoice">Голосових</string>
+    <string name="PauseOnMinimizeRound">Кружків</string>
+    <string name="PauseOnMinimizeInfo">Призупиняє відтворення медіа, коли пристрій заблоковано або додаток згорнуто.</string>
+    <string name="SwipeToPip">Картинка-в-картинці по свайпу</string>
+    <string name="UnmuteWithVolumeButtons">Вмикання звуку кнопками гучності</string>
+    <string name="UnmuteWithVolumeButtonsInfo">Натискання кнопки гучності увімкне звук у відео замість зміни системної гучності.</string>
+    <!-- Other -->
+    <!-- Google -->
+    <string name="AnalyticsInfo">Коли ці опції ввімкнено, дані про пристрій збираються та надсилаються до Google Analytics та Crashlytics, що дозволяє нам вести статистику використання та відстежувати помилки в додатку. \n\nОднак, якщо ці опції вимкнено, збір даних припиняється, а будь-які надіслані дані миттєво видаляються.</string>
+    <!-- Backup & Restore -->
+    <string name="WriteFileName">Введіть назву файлу…</string>
+    <string name="ExportSettings">Експорт налаштувань</string>
+    <string name="ApplySettings">Застосувати налаштування</string>
+    <string name="ImportTitle">Ви впевнені що хочете застосувати ці налаштування?</string>
+    <string name="ImportConfirm">Так, застосувати</string>
+    <string name="CancelConfirm">Ні, залишити як є</string>
+    <string name="SettingsSaved">Файл налаштувань успішно збережено.</string>
+    <string name="SettingsImported">Налаштування успішно застосовано.</string>
+    <string name="ImportChanges_one">**1** зміна буде застосована до поточних налаштувань.</string>
+    <string name="ImportChanges_two">**%1$d** змін буде застосовано до поточних налаштувань.</string>
+    <string name="ImportChanges_few">**%1$d** змін буде застосовано до поточних налаштувань.</string>
+    <string name="ImportChanges_many">**%1$d** змін буде застосовано до поточних налаштувань.</string>
+    <string name="ImportChanges_other">**%1$d** змін буде застосовано до поточних налаштувань.</string>
+    <string name="SameSettings">Схоже, що налаштування збігаються з поточними.</string>
+    <!-- Export data -->
+    <!-- Settings Management -->
+    <string name="DeleteAccount">Видалити акаунт</string>
+    <string name="ResetSettings">Скинути налаштування</string>
+    <string name="ResetPreferences">Налаштування **exteraGram** скинуто.</string>
+    <string name="ResetPreferencesInfo">Ви впевнені, що хочете скинути **всі** налаштування exteraGram до значень за замовчуванням?</string>
+    <!-- Donates -->
+    <string name="SupportDevelopment">Підтримати розробку</string>
+    <string name="SupportDevelopmentInfo">Підтримуючи проєкт, ви не тільки сприяєте його розвитку, але й отримуєте унікальний значок.</string>
+    <string name="MakeDonation">Зробити пожертву</string>
+    <string name="MakeDonationInfo">Перекажіть суму %1$s (%2$s) на будь-який з платіжних даних проєкту. Вони можуть бути знайдені в **Інші** секції в налаштуваннях додатку.</string>
+    <string name="SendProof">Надіслати підтвердження платежу</string>
+    <string name="SendProofInfo">Надішліть фото підтвердження платежу **@exteraOwner**. Переконайтеся, що фотографія чітко показує суму, дату та час переказу.</string>
+    <string name="ReceiveBadge">Отримати значок</string>
+    <string name="ReceiveBadgeInfo">Після підтвердження платежу, ви отримаєте унікальний значок, який буде відображатися в вашому профілі та буде видимий для інших користувачів.</string>
+    <string name="GetBadgeInfo">**Підтримайте розробку** та отримайте унікальний значок!</string>
+    <string name="NowPlaying">Зараз грає</string>
+    <string name="ScrobblingService">Скробблінг-сервіс</string>
+    <string name="SelectService">Виберіть сервіс</string>
+    <string name="SelectServiceInfo">Показує поточний трек, отриманий зі скробблінг-сервісу в профілі у вигляді картки.</string>
+    <string name="EnterUsername">Введіть ім’я користувача</string>
+    <string name="EnterUsernameInfo">Ви можете отримати своє ім’я користувача на **офіційному сайті**.</string>
+    <string name="BoostyPeopleCount_one">%1$d людина</string>
+    <string name="BoostyPeopleCount_two">%1$d людини</string>
+    <string name="BoostyPeopleCount_few">%1$d людини</string>
+    <string name="BoostyPeopleCount_many">%1$d людей</string>
+    <string name="BoostyPeopleCount_other">%1$d людей</string>
+    <string name="BoostyInfo">Активно підтримують **exteraGram** на **Boosty**.</string>
+    <string name="BoostyInfo2">Дякую за вашу підтримку!</string>
+    <!-- Plugins -->
+    <string name="PluginsNotSupported">Встановлення плагінів доступне лише в **Full**-версії **exteraGram**.</string>
+    <string name="Plugins">Плагіни</string>
+    <string name="PluginsEngine">Система плагінів</string>
+    <string name="EnablePluginsEngine">Увімкнути систему плагінів</string>
+    <string name="PluginsInfo">Ви можете знайти плагіни в @exteraPlugins.</string>
+    <string name="PluginsNotFound">Плагінів не знайдено.</string>
+    <string name="InstallPlugin">Встановити</string>
+    <string name="UpdatePlugin">Оновити</string>
+    <string name="PluginNotEnabled">Увімкніть **Систему плагінів** для встановлення **%1$s**.</string>
+    <string name="PluginInstalled">**%1$s** встановлено успішно.</string>
+    <string name="PluginUpdated">**%1$s** оновлено успішно.</string>
+    <string name="PluginInstalledButFailedToEnable">**%1$s** встановлено, але під час увімкнення сталася помилка.</string>
+    <string name="PluginEnableError">Не вдалося увімкнути **%1$s**.</string>
+    <string name="PluginDisableError">Не вдалося вимкнути **%1$s**.</string>
+    <string name="PluginInstallError">Не вдалося встановити **%1$s**.</string>
+    <string name="PluginSourceTrusted">Надійне джерело</string>
+    <string name="PluginSourceTrustedInfo">Плагіни з цього джерела **перевірені** та безпечні у використанні.</string>
+    <string name="PluginSourceUnknown">Невідоме джерело</string>
+    <string name="PluginSourceUnknownInfo">Плагіни з цього джерела **неперевірені** й можуть становити загрозу безпеці.</string>
+    <string name="PluginVersion">Версія</string>
+    <string name="PluginNoDescription">Опис не надано.</string>
+    <string name="PluginIsNotResponding">Плагін не відповідає.</string>
+    <string name="PluginIsNotRespondingAlert">%1$s не відповідає</string>
+    <string name="PluginNoAuthor">Невідомий автор</string>
+    <string name="EnableAfterInstallation">Увімкнути після встановлення</string>
+    <string name="EnterValue">Введіть значення</string>
+    <string name="PluginDelete">Видалити плагін</string>
+    <string name="PluginDeleteInfo">Ви впевнені, що хочете видалити %1$s?</string>
+    <string name="ResetPluginSettings">Налаштування **%1$s** були скинуті.</string>
+    <string name="ResetPluginSettingsInfo">Ви впевнені, що хочете скинути налаштування **%1$s** до стандартних?</string>
+    <string name="PluginsSafeMode">Безпечний режим</string>
+    <string name="PluginsSafeModeShortcut">Запустити у безпечному режимі</string>
+    <string name="PluginsSafeModeInfo">Систему плагінів вимкнено через збій. Вимкнення безпечного режиму може призвести до непередбачуваних наслідків.</string>
+    <string name="PluginsSafeModeInfo2">У безпечному режимі всі плагіни неактивні. Це дозволяє безпечно знайти та вимкнути проблемний плагін.</string>
+    <string name="PluginsDevMode">Режим розробника</string>
+    <string name="PluginsCompactView">Компактний вигляд плагінів</string>
+    <string name="PluginsDocumentation">Документація</string>
+    <string name="PluginsTrusted">Перевірені плагіни</string>
+    <string name="PluginsDevServerLaunched">Сервер розробника запущено.</string>
+    <string name="PluginsDevServerStopped">Сервер розробника зупинено.</string>
+    <string name="PluginEngineNotEnabled">Увімкніть **Систему плагінів**, щоб відкрити налаштування **%1$s**.</string>
+    <string name="PluginNotFound">**%1$s** не знайдено.</string>
+    <string name="PluginHasNoSettings">**%1$s** не має налаштувань.</string>
+    <string name="PluginsPySdkAutoUpdate">Оновлювати автоматично</string>
+    <string name="PluginsPySdkEnableBetaVersion">Встановлювати бета-версії</string>
+    <string name="PluginsPySdkCheckUpdates">Перевірити наявність оновлень</string>
+    <string name="CheckingForUpdates">Перевірка оновлень…</string>
+    <string name="LatestVersionInstalled">Встановлена остання версія</string>
+    <string name="RestartPluginSystemToApplyUpdate">Оновлення завантажено, перезавантажте систему плагінів для застосування</string>
+    <string name="LoadingUpdate">Завантаження оновлення…</string>
+    <string name="RestoreSdkFromApk">Відновити SDK з APK</string>
+    <string name="EnableAutoUpdate">Оновляти автоматично</string>
+    <string name="PluginsDisableArt">Режим сумісності</string>
+    <string name="PluginsDisableArtInfo">Вимикає ART Profile Saver для запобігання збоїв хуків плагінів.</string>
+    <!-- Updates -->
+    <string name="UpdateInstalling">Оновлення триває…</string>
+    <string name="UpdateInstallingRelaunch">Після завершення оновлення додаток перезапуститься.</string>
+    <string name="UpdateInstallingNotification">Ви отримаєте сповіщення, коли оновлення завершиться.</string>
+    <string name="UpdateInstalledNotification">Оновлення завершено. Натисніть, щоб відкрити додаток.</string>
+    <string name="UpdateFailedToInstall">Не вдалося встановити оновлення: %d</string>
+    <string name="UpdateAvailable">Доступне оновлення!</string>
+    <!-- Message Details -->
+    <string name="Details">Деталі</string>
+    <string name="Date">Дата</string>
+    <string name="EditedDate">Дата редагування</string>
+    <string name="ForwardedDate">Дата пересилки</string>
+    <string name="FileSize">Розмір файлу</string>
+    <string name="FileName">Ім\'я файлу</string>
+    <string name="FilePath">Шлях до файлу</string>
+    <string name="Platform">Платформа</string>
+    <string name="Resolution">Роздільність</string>
+    <string name="Bitrate">Бітрейт</string>
+    <string name="Duration">Тривалість</string>
+    <string name="MimeType">Тип медіа</string>
+    <string name="Datacenter">Дата-центр</string>
+    <!-- Date Formatting -->
+    <string name="DateFormatOption">Формат:</string>
+    <string name="DateFormatOptionNone">Нічого</string>
+    <string name="DateFormatOptionRelative">Відносне</string>
+    <string name="DateFormatOptionShortTime">Короткий час</string>
+    <string name="DateFormatOptionLongTime">Довгий час</string>
+    <string name="DateFormatOptionShortDate">Коротка дата</string>
+    <string name="DateFormatOptionLongDate">Довга дата</string>
+    <string name="DateFormatOptionDayOfWeek">День тижня</string>
+    <!-- Login & QR -->
+    <string name="LoginQrTitle">Вхід по QR-коду</string>
+    <string name="LoginQrSubtitle">Використайте інший пристрій для сканування цього QR-коду.</string>
+    <string name="SelectNumber">Оберіть номер телефону</string>
+    <string name="WifiConnect">Під\'єднатися</string>
+    <string name="WifiDisabled">Wi-Fi вимкнено.</string>
+    <string name="WifiFailed">Не вдалося під\'єднатися до Wi-Fi.</string>
+    <string name="WifiSuccess">Успішно підключено до Wi-Fi.</string>
+    <string name="AreYouSureToLogin">Ви впевнені, що хочете увійти в цей акаунт на іншому пристрої?</string>
+    <!-- AdBlock -->
+    <string name="PageBlocked">Сторінка заблокована</string>
+    <string name="PageBlockedDescription">exteraGram зупинив завантаження сторінки:\n**%1$s**</string>
+    <string name="PageBlockedGoBack">Назад</string>
+    <string name="PageBlockedProceed">Продовжити</string>
+    <!-- Other -->
+    <string name="SetAsBadge">Встановити як бейдж</string>
+    <string name="AutoLockInstant">Миттєво</string>
+    <string name="TestBackend">Тестовий сервер</string>
+    <string name="SearchPhotoInfo">Сервіси можуть використовувати зображення відповідно до своєї політики конфіденційності та умов використання.</string>
+    <string name="PhotoUploadFailed">Не вдалося завантажити фото.</string>
+    <string name="TrackSaved">Трек збережено до **%1$s**.</string>
+    <string name="ChannelToSaveChanged">Треки будуть збережені в **%1$s**.</string>
+    <string name="DeletedMessage">Видалене повідомлення</string>
+    <!-- Bot Button Context Menu -->
+    <string name="CopyTitle">Копіювати назву</string>
+    <string name="CopyCallback">Копіювати callback-дані</string>
+    <string name="CopyInlineQuery">Копіювати інлайн-запит</string>
+    <string name="CopyID">Копіювати ID користувача</string>
+    <!-- Information Toasts & Dialogs -->
+    <string name="SetAsBadgeStatusInfo">Бейдж змінено.</string>
+    <string name="UserNotFound">Користувача з таким **ID** не знайдено.</string>
+    <string name="ChatNotFound">Чат з цим **ID** не знайдено.</string>
+    <string name="PhotoCopied">Фото скопійовано до буфера обміну.</string>
+    <string name="FrameCopied">Кадр скопійовано до буфера обміну.</string>
+    <string name="TapToCopy">Натисніть, щоб скопіювати</string>
+    <string name="ProfileUsesEmojiPack">Цей профіль використовує емодзі з пакунка %s для свого фону.</string>
+    <string name="ReplyUsesEmojiPacks">Ця відповідь використовує емодзі з пакунка %s для свого фону.</string>
+    <string name="StickerSavedHint">Наліпка збережена до галереї.</string>
+    <string name="EmojiSavedHint">Емодзі збережено до галереї.</string>
+    <string name="GifGallerySavedHint">GIF збережено до галереї.</string>
+    <string name="MutualContactInfo">Цей контакт є взаємним.</string>
+    <string name="LocalPremiumEmojiHint">У вас немає підписки **Telegram Premium**, тому цю емодзі зможуть бачити лише користувачі **exteraGram**.</string>
+    <!-- Main Tabs -->
+    <string name="HideContactsTab">Приховати вкладку «Контакти»</string>
+    <string name="ShowContactsTab">Показати вкладку «Контакти»</string>
+    <string name="ContactsTabWasShownTitle">Вкладка «Контакти» додана.</string>
+    <string name="ContactsTabWasHiddenTitle">Вкладка «Контакти» прихована.</string>
+    <!-- Passkeys -->
+    <string name="PasskeyInfo2">Ця функція працює лише з менеджерами паролів, які дозволяють користувачеві керувати налаштуваннями довіри для привілейованих програм, таких як **Bitwarden** чи **KeePassDX**.</string>
+    <string name="PasskeyUnsupportedTitle">Менеджер паролів не підтримується</string>
+    <string name="PasskeyUnsupportedMessage">Спробуйте інші менеджери паролів, такі як **Bitwarden** або **KeePassDX**.</string>
+    <!-- Date Information -->
+    <string name="CreationDateUserApproximately">**%1$s** створив(-ла) акаунт приблизно **%2$s**.</string>
+    <string name="CreationDateUserEarlier">**%1$s** створив(-ла) свій акаунт раніше ніж **%2$s**.</string>
+    <string name="CreationDateUserLater">**%1$s** створив(-ла) свій акаунт раніше, ніж **%2$s**.</string>
+    <string name="CreationDateChat">**%1$s** був створений **%2$s**.</string>
+    <string name="CreationDateSelfApproximately">Ви створили свій акаунт приблизно **%1$s**.</string>
+    <string name="CreationDateSelfEarlier">Ви створили свій акаунт раніше, ніж **%1$s**.</string>
+    <string name="CreationDateSelfLater">Ви створили свій акаунт пізніше, ніж **%1$s**.</string>
+    <string name="JoinDateChat">Ви приєдналися до **%1$s** **%2$s**.</string>
+    <string name="GroupMemberJoined">приєднався %1$s</string>
+    <!-- Menu Items -->
+    <string name="SendVideoWithoutCompression">Надіслати без стиснення</string>
+    <string name="ToBeginning">На початок</string>
+    <string name="MessageHistory">Історія повідомлень</string>
+    <string name="BoldItalic">Жирний курсив</string>
+    <string name="CopyPhoto">Копіювати фото</string>
+    <string name="CopyFrame">Скопіювати кадр</string>
+    <string name="Repeat">Повторити</string>
+    <string name="Subtitles">Субтитри</string>
+    <string name="ChooseSubtitles">Обрати субтитри</string>
+    <string name="DisableSubtitles">Вимкнути субтитри</string>
+    <string name="SubtitlesAdded">Субтитри ввімкнено.</string>
+    <string name="SubtitlesRemoved">Субтитри вимкнено.</string>
+    <string name="SubtitlesLoadError">Не вдалося завантажити субтитри.</string>
+    <string name="SubtitlesUnsupportedFormat">Непідтримуваний формат субтитрів.</string>
+    <!-- Sticker Maker -->
+    <string name="StickerCornerRadius">Кути стікерів</string>
+    <string name="StickerCornerRadiusInfo">Виберіть, як повинні виглядати кути стікерів.</string>
+    <string name="StickerCornerRadiusLarge">Великий</string>
+    <string name="StickerCornerRadiusMedium">Середній</string>
+    <string name="StickerCornerRadiusSmall">Маленький</string>
+    <string name="StickerCornerRadiusNone">Немає</string>
+    <!-- Feed -->
+    <string name="Feed">Стрічка</string>
+    <string name="FeedShownChannels">Показуються у стрічці</string>
+    <string name="FeedHiddenChannels">Прихований</string>
+    <string name="FeedChannels">Канали</string>
+    <string name="FeedChannelsInfo">Зніміть позначку з каналу, щоб приховати його повідомлення від стрічки. Нові канали відображаються автоматично.</string>
+    <string name="FeedSettings">Налаштування стрічки</string>
+    <string name="FeedNoPosts">Постів у каналі поки що немає.</string>
+    <string name="FeedAllChannelsExcluded">Усі канали виключено зі стрічки.</string>
+    <string name="FeedMarkAllRead">Позначити все як прочитане</string>
+    <string name="FeedMarkAllReadConfirm">Позначити всі повідомлення у ваших каналах як прочитані? Це також позначить їх як \"прочитані\" в оригінальних каналах.</string>
+    <string name="FeedMarkAllReadDone">Всі пости позначено як прочитані</string>
+    <string name="FeedIncludeArchived">Показати чати з архіву</string>
+    <string name="FeedIncludeArchivedInfo">Також показувати у стрічці канали з ваших архівованих чатів.</string>
+    <string name="FeedHideChannel">Приховати зі стрічки</string>
+    <string name="FeedChannelHidden">**%1$s** приховано зі стрічки</string>
+    <string name="FeedBottomTab">Показувати на нижніх вкладках</string>
+    <string name="FeedBottomTabInfo">Відображати стрічку як вкладку нижньої навігації замість вкладки Контакти.</string>
+    <string name="HideFeedTab">Приховати вкладку стрічка</string>
+    <!-- Non-translatable -->
+</resources>

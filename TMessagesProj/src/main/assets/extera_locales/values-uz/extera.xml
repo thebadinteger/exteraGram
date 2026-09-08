@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+ This is the source code of exteraGram for Android.
+
+ We do not and cannot prevent the use of our code,
+ but be respectful and credit the original author.
+
+ Copyright @exteraGram, 2022-2026
+
+-->
+<resources>
+    <string name="Preferences">exteraGram parametrlari</string>
+    <!-- Main Menu -->
+    <string name="Links">Havolalar</string>
+    <string name="Crowdin">Tarjima qilish</string>
+    <string name="Categories">Turkum</string>
+    <string name="SettingLinkToSavedMessages">Sozlama havolasi **Saqlangan xabarlar** ga yuborildi.</string>
+    <string name="SettingLinkToUser">Sozlama havolasi **%1$s** manziliga yuborildi.</string>
+    <string name="SettingLinkToChats">Sozlash uchun havola **%1$s**ga yuborildi</string>
+    <string name="LiteBatteryFollowSystem">Tizim quvvat saqlash rejimini ishlatish</string>
+    <string name="LiteBatteryFollowSystemState">Tizim</string>
+    <string name="LiteBatteryFollowSystemInfo">Tizim Quvvat Saqlashi tomonidan nazorat qilinadi.</string>
+    <!-- Pill Stack -->
+    <string name="PillStackPills">Vidjetlar yigʻini</string>
+    <string name="PillStackPillsInfo">Qidiruv maydonidagi interaktiv vidjetlar</string>
+    <string name="PillStackActivePills">Aktiv vidjetlar</string>
+    <string name="PillStackHiddenPills">Yashirin vidjetlar</string>
+    <string name="CurrentLocation">Joriy joylashuv</string>
+    <string name="SelectLocation">Xaritada tanlash</string>
+    <string name="WeatherPill">Zalupa</string>
+    <string name="WeatherSettingsInfo">Ob-havo ma’lumotlarini olish uchun joylashuvni aniqlash usulini tanlang</string>
+    <string name="WeatherLocation">Jovlashuvni aniqlash</string>
+    <string name="WeatherLocationPermissionNo">Ob-havoni koʻrsatish uchun exteraGram sizning joylashuvingizni talab qiladi</string>
+    <string name="WeatherLocationPermissionGrant">Ruxsat berish</string>
+    <string name="WeatherLocationServicesEnable">Jovlashuvni yoqish</string>
+    <string name="WeatherPillTopInfo">Vidjetlar yigʻini uchun ob-havo vidjetlari sozlamalari</string>
+    <string name="PillStackInfiniteScrolling">Cheksiz aylantirish</string>
+    <string name="CryptoPillTargetCurrency">Oʻzbekcha</string>
+    <string name="CryptoCurrencyUsd">AQSh dollari</string>
+    <string name="CryptoCurrencyEur">Yevro</string>
+    <string name="CryptoCurrencyRub">Rossiya rubli</string>
+    <string name="CryptoCurrencyGbp">Britaniya funti</string>
+    <string name="CryptoCurrencyKzt">Qozog‘iston tengesi</string>
+    <string name="CryptoCurrencyTry">Turk lirasi</string>
+    <string name="CryptoCurrencyUah">Ukraina grivnasi</string>
+    <string name="CryptoCurrencyPln">Polsha zlotiyi</string>
+    <string name="CryptoCurrencyAed">BAA dirhami</string>
+    <string name="CryptoCurrencyCny">Xitoy yuani</string>
+    <string name="CryptoCurrencyJpy">Yaponiya yeni</string>
+    <string name="CryptoCurrencyByn">Belarus rubli</string>
+    <string name="CryptoCurrencyIls">Isroil yangi shekeli</string>
+    <string name="CryptoCurrencyCzk">Chexiya kronasi</string>
+    <string name="CryptoCurrencyInr">Hindiston rupiyasi</string>
+    <!-- Proxy -->
+    <string name="ProxyDoNotUseWithVPN">VPN bilan ishlatmasin</string>
+    <string name="ProxyType">Tur</string>
+    <string name="Unknown">Noma\'lum</string>
+    <string name="ProxyRename">Proxy nomi (ixtiyoriy)</string>
+    <string name="ProxyPinLimitReached">%1$d gacha proxy saqlashingiz mumkin.</string>
+    <string name="CopyIpAddress">IP manzilni nusxalash</string>
+    <string name="IpInfoUnavailable">IP manzil haqida maʼlumotni yuklab boʻlmadi.</string>
+    <string name="IpInfoCountry">Mamlakat</string>
+    <string name="IpInfoRegion">Mintaqa</string>
+    <string name="IpInfoCity">Shahar</string>
+    <string name="IpInfoIsp">Provayder</string>
+    <string name="IpInfoOrganization">Tashkilot</string>
+    <string name="IpInfoDomain">Domen</string>
+    <string name="IpInfoTimezone">Vaqt mintaqasi</string>
+    <!-- Translator -->
+    <string name="TranslationProvider">Oʻzbekcha</string>
+    <string name="TranslationTarget">Oʻzbekcha</string>
+    <string name="TranslationTargetApp">Ilovani kuzatish</string>
+    <string name="TranslationFormalityLess">T</string>
+    <!-- Formatting & Behavior -->
+    <string name="DisableNumberRounding">Raqamlarni yaxlitlashni o‘chirish</string>
+    <string name="FormatTimeWithSeconds">Uzbek</string>
+    <string name="RelativeLastSeen">Nisbiy onlayn vaqti</string>
+    <string name="InAppVibration">Uzbek</string>
+    <string name="FilterZalgo">Uzbek</string>
+    <string name="FilterZalgoInfo">Ismlar va xabarlardagi \"%1$s\" belgilarini olib tashlaydi.</string>
+    <!-- Message Formatting -->
+    <string name="CodeBlock">Kod</string>
+    <string name="CreateCode">Kod blokini yaratish</string>
+    <string name="CreateCodeLanguage">Til</string>
+    <!-- Speed -->
+    <string name="DownloadSpeedBoost">Yuklash olish tezligini oshirish</string>
+    <string name="UploadSpeedBoost">Yuklash tezligini oshirish</string>
+    <string name="Ultra">Yuqori</string>
+    <!-- Maps -->
+    <string name="InstallYandexMaps">Install Yandex Maps?</string>
+    <!-- Storage -->
+    <string name="StorageSettings">Xotira</string>
+    <string name="CustomSavePath">Saqlash uchun papka</string>
+    <string name="CustomSavePathHint">Rootga saqlash uchun boʻsh qoldiring</string>
+    <string name="CustomSavePathDefault">Rootga saqlash</string>
+    <string name="CustomSavePathInfo">Saqlangan fayllar toʻgʻridan-toʻgʻri Rasmlar, Yuklamalar, va boshqa papkalarda saqlanadi.</string>
+    <string name="CustomSavePathInfoFolder">Saqlangan fayllar toʻgʻridan-toʻgʻri Rasmlar/%1$s, Yuklamalar/%1$s, va boshqa papkalarda saqlanadi.</string>
+    <!-- Profile -->
+    <string name="Profile">Profil</string>
+    <string name="HidePhoneNumber">Telefon raqamni berkitish</string>
+    <string name="ShowIdAndDc">ID va DC ko‘rsatish</string>
+    <!-- Archive -->
+    <string name="HideArchiveFolder">Arxiv jildini yashirish</string>
+    <string name="ArchiveOnPull">Arxivni pastga tortishda ochish</string>
+    <!-- Appearance -->
+    <string name="Appearance">Ingliz rus</string>
+    <!-- Avatars -->
+    <string name="AvatarCorners">Avatar Corners</string>
+    <string name="AvatarCornersLeft">Square</string>
+    <string name="AvatarCornersRight">Circle</string>
+    <string name="SingleCornerRadius">Yagona burchak radiusi</string>
+    <string name="SingleCornerRadiusInfo">Forumlar chatlar bilan bir xil avatar shakliga ega boʻladi.</string>
+    <!-- Chat List -->
+    <string name="ListOfChats">Chatlar ro‘yxati</string>
+    <string name="ActionBarTitle">Sarlavha + matn</string>
+    <string name="ActionBarTitleUsername">Foydalanuvchi nomi</string>
+    <string name="ActionBarTitleName">Is</string>
+    <string name="HideStories">Turkumlarni berkitish</string>
+    <string name="HideActionBarStatus">Holatni berkitish</string>
+    <string name="CenterTitle">Markaziy sarlavha</string>
+    <string name="ChatHeader">Chat sarlavhasi</string>
+    <string name="HideFloatingButton">Muallaq tugmani yashirish</string>
+    <string name="HideDialogsSearchBar">Qidiruv panelini yashirish</string>
+    <string name="BottomNavigationBarMode">Oʻzbekcha</string>
+    <string name="BottomNavigationModeShow">Roʻrsatish</string>
+    <string name="BottomNavigationModeHide">Yashirish</string>
+    <string name="BottomNavigationModeFloating">Muallaq</string>
+    <!-- Folders (Tabs) -->
+    <string name="TabTitleStyle">Varaq sarlavhasi</string>
+    <string name="TabTitleStyleTextWithIcons">Belgilar bilan nomlar</string>
+    <string name="TabTitleStyleIconsOnly">Faqat belgilar</string>
+    <string name="TabTitleStyleTextOnly">Faqat nomlar</string>
+    <string name="TabCounter">Varaq hisoblagichi</string>
+    <string name="HideAllChats">\"%1$s\" varaqni berkitish</string>
+    <string name="FoldersInfo">hi</string>
+    <!-- App Navigation -->
+    <string name="AppNavigation">Ilova yoʻllanmasi</string>
+    <string name="AppNavigationInfo">Yuqori menyu va yon panel sozlamalari</string>
+    <string name="NavigationDrawer">Yon panel</string>
+    <string name="NavigationDrawerInfo">Yuqori oʻng burchakdagi menyuni, swipe bilan ochiladigan yon panelga almashtiradi.</string>
+    <string name="NavigationDrawerImmersiveAnimation">Immersiv animatsiya</string>
+    <string name="NavigationDrawerProxyPingShort">%1$d ms</string>
+    <string name="MainMenuItems">Menyu elementlari</string>
+    <string name="MainMenuItemsInfo">Elementlarni yashirish yoki koʻrsatish uchun bosing, tartibini oʻzgartirish uchun bosib turing. Oʻzgarishlar menyu va yon panelga qoʻllaniladi.</string>
+    <string name="MainMenuHiddenItems">Yashirin menyu elementlari</string>
+    <string name="MainMenuDivider">Ajratuvchi</string>
+    <string name="MainMenuAddDivider">Ajratuvchini qo‘shish</string>
+    <string name="MainMenuRemoveSettingsInfo">Pastgi panel oʻchiq boʻlsa sozlamalarni berkitib boʻlmaydi.</string>
+    <!-- Icon Packs -->
+    <string name="IconPickerFilter">Filtr</string>
+    <string name="IconPickerAllIcons">Hamma ikonchala</string>
+    <string name="IconPickerReplacedIcons">Almashtirilgan belgilar</string>
+    <string name="IconPickerNotReplacedIcons">Almashtirilmagan belgilar</string>
+    <string name="IconPickerSaveAndExit">Saqlamaq &amp; chiqishh</string>
+    <string name="BasePacks">Asosiy paketlar</string>
+    <string name="BaseIconPackInfo">Asosiy piktogramma to\'plami boshqa paketlar bilan almashtirilmagan piktogrammalar uchun zaxira sifatida ishlatiladi.</string>
+    <string name="NewIconPack">Create a new Icon Pack</string>
+    <string name="EnabledPacks">Fg
+</string>
+    <string name="AuthorNameOptional">Avtorni ismi (xuyyoviy)</string>
+    <string name="Version">Ozbek</string>
+    <string name="InstallPack">Yozvotti</string>
+    <string name="IconCount_one">%1$d icon</string>
+    <string name="IconCount_two">%1$d belgilar</string>
+    <string name="IconCount_few">%1$d belgilar</string>
+    <string name="IconCount_many">%1$d belgilar</string>
+    <string name="DeletePack">Toʻplamni oʻchirish</string>
+    <string name="DeletePackInfo">Haqiqatan ham **%1$s** toʻplamini oʻchirib tashlamoqchimisiz?</string>
+    <string name="IconPackErrorInvalidArchive">Belgilar toʻplami yaroqsiz.</string>
+    <string name="IconPackErrorMissingMetadata">Belgilar toʻplamiz arxivida metadata.json mavjud emas.</string>
+    <string name="IconPackErrorMetadataTooLarge">Belgilar toʻplami juda katta.</string>
+    <string name="IconPackErrorInvalidMetadata">Belgilar metedatasida xatolar mavjud.</string>
+    <string name="IconPackErrorTooManyFiles">Belgilar toʻplamida juda koʻp fayllar bor.</string>
+    <string name="IconPackErrorArchiveTooLarge">Belgilar toʻplami juda katta.</string>
+    <!-- App Icons -->
+    <string name="AppIconSunset">Quyosh botishi</string>
+    <string name="AppIconAurora">Avrora</string>
+    <string name="AppIconAmethyst">Ametist</string>
+    <string name="AppIconSapphire">Zumrad</string>
+    <string name="AppIconInvincible">Uzbek</string>
+    <string name="AppIconSpace">Koinot</string>
+    <string name="AppIconIceAge">Muzlik davri</string>
+    <string name="AppIconEditor">Tahrirchi</string>
+    <string name="AppIconOrbit">Orbita</string>
+    <string name="AppIconSus">Firibgar</string>
+    <string name="AppIconWinter">Qish</string>
+    <!-- General Appearance -->
+    <string name="SeparateHeaders">Apple</string>
+    <string name="UseSystemFonts">Tizim shriftidan foydalanish</string>
+    <string name="UseSystemEmoji">Tizim emojisidan foydalanish</string>
+    <string name="NewLoadingStyle">Yuklanish uslubi</string>
+    <string name="NewSliderStyle">Slayder uslubi</string>
+    <string name="TabletMode">Planshet rejimi</string>
+    <string name="RemoveMessageTail">Fj chknnv</string>
+    <string name="GooeyAvatarAnimation">Apple</string>
+    <string name="CustomChatThemes">Bnm b</string>
+    <string name="CustomChatThemesInfo">Vbnbbln m</string>
+    <string name="SpringAnimations">Bahor animatsiyalar</string>
+    <!-- Blur & Effects -->
+    <string name="BlurOptions">Xiralashtirish amallari</string>
+    <string name="ForceBlur">Majburiy xiralashtirish</string>
+    <string name="ForceBlurInfo">Uzbek.</string>
+    <string name="ForceSnow">Qorparchalarni ko\'rsatish</string>
+    <string name="ForceSnowInfo">Uzbek.</string>
+    <!-- Chats -->
+    <!-- Chat Media & Appearance -->
+    <string name="StickerSizeLeft">Kechik</string>
+    <string name="StickerSizeDialogMessageReplyTo">voy-buy</string>
+    <string name="StickerShapeRounded">Dumaloq</string>
+    <string name="StickerShapeRoundedMsg">Xabar</string>
+    <string name="StickerTime">Stikerlarda vaqtni berkitish</string>
+    <string name="UnlimitedRecentStickers">Cheksiz oxirgi stikerlar</string>
+    <string name="HideReactions">Reaksiyalarni berkitish</string>
+    <string name="ReplyBackground">Orqa fon</string>
+    <string name="ChatSettingsInfo">Media sozlamalari, ilova belgisi va boshqalar</string>
+    <!-- AI -->
+    <string name="AIChatInfo">Xizmatlar, rollar va tarixni sozlash</string>
+    <!-- AI Services -->
+    <string name="Services">Uzbek </string>
+    <string name="ServicesInfo">Uzbek </string>
+    <string name="ServiceModel">Uzbek </string>
+    <string name="ServiceKey">Oʻzbek</string>
+    <!-- AI Roles -->
+    <string name="Roles">Rollar</string>
+    <string name="Suggestions">Takliflar</string>
+    <string name="RoleName">Nom</string>
+    <string name="RolePrompt">So\'rov</string>
+    <string name="NewRole">Yangi Rol</string>
+    <string name="EditRole">Rolni O\'zgartirish</string>
+    <!-- AI History & Behavior -->
+    <string name="ResponseStreaming">Javob Oqimi</string>
+    <string name="ResponseStreamingInfo">Javoblarni yanada silliq va tezkor tarzda ko\'rsatishni ta\'minlaydi.</string>
+    <string name="TapToAddApiKey">Oʻzbek.</string>
+    <string name="Generate">Yaratish</string>
+    <string name="ClearConversationHistoryInfo">Oʻzbek1?</string>
+    <!-- AI Errors -->
+    <string name="AIError400">Azik</string>
+    <string name="AIError408Info">Your request was not processed in time. Please try again later.</string>
+    <string name="AIError429">Rate Limit Exceeded</string>
+    <string name="AIError502">Model Failure</string>
+    <string name="AIError502Info">The selected model is unavailable or we received an invalid response from it.</string>
+    <string name="AIError">Server Error</string>
+    <string name="AIErrorInfo">Please retry your request after a short wait.</string>
+    <!-- Chat Actions -->
+    <string name="DoubleTap">Ikki marta bosish</string>
+    <string name="DoubleTapIncoming">Kiruvchi xabarlar</string>
+    <string name="DoubleTapOutgoing">Chiquvchi xabarlar</string>
+    <string name="DoubleTapInfo">Ba’zi amallar chat yoki kanalda administrator ruxsatlarini talab qiladi.</string>
+    <string name="BottomButton">Pastki tugma</string>
+    <string name="QuickTransitions">Ekran bo\'ylab tez o\'tish</string>
+    <string name="AdminShortcuts">Tezkor admin yorliqlari</string>
+    <string name="HideKeyboardOnScroll">Aylantirishda klaviaturani berkitish</string>
+    <string name="HideShareButton">Yon tomon \"%1$s\" berkitish tugmasi</string>
+    <string name="MessageMenu">Xabar menyusi</string>
+    <string name="GroupMessageMenuInfo">Hi.</string>
+    <string name="GlassMessageMenu">Glass Message Menu</string>
+    <string name="AddCommaAfterMention">Eslatmadan keyin vergul qo‘yish</string>
+    <string name="HideSendAsPeer">“Yuborish…” tugmasini berkitish</string>
+    <string name="HideSendAsPeerInfo">Emojilar/stikerlar/GIFlar tugmasini uzoq bosib, “Yuborish…” menyusiga kirishingiz mumkin.</string>
+    <!-- Voice & Video Recognition -->
+    <string name="RecognitionLanguage">Tilni avtomatik aniqlash</string>
+    <string name="MissingLanguageModel">Til modeli yetishmayapti</string>
+    <string name="ModelDownload">Yuklanmoqda (%1$s)</string>
+    <string name="ModelError">Modelni yuklab olishda xatolik yuz berdi.</string>
+    <string name="ModelUnzipping">Arxivdan chiqarilmoqda…</string>
+    <string name="PostProcessingWithAi">Post-processing uchun sun\'iy intellektdan foydalaning</string>
+    <!-- Camera -->
+    <string name="ExtendedSettings">Kengaytirilgan Sozlamar</string>
+    <string name="SeamlessSwitching">Silliq o\'tish</string>
+    <string name="ExtendedFramesPerSecond">Kengaytirilgan FPS diapazoni</string>
+    <string name="CameraStabilization">Stabilizatsiya</string>
+    <string name="StaticZoom">Statik kattalashtirish</string>
+    <string name="VideoMessagesCamera">Video xabarlardagi kamera</string>
+    <string name="VideoMessagesCameraRear">Orqa</string>
+    <string name="VideoMessagesCameraFront">Oldi</string>
+    <string name="VideoMessagesCameraAsk">So‘rash</string>
+    <string name="RearCamera">Orqa kamera</string>
+    <string name="FrontCamera">Old kamera</string>
+    <!-- Photo -->
+    <string name="HideCameraTile">Tezkor kamera plitasini yashirish</string>
+    <!-- Playback -->
+    <string name="DoubleTapSeekDuration">Ikki marta bosish izlash davomiyligi</string>
+    <string name="PauseOnMinimize">Avto-pauza</string>
+    <string name="PauseOnMinimizeVideo">Video</string>
+    <string name="PauseOnMinimizeVoice">Ovoz</string>
+    <string name="PauseOnMinimizeRound">Davra</string>
+    <string name="SwipeToPip">PiP ga o\'zgartirish</string>
+    <!-- Other -->
+    <!-- Google -->
+    <!-- Backup & Restore -->
+    <string name="ExportSettings">Sozlamalarni eksport qilish</string>
+    <string name="ApplySettings">Sozlamalarni qo‘llash</string>
+    <string name="ImportTitle">Sozlamalarni qo‘llashni istaysizmi?</string>
+    <string name="ImportConfirm">Ha, qo‘llayman</string>
+    <string name="SettingsSaved">Sozlamalar fayli muvaffaqiyatli saqlandi.</string>
+    <string name="ImportChanges_one">Joriy sozlamalarga ℅d ta o‘zgarish kiritildi.</string>
+    <string name="ImportChanges_few">** %1$d* * o\'zgarishlar joriy sozlamalarga qo\'llaniladi.</string>
+    <string name="ImportChanges_many">** %1$d* * o\'zgarishlar joriy sozlamalarga qo\'llaniladi.</string>
+    <string name="ImportChanges_other">** %1$d* * o\'zgarishlar joriy sozlamalarga qo\'llaniladi.</string>
+    <string name="SameSettings">Sozlamalar joriy sozlamalar bilan bir xil koʻrinadi.</string>
+    <!-- Export data -->
+    <!-- Settings Management -->
+    <string name="DeleteAccount">Hisobni o‘chirish</string>
+    <string name="ResetSettings">Sozlamalarni asliga qaytarish</string>
+    <!-- Donates -->
+    <string name="SupportDevelopment">Loyihani qollab quvatlash</string>
+    <string name="MakeDonation">Xayriya qiling</string>
+    <string name="SendProof">Tolov dalilini yuboring</string>
+    <string name="ReceiveBadge">Nishoningizni oling</string>
+    <string name="ReceiveBadgeInfo">To‘lov tasdiqlangandan so‘ng, profilingizda ko‘rsatiladigan va boshqa foydalanuvchilarga ko‘rinadigan noyob nishonga ega bo‘lasiz.</string>
+    <!-- Plugins -->
+    <string name="InstallPlugin">Yuklab olish</string>
+    <string name="UpdatePlugin">Yangilash</string>
+    <string name="PluginSourceUnknown">Nomalum soure</string>
+    <!-- Updates -->
+    <string name="UpdateAvailable">Yangilanish mavjud!</string>
+    <!-- Message Details -->
+    <string name="Details">Tafsilotlar</string>
+    <string name="Date">Sana</string>
+    <string name="EditedDate">Tahrirlash sanasi</string>
+    <string name="ForwardedDate">Uzatilgan sana</string>
+    <string name="FileSize">Fayl hajmi</string>
+    <string name="FileName">File nomi</string>
+    <string name="FilePath">Fayl yo‘li</string>
+    <string name="Resolution">Zichlik</string>
+    <string name="Bitrate">Bit tezligi</string>
+    <string name="MimeType">Mime turi</string>
+    <string name="Datacenter">Ma’lumotlar markazi</string>
+    <!-- Date Formatting -->
+    <!-- Login & QR -->
+    <string name="WifiConnect">Connect</string>
+    <string name="WifiDisabled">Wi-Fi is disabled.</string>
+    <string name="WifiFailed">Failed to connect to Wi-Fi.</string>
+    <string name="AreYouSureToLogin">Are you sure you want to log in to this account on another device?</string>
+    <!-- AdBlock -->
+    <string name="PageBlocked">Page blocked</string>
+    <string name="PageBlockedGoBack">Ortga qaytish</string>
+    <string name="PageBlockedProceed">Dovom etish</string>
+    <!-- Other -->
+    <string name="AutoLockInstant">Tezkor</string>
+    <string name="TestBackend">Orqa tizimni sinash</string>
+    <string name="SearchPhotoInfo">Xizmatlar maxfiylik siyosati va foydalanish shartlariga muvofiq rasmlardan foydalanishlari mumkin.</string>
+    <string name="PhotoUploadFailed">Suratni yuklab bo\'lmadi.</string>
+    <string name="TrackSaved">Yozuv bu yerga **%1$s** saqlandi.</string>
+    <string name="ChannelToSaveChanged">Yozuvlar **%1$s** ichiga saqlanadi.</string>
+    <!-- Bot Button Context Menu -->
+    <string name="CopyTitle">Sarlavhani Nusxalash</string>
+    <string name="CopyCallback">\"Callback Data\" ni nusxalash</string>
+    <string name="CopyInlineQuery">Inline So\'rovini Nusxalash</string>
+    <string name="CopyID">Foydalanuvchi ID sini Nusxalash</string>
+    <!-- Information Toasts & Dialogs -->
+    <string name="UserNotFound">**ID** raqamiga ega foydalanuvchi topilmadi.</string>
+    <string name="PhotoCopied">Rasm vaqtinchalik xotiraga nusxalandi.</string>
+    <string name="FrameCopied">Frame copied to clipboard.</string>
+    <string name="StickerSavedHint">Sticker saved to gallery.</string>
+    <string name="EmojiSavedHint">Emoji saved to gallery.</string>
+    <string name="MutualContactInfo">Ushbu foydalanuvchining kontaktidasiz.</string>
+    <!-- Main Tabs -->
+    <!-- Passkeys -->
+    <!-- Date Information -->
+    <!-- Menu Items -->
+    <string name="ToBeginning">Boshiga</string>
+    <string name="MessageHistory">Tarix</string>
+    <string name="BoldItalic">Qalin kursiv</string>
+    <string name="CopyPhoto">Rasmdan nusxa olish</string>
+    <string name="CopyFrame">Copy Frame</string>
+    <!-- Sticker Maker -->
+    <!-- Feed -->
+    <!-- Non-translatable -->
+</resources>

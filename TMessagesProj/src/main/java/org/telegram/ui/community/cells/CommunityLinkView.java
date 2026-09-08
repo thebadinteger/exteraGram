@@ -1,0 +1,110 @@
+package org.telegram.ui.community.cells;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import com.exteragram.messenger.AvatarCornerType;
+import com.exteragram.messenger.ExteraConfig;
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.DialogObject;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.R;
+import org.telegram.messenger.utils.DrawableUtils;
+import org.telegram.tgnet.TLObject;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.AvatarDrawable;
+import org.telegram.ui.Components.BackupImageView;
+import org.telegram.ui.Components.LayoutHelper;
+
+@SuppressLint({"ViewConstructor"})
+public class CommunityLinkView extends FrameLayout implements Theme.Colorable {
+    private final ImageView arrowView;
+    public final BackupImageView avatarView;
+    public final Theme.ResourcesProvider resourcesProvider;
+    public final TextView subtitleView;
+    public final TextView titleView;
+
+    @Override // org.telegram.ui.ActionBar.Theme.Colorable
+    public /* bridge */ /* synthetic */ int[] getColorKeys() {
+        return super.getColorKeys();
+    }
+
+    public CommunityLinkView(Context context, Theme.ResourcesProvider resourcesProvider) {
+        super(context);
+        this.resourcesProvider = resourcesProvider;
+        BackupImageView backupImageView = new BackupImageView(context);
+        this.avatarView = backupImageView;
+        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(32.0f, false, AvatarCornerType.COMMUNITY));
+        addView(backupImageView, LayoutHelper.createFrame(32, 32.0f, 19, 20.0f, 0.0f, 0.0f, 0.0f));
+        LinearLayout linearLayout = new LinearLayout(context);
+        linearLayout.setOrientation(1);
+        linearLayout.setGravity(16);
+        TextView textView = new TextView(context);
+        this.titleView = textView;
+        textView.setTypeface(AndroidUtilities.bold());
+        textView.setTextSize(1, 16.0f);
+        textView.setSingleLine(true);
+        TextUtils.TruncateAt truncateAt = TextUtils.TruncateAt.END;
+        textView.setEllipsize(truncateAt);
+        linearLayout.addView(textView, LayoutHelper.createLinear(-1, -2));
+        TextView textView2 = new TextView(context);
+        this.subtitleView = textView2;
+        textView2.setTextSize(1, 13.0f);
+        textView2.setSingleLine(true);
+        textView2.setEllipsize(truncateAt);
+        linearLayout.addView(textView2, LayoutHelper.createLinear(-1, -2, 0.0f, 2.0f, 0.0f, 0.0f));
+        addView(linearLayout, LayoutHelper.createFrame(-1, -2.0f, 19, 67.0f, 0.0f, 48.0f, 1.0f));
+        ImageView imageView = new ImageView(context);
+        this.arrowView = imageView;
+        imageView.setImageResource(R.drawable.msg_inputarrow);
+        imageView.setScaleType(ImageView.ScaleType.CENTER);
+        addView(imageView, LayoutHelper.createFrame(24, 24.0f, 21, 0.0f, 0.0f, 11.0f, 0.0f));
+        updateColors();
+    }
+
+    @Override // android.widget.FrameLayout, android.view.View
+    public void onMeasure(int i, int i2) {
+        super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(60.0f), TLObject.FLAG_30));
+    }
+
+    @Override // android.view.ViewGroup, android.view.View
+    public void dispatchDraw(Canvas canvas) {
+        DrawableUtils.drawCommunityCardDrawable(canvas, Theme.dialogs_communityCardsDrawable, this.avatarView.getLeft() + (this.avatarView.getWidth() / 2.0f), this.avatarView.getTop() + (this.avatarView.getHeight() / 2.0f), this.avatarView.getHeight());
+        super.dispatchDraw(canvas);
+    }
+
+    public void setTitle(CharSequence charSequence) {
+        this.titleView.setText(charSequence);
+    }
+
+    public void setSubtitle(CharSequence charSequence) {
+        this.subtitleView.setText(charSequence);
+    }
+
+    public void setChat(int i, TLRPC.Chat chat) {
+        if (chat == null) {
+            return;
+        }
+        TLRPC.ChatFull chatFull = MessagesController.getInstance(i).getChatFull(chat.id);
+        setTitle(DialogObject.getShortName(chat));
+        setSubtitle(LocaleController.formatPluralString("CommunityWithChats", chatFull != null ? chatFull.linked_peers.size() : 0, new Object[0]));
+        this.avatarView.setForUserOrChat(chat, new AvatarDrawable(chat));
+    }
+
+    @Override // org.telegram.ui.ActionBar.Theme.Colorable
+    public void updateColors() {
+        ImageView imageView = this.arrowView;
+        int i = Theme.key_windowBackgroundWhiteGrayText2;
+        imageView.setColorFilter(Theme.getColor(i, this.resourcesProvider));
+        this.titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, this.resourcesProvider));
+        this.subtitleView.setTextColor(Theme.getColor(i, this.resourcesProvider));
+    }
+}

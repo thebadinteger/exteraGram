@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:color="?android:attr/colorControlHighlight">
+    <item
+        android:id="@android:id/mask"
+        android:drawable="@drawable/m3_focus_ring_framework_button_background_shape"/>
+    <item>
+        <com.google.android.material.focus.FocusRingDrawable
+            app:focusRingsInset="2dp"
+            app:focusRingsRadius="2dp"/>
+    </item>
+</ripple>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:name="splash"
+    android:height="320dp"
+    android:width="320dp"
+    android:viewportWidth="320"
+    android:viewportHeight="320">
+    <path
+        android:name="splash_background"
+        android:fillColor="@color/ic_background_monet"
+        android:pathData="M160 53.33A106.67 106.67 0 1 0 160 266.67 106.67 106.67 0 1 0 160 53.33z"
+        android:strokeWidth="1"
+        android:fillAlpha="0"/>
+    <path
+        android:name="splash_icon"
+        android:fillColor="@color/ic_foreground_monet"
+        android:pathData="M138.5 181.38c7.57 7.57 14.66 20.35 20.05 31.75 3.62 7.66 15.5 7.37 18.18-0.67l27.75-83.19c2.83-8.5-5.25-16.58-13.75-13.74l-83.09 27.74c-8.03 2.69-8.32 14.6-0.65 18.21 11.32 5.34 23.97 12.37 31.5 19.9Z"
+        android:strokeWidth="1"
+        android:fillAlpha="0"/>
+</vector>
