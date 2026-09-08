@@ -1,9 +1,13 @@
 package org.telegram.ui.Components;
 
-import android.R;
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.dpf2;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -19,196 +23,141 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Layout;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
-import android.widget.Button;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RawRes;
+import androidx.annotation.StringRes;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.math.MathUtils;
-import com.exteragram.messenger.DividerStyle;
-import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.IconPackType;
-import com.exteragram.messenger.icons.IconManager;
-import com.exteragram.messenger.utils.system.VibratorUtils;
-import com.google.android.gms.cast.MediaError;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BuildConfig;
+import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.Utilities;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.ProfileActivity;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.LocaleController;
-import org.telegram.messenger.Utilities;
-import org.telegram.tgnet.TLObject;
-import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.ProfileActivity;
 
-@SuppressLint({"ViewConstructor"})
+@SuppressLint("ViewConstructor")
 public class ProfileActionsView extends View {
-    private AccessibilityNodeProvider accessibilityNodeProvider;
-    private final List<Action> actions;
-    private int activeCount;
-    private final Set<Integer> allAvailableActions;
-    private ProfileActivity.AvatarImageView avatarView;
-    private Action callAction;
-    private boolean callAnimationStateLoaded;
-    private float callBackwardAnimateFromX;
-    private float callBackwardAnimateFromY;
-    private final Path clipAvatarPath;
-    public float clipHeight;
-    private final Path clipPath;
-    private int color;
-    private float currentHeight;
-    private long downTime;
-    private float downX;
-    private float downY;
-    private Action firstAction;
-    private boolean hasColorById;
-    private Action hit;
-    private boolean ignoreRect;
-    public boolean isAnimatingCallAction;
-    private boolean isApplying;
-    private boolean isNotificationsEnabled;
-    public boolean isOpeningLayout;
-    private Action lastAction;
-    private ColorFilter lastColorFilter;
-    private int lastColorFilterColor;
-    private final Matrix matrix;
-    public int mode;
-    private OnActionClickListener onActionClickListener;
-    private final Paint paint;
+
+    private final List<Action> actions = new ArrayList<>();
+    private final Paint paint = new Paint();
+    private final Paint shaderPaint = new Paint();
     private float parentExpanded;
-    private final Path pathTmp;
-    private RadialGradient radialGradient;
-    private final float[] radii;
-    private RenderNode renderNode;
+
+    public boolean isAnimatingCallAction = false;
+    public boolean isOpeningLayout = true;
+    public float clipHeight = -1;
+    private final Path clipAvatarPath = new Path();
+    private final Path clipPath = new Path();
+    private ProfileActivity.AvatarImageView avatarView;
     private float renderNodeScale;
     private float renderNodeTranslateY;
-    private final Paint shaderPaint;
+    private RenderNode renderNode;
+
+    private int activeCount = 0;
     private final int targetHeight;
-    private int textColor;
-    final float textPadding;
-    final float top;
+    private boolean ignoreRect = false;
+    private float currentHeight = 0;
+
+    private OnActionClickListener onActionClickListener = null;
+
+    private final Set<Integer> allAvailableActions = new HashSet<>();
+
+    public int mode = MODE_MY_PROFILE;
+    public static final int MODE_USER = 0;
+    public static final int MODE_CHANNEL = 1;
+    public static final int MODE_BOT = 2;
+    public static final int MODE_GROUP = 3;
+    public static final int MODE_FORUM = 4;
+    public static final int MODE_TOPIC = 5;
+    public static final int MODE_MY_PROFILE = 6;
+
+    public static final int KEY_MESSAGE = 0;
+    public static final int KEY_NOTIFICATION = 1;
+    public static final int KEY_DISCUSS = 2;
+    public static final int KEY_GIFT = 3;
+    public static final int KEY_SHARE = 4;
+    public static final int KEY_CALL = 5;
+    public static final int KEY_VIDEO = 6;
+    public static final int KEY_JOIN = 7;
+    public static final int KEY_REPORT = 8;
+    public static final int KEY_LEAVE = 9;
+    public static final int KEY_VOICE_CHAT = 10;
+    public static final int KEY_STREAM = 11;
+    public static final int KEY_STORY = 12;
+    public static final int KEY_STOP = 13;
+    public static final int KEY_SET_PHOTO = 14;
+    public static final int KEY_EDIT_USERNAME = 15;
+    public static final int KEY_EDIT_INFO = 16;
+    public static final int KEY_SETTINGS = 17;
+
+    private boolean isApplying;
+    private boolean isNotificationsEnabled;
+
+    private Action callAction = null;
+    private Action firstAction, lastAction;
     final float xpadding;
     final float ypadding;
+    final float top;
+    final float textPadding;
 
-    public interface OnActionClickListener {
-        void onClick(int i, float f, float f2);
-    }
+    private int color = 0;
+    private boolean hasColorById;
+    private RadialGradient radialGradient;
+    private final Matrix matrix = new Matrix();
 
-    private void checkPaints() {
-    }
+    public boolean myProfile;
 
-    public boolean isSegmentedMode() {
-        return ExteraConfig.getDividerStyle() == DividerStyle.SEGMENTS;
-    }
-
-    private void setRadii(boolean z, boolean z2, float f, float f2) {
-        float[] fArr = this.radii;
-        float f3 = z ? f : f2;
-        fArr[1] = f3;
-        fArr[0] = f3;
-        float f4 = z2 ? f : f2;
-        fArr[3] = f4;
-        fArr[2] = f4;
-        float f5 = z2 ? f : f2;
-        fArr[5] = f5;
-        fArr[4] = f5;
-        if (!z) {
-            f = f2;
-        }
-        fArr[7] = f;
-        fArr[6] = f;
-    }
-
-    private void updateClipPath(Action action, float f, float f2, Path path) {
-        boolean z;
-        path.rewind();
-        RectF rectF = AndroidUtilities.rectTmp;
-        rectF.set(action.rect);
-        rectF.inset((action.rect.width() / 2.0f) * (1.0f - action.getScale()), (action.rect.height() / 2.0f) * (1.0f - action.getScale()));
-        float f3 = -f2;
-        rectF.inset(f3, f3);
-        if (isSegmentedMode()) {
-            float innerRoundRadius = getInnerRoundRadius();
-            boolean z2 = action.isDeleting;
-            boolean z3 = false;
-            if (z2) {
-                z = action.wasFirst;
-            } else {
-                z = action == this.firstAction;
-            }
-            if (z2) {
-                z3 = action.wasLast;
-            } else if (action == this.lastAction) {
-                z3 = true;
-            }
-            setRadii(z, z3, f, innerRoundRadius);
-            path.addRoundRect(rectF, this.radii, Path.Direction.CCW);
-            return;
-        }
-        path.addRoundRect(rectF, f, f, Path.Direction.CCW);
-    }
-
-    public ProfileActionsView(Context context, int i) {
+    public ProfileActionsView(Context context, int targetHeight) {
         super(context);
-        this.actions = new ArrayList();
-        Paint paint = new Paint();
-        this.paint = paint;
-        this.shaderPaint = new Paint();
-        this.isAnimatingCallAction = false;
-        this.isOpeningLayout = true;
-        this.clipHeight = -1.0f;
-        this.clipAvatarPath = new Path();
-        this.clipPath = new Path();
-        this.pathTmp = new Path();
-        this.radii = new float[8];
-        this.activeCount = 0;
-        this.ignoreRect = false;
-        this.currentHeight = 0.0f;
-        this.onActionClickListener = null;
-        this.allAvailableActions = new HashSet();
-        this.mode = 6;
-        this.callAction = null;
-        this.color = 0;
-        this.matrix = new Matrix();
-        this.textColor = -1;
-        this.hit = null;
-        this.callAnimationStateLoaded = false;
-        this.callBackwardAnimateFromX = -1.0f;
-        this.callBackwardAnimateFromY = -1.0f;
-        paint.setColor(-16777216);
+
+        paint.setColor(Color.BLACK);
         paint.setAlpha(40);
-        float fDpf2 = AndroidUtilities.dpf2(12.0f);
-        this.ypadding = fDpf2;
-        this.xpadding = fDpf2;
-        float fDpf3 = AndroidUtilities.dpf2(8.0f);
-        this.top = fDpf3;
-        this.textPadding = AndroidUtilities.dpf2(4.0f);
-        this.targetHeight = (int) ((i - fDpf2) - fDpf3);
+
+        xpadding = dpf2(14);
+        ypadding = dpf2(12);
+        top = dpf2(8);
+        textPadding = dpf2(4);
+
+        this.targetHeight = (int) (targetHeight - ypadding - top);
+
         setBackgroundColor(0);
-        setImportantForAccessibility(1);
+
+        setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
     }
 
-    public void drawingBlur(boolean z) {
-        if (this.ignoreRect == z && this.renderNode == null) {
-            return;
+    public void drawingBlur(boolean drawing) {
+        if (ignoreRect != drawing || renderNode != null) {
+            ignoreRect = drawing;
+            renderNode = null;
+            avatarView = null;
+            invalidate();
         }
-        this.ignoreRect = z;
-        this.renderNode = null;
-        this.avatarView = null;
-        invalidate();
     }
 
-    public void drawingBlur(RenderNode renderNode, ProfileActivity.AvatarImageView avatarImageView, float f, float f2) {
+    public void drawingBlur(RenderNode renderNode, ProfileActivity.AvatarImageView avatarView, float scale, float dy) {
         this.ignoreRect = false;
         this.renderNode = renderNode;
-        this.avatarView = avatarImageView;
-        this.renderNodeScale = f;
-        this.renderNodeTranslateY = f2;
+        this.avatarView = avatarView;
+        this.renderNodeScale = scale;
+        this.renderNodeTranslateY = dy;
         invalidate();
     }
 
@@ -216,897 +165,1193 @@ public class ProfileActionsView extends View {
         this.onActionClickListener = onActionClickListener;
     }
 
-    public void setParentExpanded(float f) {
-        if (this.parentExpanded != f) {
-            this.parentExpanded = f;
+    public void setParentExpanded(float expanded) {
+        if (parentExpanded != expanded) {
+            parentExpanded = expanded;
             checkPaints();
             invalidate();
         }
     }
 
-    public void setActionsColor(int i, int i2, boolean z) {
-        if (this.radialGradient != null && this.color == i && this.textColor == i2 && this.hasColorById == z) {
-            return;
+    public void setActionsColor(int color, boolean hasColorById) {
+        if (radialGradient == null || this.color != color || this.hasColorById != hasColorById) {
+            this.color = color;
+            this.hasColorById = hasColorById;
+            createColorShader();
+            checkPaints();
         }
-        this.color = i;
-        this.textColor = i2;
-        this.hasColorById = z;
-        createColorShader();
-        checkPaints();
     }
 
     private boolean isButtonColorLight() {
-        return AndroidUtilities.computePerceivedBrightness(this.color) > 0.72f;
+        return AndroidUtilities.computePerceivedBrightness(color) > 0.72f;
+    }
+
+    private void checkPaints() {
+
     }
 
     private void createColorShader() {
-        int i = this.color;
-        if (i == 0) {
+        if (color == 0) return;
+        if (!hasColorById) {
+            paint.setColor(color);
+//            paint.setAlpha(40);
             return;
         }
-        if (!this.hasColorById) {
-            this.paint.setColor(i);
-            return;
-        }
-        int measuredWidth = getMeasuredWidth();
-        if (measuredWidth <= 0) {
-            return;
-        }
-        float gap = ((measuredWidth - (getGap() * Math.max(0, this.activeCount - 1))) - (this.xpadding * 2.0f)) / Math.max(1, this.activeCount);
-        RadialGradient radialGradient = new RadialGradient(gap / 2.0f, this.targetHeight / 2.0f, this.hasColorById ? gap * 0.65f : 1.0f, Theme.multAlpha(this.color, 0.8f), this.color, Shader.TileMode.CLAMP);
-        this.radialGradient = radialGradient;
-        this.shaderPaint.setShader(radialGradient);
+        int w = getMeasuredWidth();
+        if (w <= 0) return;
+
+        float betweenPadding = xpadding / 2f;
+        float width = (w - betweenPadding * Math.max(0, activeCount - 1) - xpadding * 2f) / Math.max(1, activeCount);
+
+        this.radialGradient = new RadialGradient(
+                width / 2f,
+                targetHeight / 2f,
+                hasColorById ? width * 0.65f : 1f,
+                Theme.multAlpha(color, 0.8f),
+                color,
+                Shader.TileMode.CLAMP
+        );
+        shaderPaint.setShader(radialGradient);
     }
 
-    private void measureActions() {
-        if (getMeasuredWidth() <= 0 || this.activeCount <= 0) {
-            return;
-        }
-        float itemWidth = getItemWidth();
-        for (int i = 0; i < this.actions.size(); i++) {
-            Action action = this.actions.get(i);
-            if (action.text != null) {
-                action.text.setMaxWidth(itemWidth - AndroidUtilities.dp(2.0f));
-                action.textScale = action.text.getLineCount() >= 3 ? 0.75f : action.text.getLineCount() >= 2 ? 0.85f : 1.0f;
-            }
-        }
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(
+                MeasureSpec.getSize(widthMeasureSpec),
+                MeasureSpec.makeMeasureSpec((int) (targetHeight + top + ypadding), MeasureSpec.EXACTLY)
+        );
     }
 
-    @Override // android.view.View
-    public void onMeasure(int i, int i2) {
-        setMeasuredDimension(View.MeasureSpec.getSize(i), View.MeasureSpec.makeMeasureSpec((int) (this.targetHeight + this.top + this.ypadding), TLObject.FLAG_30));
-        measureActions();
-    }
-
-    public void updatePosition(float f, float f2) {
-        this.currentHeight = f2;
-        setTranslationY(f);
+    public void updatePosition(float y, float newHeight) {
+        currentHeight = newHeight;
+        setTranslationY(y);
         invalidate();
     }
 
-    private float getGap() {
-        return isSegmentedMode() ? AndroidUtilities.dp(2.0f) : this.xpadding / 2.0f;
-    }
-
     private float getItemWidth() {
-        int measuredWidth = getMeasuredWidth();
-        float gap = getGap();
-        int i = this.activeCount;
-        return ((measuredWidth - (gap * (i - 1))) - (this.xpadding * 2.0f)) / i;
+        int w = getMeasuredWidth();
+        float betweenPadding = xpadding / 2f;
+        return (w - betweenPadding * (activeCount - 1) - xpadding * 2f) / activeCount;
     }
 
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        float f = this.clipHeight;
-        if (f >= 0.0f) {
-            float y = f - getY();
-            if (y <= 0.0f) {
+    @Override
+    protected void onDraw(@NonNull Canvas canvas) {
+        if (clipHeight >= 0f) {
+            final float bottom = clipHeight - getY();
+            if (bottom <= 0) {
                 return;
-            } else {
-                canvas.clipRect(0.0f, 0.0f, getMeasuredWidth(), y);
             }
+            canvas.clipRect(0f, 0f, getMeasuredWidth(), bottom);
         }
-        float fMax = Math.max(0.0f, (this.currentHeight - this.ypadding) - this.top);
-        if (fMax <= 0.0f) {
-            return;
-        }
-        float gap = getGap();
-        float itemWidth = getItemWidth();
-        float f2 = this.xpadding;
-        float roundRadius = getRoundRadius();
-        if (this.renderNode != null) {
-            this.clipPath.rewind();
-        }
-        int size = this.actions.size();
-        Action action = null;
-        Action action2 = null;
-        for (int i = 0; i < size; i++) {
-            Action action3 = this.actions.get(i);
-            if (!action3.isDeleted) {
-                if (!action3.isDeleting) {
-                    RectF rectF = action3.rect;
-                    float f3 = this.top;
-                    rectF.set(f2, f3, f2 + itemWidth, f3 + fMax);
-                    f2 += itemWidth + gap;
-                    if (action == null) {
-                        action = action3;
-                    }
-                    action2 = action3;
-                }
-                action3.updatePosition();
-            }
-        }
-        this.firstAction = action;
-        this.lastAction = action2;
-        if (this.renderNode != null) {
-            for (int i2 = 0; i2 < size; i2++) {
-                Action action4 = this.actions.get(i2);
-                if (!action4.isDeleted) {
-                    updateClipPath(action4, roundRadius, 1.0f, this.pathTmp);
-                    this.clipPath.addPath(this.pathTmp);
-                }
-            }
-        }
-        float fClamp01 = Utilities.clamp01(fMax / this.targetHeight);
-        float fClamp02 = Utilities.clamp01((fClamp01 - 0.2f) / 0.8f);
-        if (fClamp02 <= 0.0f) {
-            return;
-        }
-        if (!this.ignoreRect) {
-            for (int i3 = 0; i3 < size; i3++) {
-                Action action5 = this.actions.get(i3);
-                if (!action5.isDeleted) {
-                    int alpha = this.paint.getAlpha();
-                    this.paint.setAlpha((int) (((int) (action5.getAlpha() * fClamp02 * alpha)) * (this.radialGradient != null ? 0.1f : 1.0f)));
-                    updateClipPath(action5, roundRadius, 0.0f, this.pathTmp);
-                    if (isSegmentedMode()) {
-                        canvas.save();
-                        canvas.clipPath(this.pathTmp);
-                        RectF rectF2 = AndroidUtilities.rectTmp;
-                        canvas.drawRect(rectF2, this.paint);
-                        drawGradient(canvas, action5, fClamp02);
-                        this.paint.setAlpha(alpha);
-                        action5.rippleDrawable.setBounds((int) rectF2.left, (int) rectF2.top, (int) rectF2.right, (int) rectF2.bottom);
-                        action5.rippleDrawable.draw(canvas);
-                        canvas.restore();
-                    } else {
-                        RectF rectF3 = AndroidUtilities.rectTmp;
-                        canvas.drawRoundRect(rectF3, roundRadius, roundRadius, this.paint);
-                        if (this.radialGradient != null) {
-                            drawGradient(canvas, action5, fClamp02);
-                        }
-                        this.paint.setAlpha(alpha);
-                        action5.rippleDrawable.setBounds((int) rectF3.left, (int) rectF3.top, (int) rectF3.right, (int) rectF3.bottom);
-                        action5.rippleDrawable.draw(canvas);
-                    }
-                }
-            }
-        }
-        drawRenderNode(canvas);
-        float fClamp03 = Utilities.clamp01((fClamp01 - 0.4f) / 0.6f);
-        if (fClamp03 > 0.0f) {
-            for (int i4 = 0; i4 < size; i4++) {
-                drawAction(canvas, this.actions.get(i4), fClamp01, fClamp03);
-            }
-        }
-    }
 
-    private void drawGradient(Canvas canvas, Action action, float f) {
-        if (this.radialGradient != null) {
-            int alpha = this.shaderPaint.getAlpha();
-            this.shaderPaint.setAlpha((int) (action.getAlpha() * f * alpha));
-            Matrix matrix = this.matrix;
-            RectF rectF = AndroidUtilities.rectTmp;
-            matrix.setTranslate(rectF.left, rectF.top);
-            this.radialGradient.setLocalMatrix(this.matrix);
-            if (isSegmentedMode()) {
-                canvas.drawRect(rectF, this.shaderPaint);
-            } else {
-                float roundRadius = getRoundRadius();
-                canvas.drawRoundRect(rectF, roundRadius, roundRadius, this.shaderPaint);
+        float height = Math.max(0f, currentHeight - ypadding - top);
+
+        if (height <= 0f) {
+            return;
+        }
+
+        final float betweenPadding = xpadding / 2f;
+        final float width = getItemWidth();
+        float left = xpadding;
+        float r = getRoundRadius();
+
+        if (renderNode != null) {
+            clipPath.rewind();
+        }
+
+        Action newFirstAction = null, newLastAction = null;
+        int c = actions.size();
+        for (int i = 0; i < c; i++) {
+            Action action = actions.get(i);
+            if (action.isDeleted) continue;
+
+            if (!action.isDeleting) {
+                action.rect.set(left, top, left + width, top + height);
+                left += width + betweenPadding;
+
+                if (newFirstAction == null) {
+                    newFirstAction = action;
+                }
+                newLastAction = action;
             }
-            this.shaderPaint.setAlpha(alpha);
+
+            action.updatePosition();
+            if (renderNode != null) {
+                AndroidUtilities.rectTmp.set(action.rect);
+                AndroidUtilities.rectTmp.inset(
+                    action.rect.width() / 2.0f * (1.0f - action.getScale()),
+                    action.rect.height() / 2.0f * (1.0f - action.getScale())
+                );
+                AndroidUtilities.rectTmp.inset(-1, -1);
+                clipPath.addRoundRect(AndroidUtilities.rectTmp, r, r, Path.Direction.CCW);
+            }
+        }
+        firstAction = newFirstAction;
+        lastAction = newLastAction;
+
+        float fraction = Utilities.clamp01(height / targetHeight);
+        float alphaFraction1 = Utilities.clamp01((fraction - 0.2f) / 0.8f);
+        if (alphaFraction1 <= 0f) {
+            return;
+        }
+
+        if (!ignoreRect) {
+            for (int i = 0; i < c; i++) {
+                Action action = actions.get(i);
+                if (!action.isDeleted) {
+                    AndroidUtilities.rectTmp.set(action.rect);
+                    AndroidUtilities.rectTmp.inset(
+                        action.rect.width() / 2.0f * (1.0f - action.getScale()),
+                        action.rect.height() / 2.0f * (1.0f - action.getScale())
+                    );
+                    int wasAlpha = paint.getAlpha();
+                    int newAlpha = (int) (action.getAlpha() * alphaFraction1 * wasAlpha);
+                    paint.setAlpha((int) (newAlpha * (radialGradient != null ? 0.1f : 1f)));
+
+                    if (SharedConfig.shadowsInSections && isButtonColorLight() && parentExpanded < 0.5f) {
+                        paint.setShadowLayer(dpf2(1.5f), 0, 0, Theme.multAlpha(Color.BLACK & 0x20FFFFFF, (newAlpha / 255f * (radialGradient != null ? 0.1f : 1f))));
+                    } else {
+                        paint.setShadowLayer(0, 0, 0, 0);
+                    }
+
+                    canvas.drawRoundRect(AndroidUtilities.rectTmp, r, r, paint);
+                    if (radialGradient != null) {
+                        int wasAlpha2 = shaderPaint.getAlpha();
+                        shaderPaint.setAlpha((int) (action.getAlpha() * alphaFraction1 * wasAlpha2));
+                        matrix.setTranslate(AndroidUtilities.rectTmp.left, AndroidUtilities.rectTmp.top);
+                        radialGradient.setLocalMatrix(matrix);
+                        canvas.drawRoundRect(AndroidUtilities.rectTmp, r, r, shaderPaint);
+                        shaderPaint.setAlpha(wasAlpha2);
+                    }
+                    paint.setAlpha(wasAlpha);
+                }
+            }
+        }
+
+        drawRenderNode(canvas);
+
+        float alphaFraction2 = Utilities.clamp01((fraction - 0.4f) / 0.6f);
+        if (alphaFraction2 > 0f) {
+            for (int i = 0; i < c; i++) {
+                drawAction(canvas, actions.get(i), fraction, alphaFraction2);
+            }
         }
     }
 
     private void drawRenderNode(Canvas canvas) {
-        RenderNode renderNode = this.renderNode;
-        if (renderNode == null || Build.VERSION.SDK_INT < 29 || !renderNode.hasDisplayList() || !canvas.isHardwareAccelerated()) {
+        if (renderNode == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !renderNode.hasDisplayList() || !canvas.isHardwareAccelerated()) {
             return;
         }
+
         canvas.save();
-        ProfileActivity.AvatarImageView avatarImageView = this.avatarView;
-        if (avatarImageView != null) {
-            View view = (View) avatarImageView.getParent();
-            float x = view.getX();
-            float y = view.getY() - getTranslationY();
-            float width = view.getWidth() * view.getScaleX();
-            float height = view.getHeight() * view.getScaleY();
-            this.clipAvatarPath.rewind();
-            this.clipAvatarPath.addRoundRect(x, y, width + x, height + y, this.avatarView.getRoundRadiusForExpand() * view.getScaleX(), this.avatarView.getRoundRadiusForExpand() * view.getScaleY(), Path.Direction.CCW);
-            canvas.clipPath(this.clipAvatarPath);
+        if (avatarView != null) {
+            View v = (View) avatarView.getParent();
+            float vl = v.getX();
+            float vt = v.getY() - getTranslationY();
+            float vw = v.getWidth() * v.getScaleX();
+            float vh = v.getHeight() * v.getScaleY();
+
+            clipAvatarPath.rewind();
+            clipAvatarPath.addRoundRect(
+                    vl,
+                    vt,
+                    vl + vw,
+                    vt + vh,
+                    avatarView.getRoundRadiusForExpand() * v.getScaleX(),
+                    avatarView.getRoundRadiusForExpand() * v.getScaleY(),
+                    Path.Direction.CCW
+            );
+            canvas.clipPath(clipAvatarPath);
         }
-        canvas.clipPath(this.clipPath);
-        canvas.translate(0.0f, this.renderNodeTranslateY);
-        float f = this.renderNodeScale;
-        canvas.scale(f, f);
-        canvas.drawRenderNode(this.renderNode);
+
+        canvas.clipPath(clipPath);
+        canvas.translate(0f, renderNodeTranslateY);
+        canvas.scale(renderNodeScale, renderNodeScale);
+        canvas.drawRenderNode(renderNode);
+
         canvas.restore();
     }
 
-    public void stopLoading(int i) {
-        stopLoading(find(i));
+    public void stopLoading(int key) {
+        stopLoading(find(key));
     }
 
-    private void stopLoading(Action action) {
-        if (action == null || !action.isLoading) {
-            return;
+    private void stopLoading(Action a) {
+        if (a != null && a.isLoading) {
+            a.isLoading = false;
+            invalidate();
         }
-        action.isLoading = false;
-        invalidate();
     }
 
     private void updateBounds(Action action) {
-        float fCenterX = action.rect.centerX();
-        action.rect.centerY();
-        float fDp = AndroidUtilities.dp(24.0f);
-        float f = 0.5f * fDp;
-        float fMax = Math.max(0.0f, ((this.targetHeight - (action.text.getHeight() * action.textScale)) / 3.0f) + AndroidUtilities.dpf2(2.0f));
-        action.setBounds((int) (fCenterX - f), (int) fMax, (int) (fCenterX + f), (int) (fMax + fDp));
+        final float cx = action.rect.centerX();
+        final float cy = action.rect.centerY();
+
+        final int drawableSize = dp(24);
+        final float drawableR = drawableSize * 0.5f;
+
+        action.text.setMaxWidth(action.rect.width() - dp(2));
+        action.textScale = action.text.getLineCount() >= 3 ? 0.75f : action.text.getLineCount() >= 2 ? 0.85f : 1.0f;
+        final float drawableTop = Math.max(0, (targetHeight - action.text.getHeight() * action.textScale) / 3f + dpf2(1.33f));
+        action.setBounds(
+            (int) (cx - drawableR),
+            (int) (drawableTop),
+            (int) (cx + drawableR),
+            (int) (drawableTop + drawableSize)
+        );
     }
 
-    private void drawAction(Canvas canvas, Action action, float f, float f2) {
+    private int lastColorFilterColor;
+    private ColorFilter lastColorFilter;
+
+    private void drawAction(Canvas canvas, Action action, float fraction, float alpha) {
         if (action == null || action.isDeleted) {
             return;
         }
-        boolean zIsButtonColorLight = isButtonColorLight();
-        float fClamp = !zIsButtonColorLight ? 1.0f : MathUtils.clamp((this.parentExpanded - 0.75f) / 0.25f, 0.0f, 1.0f);
-        if (zIsButtonColorLight && Build.VERSION.SDK_INT < 31) {
-            fClamp = 0.0f;
+
+        final boolean isButtonColorLight = isButtonColorLight();
+        float useFilledWhiteIcon = !isButtonColorLight ? 1 : MathUtils.clamp((parentExpanded - 0.75f) / 0.25f, 0, 1);
+        if (isButtonColorLight && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            useFilledWhiteIcon = 0f;
         }
-        int iBlendARGB = ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText), -1, fClamp);
-        if (this.lastColorFilter == null || this.lastColorFilterColor != iBlendARGB) {
-            this.lastColorFilterColor = iBlendARGB;
-            this.lastColorFilter = new PorterDuffColorFilter(iBlendARGB, PorterDuff.Mode.SRC_IN);
+
+        final int textColor = ColorUtils.blendARGB(Color.BLACK, Color.WHITE, useFilledWhiteIcon);
+        if (lastColorFilter == null || lastColorFilterColor != textColor) {
+            lastColorFilterColor = textColor;
+            lastColorFilter = new PorterDuffColorFilter(textColor, PorterDuff.Mode.SRC_IN);
         }
+
         canvas.save();
-        float alpha = f2 * action.getAlpha();
-        float fCenterX = action.rect.centerX();
-        float fCenterY = action.rect.centerY();
-        float scale = f * action.getScale();
-        canvas.scale(scale, scale, fCenterX, fCenterY);
+        alpha *= action.getAlpha();
+        final float cx = action.rect.centerX();
+        final float cy = action.rect.centerY();
+        fraction *= action.getScale();
+        canvas.scale(fraction, fraction, cx, cy);
         canvas.clipRect(action.rect);
+
         updateBounds(action);
-        float height = ((action.bounds.bottom + action.bounds.top) - ((action.text.getHeight() * action.textScale) / 2.0f)) - AndroidUtilities.dp(6.0f);
+
+        final float textY = action.bounds.bottom + action.bounds.top - action.text.getHeight() * action.textScale / 2.0f - dp(4.66f);
         canvas.save();
-        canvas.scale(action.textScale, action.textScale, fCenterX, ((action.text.getHeight() * action.textScale) / 2.0f) + height);
-        action.text.draw(canvas, fCenterX - (action.text.getWidth() / 2.0f), height, iBlendARGB, alpha);
+        canvas.scale(action.textScale, action.textScale, cx, textY + action.text.getHeight() * action.textScale / 2.0f);
+        action.text.draw(canvas, cx - action.text.getWidth() / 2f, textY, textColor, alpha);
         canvas.restore();
-        int i = action.iconTranslationY;
-        if (i != 0) {
-            canvas.translate(0.0f, i);
+
+        if (action.iconTranslationY != 0) {
+            canvas.translate(0, action.iconTranslationY);
         }
-        float f3 = action.iconScale;
-        if (f3 != 1.0f) {
-            canvas.scale(f3, f3, action.bounds.centerX(), action.bounds.centerY());
+
+        if (action.iconScale != 1f) {
+            canvas.scale(action.iconScale, action.iconScale, action.bounds.centerX(), action.bounds.centerY());
         }
-        if (!this.isAnimatingCallAction || action.key != 5) {
-            boolean zIsBasePackOnly = IconManager.INSTANCE.isBasePackOnly(IconPackType.DEFAULT);
-            float f4 = zIsBasePackOnly ? (1.0f - fClamp) * alpha : 0.0f;
-            float f5 = !zIsBasePackOnly ? alpha : fClamp * alpha;
+        if (!isAnimatingCallAction || action.key != KEY_CALL) {
+            final float outlineAlpha = (1f - useFilledWhiteIcon) * alpha;
+            final float filledAlpha = useFilledWhiteIcon * alpha;
             if (action.drawableAnimated != null) {
-                if (action.key == 1) {
-                    drawActionDrawable(canvas, action.drawableOutline, f4);
-                    drawActionDrawable(canvas, action.drawableAnimated, f5);
+                if (action.key == KEY_NOTIFICATION) {
+                    drawActionDrawable(canvas, action.drawableOutline, outlineAlpha);
+                    drawActionDrawable(canvas, action.drawableAnimated, filledAlpha);
                 } else {
                     drawActionDrawable(canvas, action.drawableAnimated, alpha);
                 }
             } else {
-                drawActionDrawable(canvas, action.drawableOutline, f4);
-                drawActionDrawable(canvas, action.drawableFilled, f5);
+                drawActionDrawable(canvas, action.drawableOutline, outlineAlpha);
+                drawActionDrawable(canvas, action.drawableFilled, filledAlpha);
             }
         }
+
         canvas.restore();
         drawLoading(canvas, action, alpha);
     }
 
-    private void drawActionDrawable(Canvas canvas, Drawable drawable, float f) {
+    private void drawActionDrawable(Canvas canvas, Drawable drawable, float alpha) {
         if (drawable == null) {
             return;
         }
-        drawable.setColorFilter(this.lastColorFilter);
-        drawable.setAlpha((int) (f * 255.0f));
+
+        final int a = (int) (alpha * 255);
+
+        drawable.setColorFilter(lastColorFilter);
+        drawable.setAlpha(a);
         drawable.draw(canvas);
     }
 
-    private void drawLoading(Canvas canvas, Action action, float f) {
-        boolean z;
-        boolean z2 = false;
-        if (action.stopDelay > 0 && System.currentTimeMillis() > ((long) action.stopDelay) + action.startTime) {
+    private void drawLoading(Canvas canvas, Action action, float alpha) {
+        if (action.stopDelay > 0 && System.currentTimeMillis() > action.stopDelay + action.startTime) {
             action.isLoading = false;
         }
-        boolean z3 = action.isLoading;
-        LoadingDrawable loadingDrawable = action.loadingDrawable;
-        if (z3) {
-            if (loadingDrawable == null) {
-                LoadingDrawable loadingDrawable2 = new LoadingDrawable();
-                action.loadingDrawable = loadingDrawable2;
-                loadingDrawable2.setCallback(this);
-                action.loadingDrawable.setColors(Theme.multAlpha(-1, 0.1f), Theme.multAlpha(-1, 0.3f), Theme.multAlpha(-1, 0.35f), Theme.multAlpha(-1, 0.8f));
+
+        if (action.isLoading) {
+            if (action.loadingDrawable == null) {
+                action.loadingDrawable = new LoadingDrawable();
+                action.loadingDrawable.setCallback(this);
+                action.loadingDrawable.setColors(
+                        Theme.multAlpha(Color.WHITE, .1f),
+                        Theme.multAlpha(Color.WHITE, .3f),
+                        Theme.multAlpha(Color.WHITE, .35f),
+                        Theme.multAlpha(Color.WHITE, .8f)
+                );
                 action.loadingDrawable.setAppearByGradient(true);
-                action.loadingDrawable.strokePaint.setStrokeWidth(AndroidUtilities.dpf2(1.25f));
-            } else if (loadingDrawable.isDisappeared() || action.loadingDrawable.isDisappearing()) {
+                action.loadingDrawable.strokePaint.setStrokeWidth(dpf2(1.25f));
+            } else if (action.loadingDrawable.isDisappeared() || action.loadingDrawable.isDisappearing()) {
                 action.loadingDrawable.reset();
                 action.loadingDrawable.resetDisappear();
             }
-        } else if (loadingDrawable != null && !loadingDrawable.isDisappearing() && !action.loadingDrawable.isDisappeared()) {
+        } else if (action.loadingDrawable != null && !action.loadingDrawable.isDisappearing() && !action.loadingDrawable.isDisappeared()) {
             action.loadingDrawable.disappear();
         }
-        LoadingDrawable loadingDrawable3 = action.loadingDrawable;
-        if (loadingDrawable3 != null) {
-            loadingDrawable3.setBounds(action.rect);
-            if (isSegmentedMode()) {
-                float roundRadius = getRoundRadius();
-                float innerRoundRadius = getInnerRoundRadius();
-                boolean z4 = action.isDeleting;
-                if (z4) {
-                    z = action.wasFirst;
-                } else {
-                    z = action == this.firstAction;
-                }
-                if (z4) {
-                    z2 = action.wasLast;
-                } else if (action == this.lastAction) {
-                    z2 = true;
-                }
-                LoadingDrawable loadingDrawable4 = action.loadingDrawable;
-                float f2 = z ? roundRadius : innerRoundRadius;
-                float f3 = z2 ? roundRadius : innerRoundRadius;
-                float f4 = z2 ? roundRadius : innerRoundRadius;
-                if (!z) {
-                    roundRadius = innerRoundRadius;
-                }
-                loadingDrawable4.setRadii(f2, f3, f4, roundRadius);
-            } else {
-                action.loadingDrawable.setRadii(getRoundRadius());
-            }
-            action.loadingDrawable.setAlpha((int) (f * 255.0f));
+
+        if (action.loadingDrawable != null) {
+            action.loadingDrawable.setBounds(action.rect);
+            action.loadingDrawable.setRadii(getRoundRadius());
+            action.loadingDrawable.setAlpha((int) (0xFF * alpha));
             action.loadingDrawable.draw(canvas);
         }
     }
 
     public float getRoundRadius() {
-        return AndroidUtilities.dp(ExteraConfig.getSectionRadiusDp());
+        return dp(16);
     }
 
-    public float getInnerRoundRadius() {
-        return Math.min(AndroidUtilities.dp(4.0f), ExteraConfig.getSectionRadiusDp());
-    }
+    private Action hit = null;
+    private float downX, downY;
+    private long downTime;
 
-    @Override // android.view.View
-    public boolean onTouchEvent(MotionEvent motionEvent) {
-        Action action;
-        if (this.currentHeight < AndroidUtilities.dp(8.0f)) {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (currentHeight < dp(8)) {
             return false;
         }
-        float x = motionEvent.getX();
-        float y = motionEvent.getY();
-        int action2 = motionEvent.getAction();
-        if (action2 == 0) {
-            this.hit = null;
-            int size = this.actions.size();
-            for (int i = 0; i < size; i++) {
-                Action action3 = this.actions.get(i);
-                if (!action3.isDeleting && action3.rect.contains(x, y)) {
-                    this.hit = action3;
-                    this.downX = x;
-                    this.downY = y;
-                    this.downTime = System.currentTimeMillis();
-                    this.hit.bounce.setPressed(true);
-                    this.hit.rippleDrawable.setHotspot(x, y);
-                    this.hit.rippleDrawable.setState(new int[]{R.attr.state_pressed, R.attr.state_enabled});
+
+        float x = event.getX();
+        float y = event.getY();
+        int eventAction = event.getAction();
+
+        if (eventAction == MotionEvent.ACTION_DOWN) {
+            hit = null;
+            int c = actions.size();
+            for (int i = 0; i < c; i++) {
+                Action a = actions.get(i);
+                if (!a.isDeleting && a.rect.contains(x, y)) {
+                    hit = a;
+                    downX = x;
+                    downY = y;
+                    downTime = System.currentTimeMillis();
+                    hit.bounce.setPressed(true);
+//                    try {
+//                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+//                    } catch (Exception ignore) {}
                     break;
                 }
             }
-        } else if (action2 == 2) {
-            if (this.hit != null && (Math.abs(x - this.downX) > 20.0f || Math.abs(y - this.downY) > 20.0f)) {
-                this.hit.bounce.setPressed(false);
-                this.hit.rippleDrawable.setState(new int[0]);
-                this.hit = null;
+        } else if (eventAction == MotionEvent.ACTION_MOVE) {
+            if (hit != null) {
+                if (Math.abs(x - downX) > 20 || Math.abs(y - downY) > 20) {
+                    hit.bounce.setPressed(false);
+                    hit = null;
+                }
             }
-        } else if ((action2 == 1 || action2 == 3) && (action = this.hit) != null) {
-            action.bounce.setPressed(false);
-            this.hit.rippleDrawable.setState(new int[0]);
-            if (action2 == 1 && this.hit.rect.contains(x, y)) {
-                if (System.currentTimeMillis() - this.downTime > 250) {
-                    try {
-                        performHapticFeedback(VibratorUtils.getType(0), 1);
-                    } catch (Exception unused) {
+        } else if (eventAction == MotionEvent.ACTION_UP || eventAction == MotionEvent.ACTION_CANCEL) {
+            if (hit != null) {
+                hit.bounce.setPressed(false);
+                if (eventAction == MotionEvent.ACTION_UP && hit.rect.contains(x, y)) {
+                    if (System.currentTimeMillis() - downTime > 250) {
+                        try {
+                            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+                        } catch (Exception ignore) {
+                        }
+                    }
+                    if (hit.supportsLoading && !hit.isLoading) {
+                        hit.isLoading = true;
+                        invalidate();
+                    }
+                    if (hit.supportsAnimate != 0) {
+                        hit.updateDrawable(true, hit.supportsAnimate);
+                    }
+                    hit.startTime = System.currentTimeMillis();
+                    final Action finalHit = hit;
+                    if (onActionClickListener != null) {
+                        if (finalHit.callDelay == 0) {
+                            onActionClickListener.onClick(hit.key, hit.rect.left, hit.rect.top);
+                        } else {
+                            postDelayed(() -> {
+                                onActionClickListener.onClick(finalHit.key, finalHit.rect.left, finalHit.rect.top);
+                            }, finalHit.callDelay);
+                        }
                     }
                 }
-                Action action4 = this.hit;
-                if (action4.supportsLoading && !action4.isLoading) {
-                    action4.isLoading = true;
-                    invalidate();
-                }
-                if (this.hit.supportsAnimate != 0 && IconManager.INSTANCE.isBasePackOnly(IconPackType.DEFAULT)) {
-                    Action action5 = this.hit;
-                    action5.updateDrawable(true, action5.supportsAnimate);
-                }
-                this.hit.startTime = System.currentTimeMillis();
-                final Action action6 = this.hit;
-                OnActionClickListener onActionClickListener = this.onActionClickListener;
-                if (onActionClickListener != null) {
-                    if (action6.callDelay == 0) {
-                        int i2 = action6.key;
-                        RectF rectF = action6.rect;
-                        onActionClickListener.onClick(i2, rectF.left, rectF.top);
+                hit = null;
+                return true;
+            }
+        }
+        return hit != null;
+    }
+
+    @Override
+    protected boolean verifyDrawable(@NonNull Drawable who) {
+        return super.verifyDrawable(who) || who instanceof LoadingDrawable;
+    }
+
+    public void beginApplyingActions() {
+        isApplying = true;
+    }
+
+    public void commitActions() {
+        if (isApplying) {
+            isApplying = false;
+            applyVisibleActions();
+        }
+    }
+
+    public void set(int key, boolean enabled) {
+        boolean changed;
+        if (enabled) {
+            changed = allAvailableActions.add(key);
+        } else {
+            changed = allAvailableActions.remove(key);
+        }
+        if (changed) {
+            applyVisibleActions();
+        }
+    }
+
+    public void setNotifications(boolean enabled) {
+        final boolean animated = isNotificationsEnabled != enabled;
+        isNotificationsEnabled = enabled;
+        Action notificationAction = find(KEY_NOTIFICATION);
+        if (notificationAction != null) {
+            updateNotification(notificationAction, animated);
+            invalidate();
+        } else {
+            allAvailableActions.add(KEY_NOTIFICATION);
+            applyVisibleActions();
+        }
+    }
+
+    public void addCameraAction() {
+        Action action = new Action(ActionButton.SET_PHOTO);
+        action.key = KEY_SET_PHOTO;
+        actions.add(action);
+    }
+
+    public void addEditInfo() {
+        final Action action = new Action(ActionButton.EDIT_INFO);
+        action.key = KEY_EDIT_INFO;
+        actions.add(action);
+    }
+
+    public void addSettings() {
+        final Action action = new Action(ActionButton.SETTINGS);
+        action.key = KEY_SETTINGS;
+        actions.add(action);
+    }
+
+    public void startAnimatedActions() {
+        if (mode == MODE_MY_PROFILE) {
+            int c = actions.size();
+            for (int i = 0; i < c; i++) {
+                Action a = actions.get(i);
+                if (a.drawableAnimated != null) {
+                    if (a.key == KEY_EDIT_USERNAME) {
+                        a.drawableAnimated.setCurrentFrame(14);
                     } else {
-                        postDelayed(new Runnable() { // from class: org.telegram.ui.Components.ProfileActionsView$$ExternalSyntheticLambda2
-                            @Override // java.lang.Runnable
-                            public final void run() {
-                                this.f$0.lambda$onTouchEvent$0(action6);
-                            }
-                        }, action6.callDelay);
+                        a.drawableAnimated.setCurrentFrame(0);
                     }
+                    a.drawableAnimated.start();
                 }
             }
-            this.hit = null;
-            return true;
         }
-        return this.hit != null;
     }
 
-    public void lambda$applyVisibleActions$2(List list) {
-        int i = this.activeCount;
-        int size = list.size();
-        this.activeCount = size;
-        if (i != size && this.radialGradient != null) {
-            createColorShader();
+    public boolean supportsEditInfo() {
+        return mode == MODE_MY_PROFILE;
+    }
+
+    public void startCameraAnimation() {
+        Action camera = find(KEY_SET_PHOTO);
+        if (camera != null && camera.drawableAnimated != null) {
+            camera.drawableAnimated.start();
         }
-        int size2 = this.actions.size();
-        int i2 = 0;
-        while (true) {
-            List<Action> list2 = this.actions;
-            if (i2 < size2) {
-                Action action = list2.get(i2);
-                if (action.isDeleting && !action.isDeleted) {
-                    list.add(action);
-                } else if (find(list, action.key) == null) {
-                    action.delete();
-                    list.add(action);
-                }
-                i2++;
+    }
+
+    public boolean canHaveJoinAction() {
+        return mode == MODE_CHANNEL || mode == MODE_GROUP;
+    }
+
+    private void updateNotification(Action notificationAction, boolean animated) {
+        if (animated) {
+            if (isNotificationsEnabled) {
+                notificationAction.setText(getString(ActionButton.NOTIFICATION_MUTE.title));
+                notificationAction.updateDrawable(
+                    R.raw.profile_unmuting,
+                    ActionButton.NOTIFICATION_MUTE.filledIcon,
+                    ActionButton.NOTIFICATION_MUTE.outlineIcon
+                );
             } else {
-                list2.clear();
-                this.actions.addAll(list);
-                invalidate();
-                return;
+                notificationAction.setText(getString(ActionButton.NOTIFICATION_UNMUTE.title));
+                notificationAction.updateDrawable(
+                    R.raw.profile_muting,
+                    ActionButton.NOTIFICATION_UNMUTE.filledIcon,
+                    ActionButton.NOTIFICATION_UNMUTE.outlineIcon
+                );
             }
+        } else {
+            notificationAction.update(isNotificationsEnabled ? ActionButton.NOTIFICATION_MUTE : ActionButton.NOTIFICATION_UNMUTE);
         }
     }
 
-    private void insertIfAvailable(List<Action> list, int i) {
-        if (this.allAvailableActions.contains(Integer.valueOf(i))) {
-            list.add(getOrCreate(i));
-        }
-    }
-
-    private void insertIfNotAvailable(List<Action> list, int i, int i2) {
-        if (!this.allAvailableActions.contains(Integer.valueOf(i)) || this.allAvailableActions.contains(Integer.valueOf(i2))) {
+    private void applyVisibleActions() {
+        if (isApplying) return;
+        if (mode == MODE_MY_PROFILE) {
+            activeCount = actions.size();
+            invalidate();
             return;
         }
-        list.add(getOrCreate(i));
+
+        List<Action> out = new ArrayList<>();
+        boolean join = hasJoin();
+
+        switch (mode) {
+            case MODE_USER:
+                insertIfAvailable(out, KEY_MESSAGE);
+                insertIfAvailable(out, KEY_NOTIFICATION);
+                insertIfAvailable(out, KEY_CALL);
+                insertIfAvailable(out, KEY_VIDEO);
+                insertIfNotAvailable(out, KEY_GIFT, KEY_VIDEO);
+                break;
+            case MODE_TOPIC:
+                insertIfAvailable(out, KEY_MESSAGE);
+                insertIfAvailable(out, KEY_NOTIFICATION);
+                break;
+            case MODE_CHANNEL:
+                if (join) {
+                    insertIfAvailable(out, KEY_JOIN);
+                } else {
+                    insertIfAvailable(out, KEY_VOICE_CHAT);
+                    insertIfNotAvailable(out, KEY_STREAM, KEY_VOICE_CHAT);
+                }
+                insertIfAvailable(out, KEY_NOTIFICATION);
+                if (!join) {
+                    insertIfAvailable(out, KEY_DISCUSS);
+                    insertIfNotAvailable2(out, KEY_GIFT, KEY_DISCUSS, KEY_STORY);
+                }
+                insertIfNotAvailable(out, KEY_SHARE, KEY_STORY);
+                if (join) {
+                    out.add(getOrCreate(KEY_REPORT));
+                } else {
+                    insertIfAvailable(out, KEY_STORY);
+                    insertIfNotAvailable(out, KEY_LEAVE, KEY_STORY);
+                }
+                break;
+            case MODE_GROUP:
+            case MODE_FORUM:
+                if (join) {
+                    insertIfAvailable(out, KEY_JOIN);
+                } else {
+                    insertIfAvailable(out, KEY_MESSAGE);
+                }
+                insertIfAvailable(out, KEY_NOTIFICATION);
+                if (join) {
+                    out.add(getOrCreate(KEY_REPORT));
+                } else {
+                    insertIfAvailable(out, KEY_VOICE_CHAT);
+                    insertIfNotAvailable(out, KEY_STREAM, KEY_VOICE_CHAT);
+                    insertIfAvailable(out, KEY_STORY);
+                    insertIfAvailable(out, KEY_LEAVE);
+                }
+                break;
+            case MODE_BOT:
+                insertIfAvailable(out, KEY_MESSAGE);
+                insertIfAvailable(out, KEY_NOTIFICATION);
+                insertIfAvailable(out, KEY_SHARE);
+                out.add(getOrCreate(KEY_STOP));
+                break;
+        }
+
+        AndroidUtilities.runOnUIThread(() -> {
+            int oldCount = activeCount;
+            activeCount = out.size();
+
+            if (oldCount != activeCount && radialGradient != null) {
+                createColorShader();
+            }
+
+            int c = actions.size();
+            for (int i = 0; i < c; i++) {
+                Action a = actions.get(i);
+                if (a.isDeleting && !a.isDeleted) {
+                    out.add(a);
+                } else if (find(out, a.key) == null) {
+                    a.delete();
+                    out.add(a);
+                }
+            }
+
+            actions.clear();
+            actions.addAll(out);
+            invalidate();
+        });
     }
 
-    private void insertIfNotAvailable2(List<Action> list, int i, int i2, int i3) {
-        if (!this.allAvailableActions.contains(Integer.valueOf(i)) || this.allAvailableActions.contains(Integer.valueOf(i2)) || this.allAvailableActions.contains(Integer.valueOf(i3))) {
-            return;
+    private void insertIfAvailable(List<Action> list, int key) {
+        if (allAvailableActions.contains(key)) {
+            list.add(getOrCreate(key));
         }
-        list.add(getOrCreate(i));
+    }
+
+    private void insertIfNotAvailable(List<Action> list, int key, int notAvailable) {
+        if (allAvailableActions.contains(key) &&
+                !allAvailableActions.contains(notAvailable)) {
+            list.add(getOrCreate(key));
+        }
+    }
+
+    private void insertIfNotAvailable2(List<Action> list, int key, int notAvailable1, int notAvailable2) {
+        if (allAvailableActions.contains(key) &&
+                !allAvailableActions.contains(notAvailable1) &&
+                !allAvailableActions.contains(notAvailable2)) {
+            list.add(getOrCreate(key));
+        }
     }
 
     private boolean hasJoin() {
-        return this.allAvailableActions.contains(7) && !this.allAvailableActions.contains(9);
+        return allAvailableActions.contains(KEY_JOIN) &&
+                !allAvailableActions.contains(KEY_LEAVE);
     }
 
-    private Action getOrCreate(int i) {
-        Action actionFind = find(i);
-        if (actionFind != null) {
-            if (i == 1) {
-                updateNotification(actionFind, false);
+    private Action getOrCreate(int key) {
+        Action newAction = find(key);
+        if (newAction != null) {
+            if (key == KEY_NOTIFICATION) {
+                updateNotification(newAction, false);
             }
-            return actionFind;
+            return newAction;
         }
-        if (i != 18) {
-            switch (i) {
-                case 0:
-                    actionFind = new Action(ActionButton.MESSAGE);
-                    break;
-                case 1:
-                    actionFind = new Action();
-                    updateNotification(actionFind, false);
-                    break;
-                case 2:
-                    actionFind = new Action(ActionButton.DISCUSS);
-                    break;
-                case 3:
-                    actionFind = new Action(ActionButton.GIFT);
-                    actionFind.supportsLoading = true;
-                    actionFind.stopDelay = 200;
-                    break;
-                case 4:
-                    actionFind = new Action(ActionButton.SHARE);
-                    break;
-                case 5:
-                    actionFind = new Action(ActionButton.CALL);
-                    this.callAction = actionFind;
-                    actionFind.supportsLoading = true;
-                    actionFind.stopDelay = MediaError.DetailedErrorCode.SEGMENT_UNKNOWN;
-                    break;
-                case 6:
-                    actionFind = new Action(ActionButton.VIDEO);
-                    actionFind.supportsLoading = true;
-                    actionFind.stopDelay = MediaError.DetailedErrorCode.SEGMENT_UNKNOWN;
-                    break;
-                case 7:
-                    actionFind = new Action(ActionButton.JOIN);
-                    actionFind.supportsLoading = true;
-                    actionFind.callDelay = 300;
-                    break;
-                case 8:
-                    actionFind = new Action(ActionButton.REPORT);
-                    actionFind.supportsLoading = true;
-                    actionFind.stopDelay = MediaError.DetailedErrorCode.SEGMENT_UNKNOWN;
-                    break;
-                case 9:
-                    actionFind = new Action(ActionButton.LEAVE);
-                    actionFind.supportsLoading = true;
-                    actionFind.supportsAnimate = org.telegram.messenger.R.raw.profile_leave;
-                    actionFind.stopDelay = 300;
-                    break;
-                case 10:
-                    actionFind = new Action(ActionButton.VOICE_CHAT);
-                    actionFind.supportsLoading = true;
-                    actionFind.supportsAnimate = org.telegram.messenger.R.raw.profile_voicechat;
-                    actionFind.stopDelay = MediaError.DetailedErrorCode.SEGMENT_UNKNOWN;
-                    break;
-                case 11:
-                    actionFind = new Action(ActionButton.STREAM);
-                    actionFind.supportsLoading = true;
-                    actionFind.supportsAnimate = org.telegram.messenger.R.raw.profile_voicechat;
-                    actionFind.stopDelay = MediaError.DetailedErrorCode.SEGMENT_UNKNOWN;
-                    break;
-                case 12:
-                    actionFind = new Action(ActionButton.STORY);
-                    break;
-                case 13:
-                    actionFind = new Action(ActionButton.STOP);
-                    actionFind.supportsLoading = true;
-                    actionFind.stopDelay = 300;
-                    break;
-            }
-        } else {
-            actionFind = new Action(ActionButton.OPEN_CHANNEL);
+
+        switch (key) {
+            case KEY_MESSAGE:
+                newAction = new Action(ActionButton.MESSAGE);
+                break;
+            case KEY_DISCUSS:
+                newAction = new Action(ActionButton.DISCUSS);
+                break;
+            case KEY_GIFT:
+                newAction = new Action(ActionButton.GIFT);
+                newAction.supportsLoading = true;
+                newAction.stopDelay = 200;
+                break;
+            case KEY_SHARE:
+                newAction = new Action(ActionButton.SHARE);
+                break;
+            case KEY_CALL:
+                newAction = new Action(ActionButton.CALL);
+                callAction = newAction;
+                newAction.supportsLoading = true;
+                newAction.stopDelay = 500;
+                break;
+            case KEY_VIDEO:
+                newAction = new Action(ActionButton.VIDEO);
+                newAction.supportsLoading = true;
+                newAction.stopDelay = 500;
+                break;
+            case KEY_JOIN:
+                newAction = new Action(ActionButton.JOIN);
+                newAction.supportsLoading = true;
+                newAction.callDelay = 300;
+                break;
+            case KEY_REPORT:
+                newAction = new Action(ActionButton.REPORT);
+                newAction.supportsLoading = true;
+                newAction.stopDelay = 500;
+                break;
+            case KEY_LEAVE:
+                newAction = new Action(ActionButton.LEAVE);
+                newAction.supportsLoading = true;
+                newAction.supportsAnimate = R.raw.profile_leave;
+                newAction.stopDelay = 300;
+                break;
+            case KEY_VOICE_CHAT:
+                newAction = new Action(ActionButton.VOICE_CHAT);
+                newAction.supportsLoading = true;
+                newAction.supportsAnimate = R.raw.profile_voicechat;
+                newAction.stopDelay = 500;
+                break;
+            case KEY_STREAM:
+                newAction = new Action(ActionButton.STREAM);
+                newAction.supportsLoading = true;
+                newAction.supportsAnimate = R.raw.profile_voicechat;
+                newAction.stopDelay = 500;
+                break;
+            case KEY_STORY:
+                newAction = new Action(ActionButton.STORY);
+                break;
+            case KEY_STOP:
+                newAction = new Action(ActionButton.STOP);
+                newAction.supportsLoading = true;
+                newAction.stopDelay = 300;
+                break;
+            case KEY_NOTIFICATION:
+                newAction = new Action();
+                updateNotification(newAction, false);
+                break;
         }
-        if (actionFind != null) {
-            actionFind.key = i;
+
+        if (newAction != null) {
+            newAction.key = key;
         }
-        return actionFind;
+        return newAction;
     }
 
-    private Action find(int i) {
-        return find(this.actions, i);
+    private Action find(int key) {
+        return find(actions, key);
     }
 
-    private Action find(List<Action> list, int i) {
-        int size = list.size();
-        for (int i2 = 0; i2 < size; i2++) {
-            Action action = list.get(i2);
-            if (!action.isDeleting && action.key == i) {
-                return action;
+    private Action find(List<Action> actions, int key) {
+        int c = actions.size();
+        for (int i = 0; i < c; i++) {
+            Action a = actions.get(i);
+            if (!a.isDeleting && a.key == key) {
+                return a;
             }
         }
         return null;
     }
 
     public boolean hasCall() {
-        return this.allAvailableActions.contains(5) && this.callAction != null;
+        return allAvailableActions.contains(KEY_CALL) && callAction != null;
     }
 
-    public class Action {
-        private final ButtonBounce bounce;
-        private RLottieDrawable drawableAnimated;
-        private Drawable drawableFilled;
-        private Drawable drawableOutline;
-        boolean isLoading;
+    private boolean callAnimationStateLoaded = false;
+    private float callBackwardAnimateFromX = -1;
+    private float callBackwardAnimateFromY = -1;
+
+    public void applyCallTransition(
+            View callView,
+            boolean isOpen,
+            float maxBottom,
+            float fraction
+    ) {
+        if (callView == null || getMeasuredWidth() <= 0f) {
+            return;
+        }
+
+        float callAnimateFromX = callView.getLeft();
+        float callAnimateFromY = callView.getTop();
+        if (isOpen) {
+            int c = actions.size();
+            final float betweenPadding = xpadding / 2f;
+            final float width = getItemWidth();
+            float left = xpadding;
+
+            for (int i = 0; i < c; i++) {
+                Action action = actions.get(i);
+                if (action.isDeleted) continue;
+                if (action.key == KEY_CALL) {
+                    callAction.rect.set(left, top, left + width, top + targetHeight);
+                    break;
+                }
+                left += width + betweenPadding;
+            }
+
+            updateBounds(callAction);
+
+            float callAnimateEndY = maxBottom - targetHeight - ypadding - top
+                    + callAction.bounds.centerY()
+                    - callView.getMeasuredHeight() / 2f
+                    - callAnimateFromY;
+            float callAnimateEndX = callAction.bounds.centerX()
+                    - callView.getMeasuredWidth() / 2f
+                    - callAnimateFromX;
+
+            callView.setTranslationX(AndroidUtilities.lerp(0f, callAnimateEndX, fraction));
+            callView.setTranslationY(AndroidUtilities.lerp(0f, callAnimateEndY, fraction));
+        } else {
+            if (!callAnimationStateLoaded) {
+                callAnimationStateLoaded = true;
+                callBackwardAnimateFromY = getTranslationY()
+                        + callAction.bounds.centerY()
+                        - callView.getMeasuredHeight() / 2f
+                        - callAnimateFromY;
+
+                callBackwardAnimateFromX = callAction.bounds.centerX()
+                        - callView.getMeasuredWidth() / 2f
+                        - callAnimateFromX;
+            }
+
+            callView.setTranslationX(AndroidUtilities.lerp(0f, callBackwardAnimateFromX, fraction));
+            callView.setTranslationY(AndroidUtilities.lerp(0f, callBackwardAnimateFromY, fraction));
+        }
+
+        if (callView.getVisibility() != View.VISIBLE) {
+            callView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public interface OnActionClickListener {
+        void onClick(int key, float x, float y);
+    }
+
+    private class Action {
         int key;
-        LoadingDrawable loadingDrawable;
-        private final AnimatedFloat positionFraction;
-        long startTime;
-        int stopDelay;
-        int supportsAnimate;
-        boolean supportsLoading;
-        private Text text;
-        boolean wasFirst;
-        boolean wasLast;
+
+        private final ButtonBounce bounce = new ButtonBounce(ProfileActionsView.this);
         final RectF prevRect = new RectF();
         final RectF rect = new RectF();
+
+        private final AnimatedFloat positionFraction = new AnimatedFloat(ProfileActionsView.this, 0, 250, CubicBezierInterpolator.DEFAULT);
         private final RectF to = new RectF();
         private final RectF from = new RectF();
-        private final Rect bounds = new Rect();
-        private float textScale = 1.0f;
-        boolean isOpening = false;
-        boolean isDeleting = false;
-        boolean isDeleted = false;
-        int iconTranslationY = 0;
-        float iconScale = 1.0f;
-        int callDelay = 0;
-        private final Drawable rippleDrawable = createRippleDrawable();
 
-        public void setBounds(int i, int i2, int i3, int i4) {
-            this.bounds.set(i, i2, i3, i4);
+        private final Rect bounds = new Rect();
+        private Drawable drawableFilled;
+        private Drawable drawableOutline;
+        private RLottieDrawable drawableAnimated;
+        private Text text;
+        private float textScale = 1.0f;
+
+        public void setBounds(int l, int t, int r, int b) {
+            bounds.set(l, t, r, b);
             checkBounds();
         }
 
         private void checkBounds() {
-            RLottieDrawable rLottieDrawable = this.drawableAnimated;
-            if (rLottieDrawable != null) {
-                rLottieDrawable.setBounds(this.bounds);
+            if (drawableAnimated != null) {
+                drawableAnimated.setBounds(bounds);
             }
-            Drawable drawable = this.drawableFilled;
-            if (drawable != null) {
-                drawable.setBounds(this.bounds);
+            if (drawableFilled != null) {
+                drawableFilled.setBounds(bounds);
             }
-            Drawable drawable2 = this.drawableOutline;
-            if (drawable2 != null) {
-                drawable2.setBounds(this.bounds);
+            if (drawableOutline != null) {
+                drawableOutline.setBounds(bounds);
             }
         }
 
-        public void setText(CharSequence charSequence) {
-            this.text = new Text(charSequence, 11.0f, AndroidUtilities.bold()).multiline(3).align(Layout.Alignment.ALIGN_CENTER);
+        public void setText(CharSequence cs) {
+            this.text = new Text(cs, 11, AndroidUtilities.bold())
+                .multiline(3)
+                .align(Layout.Alignment.ALIGN_CENTER);
         }
+
+        boolean isOpening = false;
+        boolean isDeleting = false;
+        boolean isDeleted = false;
+
+        int iconTranslationY = 0;
+        float iconScale = 1f;
+
+        LoadingDrawable loadingDrawable;
+        boolean isLoading;
+        boolean supportsLoading;
+        int supportsAnimate;
+        int callDelay = 0;
+        long startTime;
+        int stopDelay;
 
         @Deprecated
         public Action() {
-            this.bounce = new ButtonBounce(ProfileActionsView.this);
-            this.positionFraction = new AnimatedFloat(ProfileActionsView.this, 0L, 250L, CubicBezierInterpolator.DEFAULT);
         }
 
-        public Action(ActionButton actionButton) {
-            this.bounce = new ButtonBounce(ProfileActionsView.this);
-            this.positionFraction = new AnimatedFloat(ProfileActionsView.this, 0L, 250L, CubicBezierInterpolator.DEFAULT);
-            update(actionButton);
+        public Action(ActionButton button) {
+            update(button);
         }
 
         public float getAlpha() {
-            if (this.isDeleting) {
-                return 1.0f - this.positionFraction.set(1.0f);
+            if (isDeleting) {
+                return 1f - positionFraction.set(1f);
+            } else if (isOpening) {
+                return positionFraction.set(1f);
+            } else {
+                return 1f;
             }
-            if (this.isOpening) {
-                return this.positionFraction.set(1.0f);
-            }
-            return 1.0f;
-        }
-
-        private Drawable createRippleDrawable() {
-            int sectionRadiusDp = ProfileActionsView.this.isSegmentedMode() ? 0 : ExteraConfig.getSectionRadiusDp();
-            Drawable drawableCreateRadSelectorDrawable = Theme.createRadSelectorDrawable(0, 285212671, sectionRadiusDp, sectionRadiusDp);
-            drawableCreateRadSelectorDrawable.setCallback(ProfileActionsView.this);
-            return drawableCreateRadSelectorDrawable;
         }
 
         public void delete() {
-            LoadingDrawable loadingDrawable = this.loadingDrawable;
-            boolean z = false;
             if (loadingDrawable != null) {
                 loadingDrawable.disappear();
-                this.supportsLoading = false;
-                this.isLoading = false;
+                supportsLoading = false;
+                isLoading = false;
             }
-            this.isDeleting = true;
-            this.wasFirst = this == ProfileActionsView.this.firstAction;
-            this.wasLast = this == ProfileActionsView.this.lastAction;
-            RectF rectF = this.prevRect;
-            float f = rectF.left - 1.0f;
-            ProfileActionsView profileActionsView = ProfileActionsView.this;
-            boolean z2 = f <= profileActionsView.xpadding;
-            boolean z3 = rectF.right + 1.0f >= ((float) profileActionsView.getMeasuredWidth()) - ProfileActionsView.this.xpadding;
-            if (z2 && z3) {
-                z3 = false;
+            isDeleting = true;
+
+            boolean isFirstItem = prevRect.left - 1 <= xpadding;
+            boolean isLastItem = prevRect.right + 1 >= getMeasuredWidth() - xpadding;
+
+            if (isFirstItem && isLastItem) {
+                isFirstItem = isLastItem = false;
+            }
+            from.set(prevRect);
+            to.set(prevRect);
+
+            if (isFirstItem) {
+                to.right = to.left;
+            } else if (isLastItem) {
+                to.left = to.right;
+            } else if ((key == KEY_GIFT || key == KEY_DISCUSS) && mode == MODE_CHANNEL) {
+                to.left = to.right;
             } else {
-                z = z2;
+                to.left = to.right = to.centerX();
             }
-            this.from.set(this.prevRect);
-            this.to.set(this.prevRect);
-            if (z) {
-                RectF rectF2 = this.to;
-                rectF2.right = rectF2.left;
-            } else if (z3) {
-                RectF rectF3 = this.to;
-                rectF3.left = rectF3.right;
-            } else {
-                int i = this.key;
-                if ((i == 3 || i == 2) && ProfileActionsView.this.mode == 1) {
-                    RectF rectF4 = this.to;
-                    rectF4.left = rectF4.right;
-                } else {
-                    RectF rectF5 = this.to;
-                    float fCenterX = rectF5.centerX();
-                    rectF5.right = fCenterX;
-                    rectF5.left = fCenterX;
-                }
-            }
-            this.positionFraction.set(0.0f, true);
+            positionFraction.set(0f, true);
         }
 
         @Deprecated
-        public void updateDrawable(boolean z, int i) {
-            if (z) {
-                updateDrawable(i, 0, 0);
+        public void updateDrawable(boolean animated, int drawableRes) {
+            if (animated) {
+                updateDrawable(drawableRes, 0, 0);
             } else {
-                updateDrawable(0, i, i);
+                updateDrawable(0, drawableRes, drawableRes);
             }
         }
 
-        ActionButton[] $values() {
-            return new ActionButton[]{MESSAGE, NOTIFICATION_MUTE, NOTIFICATION_UNMUTE, DISCUSS, GIFT, SHARE, CALL, VIDEO, JOIN, REPORT, LEAVE, VOICE_CHAT, STREAM, STORY, OPEN_CHANNEL, STOP, SET_PHOTO, EDIT_USERNAME, EDIT_INFO, SETTINGS};
+        @Deprecated
+        public void update(boolean animated, int drawableRes, int textRes) {
+            updateDrawable(animated, drawableRes);
+            setText(getString(textRes));
         }
 
-        public static ActionButton valueOf(String str) {
-            return (ActionButton) Enum.valueOf(ActionButton.class, str);
+        public void updatePosition() {
+            if (isDeleting) {
+                animatePosition();
+                return;
+            }
+
+            if (isOpeningLayout) {
+                isOpening = false;
+                prevRect.set(rect);
+                from.set(rect);
+                to.set(rect);
+                positionFraction.set(1f, true);
+                return;
+            }
+
+            if (to.isEmpty()) {
+                isOpening = true;
+                to.set(rect);
+                from.set(rect);
+
+                boolean fromRight = rect.left - 1 <= xpadding;
+                boolean fromLeft = rect.right + 1 >= getMeasuredWidth() - xpadding;
+
+                if ((fromRight && fromLeft) ||
+                        (firstAction != null && firstAction.key == key) ||
+                        (lastAction != null && lastAction.key == key)) {
+                    fromRight = fromLeft = false;
+                }
+
+                if ((key == KEY_CALL || key == KEY_VIDEO) && mode == MODE_USER) {
+                    fromLeft = false;
+                    fromRight = true;
+                } else if ((key == KEY_GIFT || key == KEY_DISCUSS) && mode == MODE_CHANNEL) {
+                    fromLeft = false;
+                    fromRight = true;
+                } else if (fromRight && firstAction != null && !firstAction.isDeleting) {
+                    fromLeft = true;
+                    fromRight = false;
+                } else if (fromLeft && lastAction != null && !lastAction.isDeleting) {
+                    fromLeft = false;
+                    fromRight = true;
+                }
+
+                if (fromRight) {
+                    from.left = from.right;
+                } else if (fromLeft) {
+                    from.right = from.left;
+                } else {
+                    from.left = from.right = to.centerX();
+                }
+
+                positionFraction.set(0f, true);
+            }
+
+            if (!rect.equals(to)) {
+                from.set(prevRect);
+                to.set(rect);
+                positionFraction.set(0f, true);
+            }
+
+            animatePosition();
+            prevRect.set(rect);
         }
 
-        public static ActionButton[] values() {
-            return (ActionButton[]) $VALUES.clone();
+        private void animatePosition() {
+            float fraction = positionFraction.set(1f);
+            if (fraction != 1f) {
+                rect.left = AndroidUtilities.lerp(from.left, to.left, fraction);
+                rect.right = AndroidUtilities.lerp(from.right, to.right, fraction);
+            } else {
+                isOpening = false;
+                if (isDeleting) {
+                    isDeleted = true;
+                }
+            }
         }
 
-        static {
-            int i = org.telegram.messenger.R.string.ProfileActionsLeave;
-            int i2 = org.telegram.messenger.R.drawable.leave;
-            LEAVE = new ActionButton("LEAVE", 10, i, i2, i2);
-            int i3 = org.telegram.messenger.R.string.ProfileActionsVoiceChat;
-            int i4 = org.telegram.messenger.R.drawable.live_stream;
-            VOICE_CHAT = new ActionButton("VOICE_CHAT", 11, i3, i4, i4);
-            int i5 = org.telegram.messenger.R.string.ProfileActionsLiveStream;
-            int i6 = org.telegram.messenger.R.drawable.live_stream;
-            STREAM = new ActionButton("STREAM", 12, i5, i6, i6);
-            STORY = new ActionButton("STORY", 13, org.telegram.messenger.R.string.Story, org.telegram.messenger.R.drawable.filled_profile_story, org.telegram.messenger.R.drawable.outline_profile_story);
-            OPEN_CHANNEL = new ActionButton("OPEN_CHANNEL", 14, org.telegram.messenger.R.string.ProfileChannel, org.telegram.messenger.R.drawable.msg_channel_filled, org.telegram.messenger.R.drawable.msg_channel);
-            STOP = new ActionButton("STOP", 15, org.telegram.messenger.R.string.ProfileActionsStop, org.telegram.messenger.R.drawable.filled_profile_stop_24, org.telegram.messenger.R.drawable.outline_profile_stop_24);
-            SET_PHOTO = new ActionButton("SET_PHOTO", 16, org.telegram.messenger.R.string.ProfileActionsEditPhoto2, org.telegram.messenger.R.drawable.filled_profile_photo, org.telegram.messenger.R.drawable.outline_profile_photo);
-            EDIT_USERNAME = new ActionButton("EDIT_USERNAME", 17, org.telegram.messenger.R.string.ProfileActionsEditUsername, org.telegram.messenger.R.drawable.filled_profile_edit_24, org.telegram.messenger.R.drawable.outline_profile_edit_24);
-            EDIT_INFO = new ActionButton("EDIT_INFO", 18, org.telegram.messenger.R.string.ProfileActionsEditInfo, org.telegram.messenger.R.drawable.filled_profile_edit_24, org.telegram.messenger.R.drawable.outline_profile_edit_24);
-            SETTINGS = new ActionButton("SETTINGS", 19, org.telegram.messenger.R.string.Settings, org.telegram.messenger.R.drawable.filled_profile_settings, org.telegram.messenger.R.drawable.outline_profile_settings);
-            $VALUES = $values();
+        public float getScale() {
+            return bounce.getScale(0.04f);
         }
 
-        private ActionButton(String str, int i, int i2, int i3, int i4) {
-            super(str, i);
-            this.title = i2;
-            this.filledIcon = i3;
-            this.outlineIcon = i4;
+        public void update(ActionButton button) {
+            updateDrawable(0, button.filledIcon, button.outlineIcon);
+            setText(getString(button.title));
+        }
+
+        @SuppressLint("UseCompatLoadingForDrawables")
+        public void updateDrawable(@RawRes int animatedRes, @DrawableRes int filledRes, @DrawableRes int outlineRes) {
+            if (animatedRes != 0) {
+                RLottieDrawable drawable = new RLottieDrawable(animatedRes, String.valueOf(animatedRes),
+                    dp(56), dp(56), false, null);
+                drawable.setMasterParent(ProfileActionsView.this);
+                drawable.start();
+                drawableAnimated = drawable;
+            } else {
+                drawableAnimated = null;
+            }
+            drawableFilled = filledRes != 0 ? getResources().getDrawable(filledRes).mutate() : null;
+            drawableOutline = outlineRes != 0 ? getResources().getDrawable(outlineRes).mutate() : null;
+
+            checkBounds();
         }
     }
 
-    @Override // android.view.View
+    public enum ActionButton {
+        MESSAGE(R.string.ProfileActionsMessage, R.drawable.filled_profile_message_24, R.drawable.outline_profile_message_24),
+        NOTIFICATION_MUTE(R.string.ProfileButtonMute, R.drawable.filled_profile_mute_24, R.drawable.outline_profile_mute_24),
+        NOTIFICATION_UNMUTE(R.string.ProfileButtonUnmute, R.drawable.filled_profile_unmute_24, R.drawable.outline_profile_unmute_24),
+        DISCUSS(R.string.ProfileActionsDiscuss, R.drawable.filled_profile_message_24, R.drawable.outline_profile_message_24),
+        GIFT(R.string.ProfileActionsGift, R.drawable.gift, R.drawable.input_gift_s),
+        SHARE(R.string.ProfileActionsShare, R.drawable.action_share, R.drawable.msg_share),
+        CALL(R.string.ProfileActionsCall, R.drawable.filled_profile_call_24, R.drawable.outline_profile_call_24),
+        VIDEO(R.string.ProfileActionsVideo, R.drawable.filled_profile_video_24, R.drawable.outline_profile_video_24),
+        JOIN(R.string.ProfileActionsJoin, R.drawable.filled_profile_member_24, R.drawable.outline_profile_member_24),
+        REPORT(R.string.ProfileActionsReport, R.drawable.report, R.drawable.msg_report),
+        LEAVE(R.string.ProfileActionsLeave, R.drawable.leave, R.drawable.leave),
+        VOICE_CHAT(R.string.ProfileActionsVoiceChat, R.drawable.live_stream, R.drawable.live_stream),
+        STREAM(R.string.ProfileActionsLiveStream, R.drawable.live_stream, R.drawable.live_stream),
+        STORY(R.string.ProfileActionsAddStory, R.drawable.filled_profile_story, R.drawable.outline_profile_story),
+        STOP(R.string.ProfileActionsStop, R.drawable.filled_profile_stop_24, R.drawable.outline_profile_stop_24),
+        SET_PHOTO(R.string.ProfileActionsEditPhoto2, R.drawable.filled_profile_photo, R.drawable.outline_profile_photo),
+        EDIT_USERNAME(R.string.ProfileActionsEditUsername, R.drawable.filled_profile_edit_24, R.drawable.outline_profile_edit_24),
+        EDIT_INFO(R.string.ProfileActionsEditInfo, R.drawable.filled_profile_edit_24, R.drawable.outline_profile_edit_24),
+        SETTINGS(R.string.Settings, R.drawable.filled_profile_settings, R.drawable.outline_profile_settings),;
+
+        final @StringRes int title;
+        final @DrawableRes int filledIcon;
+        final @DrawableRes int outlineIcon;
+
+        ActionButton(@StringRes int title, @DrawableRes int filledIcon, @DrawableRes int outlineIcon) {
+            this.title = title;
+            this.filledIcon = filledIcon;
+            this.outlineIcon = outlineIcon;
+        }
+    }
+
+    private AccessibilityNodeProvider accessibilityNodeProvider;
+    @Override
     public AccessibilityNodeProvider getAccessibilityNodeProvider() {
-        if (this.accessibilityNodeProvider == null) {
-            this.accessibilityNodeProvider = new AccessibilityNodeProvider() { // from class: org.telegram.ui.Components.ProfileActionsView.1
-                /* JADX WARN: Type inference fix 'apply assigned field type' failed
-                java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$UnknownArg
-                	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-                	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-                	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-                 */
-                @Override // android.view.accessibility.AccessibilityNodeProvider
-                public AccessibilityNodeInfo createAccessibilityNodeInfo(int i) {
-                    Action action;
-                    int[] iArr = {0, 0};
-                    ProfileActionsView.this.getLocationOnScreen(iArr);
-                    if (i == -1) {
-                        AccessibilityNodeInfo accessibilityNodeInfoObtain = AccessibilityNodeInfo.obtain(ProfileActionsView.this);
-                        ProfileActionsView.this.onInitializeAccessibilityNodeInfo(accessibilityNodeInfoObtain);
-                        accessibilityNodeInfoObtain.setEnabled(true);
-                        for (int i2 = 0; i2 < ProfileActionsView.this.actions.size(); i2++) {
-                            ProfileActionsView profileActionsView = ProfileActionsView.this;
-                            accessibilityNodeInfoObtain.addChild(profileActionsView, ((Action) profileActionsView.actions.get(i2)).key);
+        if (accessibilityNodeProvider == null) {
+            accessibilityNodeProvider = new AccessibilityNodeProvider() {
+                @Override
+                public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
+                    int[] pos = {0, 0};
+                    getLocationOnScreen(pos);
+                    if (virtualViewId == HOST_VIEW_ID) {
+                        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain(ProfileActionsView.this);
+                        onInitializeAccessibilityNodeInfo(info);
+                        info.setEnabled(true);
+
+                        for (int i = 0; i < actions.size(); ++i) {
+                            info.addChild(ProfileActionsView.this, actions.get(i).key);
                         }
-                        return accessibilityNodeInfoObtain;
-                    }
-                    int i3 = 0;
-                    while (true) {
-                        if (i3 >= ProfileActionsView.this.actions.size()) {
-                            action = null;
-                            break;
+
+                        return info;
+                    } else {
+                        Action action = null;
+                        for (int i = 0; i < actions.size(); ++i) {
+                            if (actions.get(i).key == virtualViewId) {
+                                action = actions.get(i);
+                                break;
+                            }
                         }
-                        if (((Action) ProfileActionsView.this.actions.get(i3)).key == i) {
-                            action = (Action) ProfileActionsView.this.actions.get(i3);
-                            break;
-                        }
-                        i3++;
+                        if (action == null) return null;
+                        if (action.rect.isEmpty()) return null;
+
+                        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+                        info.setSource(ProfileActionsView.this, virtualViewId);
+                        info.setParent(ProfileActionsView.this);
+                        info.setPackageName(getContext().getPackageName());
+
+                        info.addAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        info.addAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                        info.setClickable(true);
+                        info.setFocusable(true);
+                        info.setEnabled(true);
+                        info.setVisibleToUser(true);
+                        info.setClassName(android.widget.Button.class.getName());
+
+                        info.setText(action.text.getText());
+
+                        Rect parentBounds = new Rect(
+                                (int) action.rect.left,
+                                (int) action.rect.top,
+                                (int) action.rect.right,
+                                (int) action.rect.bottom
+                        );
+                        info.setBoundsInParent(parentBounds);
+                        parentBounds.offset(pos[0], pos[1]);
+                        info.setBoundsInScreen(parentBounds);
+
+                        return info;
                     }
-                    if (action == null || action.rect.isEmpty()) {
-                        return null;
-                    }
-                    AccessibilityNodeInfo accessibilityNodeInfoObtain2 = AccessibilityNodeInfo.obtain();
-                    accessibilityNodeInfoObtain2.setSource(ProfileActionsView.this, i);
-                    accessibilityNodeInfoObtain2.setParent(ProfileActionsView.this);
-                    accessibilityNodeInfoObtain2.setPackageName(ProfileActionsView.this.getContext().getPackageName());
-                    accessibilityNodeInfoObtain2.addAction(16);
-                    accessibilityNodeInfoObtain2.addAction(64);
-                    accessibilityNodeInfoObtain2.setClickable(true);
-                    accessibilityNodeInfoObtain2.setFocusable(true);
-                    accessibilityNodeInfoObtain2.setEnabled(true);
-                    accessibilityNodeInfoObtain2.setVisibleToUser(true);
-                    accessibilityNodeInfoObtain2.setClassName(Button.class.getName());
-                    accessibilityNodeInfoObtain2.setText(action.text.getText());
-                    RectF rectF = action.rect;
-                    Rect rect = new Rect((int) rectF.left, (int) rectF.top, (int) rectF.right, (int) rectF.bottom);
-                    accessibilityNodeInfoObtain2.setBoundsInParent(rect);
-                    rect.offset(iArr[0], iArr[1]);
-                    accessibilityNodeInfoObtain2.setBoundsInScreen(rect);
-                    return accessibilityNodeInfoObtain2;
                 }
 
-                @Override // android.view.accessibility.AccessibilityNodeProvider
-                public boolean performAction(int i, int i2, Bundle bundle) {
-                    Action action;
-                    if (i == -1) {
-                        return ProfileActionsView.this.performAccessibilityAction(i2, bundle);
+                @Override
+                public boolean performAction(int virtualViewId, int action, @Nullable Bundle arguments) {
+                    if (virtualViewId == HOST_VIEW_ID) {
+                        return performAccessibilityAction(action, arguments);
                     }
-                    int i3 = 0;
-                    while (true) {
-                        if (i3 >= ProfileActionsView.this.actions.size()) {
-                            action = null;
+
+                    Action button = null;
+                    for (int i = 0; i < actions.size(); ++i) {
+                        if (actions.get(i).key == virtualViewId) {
+                            button = actions.get(i);
                             break;
                         }
-                        if (((Action) ProfileActionsView.this.actions.get(i3)).key == i) {
-                            action = (Action) ProfileActionsView.this.actions.get(i3);
-                            break;
+                    }
+                    if (button == null) return false;
+
+                    if (action == AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS) {
+                        sendAccessibilityEventForVirtualView(virtualViewId, AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
+                        return true;
+                    } else if (action == AccessibilityNodeInfo.ACTION_CLICK) {
+                        if (onActionClickListener != null) {
+                            onActionClickListener.onClick(virtualViewId, 0, 0);
                         }
-                        i3++;
-                    }
-                    if (action == null) {
-                        return false;
-                    }
-                    if (i2 == 64) {
-                        sendAccessibilityEventForVirtualView(i, 32768);
                         return true;
                     }
-                    if (i2 != 16) {
-                        return false;
-                    }
-                    if (ProfileActionsView.this.onActionClickListener != null) {
-                        ProfileActionsView.this.onActionClickListener.onClick(i, 0.0f, 0.0f);
-                    }
-                    return true;
+
+                    return false;
                 }
 
-                private void sendAccessibilityEventForVirtualView(int i, int i2) {
-                    sendAccessibilityEventForVirtualView(i, i2, null);
+                private void sendAccessibilityEventForVirtualView(int viewId, int eventType) {
+                    sendAccessibilityEventForVirtualView(viewId, eventType, null);
                 }
 
-                private void sendAccessibilityEventForVirtualView(int i, int i2, String str) {
-                    if (((AccessibilityManager) ProfileActionsView.this.getContext().getSystemService("accessibility")).isTouchExplorationEnabled()) {
-                        AccessibilityEvent accessibilityEventObtain = AccessibilityEvent.obtain(i2);
-                        accessibilityEventObtain.setPackageName(ProfileActionsView.this.getContext().getPackageName());
-                        accessibilityEventObtain.setSource(ProfileActionsView.this, i);
-                        if (str != null) {
-                            accessibilityEventObtain.getText().add(str);
+                private void sendAccessibilityEventForVirtualView(int viewId, int eventType, String text) {
+                    AccessibilityManager am = (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
+                    if (am.isTouchExplorationEnabled()) {
+                        AccessibilityEvent event = AccessibilityEvent.obtain(eventType);
+                        event.setPackageName(getContext().getPackageName());
+                        event.setSource(ProfileActionsView.this, viewId);
+                        if (text != null) {
+                            event.getText().add(text);
                         }
-                        if (ProfileActionsView.this.getParent() != null) {
-                            ProfileActionsView.this.getParent().requestSendAccessibilityEvent(ProfileActionsView.this, accessibilityEventObtain);
+                        if (getParent() != null) {
+                            getParent().requestSendAccessibilityEvent(ProfileActionsView.this, event);
                         }
                     }
                 }
             };
         }
-        return this.accessibilityNodeProvider;
+        return accessibilityNodeProvider;
     }
 }

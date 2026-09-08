@@ -1,11 +1,17 @@
 package org.telegram.ui.Stories;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.dpf2;
+import static org.telegram.messenger.AndroidUtilities.lerp;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
@@ -14,46 +20,42 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
+import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.math.MathUtils;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.TabIconsMode;
-import com.exteragram.messenger.utils.text.LocaleUtils;
-import com.google.android.exoplayer2.util.Consumer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Objects;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
-import me.vkryl.android.animator.ReplaceAnimator;
-import okhttp3.internal.url._UrlKt;
-import org.mvel2.asm.Opcodes;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BotWebViewVibrationEffect;
-import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.Emoji;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -91,409 +93,1932 @@ import org.telegram.ui.PremiumPreviewFragment;
 import org.telegram.ui.Stories.recorder.HintView2;
 import org.telegram.ui.Stories.recorder.StoryRecorder;
 
-@SuppressLint({"ViewConstructor"})
-public abstract class DialogStoriesCell extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
-    public float K;
-    private ActionBar actionBar;
-    Adapter adapter;
-    Paint addCirclePaint;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Objects;
+
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+import me.vkryl.android.animator.ReplaceAnimator;
+
+@SuppressLint("ViewConstructor")
+public class DialogStoriesCell extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
+
+    public final static int TYPE_DIALOGS = 0;
+    public final static int TYPE_ARCHIVE= 1;
+    private static final float COLLAPSED_DIS = 16;
+    private static final float ITEM_WIDTH = 70;
+    private static final int FAKE_TOP_PADDING = 4;
+
+    private static final int ANIMATOR_ID_HAS_TITLE_TEXT = 1;
+    private final BoolAnimator animatorHasTitleText = new BoolAnimator(ANIMATOR_ID_HAS_TITLE_TEXT, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+
+    private final int type;
+    public final static int HEIGHT_IN_DP = 81;
     private final Drawable addNewStoryDrawable;
-    private int addNewStoryLastColor;
-    ArrayList<Runnable> afterNextLayout;
-    public boolean allowGlobalUpdates;
-    ArrayList<Long> animateToDialogIds;
-    private Runnable animationRunnable;
-    private final BoolAnimator animatorHasTitleText;
-    Paint backgroundPaint;
-    private long checkedStoryNotificationDeletion;
-    private int clipTop;
-    boolean collapsed;
-    private ValueAnimator collapsedOvershootAnimator;
-    private float collapsedOvershootProgress;
-    float collapsedProgress;
-    private float collapsedProgress1;
-    private float collapsedProgress2;
-    private float collapsedSpringCoef;
-    Comparator<StoryCell> comparator;
-    int currentAccount;
-    public int currentCellWidth;
-    int currentState;
-    private CharSequence currentTitle;
-    private boolean dialogsEmojiStatusVisible;
-    private boolean dialogsEmojiStatusVisibleOut;
-    private CharSequence dialogsTitleOverride;
-    boolean drawCircleForce;
-    private LinearGradient ellipsizeGradient;
-    private Matrix ellipsizeGradientMatrix;
-    private Paint ellipsizePaint;
-    EllipsizeSpanAnimator ellipsizeSpanAnimator;
-    ImageView emojiStatusView;
-    private ValueAnimator expandOvershootAnimator;
-    private float expandOvershootAnimatorProgress;
-    private float expandedSpringCoef;
-    BaseFragment fragment;
-    private StoriesUtilities.EnsureStoryFileLoadedObject globalCancelable;
-    Paint grayPaint;
-    private boolean hasOverlayText;
-    DefaultItemAnimator itemAnimator;
-    ArrayList<Item> items;
-    private boolean lastUploadingCloseFriends;
-    LinearLayoutManager layoutManager;
-    RecyclerListView listViewMini;
-    private float menuItemsOffset;
-    Adapter miniAdapter;
     private final DefaultItemAnimator miniItemAnimator;
-    ArrayList<Item> miniItems;
-    CanvasButton miniItemsClickArea;
-    ArrayList<Item> oldItems;
-    ArrayList<Item> oldMiniItems;
-    private float overScrollCoef;
+    private int addNewStoryLastColor;
+    int currentAccount;
+    public RecyclerListView recyclerListView;
+    public RadialProgress radialProgress;
+
+    RecyclerListView listViewMini;
+    StoriesController storiesController;
+    ArrayList<Item> oldItems = new ArrayList<>();
+    ArrayList<Item> oldMiniItems = new ArrayList<>();
+    ArrayList<Item> items = new ArrayList<>();
+    ArrayList<Item> miniItems = new ArrayList<>();
+    Adapter adapter = new Adapter(false);
+    Adapter miniAdapter = new Adapter(true);
+    Paint grayPaint = new Paint();
+    Paint addCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    CanvasButton miniItemsClickArea = new CanvasButton(this);
+
+    private HintView2 premiumHint;
+
+    public static final float COLLAPSED_SIZE = 26.33f;
+
+    boolean updateOnIdleState;
+    private int clipTop;
+
+    private final static int EXPANDED_STATE = 0;
+    private final static int TRANSITION_STATE = 1;
+    private final static int COLLAPSED_STATE = 2;
+    public int currentCellWidth;
+
+    float collapsedProgress = -1;
+
+    int currentState = -1;
+
+    ArrayList<StoryCell> viewsDrawInParent = new ArrayList<>();
+    ArrayList<Long> animateToDialogIds = new ArrayList<>();
+    DefaultItemAnimator itemAnimator;
+    LinearLayoutManager layoutManager;
+    AnimatedTextView titleView;
+    ActionBarAnimatedSubtitleOverlayContainer subtitleOverlayContainer;
+    ImageView telegramLogoView;
+    ImageView emojiStatusView;
+    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable statusDrawable;
+    boolean drawCircleForce;
+    ArrayList<Runnable> afterNextLayout = new ArrayList<>();
+    private float collapsedProgress1 = -1;
+    private float collapsedProgress2;
+    BaseFragment fragment;
+    private CharSequence currentTitle;
+    private boolean hasOverlayText;
     private int overlayTextId;
+    private SpannableStringBuilder uploadingString;
+    private ValueAnimator textAnimator;
+    private Runnable animationRunnable;
+    public boolean allowGlobalUpdates = true;
+    private boolean lastUploadingCloseFriends;
     private float overscrollProgress;
     private int overscrollSelectedPosition;
     private StoryCell overscrollSelectedView;
-    private HintView2 premiumHint;
-    private Drawable premiumStar;
-    public RadialProgress radialProgress;
-    public RecyclerListView recyclerListView;
-    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable statusDrawable;
-    AnimatorSet storiesAnimatorSet;
-    private OvershootInterpolator storiesCollapseInterpolator;
-    StoriesController storiesController;
-    private OvershootInterpolator storiesExpandInterpolator;
-    ActionBarAnimatedSubtitleOverlayContainer subtitleOverlayContainer;
-    private ValueAnimator textAnimator;
-    private ValueAnimator titleOverrideAnimator;
-    private boolean titleOverrideForward;
-    private float titleOverrideProgress;
-    AnimatedTextView titleView;
-    AnimatedTextView titleViewOut;
-    private final int type;
-    boolean updateOnIdleState;
-    private ValueAnimator valueAnimator;
-    ArrayList<StoryCell> viewsDrawInParent;
-    private ValueAnimator yStoriesAnimator;
-    private float yStoriesProgress;
+    private ActionBar actionBar;
+    private StoriesUtilities.EnsureStoryFileLoadedObject globalCancelable;
+    private float menuItemsOffset;
 
-    public static void lambda$setProgressToCollapse$7(ValueAnimator valueAnimator) {
-        this.collapsedProgress2 = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-        checkCollapsedProgress();
-    }
-
-    public /* JADX WARN: Failed to calculate best type for var: r4v48 ??
-        jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r4v48 ??, new type: float
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-        	at java.base/java.util.ArrayList.forEach(Unknown Source)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-        Caused by: java.lang.NullPointerException
-         */
-        /* JADX WARN: Failed to calculate best type for var: r9v7 ??
-        jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r9v7 ??, new type: float
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-        	at java.base/java.util.ArrayList.forEach(Unknown Source)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-        Caused by: java.lang.NullPointerException
-         */
-        /* JADX WARN: Failed to calculate best type for var: r9v8 ??
-        jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r9v8 ??, new type: float
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-        	at java.base/java.util.ArrayList.forEach(Unknown Source)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-        Caused by: java.lang.NullPointerException
-         */
-        /* JADX WARN: Failed to set immutable type for var: r26v0 'this'  ??
-        jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r26v0 'this'  ??, new type: org.telegram.ui.Stories.DialogStoriesCell$StoryCell
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.applyWithWiderIgnSame(TypeUpdate.java:73)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setImmutableType(TypeInferenceVisitor.java:111)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$0(TypeInferenceVisitor.java:102)
-        	at java.base/java.util.ArrayList.forEach(Unknown Source)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:102)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-        Caused by: java.lang.NullPointerException
-         */
-        /* JADX WARN: Failed to set immutable type for var: r27v0 ??
-        jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r27v0 ??, new type: android.graphics.Canvas
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-        	at jadx.core.dex.visitors.typeinference.TypeUpdate.applyWithWiderIgnSame(TypeUpdate.java:73)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setImmutableType(TypeInferenceVisitor.java:111)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$0(TypeInferenceVisitor.java:102)
-        	at java.base/java.util.ArrayList.forEach(Unknown Source)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:102)
-        	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-        Caused by: java.lang.NullPointerException
-         */
-        /* JADX WARN: Type inference fix 'apply assigned field type' failed
-        java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$UnknownArg
-        	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-        	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-        	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-         */
-        /*  JADX ERROR: Types fix failed
-            jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r16v0 ??, new type: float
-            	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-            	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-            	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryPossibleTypes(FixTypesVisitor.java:186)
-            	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.deduceType(FixTypesVisitor.java:245)
-            	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryDeduceTypes(FixTypesVisitor.java:224)
-            	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-            Caused by: java.lang.NullPointerException
-            */
-        @Override // android.view.ViewGroup, android.view.View
-        public void dispatchDraw(android.graphics.Canvas r27) {
-            /*
-                Method dump skipped, instruction units count: 1046
-                To view this dump add '--comments-level debug' option
-            */
-            throw new UnsupportedOperationException("Method not decompiled: org.telegram.ui.Stories.DialogStoriesCell.StoryCell.dispatchDraw(android.graphics.Canvas):void");
-        }
-
-        public /* synthetic */ void lambda$dispatchDraw$2(ValueAnimator valueAnimator) {
-            this.params.progressToSegments = AndroidUtilities.lerp(0.0f, 1.0f - DialogStoriesCell.this.collapsedProgress2, ((Float) valueAnimator.getAnimatedValue()).floatValue());
-            invalidate();
-        }
-
-        public void setClipInParent(boolean z) {
-            if (getParent() != null) {
-                ((ViewGroup) getParent()).setClipChildren(z);
+    public DialogStoriesCell(@NonNull Context context, BaseFragment fragment, int currentAccount, int type) {
+        super(context);
+        this.type = type;
+        this.currentAccount = currentAccount;
+        this.fragment = fragment;
+        menuItemsOffset = dp(68);
+        storiesController = MessagesController.getInstance(currentAccount).getStoriesController();
+        recyclerListView = new RecyclerListView(context) {
+            @Override
+            public boolean drawChild(Canvas canvas, View child, long drawingTime) {
+                if (viewsDrawInParent.contains(child)) {
+                    return true;
+                }
+                return super.drawChild(canvas, child, drawingTime);
             }
-            if (getParent() == null || getParent().getParent() == null || getParent().getParent().getParent() == null) {
+
+            @Override
+            protected void onLayout(boolean changed, int l, int t, int r, int b) {
+                super.onLayout(changed, l, t, r, b);
+                for (int i = 0; i < afterNextLayout.size(); i++) {
+                    afterNextLayout.get(i).run();
+                }
+                afterNextLayout.clear();
+            }
+
+            @Override
+            public boolean dispatchTouchEvent(MotionEvent ev) {
+                if (ev.getAction() == MotionEvent.ACTION_DOWN && (collapsedProgress1 > 0.2f || DialogStoriesCell.this.getAlpha() == 0)) {
+                    return false;
+                }
+                return super.dispatchTouchEvent(ev);
+            }
+        };
+        recyclerListView.setPadding(dp(3), 0, dp(3), 0);
+        recyclerListView.setClipToPadding(false);
+        recyclerListView.setClipChildren(false);
+        miniItemsClickArea.setDelegate(this::onMiniListClicked);
+        miniItemsClickArea.setLongPress(() -> {
+            if (!BuildConfig.DEBUG_PRIVATE_VERSION) {
                 return;
             }
-            ((ViewGroup) getParent().getParent().getParent()).setClipChildren(z);
-        }
 
-        private float getArcProgress(float f, float f2) {
-            if (!this.isLast && DialogStoriesCell.this.overscrollProgress <= 0.0f) {
-                float fLerp = AndroidUtilities.lerp(getMeasuredWidth(), AndroidUtilities.dp(16.0f), CubicBezierInterpolator.EASE_OUT.getInterpolation(this.progressToCollapsed));
-                float fDpf2 = f2 + AndroidUtilities.dpf2(3.5f);
-                if (fLerp < fDpf2 * 2.0f) {
-                    return ((float) Math.toDegrees(Math.acos((fLerp / 2.0f) / fDpf2))) * 2.0f;
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            LinearLayout topView = new LinearLayout(getContext());
+            topView.setOrientation(LinearLayout.VERTICAL);
+            TextView overscrollTextView = new TextView(getContext());
+            overscrollTextView.setText("Screen oversrcoll: " + overScrollCoef);
+            overscrollTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+            SeekBarView seekBar = new SeekBarView(getContext());
+            float progress = Math.min(1.0f, Math.max(0.0f, (overScrollCoef - 0.2f) / 0.8f));
+            seekBar.setProgress(progress);
+            seekBar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+                @Override
+                public void onSeekBarDrag(boolean stop, float progress) {
+                    overScrollCoef = AndroidUtilities.lerp(0.2f, 1f, progress);
+                    overscrollTextView.setText("Screen oversrcoll: " + overScrollCoef);
+                }
+
+                @Override
+                public void onSeekBarPressed(boolean pressed) {
+
+                }
+            });
+            topView.addView(overscrollTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 20, 20, 5, 0));
+
+            topView.addView(seekBar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 5, 0, 20, 0));
+            TextView collapsedSpringTextView = new TextView(getContext());
+            collapsedSpringTextView.setText("Collapsed spring: " + collapsedSpringCoef);
+            collapsedSpringTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+            topView.addView(collapsedSpringTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 20, 0, 20, 0));
+            SeekBarView collapsedSpringSeekBar = new SeekBarView(getContext());
+            collapsedSpringSeekBar.setProgress((collapsedSpringCoef - 0.25f) / 2.25f);
+            collapsedSpringSeekBar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+                @Override
+                public void onSeekBarDrag(boolean stop, float progress) {
+                    collapsedSpringCoef = AndroidUtilities.lerp(0.25f, 2.5f, progress);
+                    collapsedSpringTextView.setText("Collapsed spring: " + collapsedSpringCoef);
+                }
+
+                @Override
+                public void onSeekBarPressed(boolean pressed) {
+
+                }
+            });
+            topView.addView(collapsedSpringSeekBar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 5, 0, 20, 0));
+
+            TextView expandedSpringTextView = new TextView(getContext());
+            expandedSpringTextView.setText("Expanded X spring: " + expandedSpringCoef);
+            expandedSpringTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+            topView.addView(expandedSpringTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 20, 0, 20, 0));
+            SeekBarView expandedSpringSeekBar = new SeekBarView(getContext());
+            expandedSpringSeekBar.setProgress((expandedSpringCoef - 0.25f) / 2.25f);
+            expandedSpringSeekBar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+                @Override
+                public void onSeekBarDrag(boolean stop, float progress) {
+                    expandedSpringCoef = AndroidUtilities.lerp(0.25f, 2.5f, progress);
+                    expandedSpringTextView.setText("Expanded X spring: " + expandedSpringCoef);
+                }
+
+                @Override
+                public void onSeekBarPressed(boolean pressed) {
+
+                }
+            });
+            topView.addView(expandedSpringSeekBar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 5, 0, 20, 0));
+            builder.setTopView(topView);
+            builder.setTopViewAspectRatio(1f);
+            builder.show();
+        });
+        recyclerListView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                invalidate();
+                checkLoadMore();
+                if (premiumHint != null) {
+                    premiumHint.hide();
                 }
             }
-            return 0.0f;
-        }
+        });
+        itemAnimator = new DefaultItemAnimator();
+        itemAnimator.setDelayAnimations(false);
+        itemAnimator.setDurations(150);
+        itemAnimator.setSupportsChangeAnimations(false);
+        recyclerListView.setItemAnimator(itemAnimator);
+        recyclerListView.setLayoutManager(layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
+        RecyclerListView.OnItemClickListener itemClickListener = (view, position) -> {
+            StoryCell cell = (StoryCell) view;
+            openStoryForCell(cell, false);
+        };
+        recyclerListView.setOnItemClickListener(itemClickListener);
+        recyclerListView.setOnItemLongClickListener((view, position) -> {
+            if (collapsedProgress == 0 && overscrollProgress == 0) {
+                onUserLongPressed(view, ((StoryCell) view).dialogId);
+            }
+            return false;
+        });
 
-        @Override // android.view.View
-        public void setPressed(boolean z) {
-            super.setPressed(z);
-            if (z) {
-                StoriesUtilities.AvatarStoryParams avatarStoryParams = this.params;
-                if (avatarStoryParams.buttonBounce == null) {
-                    avatarStoryParams.buttonBounce = new ButtonBounce(this, 1.5f, 5.0f);
+        recyclerListView.setAdapter(adapter);
+        addView(recyclerListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, FAKE_TOP_PADDING, 0, 0));
+
+        titleView = new AnimatedTextView(getContext(), true, true, false);
+        titleView.setGravity(Gravity.LEFT);
+        titleView.setTextColor(getTextLogoColor());
+        titleView.setTypeface(AndroidUtilities.bold());
+        titleView.setPadding(0, dp(8), 0, dp(8));
+        titleView.setTextSize(dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20));
+        titleView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        titleView.setFocusableInTouchMode(true);
+        addView(titleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        telegramLogoView = new ImageView(context);
+        telegramLogoView.setContentDescription(getString(R.string.AppName));
+        telegramLogoView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        telegramLogoView.setImageResource(R.drawable.telegram_logo_2);
+        telegramLogoView.setColorFilter(getTextLogoColor(), PorterDuff.Mode.MULTIPLY);
+        telegramLogoView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        telegramLogoView.setFocusableInTouchMode(true);
+        addView(telegramLogoView, LayoutHelper.createFrame(90, 22));
+
+        statusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(null, dp(26));
+        statusDrawable.center = true;
+        statusDrawable.setCallback(this);
+
+        emojiStatusView = new ImageView(context);
+        emojiStatusView.setScaleType(ImageView.ScaleType.CENTER);
+        emojiStatusView.setImageDrawable(statusDrawable);
+        addView(emojiStatusView, LayoutHelper.createFrame(40, 40));
+
+        subtitleOverlayContainer = new ActionBarAnimatedSubtitleOverlayContainer(context, null, ellipsizeSpanAnimator) {
+            @Override
+            public void onItemChanged(ReplaceAnimator<?> animator) {
+                super.onItemChanged(animator);
+                DialogStoriesCell.this.invalidate();
+            }
+        };
+        addView(subtitleOverlayContainer, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+
+        grayPaint.setColor(0xffD5DADE);
+        grayPaint.setStyle(Paint.Style.STROKE);
+        grayPaint.setStrokeWidth(dp(1));
+        addNewStoryDrawable = ContextCompat.getDrawable(getContext(), R.drawable.msg_mini_addstory);
+
+        listViewMini = new RecyclerListView(getContext()) {
+            @Override
+            protected void dispatchDraw(@NonNull Canvas canvas) {
+                viewsDrawInParent.clear();
+                for (int i = 0; i < getChildCount(); i++) {
+                    StoryCell storyCell = (StoryCell) getChildAt(i);
+                    storyCell.position = getChildAdapterPosition(storyCell);
+                    storyCell.drawInParent = true;
+                    storyCell.isFirst = storyCell.position == 0;
+                    storyCell.isLast = storyCell.position == miniItems.size() - 1;
+                    viewsDrawInParent.add(storyCell);
+                }
+
+                Collections.sort(viewsDrawInParent, comparator);
+                for (int i = 0; i < viewsDrawInParent.size(); i++) {
+                    StoryCell cell = viewsDrawInParent.get(i);
+                    int restoreCount = canvas.save();
+                    canvas.translate(cell.getX(), cell.getY());
+                    if (cell.getAlpha() != 1f) {
+                        canvas.saveLayerAlpha((float) -dp(4), -dp(4), dp(50), dp(50), (int) (255 * cell.getAlpha()), Canvas.ALL_SAVE_FLAG);
+                    }
+                    canvas.scale(cell.getScaleX(), cell.getScaleY(), dp(14), cell.getCy());
+                    cell.draw(canvas);
+                    canvas.restoreToCount(restoreCount);
                 }
             }
-            ButtonBounce buttonBounce = this.params.buttonBounce;
-            if (buttonBounce != null) {
-                buttonBounce.setPressed(z);
+
+            @Override
+            public void onScrolled(int dx, int dy) {
+                super.onScrolled(dx, dy);
+                if (premiumHint != null) {
+                    premiumHint.hide();
+                }
             }
+
+
+            @Override
+            public boolean dispatchTouchEvent(MotionEvent ev) {
+                return false;
+            }
+
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent e) {
+                return false;
+            }
+        };
+        listViewMini.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        listViewMini.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                int p = parent.getChildLayoutPosition(view);
+                outRect.setEmpty();
+                if (p == 1) {
+                    outRect.left = -dp(85) + dp(29 + COLLAPSED_DIS - 14);
+                } else if (p == 2) {
+                    outRect.left = -dp(85) + dp(29 + COLLAPSED_DIS - 14);
+                }
+            }
+        });
+        miniItemAnimator = new DefaultItemAnimator() {
+            @Override
+            protected float animateByScale(View view) {
+                return 0.6f;
+            }
+        };
+        miniItemAnimator.setDelayAnimations(false);
+        miniItemAnimator.setSupportsChangeAnimations(false);
+        listViewMini.setItemAnimator(miniItemAnimator);
+        listViewMini.setAdapter(miniAdapter);
+        listViewMini.setClipChildren(false);
+        addView(listViewMini,  LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, FAKE_TOP_PADDING, 0, 0));
+        setClipChildren(false);
+        setClipToPadding(false);
+        checkUi_titleVisibility();
+
+        updateItems(false, false);
+    }
+
+    public void onMiniListClicked() {
+
+    }
+
+    public void setMenuItemsOffset(float menuItemsOffset) {
+        this.menuItemsOffset = menuItemsOffset;
+    }
+
+    public void openStoryForCell(StoryCell cell) {
+        openStoryForCell(cell, false);
+    }
+
+    private void openStoryForCell(StoryCell cell, boolean overscroll) {
+        if (overscroll && expandOvershootAnimator != null && expandOvershootAnimator.isRunning()) {
+            return;
+        }
+        if (cell == null) {
+            return;
+        }
+        try {
+            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        } catch (Exception ignored) {}
+        if (cell.isSelf && !storiesController.hasSelfStories()) {
+            if (!MessagesController.getInstance(currentAccount).storiesEnabled()) {
+                showPremiumHint();
+            } else {
+                openStoryRecorder();
+            }
+            return;
+        }
+        if (!storiesController.hasStories(cell.dialogId) && !storiesController.hasUploadingStories(cell.dialogId)) {
+            return;
+        }
+        TL_stories.PeerStories userStories = storiesController.getStories(cell.dialogId);
+        long startFromDialogId = cell.dialogId;
+        if (globalCancelable != null) {
+            globalCancelable.cancel();
+            globalCancelable = null;
         }
 
-        @Override // android.view.View
-        public void invalidate() {
-            if (this.mini || (this.drawInParent && getParent() != null)) {
-                ViewParent parent = getParent();
-                DialogStoriesCell dialogStoriesCell = DialogStoriesCell.this;
-                RecyclerListView recyclerListView = dialogStoriesCell.listViewMini;
-                if (parent == recyclerListView) {
-                    recyclerListView.invalidate();
+        Runnable runnable = () -> {
+            if (fragment == null || fragment.getParentActivity() == null) {
+                return;
+            }
+            int position = cell.position;
+
+            ArrayList<Long> peerIds = new ArrayList<>();
+            boolean allStoriesIsRead = true;
+
+            for (int i = 0; i < items.size(); i++) {
+                long dialogId = items.get(i).dialogId;
+                if (dialogId != UserConfig.getInstance(currentAccount).clientUserId && storiesController.hasUnreadStories(dialogId)) {
+                    allStoriesIsRead = false;
+                    break;
+                }
+            }
+
+            boolean onlySelfStories = false;
+            boolean onlyUnreadStories = false;
+            if (cell.isSelf && (!allStoriesIsRead || items.size() == 1)) {
+                peerIds.add(cell.dialogId);
+                onlySelfStories = true;
+            } else {
+                boolean isUnreadStory = !cell.isSelf && storiesController.hasUnreadStories(cell.dialogId);
+                if (isUnreadStory) {
+                    onlyUnreadStories = true;
+                    for (int i = 0; i < items.size(); i++) {
+                        long dialogId = items.get(i).dialogId;
+                        if (!cell.isSelf && storiesController.hasUnreadStories(dialogId)) {
+                            peerIds.add(dialogId);
+                        }
+                        if (dialogId == cell.dialogId) {
+                            position = peerIds.size() - 1;
+                        }
+                    }
                 } else {
-                    dialogStoriesCell.invalidate();
+                    for (int i = 0; i < items.size(); i++) {
+                        long dialogId = items.get(i).dialogId;
+                        if (storiesController.hasStories(dialogId)) {
+                            peerIds.add(items.get(i).dialogId);
+                        } else if (i <= position) {
+                            position--;
+                        }
+                    }
+                }
+            }
+            StoryViewer storyViewer = fragment.getOrCreateStoryViewer();
+            storyViewer.doOnAnimationReady(() -> storiesController.setLoading(startFromDialogId, false));
+            boolean finalOnlySelfStories = onlySelfStories;
+            storyViewer.open(getContext(), null, peerIds, position, null, null, StoriesListPlaceProvider.of(recyclerListView).with(forward -> {
+                if (finalOnlySelfStories) {
+                    return;
+                }
+                if (forward) {
+                    boolean hidden = type == TYPE_ARCHIVE;
+                    storiesController.loadNextStories(hidden);
+                }
+            }).setPaginationParaments(type == TYPE_ARCHIVE, onlyUnreadStories, onlySelfStories), false);
+        };
+        if (overscroll) {
+            runnable.run();
+        } else {
+            globalCancelable = cell.cancellable = StoriesUtilities.ensureStoryFileLoaded(userStories, runnable);
+            if (globalCancelable != null) {
+                storiesController.setLoading(cell.dialogId, true);
+            }
+        }
+
+    }
+
+    private void checkLoadMore() {
+        if (layoutManager.findLastVisibleItemPosition() + 10 > items.size() || isReadAtPosition(layoutManager.findLastVisibleItemPosition() + 9)) {
+            boolean hidden = type == TYPE_ARCHIVE;
+            storiesController.loadNextStories(hidden);
+        }
+    }
+
+    private boolean isReadAtPosition(int position) {
+        if (position >= items.size()) {
+            return false;
+        }
+        return storiesController.getUnreadState(items.get(position).dialogId) == StoriesController.STATE_READ;
+    }
+
+    private float overScrollCoef = 1f;
+    private float collapsedSpringCoef = 0.95f;
+    private float expandedSpringCoef = 0.9f;
+
+    public float getOverScrollCoef() {
+        return overScrollCoef;
+    }
+
+    public void updateItems(boolean animated, boolean force) {
+        if ((currentState == TRANSITION_STATE || overscrollProgress != 0) && !force) {
+            updateOnIdleState = true;
+            return;
+        }
+        oldItems.clear();
+        oldItems.addAll(items);
+        oldMiniItems.clear();
+        oldMiniItems.addAll(miniItems);
+        items.clear();
+        if (type != TYPE_ARCHIVE) {
+            items.add(new Item(UserConfig.getInstance(currentAccount).getClientUserId()));
+        }
+
+        ArrayList<TL_stories.PeerStories> allStories = type == TYPE_ARCHIVE ? storiesController.getHiddenList() : storiesController.getDialogListStories();
+        for (int i = 0; i < allStories.size(); i++) {
+            long dialogId = DialogObject.getPeerDialogId(allStories.get(i).peer);
+            if (dialogId != UserConfig.getInstance(currentAccount).getClientUserId()) {
+                items.add(new Item(dialogId));
+            }
+        }
+        int size = items.size();
+        if (!storiesController.hasSelfStories()) {
+            size--;
+        }
+        int totalCount;
+        boolean hidden = type == TYPE_ARCHIVE;
+        totalCount = Math.max(1, Math.max(storiesController.getTotalStoriesCount(hidden), size));
+
+        currentTitle = null;
+        if (storiesController.hasOnlySelfStories()) {
+            if (storiesController.hasUploadingStories(UserConfig.getInstance(currentAccount).getClientUserId())) {
+                String str = LocaleController.getString(R.string.UploadingStory);
+                int index = str.indexOf("…");
+                if (index > 0) {
+                    if (uploadingString == null) {
+                        SpannableStringBuilder spannableStringBuilder = SpannableStringBuilder.valueOf(str);
+                        UploadingDotsSpannable dotsSpannable = new UploadingDotsSpannable();
+                        spannableStringBuilder.setSpan(dotsSpannable, spannableStringBuilder.length() - 1, spannableStringBuilder.length(), 0);
+                        dotsSpannable.setParent(titleView, true);
+                        uploadingString = spannableStringBuilder;
+                    }
+                    currentTitle = uploadingString;
+                } else {
+                    currentTitle = str;
+                }
+            } else {
+                currentTitle = menuItemsOffset < dp(50) ? null :
+                    LocaleController.getString(R.string.MyStory);
+            }
+        } else {
+            currentTitle = menuItemsOffset < dp(50) ? null :
+                LocaleController.formatPluralString("Stories", totalCount);
+        }
+
+        if (!hasOverlayText) {
+            titleView.setText(currentTitle, animated && !LocaleController.isRTL);
+        }
+
+        animatorHasTitleText.setValue(!TextUtils.isEmpty(currentTitle) || hasOverlayText, animated);
+
+        miniItems.clear();
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).dialogId == UserConfig.getInstance(currentAccount).clientUserId && !shouldDrawSelfInMini()) {
+                continue;
+            } else {
+                miniItems.add(items.get(i));
+                if (miniItems.size() >= 3) {
+                    break;
+                }
+            }
+        }
+
+        if (animated) {
+            if (currentState == COLLAPSED_STATE) {
+                listViewMini.setItemAnimator(miniItemAnimator);
+                recyclerListView.setItemAnimator(null);
+            } else {
+                recyclerListView.setItemAnimator(itemAnimator);
+                listViewMini.setItemAnimator(null);
+            }
+        } else {
+            recyclerListView.setItemAnimator(null);
+            listViewMini.setItemAnimator(null);
+        }
+        adapter.setItems(oldItems, items);
+        miniAdapter.setItems(oldMiniItems, miniItems);
+
+        oldItems.clear();
+        invalidate();
+    }
+
+    private boolean shouldDrawSelfInMini() {
+        long dialogId = UserConfig.getInstance(currentAccount).clientUserId;
+        return storiesController.hasUnreadStories(dialogId) || (storiesController.hasSelfStories() && storiesController.getDialogListStories().size() <= 3);
+    }
+
+    Comparator<StoryCell> comparator = (o1, o2) -> o2.position - o1.position;
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        canvas.save();
+        if (clipTop > 0) {
+            canvas.clipRect(0, clipTop, getMeasuredWidth(), getMeasuredHeight());
+        }
+        float maxY = getMeasuredHeight() - ActionBar.getCurrentActionBarHeight() - dp(4);
+        float bottomY = AndroidUtilities.lerp(0, maxY, collapsedProgress1);
+        recyclerListView.setTranslationY(bottomY);
+        listViewMini.setTranslationY(bottomY);
+        listViewMini.setTranslationX(menuItemsOffset);
+
+        for (int i = 0; i < viewsDrawInParent.size(); i++) {
+            viewsDrawInParent.get(i).drawInParent = false;
+        }
+        viewsDrawInParent.clear();
+        int animateFromPosition = -1;
+        boolean crossfade = false;
+        if ((currentState == TRANSITION_STATE || currentState == EXPANDED_STATE) && !animateToDialogIds.isEmpty()) {
+            for (int i = 0; i < recyclerListView.getChildCount(); i++) {
+                StoryCell cell = (StoryCell) recyclerListView.getChildAt(i);
+                if (cell.dialogId == animateToDialogIds.get(0)) {
+                    animateFromPosition = recyclerListView.getChildAdapterPosition(cell);
+                }
+            }
+        } else if (currentState == COLLAPSED_STATE) {
+            animateFromPosition = 0;
+        }
+        float lastViewRight = 0;
+        if (currentState >= 0 && currentState != COLLAPSED_STATE) {
+            if (animateFromPosition == -1) {
+                crossfade = true;
+                animateFromPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+                if (animateFromPosition == -1) {
+                    animateFromPosition = layoutManager.findFirstVisibleItemPosition();
+                }
+            }
+
+            recyclerListView.setAlpha(1f - Utilities.clamp(collapsedProgress / K, 1f, 0));
+            overscrollSelectedPosition = -1;
+            if (overscrollProgress != 0) {
+                int minPosition = -1;
+                for (int i = 0; i < recyclerListView.getChildCount(); i++) {
+                    View child = recyclerListView.getChildAt(i);
+                    if (child.getX() < 0 || child.getX() + child.getMeasuredWidth() > getMeasuredWidth()) {
+                        continue;
+                    }
+                    int position = recyclerListView.getChildAdapterPosition(child);
+                    if (position < 0) {
+                        continue;
+                    }
+
+                    if ((minPosition == -1 || position < minPosition) && items.get(position).dialogId != UserConfig.getInstance(currentAccount).clientUserId) {
+                        minPosition = position;
+                        overscrollSelectedView = (StoryCell) child;
+                    }
+                }
+                overscrollSelectedPosition = minPosition;
+            }
+            for (int i = 0; i < recyclerListView.getChildCount(); i++) {
+                StoryCell cell = (StoryCell) recyclerListView.getChildAt(i);
+                cell.setClipInParent(false);
+                int adapterPosition = recyclerListView.getChildAdapterPosition(cell);
+                float cellCollapsedProgress = collapsedProgress;
+                if (adapterPosition >= animateFromPosition && adapterPosition < animateFromPosition + animateToDialogIds.size()) {
+                    int positionOffset = adapterPosition - animateFromPosition;
+                    if (positionOffset == animateFromPosition + 2) {
+                        cellCollapsedProgress = collapsedProgress;
+                    } else if (positionOffset == animateFromPosition + 1) {
+                        cellCollapsedProgress = (float) Math.pow(collapsedProgress, 0.5f);
+                    } else {
+                        cellCollapsedProgress = (float) Math.pow(collapsedProgress, 0.25f);
+                    }
+                }
+                if (adapterPosition < animateFromPosition) {
+                    cellCollapsedProgress = (float) Math.pow(collapsedProgress, 0.25f);
+                }
+                cell.setProgressToCollapsed(cellCollapsedProgress, collapsedProgress2, overscrollProgress, overscrollSelectedPosition == cell.position);
+                if (adapterPosition > animateFromPosition && adapterPosition < animateFromPosition + animateToDialogIds.size()) {
+                    StoryCell previousCell = (StoryCell) recyclerListView.getChildAt(i - 1);
+                    if (previousCell != null) {
+                        float size = dp(48);
+                        float collapsedSize = dp(COLLAPSED_SIZE);
+                        float previousSize = AndroidUtilities.lerp(size, collapsedSize, previousCell.progressToCollapsed) + dp(8);
+                        float currentSize = AndroidUtilities.lerp(size, collapsedSize, cell.progressToCollapsed) + dp(8);
+                        float radiusPrev = previousSize / 2f;
+                        float radiusCurrent = currentSize / 2f ;
+
+                        float centerXPrev = previousCell.params.originalAvatarRect.centerX() + previousCell.getX();
+                        float centerYPrev = previousCell.params.originalAvatarRect.centerY() + previousCell.getY();
+                        float centerXCurrent = cell.params.originalAvatarRect.centerX() + cell.getX();
+                        float centerYCurrent = cell.params.originalAvatarRect.centerY() + cell.getY();
+                        float dx = centerXCurrent - centerXPrev;
+                        float dy = centerYCurrent - centerYPrev;
+
+                        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+                        if (distance < radiusPrev + radiusCurrent) {
+                            double chordAngleRadians = 2 * Math.acos(distance / (radiusPrev + radiusCurrent));
+                            float chordAngleDegrees = (float) Math.toDegrees(chordAngleRadians);
+                            float midAngle = (float) Math.toDegrees(Math.atan2(dy, dx));
+                            float rightTopAngleToExclude = midAngle - chordAngleDegrees / 2f;
+                            float rightBottomAngleToExclude = midAngle + chordAngleDegrees / 2f;
+                            previousCell.params.rightTopAngleToExclude = rightTopAngleToExclude;
+                            previousCell.params.rightBottomAngleToExclude = rightBottomAngleToExclude;
+                            float midAngleCurrent = (float) Math.toDegrees(Math.atan2(-dy, -dx));
+                            float leftTopAngleToExclude = -Math.abs(midAngleCurrent - chordAngleDegrees / 2f);
+                            float leftBottomAngleToExclude = Math.abs(midAngleCurrent + chordAngleDegrees / 2f);
+                            cell.params.leftTopAngleToExclude = leftTopAngleToExclude;
+                            cell.params.leftBottomAngleToExclude = leftBottomAngleToExclude;
+                        } else {
+                            previousCell.params.rightTopAngleToExclude = 0;
+                            previousCell.params.rightBottomAngleToExclude = 0;
+                            cell.params.leftTopAngleToExclude= 0;
+                            cell.params.leftBottomAngleToExclude = 0;
+                        }
+                        previousCell.params.useArcProgress = false;
+                        cell.params.useArcProgress = false;
+                    }
+                } else {
+                    cell.params.rightTopAngleToExclude = 0;
+                    cell.params.rightBottomAngleToExclude = 0;
+                    cell.params.leftTopAngleToExclude= 0;
+                    cell.params.leftBottomAngleToExclude = 0;
+                    cell.params.useArcProgress = false;
+                }
+
+                float ovescrollSelectProgress = Utilities.clamp((overscrollProgress - 0.5f) / 0.5f, 1f, 0f);
+                float overScrollOffset = dp(16) * ovescrollSelectProgress;
+                float overscrollAlpha = (float) (0.5 + 0.5f * (1f - ovescrollSelectProgress));
+
+                float translationX = 0;
+                float toX = 0;
+                // wave effect
+                if (adapterPosition <= animateFromPosition) {
+                    toX = 0;
+                } else if (adapterPosition == animateFromPosition + 1) {
+                    toX = dp(COLLAPSED_DIS) * cellCollapsedProgress - AndroidUtilities.dpf2(0.5f) + AndroidUtilities.lerp(dp(COLLAPSED_DIS), 0f, collapsedProgress);
+                } else {
+                    toX = dp(COLLAPSED_DIS) + dp(COLLAPSED_DIS) * cellCollapsedProgress - AndroidUtilities.dpf2(0.5f) + AndroidUtilities.lerp(dp(COLLAPSED_DIS + COLLAPSED_DIS), 0f, collapsedProgress);
+                }
+                toX += menuItemsOffset;
+                if (!collapsed) {
+                    float dstCellX = 0;
+                    if (overscrollProgress > 0) {
+                        if (cell.position < overscrollSelectedPosition) {
+                            dstCellX = -overScrollOffset;
+                        } else if (cell.position > overscrollSelectedPosition) {
+                            dstCellX = overScrollOffset;
+                        }
+                    }
+                    translationX = AndroidUtilities.lerp(toX - cell.getLeft(), dstCellX,1 - expandOvershootAnimatorProgress);
+                } else {
+                    translationX = AndroidUtilities.lerp(0, toX - cell.getLeft(), storiesCollapseInterpolator.getInterpolation(collapsedOvershootProgress));
+                }
+
+                final float collapsedFactor = MathUtils.clamp((collapsedProgress1 - 0.2f) / 0.1f, 0, 1);
+                float translationY, translationY1 = 0, translationY2 = 0;
+//              if (collapsed) {        // collapsedProgress1 > 0.3
+                    if (adapterPosition - animateFromPosition == 0) {
+                        translationY1 = lerp(0, bottomY - maxY, CubicBezierInterpolator.EASE_OUT_QUINT.getInterpolation(collapsedProgress));
+                    } else if (adapterPosition - animateFromPosition == 1) {
+                        translationY1 = lerp(0, (bottomY - maxY) * 0.65f, CubicBezierInterpolator.EASE_OUT_QUINT.getInterpolation(collapsedProgress));
+                    }
+//              } else {
+                    float dstY = 0;
+                    if (cell.position == overscrollSelectedPosition && overscrollProgress > 0) {
+                        dstY = -overScrollOffset / 2f;
+                    }
+                    if (adapterPosition - animateFromPosition == 0) {
+                        translationY2 = lerp(dstY, bottomY - maxY, yStoriesProgress);
+                    } else if (adapterPosition - animateFromPosition == 1) {
+                        translationY2 = lerp(dstY, (bottomY - maxY) * 0.65f, yStoriesProgress);
+                    }
+//              }
+                translationY = lerp(translationY2, translationY1, collapsedFactor);
+
+                if (collapsedProgress > 0) {
+                    boolean drawInParent = adapterPosition >= animateFromPosition && adapterPosition <= animateFromPosition + 2;
+                    if (crossfade) {
+                        int p = adapterPosition - animateFromPosition;
+                        if (p >= 0 && p < animateToDialogIds.size()) {
+                            long dialogId = animateToDialogIds.get(p);
+                            cell.setCrossfadeTo(dialogId);
+                        } else {
+                            cell.setCrossfadeTo(-1);
+                        }
+                    } else {
+                        cell.setCrossfadeTo(-1);
+                    }
+                    cell.drawInParent = drawInParent;
+                    cell.isFirst = adapterPosition == animateFromPosition;
+                    cell.isLast = adapterPosition >= animateFromPosition + animateToDialogIds.size() - 1;
+                    cell.setTranslationX(translationX);
+                    cell.setTranslationY(translationY);
+
+                    if (drawInParent) {
+                        viewsDrawInParent.add(cell);
+                    }
+                } else if (recyclerListView.getItemAnimator() == null || !recyclerListView.getItemAnimator().isRunning()) {
+                    if (overscrollProgress > 0) {
+                        if (cell.position < overscrollSelectedPosition) {
+                            cell.setAlpha(overscrollAlpha);
+                        } else if (cell.position > overscrollSelectedPosition) {
+                            cell.setAlpha(overscrollAlpha);
+                        } else {
+                            cell.setAlpha(1f);
+                        }
+                    } else {
+                        cell.setAlpha(1f);
+                    }
+                    cell.setTranslationX(translationX);
+                    cell.setTranslationY(translationY);
+                }
+                if (cell.drawInParent) {
+                    float right = recyclerListView.getX() + cell.getX() + cell.getMeasuredWidth() / 2f + dp(ITEM_WIDTH) / 2f;
+                    if (lastViewRight == 0 || right > lastViewRight) {
+                        lastViewRight = right;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < listViewMini.getChildCount(); i++) {
+                StoryCell cell = (StoryCell) listViewMini.getChildAt(i);
+                float right = (listViewMini.getX() /*+ dp(50)*/) + cell.getX() + cell.getMeasuredWidth();
+                if (lastViewRight == 0 || right > lastViewRight) {
+                    lastViewRight = right;
+                }
+            }
+        }
+
+        if (premiumHint != null) {
+            float x = AndroidUtilities.lerp(37 - 8, 68 + 14 - 8, CubicBezierInterpolator.EASE_OUT.getInterpolation(collapsedProgress));
+            if (recyclerListView.getChildCount() > 0) {
+                x += recyclerListView.getChildAt(0).getLeft();
+            }
+            premiumHint.setJoint(0, x);
+        }
+
+        float progress = Math.min(collapsedProgress, collapsedProgress2);
+
+        final float clipRightPadding = actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress - dp(6);
+        final boolean needSaveLayer = progress != 0 && clipRightPadding > 0;
+        if (needSaveLayer) {
+            final float clipWidth = getWidth() - clipRightPadding;
+            final float layerWidth = getWidth(); // - clipRightPadding;
+            canvas.saveLayer(0, 0, layerWidth, getHeight(), null);
+            canvas.save();
+            canvas.clipRect(0, 0, clipWidth, getHeight());
+        }
+
+        if (progress != 0) {
+            final float translationOffset = subtitleOverlayContainer.getTotalVisibility() * -dp(10);
+
+            float offset = (titleView.getMeasuredHeight() - titleView.getTextHeight()) / 2f;
+            titleView.setPivotX(0);
+            titleView.setScaleX(lerp(1f, 0.95f, subtitleOverlayContainer.getTotalVisibility()));
+            titleView.setScaleY(lerp(1f, 0.95f, subtitleOverlayContainer.getTotalVisibility()));
+            titleView.setTranslationY(bottomY + dp(14) - offset + dp(FAKE_TOP_PADDING) - dp(6) * subtitleOverlayContainer.getTotalVisibility());
+            int cellWidth = dp(72);
+            lastViewRight += -cellWidth + getAvatarRight(cellWidth, collapsedProgress) + dp(12);
+            titleView.setTranslationX(lastViewRight);
+            titleView.getDrawable().setRightPadding(lastViewRight - dp(12) + actionBar.menu.getVisibleItemsMeasuredWidthWithAlpha() * progress);
+
+            telegramLogoView.setTranslationX(titleView.getTranslationX() + dp(1));
+            telegramLogoView.setTranslationY(bottomY + dp(14 + FAKE_TOP_PADDING + 4.333f) + translationOffset /*titleView.getTranslationY() + dpf2(37.33f)*/);
+
+            emojiStatusView.setTranslationX(titleView.getTranslationX() - dpf2(3.33f) + telegramLogoView.getMeasuredWidth());
+            emojiStatusView.setTranslationY(bottomY + dp(14 - 11 + FAKE_TOP_PADDING + 4.333f) + translationOffset);
+
+            subtitleOverlayContainer.setTranslationX(titleView.getTranslationX());
+            subtitleOverlayContainer.setTranslationY(bottomY + dp(15 + FAKE_TOP_PADDING + 4.333f + 8));
+        }
+
+        super.dispatchDraw(canvas);
+        if (currentState >= 0 && currentState != COLLAPSED_STATE) {
+            Collections.sort(viewsDrawInParent, comparator);
+            for (int i = 0; i < viewsDrawInParent.size(); i++) {
+                StoryCell cell = viewsDrawInParent.get(i);
+                canvas.save();
+                canvas.translate(recyclerListView.getX() + cell.getX() /*- dp(50)*/, recyclerListView.getY() + cell.getY());
+                cell.draw(canvas);
+                canvas.restore();
+            }
+        }
+
+        if (needSaveLayer) {
+            final float w = dp(16);
+            if (ellipsizeGradient == null) {
+                ellipsizeGradient = new LinearGradient(0, 0, w, 0, new int[] {0x00ff0000, 0xffff0000}, new float[] {0, 1}, Shader.TileMode.CLAMP);
+                ellipsizeGradientMatrix = new Matrix();
+                ellipsizePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                ellipsizePaint.setShader(ellipsizeGradient);
+                ellipsizePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
+            }
+            ellipsizeGradientMatrix.reset();
+            ellipsizeGradientMatrix.postTranslate(getWidth() - clipRightPadding - w, 0);
+            ellipsizeGradient.setLocalMatrix(ellipsizeGradientMatrix);
+            canvas.drawRect(getWidth() - clipRightPadding - w, 0, getWidth() - clipRightPadding + dp(1), getHeight(), ellipsizePaint);
+            canvas.restore();
+            canvas.restore();
+        }
+
+        canvas.restore();
+    }
+
+    private LinearGradient ellipsizeGradient;
+    private Matrix ellipsizeGradientMatrix;
+    private Paint ellipsizePaint;
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        updateItems(false, false);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.storiesUpdated);
+        ellipsizeSpanAnimator.onAttachedToWindow();
+        statusDrawable.attach();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.storiesUpdated);
+        ellipsizeSpanAnimator.onDetachedFromWindow();
+        if (globalCancelable != null) {
+            globalCancelable.cancel();
+            globalCancelable = null;
+        }
+        statusDrawable.detach();
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        titleView.setTextSize(dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20));
+        currentCellWidth = dp(ITEM_WIDTH);
+        AndroidUtilities.rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(85 + FAKE_TOP_PADDING), MeasureSpec.EXACTLY));
+    }
+
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.storiesUpdated) {
+            if (allowGlobalUpdates) {
+                updateItems(getVisibility() == View.VISIBLE, false);
+                AndroidUtilities.runOnUIThread(this::checkLoadMore);
+            }
+        }
+    }
+
+    boolean collapsed;
+    public float K = 0.3f;
+    private ValueAnimator valueAnimator;
+    private ValueAnimator collapsedOvershootAnimator;
+    private float collapsedOvershootProgress = 1f;
+    private ValueAnimator yStoriesAnimator;
+    private float yStoriesProgress;
+    private ValueAnimator expandOvershootAnimator;
+    private float expandOvershootAnimatorProgress;
+
+    private OvershootInterpolator storiesExpandInterpolator = new OvershootInterpolator(expandedSpringCoef);
+    private OvershootInterpolator storiesCollapseInterpolator = new OvershootInterpolator(collapsedSpringCoef);
+
+    public void setProgressToCollapse(float progress) {
+        setProgressToCollapse(progress, true);
+    }
+
+    AnimatorSet storiesAnimatorSet;
+    public void setProgressToCollapse(float progress, boolean animated) {
+        if (collapsedProgress1 == progress) {
+            return;
+        }
+
+        collapsedProgress1 = progress;
+        checkCollapsedProgress();
+
+        boolean newCollapsed = progress > K;
+        if (newCollapsed != collapsed) {
+            collapsed = newCollapsed;
+            if (storiesAnimatorSet != null) {
+                storiesAnimatorSet.removeAllListeners();
+                storiesAnimatorSet.cancel();
+                storiesAnimatorSet = null;
+            }
+            if (animated) {
+                valueAnimator = ValueAnimator.ofFloat(collapsedProgress2, newCollapsed ? 1f : 0);
+                valueAnimator.addUpdateListener(animation -> {
+                    collapsedProgress2 = (float) animation.getAnimatedValue();
+                    checkCollapsedProgress();
+                });
+
+                valueAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+                yStoriesAnimator = ValueAnimator.ofFloat(collapsedProgress1, newCollapsed ? collapsedProgress1 : 0);
+                yStoriesAnimator.addUpdateListener(animation -> {
+                    yStoriesProgress = (float) animation.getAnimatedValue();
+                });
+                yStoriesAnimator.setDuration(100);
+
+                storiesAnimatorSet = new AnimatorSet();
+                storiesAnimatorSet.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        collapsedProgress2 = newCollapsed ? 1f : 0;
+                        checkCollapsedProgress();
+                    }
+
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        super.onAnimationStart(animation);
+                        try {
+                            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                        } catch (Exception ignored) {}
+                    }
+                });
+                ArrayList<Animator> animators = new ArrayList<>();
+                animators.add(valueAnimator);
+                animators.add(yStoriesAnimator);
+                if (collapsed) {
+                    storiesAnimatorSet.setDuration(1000);
+                    collapsedOvershootAnimator = ValueAnimator.ofFloat(collapsedProgress2, newCollapsed ? 1f : 0);
+                    collapsedOvershootAnimator.addUpdateListener(animation -> {
+                        collapsedOvershootProgress = (float) animation.getAnimatedValue();
+                    });
+                    storiesCollapseInterpolator = new OvershootInterpolator(collapsedSpringCoef);
+                    collapsedOvershootAnimator.setInterpolator(storiesCollapseInterpolator);
+                    collapsedOvershootAnimator.setDuration(750);
+                    animators.add(collapsedOvershootAnimator);
+                } else {
+                    expandOvershootAnimator = ValueAnimator.ofFloat(collapsedProgress2, newCollapsed ? 1f : 0f);
+                    storiesExpandInterpolator = new OvershootInterpolator(expandedSpringCoef);
+                    expandOvershootAnimator.setInterpolator(storiesExpandInterpolator);
+                    expandOvershootAnimator.setDuration(350);
+                    expandOvershootAnimator.addUpdateListener(animation -> {
+                        expandOvershootAnimatorProgress = (float) animation.getAnimatedValue();
+                        invalidate();
+                    });
+                    animators.add(expandOvershootAnimator);
+                }
+                storiesAnimatorSet.playTogether(animators);
+                storiesAnimatorSet.start();
+            } else {
+                collapsedProgress2 = newCollapsed ? 1f : 0;
+                checkCollapsedProgress();
+                AndroidUtilities.forEachViews(recyclerListView, view -> {
+                    view.setTranslationY(0);
+                });
+            }
+        }
+    }
+
+    private void checkCollapsedProgress() {
+        collapsedProgress = 1f - AndroidUtilities.lerp(1f - collapsedProgress1, 1f, 1f - collapsedProgress2);
+        checkUi_titleVisibility();
+
+        int state = EXPANDED_STATE;
+        if (collapsedProgress == 1f) {
+            state = COLLAPSED_STATE;
+        } else if (collapsedProgress != 0) {
+            state = TRANSITION_STATE;
+        }
+        updateCurrentState(state);
+        invalidate();
+    }
+
+    public float getCollapsedProgress() {
+        return collapsedProgress;
+    }
+
+    public void scrollToFirstCell() {
+        layoutManager.scrollToPositionWithOffset(0, 0);
+    }
+
+    public void updateColors() {
+        StoriesUtilities.updateColors();
+        int color = getTextColor();
+
+        titleView.setTextColor(getTextLogoColor());
+        if (subtitleOverlayContainer != null) {
+            subtitleOverlayContainer.updateColors();
+        }
+        telegramLogoView.setColorFilter(getTextLogoColor(), PorterDuff.Mode.MULTIPLY);
+        AndroidUtilities.forEachViews(recyclerListView, view -> {
+            StoryCell cell = (StoryCell) view;
+            cell.invalidate();
+            cell.textView.setTextColor(color);
+        });
+        AndroidUtilities.forEachViews(listViewMini, view -> {
+            StoryCell cell = (StoryCell) view;
+            cell.invalidate();
+        });
+    }
+
+    private int getTextLogoColor() {
+        return getThemedColor(Theme.key_telegram_color_dialogsLogo);
+    }
+
+    private int getTextColor() {
+        if (type == TYPE_DIALOGS) {
+            return getThemedColor(Theme.key_actionBarDefaultTitle);
+        } else {
+            return getThemedColor(Theme.key_actionBarDefaultArchivedTitle);
+        }
+    }
+
+    public boolean scrollTo(long currentDialogId) {
+        int position = -1;
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).dialogId == currentDialogId) {
+                position = i;
+                break;
+            }
+        }
+        if (position >= 0) {
+            if (position < layoutManager.findFirstCompletelyVisibleItemPosition()) {
+                layoutManager.scrollToPositionWithOffset(position, 0);
+                return true;
+            } else if (position > layoutManager.findLastCompletelyVisibleItemPosition()) {
+                layoutManager.scrollToPositionWithOffset(position, 0, true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void afterNextLayout(Runnable r) {
+        afterNextLayout.add(r);
+    }
+
+    public boolean isExpanded() {
+        return currentState == EXPANDED_STATE || currentState == TRANSITION_STATE;
+    }
+
+    public boolean isFullExpanded() {
+        return currentState == EXPANDED_STATE;
+    }
+
+    public boolean scrollToFirst() {
+        if (layoutManager.findFirstVisibleItemPosition() != 0) {
+            recyclerListView.smoothScrollToPosition(0);
+            return true;
+        }
+        return false;
+    }
+
+    public void onUserLongPressed(View view, long dialogId) {
+
+    }
+
+    public void openStoryRecorder() {
+        openStoryRecorder(0);
+    }
+
+    public void openStoryRecorder(long dialogId) {
+        if (dialogId == 0) {
+            final StoriesController.StoryLimit storyLimit = MessagesController.getInstance(currentAccount).getStoriesController().checkStoryLimit();
+            if (storyLimit != null && storyLimit.active(currentAccount)) {
+                fragment.showDialog(new LimitReachedBottomSheet(fragment, getContext(), storyLimit.getLimitReachedType(), currentAccount, null));
+                return;
+            }
+        }
+
+        StoryCell cell = null;
+        for (int i = 0 ; i < recyclerListView.getChildCount(); i++) {
+            StoryCell storyCell = (StoryCell) recyclerListView.getChildAt(i);
+            if (dialogId == 0 ? storyCell.isSelf : storyCell.dialogId == dialogId) {
+                cell = storyCell;
+                break;
+            }
+        }
+        if (cell == null) {
+            return;
+        }
+        final StoryCell finalCell = cell;
+        if (dialogId != 0) {
+            final Theme.ResourcesProvider resourcesProvider = fragment != null ? fragment.getResourceProvider() : null;
+            AlertDialog progressDialog = new AlertDialog(getContext(), AlertDialog.ALERT_TYPE_SPINNER, resourcesProvider);
+            progressDialog.showDelayed(500);
+            MessagesController.getInstance(currentAccount).getStoriesController().canSendStoryFor(dialogId, canSend -> {
+                progressDialog.dismiss();
+                if (canSend) {
+                    StoryRecorder.getInstance(fragment.getParentActivity(), currentAccount)
+                        .selectedPeerId(dialogId)
+                        .canChangePeer(false)
+                        .open(StoryRecorder.SourceView.fromStoryCell(finalCell));
+                }
+            }, true, resourcesProvider);
+        } else {
+            StoryRecorder.getInstance(fragment.getParentActivity(), currentAccount).open(StoryRecorder.SourceView.fromStoryCell(cell));
+        }
+    }
+
+    EllipsizeSpanAnimator ellipsizeSpanAnimator = new EllipsizeSpanAnimator(this);
+
+    public void setTitleOverlayText(String titleOverlayText, int textId) {
+        final CharSequence subtitleToSet;
+        if (textId == R.string.ConnectingToProxyWithDots) {
+            subtitleToSet = AndroidUtilities.replaceArrows(getString(R.string.TitleSetupProxy), true, dp(8f / 3f), dp(2));
+        } else {
+            subtitleToSet = null;
+        }
+        subtitleOverlayContainer.setText(subtitleToSet, true);
+
+        boolean hasEllipsizedText = false;
+        if (titleOverlayText != null) {
+            hasOverlayText = true;
+            if (overlayTextId != textId) {
+                overlayTextId = textId;
+                String title = LocaleController.getString(titleOverlayText, textId);
+                CharSequence textToSet = title;
+//                if (!TextUtils.isEmpty(title)) {
+//                    int index = TextUtils.indexOf(textToSet, "...");
+//                    if (index >= 0) {
+//                        SpannableString spannableString = SpannableString.valueOf(textToSet);
+//                        ellipsizeSpanAnimator.wrap(spannableString, index);
+//                        hasEllipsizedText = true;
+//                        textToSet = spannableString;
+//                    }
+//                }
+                titleView.setText(textToSet, !LocaleController.isRTL);
+            }
+        } else {
+            hasOverlayText = false;
+            overlayTextId = 0;
+            titleView.setText(currentTitle, !LocaleController.isRTL);
+        }
+
+        animatorHasTitleText.setValue(hasOverlayText, true);
+        if (hasEllipsizedText) {
+            ellipsizeSpanAnimator.addView(titleView);
+        } else {
+            ellipsizeSpanAnimator.removeView(titleView);
+        }
+    }
+
+    public void setClipTop(int clipTop) {
+        if (clipTop < 0) {
+            clipTop = 0;
+        }
+        if (this.clipTop != clipTop) {
+            this.clipTop = clipTop;
+            invalidate();
+        }
+    }
+
+    public void openSelfStories() {
+        if (!storiesController.hasSelfStories()) {
+            return;
+        }
+        ArrayList<Long> peerIds = new ArrayList<>();
+        peerIds.add(UserConfig.getInstance(currentAccount).clientUserId);
+        fragment.getOrCreateStoryViewer().open(getContext(), null, peerIds, 0, null, null, StoriesListPlaceProvider.of(listViewMini), false);
+    }
+
+    public void onResume() {
+        storiesController.checkExpiredStories();
+        for (int i = 0; i < items.size(); i++) {
+            TL_stories.PeerStories stories = storiesController.getStories(items.get(i).dialogId);
+            if (stories != null) {
+                storiesController.preloadUserStories(stories);
+            }
+        }
+    }
+
+    public void setOverscroll(float storiesOverscroll) {
+        overscrollProgress = storiesOverscroll / dp(90);
+        invalidate();
+        recyclerListView.invalidate();
+    }
+
+    public boolean openOverscrollSelectedStory() {
+        if (expandOvershootAnimator != null && expandOvershootAnimator.isRunning()) {
+            return false;
+        }
+
+        openStoryForCell(overscrollSelectedView, true);
+        return true;
+    }
+
+    public void setActionBar(ActionBar actionBar) {
+        this.actionBar = actionBar;
+    }
+
+    public float overscrollProgress() {
+        return overscrollProgress;
+    }
+
+    private class Adapter extends AdapterWithDiffUtils {
+
+        boolean mini;
+
+        public Adapter(boolean mini) {
+            this.mini = mini;
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            StoryCell storyCell = new StoryCell(parent.getContext());
+            storyCell.mini = mini;
+            if (mini) {
+                storyCell.setProgressToCollapsed(1f, 1f, 0f, false);
+            }
+            return new RecyclerListView.Holder(storyCell);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            StoryCell cell = (StoryCell) holder.itemView;
+            cell.position = position;
+            if (mini) {
+                cell.setDialogId(miniItems.get(position).dialogId);
+            } else {
+                cell.setDialogId(items.get(position).dialogId);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return mini ? miniItems.size() : items.size();
+        }
+
+
+        @Override
+        public boolean isEnabled(RecyclerView.ViewHolder holder) {
+            return false;
+        }
+    }
+
+    private class Item extends AdapterWithDiffUtils.Item {
+
+        final long dialogId;
+
+        public Item(long dialogId) {
+            super(0, false);
+            this.dialogId = dialogId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Item)) return false;
+            Item item = (Item) o;
+            return dialogId == item.dialogId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dialogId);
+        }
+    }
+
+
+    public StoryCell findStoryCell(long dialogId) {
+        RecyclerListView parent = recyclerListView;
+        if (currentState == COLLAPSED_STATE) {
+            parent = listViewMini;
+        }
+        for (int i = 0; i < parent.getChildCount(); ++i) {
+            View child = parent.getChildAt(i);
+            if (child instanceof StoryCell) {
+                StoryCell storyCell = (StoryCell) child;
+                if (storyCell.dialogId == dialogId) {
+                    return storyCell;
+                }
+            }
+        }
+        return null;
+    }
+
+
+
+    public class StoryCell extends FrameLayout {
+        public boolean drawInParent;
+        public int position;
+        public boolean isLast;
+        public boolean isFirst;
+        public StoriesUtilities.EnsureStoryFileLoadedObject cancellable;
+        TLRPC.User user;
+        TLRPC.Chat chat;
+
+        AvatarDrawable avatarDrawable = new AvatarDrawable();
+        public ImageReceiver avatarImage = new ImageReceiver(this);
+        public ImageReceiver crossfadeToAvatarImage = new ImageReceiver(this);
+        AvatarDrawable crossfadeAvatarDrawable = new AvatarDrawable();
+        public boolean drawAvatar = true;
+        FrameLayout textViewContainer;
+        SimpleTextView textView;
+        long dialogId;
+        boolean isSelf;
+        boolean isFail;
+        boolean crossfadeToDialog;
+        long crossfadeToDialogId;
+
+        float progressToCollapsed;
+        float progressToCollapsed2;
+        private float cx, cy;
+        private boolean mini;
+        public final StoriesUtilities.AvatarStoryParams params = new StoriesUtilities.AvatarStoryParams(true);
+        float textAlpha = 1f;
+        float textAlphaTransition = 1f;
+
+        public RadialProgress radialProgress;
+        private Drawable verifiedDrawable;
+        private float bounceScale = 1f;
+        private boolean isUploadingState;
+        private float overscrollProgress;
+        private boolean selectedForOverscroll;
+        boolean progressWasDrawn;
+
+        private final AnimatedFloat failT = new AnimatedFloat(this, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+
+        public StoryCell(Context context) {
+            super(context);
+            params.isArchive = type == TYPE_ARCHIVE;
+            params.isDialogStoriesCell = true;
+            avatarImage.setInvalidateAll(true);
+            avatarImage.setAllowLoadingOnAttachedOnly(true);
+
+            textViewContainer = new FrameLayout(getContext());
+            textViewContainer.setClipChildren(false);
+            if (!mini) {
+                setClipChildren(false);
+            }
+            createTextView();
+            addView(textViewContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+            avatarImage.setRoundRadius(dp(48) / 2);
+            crossfadeToAvatarImage.setRoundRadius(dp(48) / 2);
+        }
+
+        private void createTextView() {
+            textView = new SimpleTextView(getContext());
+            textView.setTypeface(AndroidUtilities.bold());
+            textView.setGravity(Gravity.CENTER);
+            textView.setTextSize(11);
+            textView.setTextColor(getTextColor());
+            NotificationCenter.listenEmojiLoading(textView);
+            textView.setMaxLines(1);
+
+            textViewContainer.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 1, 0, 1, 0));
+            avatarImage.setRoundRadius(dp(48) / 2);
+            crossfadeToAvatarImage.setRoundRadius(dp(48) / 2);
+        }
+
+        public void setDialogId(long dialogId) {
+            boolean animated = this.dialogId == dialogId;
+            if (!animated) {
+                if (cancellable != null) {
+                    storiesController.setLoading(this.dialogId, false);
+                    cancellable.cancel();
+                    cancellable = null;
+                }
+            }
+            this.dialogId = dialogId;
+
+            isSelf = dialogId == UserConfig.getInstance(currentAccount).getClientUserId();
+            isFail = storiesController.isLastUploadingFailed(dialogId);
+            TLObject object;
+            if (dialogId > 0) {
+                object = user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+                chat = null;
+            } else {
+                object = chat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+                user = null;
+            }
+
+            if (object == null) {
+                textView.setText("");
+                avatarImage.clearImage();
+                return;
+            }
+            avatarDrawable.setInfo(currentAccount, object);
+            avatarImage.setForUserOrChat(object, avatarDrawable);
+            if (mini) {
+                return;
+            }
+            textView.setRightDrawable(null);
+            if (storiesController.isLastUploadingFailed(dialogId)) {
+                textView.setTextSize(10);
+                textView.setText(LocaleController.getString(R.string.FailedStory));
+                isUploadingState = false;
+            } else if (!Utilities.isNullOrEmpty(storiesController.getUploadingStories(dialogId))) {
+                textView.setTextSize(10);
+                StoriesUtilities.applyUploadingStr(textView, true, false);
+                isUploadingState = true;
+            } else if (storiesController.getEditingStory(dialogId) != null) {
+                textView.setTextSize(10);
+                StoriesUtilities.applyUploadingStr(textView, true, false);
+                isUploadingState = true;
+            } else {
+                if (isSelf) {
+                    if (animated && isUploadingState && !mini) {
+                        View oldTextView = textView;
+                        createTextView();
+                        if (textAnimator != null) {
+                            textAnimator.cancel();
+                            textAnimator = null;
+                        }
+                        textAnimator = ValueAnimator.ofFloat(0, 1f);
+                        textAnimator.addUpdateListener(animation -> {
+                            float progress = (float) animation.getAnimatedValue();
+                            oldTextView.setAlpha(1f - progress);
+                            oldTextView.setTranslationY(-dp(5) * progress);
+
+                            textView.setAlpha(progress);
+                            textView.setTranslationY(dp(5) * (1f - progress));
+                        });
+                        textAnimator.addListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                super.onAnimationEnd(animation);
+                                textAnimator = null;
+                                AndroidUtilities.removeFromParent(oldTextView);
+                            }
+                        });
+                        textAnimator.setDuration(150);
+                        textView.setAlpha(0);
+                        textView.setTranslationY(dp(5));
+                        animationRunnable = () -> {
+                            if (textAnimator != null) {
+                                textAnimator.start();
+                            }
+                            animationRunnable = null;
+                        };
+                    }
+                    AndroidUtilities.runOnUIThread(animationRunnable, 500);
+                    isUploadingState = false;
+                    textView.setTextSize(10);
+                    textView.setText(LocaleController.getString(R.string.MyStory));
+                } else if (user != null) {
+                    textView.setTextSize(11);
+                    String name = user.first_name == null ? "" : user.first_name.trim();
+                    int index = name.indexOf(" ");
+                    if (index > 0) {
+                        name = name.substring(0, index);
+                    }
+                    if (user.verified) {
+                        if (verifiedDrawable == null) {
+                            verifiedDrawable = createVerifiedDrawable();
+                        }
+                        CharSequence text = name;
+                        text = Emoji.replaceEmoji(text, textView.getPaint().getFontMetricsInt(), false);
+                        textView.setText(text);
+                        textView.setRightDrawable(verifiedDrawable);
+                    } else {
+                        CharSequence text = name;
+                        text = Emoji.replaceEmoji(text, textView.getPaint().getFontMetricsInt(), false);
+                        textView.setText(text);
+                        textView.setRightDrawable(null);
+                    }//, false);
+                } else {
+                    textView.setTextSize(11);
+                    CharSequence text = chat.title;
+                    text = Emoji.replaceEmoji(text, textView.getPaint().getFontMetricsInt(), false);
+                    textView.setText(text);//, false);
+                    textView.setRightDrawable(null);
+                }
+            }
+
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            super.onMeasure(MeasureSpec.makeMeasureSpec(mini ? dp(ITEM_WIDTH) : currentCellWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(HEIGHT_IN_DP), MeasureSpec.EXACTLY));
+        }
+
+        float getCy() {
+            float size = dp(48);
+            float collapsedSize = dp(COLLAPSED_SIZE);
+
+            float finalSize = AndroidUtilities.lerp(size, collapsedSize, progressToCollapsed);
+            float radius = finalSize / 2f;
+
+            float y = AndroidUtilities.lerp(dp(5), (ActionBar.getCurrentActionBarHeight() - collapsedSize) / 2f, collapsedProgress1);
+            return y + radius;
+        }
+
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            float size = dp(48);
+            float collapsedSize = dp(COLLAPSED_SIZE);
+            float overscrollSize = dp(8) *  Utilities.clamp(DialogStoriesCell.this.overscrollProgress / 0.5f, 1f, 0);
+            if (selectedForOverscroll) {
+                overscrollSize += dp(16) * Utilities.clamp((DialogStoriesCell.this.overscrollProgress - 0.5f) / 0.5f, 1f, 0f);
+            }
+
+            float finalSize = AndroidUtilities.lerp(size + overscrollSize, collapsedSize, progressToCollapsed);
+            float radius = finalSize / 2f;
+
+            float fromX = getMeasuredWidth() / 2f - radius;
+            float x = AndroidUtilities.lerp(fromX, 0, progressToCollapsed);
+            float y = AndroidUtilities.lerp(dp(5), (ActionBar.getCurrentActionBarHeight() - collapsedSize) / 2f, progressToCollapsed);
+
+            float progressHalf = Utilities.clamp(progressToCollapsed / 0.5f, 1f, 0f);
+
+            params.drawSegments = true;
+            if (!params.forceAnimateProgressToSegments) {
+                params.progressToSegments = 1f - collapsedProgress2;
+            }
+            params.originalAvatarRect.set(x, y, x + finalSize, y + finalSize);
+            params.additionalInset = dpf2(1.33f) * progressToCollapsed;
+            avatarImage.setAlpha(1f);
+            avatarImage.setRoundRadius((int) radius);
+
+            cx = x + radius;
+            cy = y + radius;
+            if (type == TYPE_DIALOGS) {
+                backgroundPaint.setColor(getThemedColor(Theme.key_actionBarDefault));
+            } else {
+                backgroundPaint.setColor(getThemedColor(Theme.key_actionBarDefaultArchived));
+            }
+            if (progressToCollapsed != 0) {
+                canvas.drawCircle(cx, cy, radius + dpf2(1.5f), backgroundPaint);
+            }
+
+            canvas.save();
+            canvas.scale(bounceScale, bounceScale, cx, cy);
+            if (radialProgress == null) {
+                radialProgress = DialogStoriesCell.this.radialProgress;
+            }
+            ArrayList<StoriesController.UploadingStory> uploadingOrEditingStories = storiesController.getUploadingAndEditingStories(dialogId);
+            boolean hasUploadingStories = (uploadingOrEditingStories != null && !uploadingOrEditingStories.isEmpty());
+            boolean drawProgress = hasUploadingStories || (progressWasDrawn && radialProgress != null && radialProgress.getAnimatedProgress() < 0.98f);
+            if (drawProgress) {
+                float uploadingProgress = 0;
+                boolean closeFriends;
+                if (!hasUploadingStories) {
+                    uploadingProgress = 1f;
+                    closeFriends = lastUploadingCloseFriends;
+                } else {
+                    for (int i = 0; i < uploadingOrEditingStories.size(); i++) {
+                        uploadingProgress += uploadingOrEditingStories.get(i).progress;
+                    }
+                    uploadingProgress = (storiesController.uploadedStories + uploadingProgress) / (storiesController.uploadedStories + uploadingOrEditingStories.size());
+                    lastUploadingCloseFriends = closeFriends = uploadingOrEditingStories.get(uploadingOrEditingStories.size() - 1).isCloseFriends();
+                }
+                invalidate();
+                if (radialProgress == null) {
+                    if (DialogStoriesCell.this.radialProgress != null) {
+                        radialProgress = DialogStoriesCell.this.radialProgress;
+                    } else {
+                        DialogStoriesCell.this.radialProgress = radialProgress = new RadialProgress(this);
+                        radialProgress.setBackground(null, true, false);
+                    }
+                }
+                if (drawAvatar) {
+                    canvas.save();
+                    canvas.scale(params.getScale(), params.getScale(), params.originalAvatarRect.centerX(), params.originalAvatarRect.centerY());
+                    avatarImage.setImageCoords(params.originalAvatarRect);
+                    avatarImage.draw(canvas);
+                    canvas.restore();
+                }
+                radialProgress.setDiff(0);
+                Paint paint = closeFriends ?
+                        StoriesUtilities.getCloseFriendsPaint(avatarImage) :
+                        StoriesUtilities.getUnreadCirclePaint(avatarImage, true);
+                paint.setAlpha(255);
+                radialProgress.setPaint(paint);
+                radialProgress.setProgressRect(
+                        (int) (avatarImage.getImageX() - dp(3)), (int) (avatarImage.getImageY() - dp(3)),
+                        (int) (avatarImage.getImageX2() + dp(3)), (int) (avatarImage.getImageY2() + dp(3))
+                );
+                radialProgress.setProgress(Utilities.clamp(uploadingProgress, 1f, 0), progressWasDrawn);
+                if (avatarImage.getVisible()) {
+                    radialProgress.draw(canvas);
+                }
+                progressWasDrawn = true;
+                drawCircleForce = true;
+                invalidate();
+            } else {
+                float failT = this.failT.set(isFail);
+                if (drawAvatar) {
+                    if (progressWasDrawn) {
+                        params.forceAnimateProgressToSegments = true;
+                        params.progressToSegments = 0f;
+                        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0f, 1f);
+                        valueAnimator.addUpdateListener(animation -> {
+                            params.progressToSegments = AndroidUtilities.lerp(0, 1f - collapsedProgress2, (float) animation.getAnimatedValue());
+                            invalidate();
+                        });
+                        valueAnimator.addListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                super.onAnimationEnd(animation);
+                                params.forceAnimateProgressToSegments = false;
+                            }
+                        });
+                        valueAnimator.setDuration(100);
+                        valueAnimator.start();
+                    }
+                    failT *= params.progressToSegments;
+
+                    params.animate = !progressWasDrawn;
+                    params.progressToArc = getArcProgress(cx, radius);
+                    params.isLast = isLast;
+                    params.isFirst = isFirst;
+                    params.alpha = 1f - failT;
+
+                    if (!isSelf && crossfadeToDialog) {
+                        params.crossfadeToDialog = crossfadeToDialogId;
+                        params.crossfadeToDialogProgress = progressToCollapsed2;
+                    } else {
+                        params.crossfadeToDialog = 0;
+                    }
+
+                    if (isSelf) {
+                        StoriesUtilities.drawAvatarWithStory(dialogId, canvas, avatarImage, storiesController.hasSelfStories(), params);
+                    } else {
+                        StoriesUtilities.drawAvatarWithStory(dialogId, canvas, avatarImage, storiesController.hasStories(dialogId), params);
+                    }
+
+
+                    if (failT > 0) {
+                        final Paint paint = StoriesUtilities.getErrorPaint(avatarImage);
+                        paint.setStrokeWidth(dp(2));
+                        paint.setAlpha((int) (0xFF * failT));
+                        canvas.drawCircle(x + finalSize / 2, y + finalSize / 2, (finalSize / 2 + dp(4)) * params.getScale(), paint);
+                    }
+                }
+                progressWasDrawn = false;
+                if (drawAvatar) {
+                    canvas.save();
+                    float s = 1f - progressHalf;
+                    canvas.scale(s, s, cx + dp(16), cy + dp(16));
+                    drawPlus(canvas, cx, cy, 1f);
+                    drawFail(canvas, cx, cy, failT);
+                    canvas.restore();
+                }
+            }
+            canvas.restore();
+
+            if (crossfadeToDialog && progressToCollapsed2 > 0) {
+                crossfadeToAvatarImage.setImageCoords(x, y, finalSize, finalSize);
+                crossfadeToAvatarImage.setAlpha(progressToCollapsed2);
+                crossfadeToAvatarImage.draw(canvas);
+            }
+            textViewContainer.setTranslationY(y + finalSize + dp(7) * (1f - progressToCollapsed));
+            textViewContainer.setTranslationX(x - fromX);
+            if (!mini) {
+                float p;
+                if (isSelf) {
+                    textAlpha = 1f;
+                } else {
+                    if (params.progressToSate != 1f) {
+                        p = params.currentState == StoriesUtilities.STATE_READ ? params.progressToSate : (1f - params.progressToSate);
+                    } else {
+                        p = params.currentState == StoriesUtilities.STATE_READ ? 1f : 0f;
+                    }
+                    textAlpha = params.globalState == StoriesUtilities.STATE_READ ? 0.7f : 1f;//AndroidUtilities.lerp(1f, 0.7f, p);
+                }
+                final float alpha = textAlphaTransition * textAlpha;
+                textViewContainer.setAlpha(alpha);
+                textViewContainer.setVisibility(alpha > 0 ? View.VISIBLE : View.INVISIBLE);
+            }
+            super.dispatchDraw(canvas);
+        }
+
+        private void setClipInParent(boolean clip) {
+            if (getParent() != null) {
+                ((ViewGroup) getParent()).setClipChildren(clip);
+            }
+            if (getParent() != null && getParent().getParent() != null && getParent().getParent().getParent() != null) {
+                ((ViewGroup) getParent().getParent().getParent()).setClipChildren(clip);
+            }
+        }
+
+        private float getArcProgress(float cx, float radius) {
+            if (isLast || DialogStoriesCell.this.overscrollProgress > 0) {
+                return 0;
+            }
+            float p = CubicBezierInterpolator.EASE_OUT.getInterpolation(progressToCollapsed);
+            float distance = AndroidUtilities.lerp(getMeasuredWidth(), dp(COLLAPSED_DIS), p);
+            radius += AndroidUtilities.dpf2(3.5f);
+            if (distance < radius * 2) {
+                //double cosA = (distance / 2f) / radius;
+                return (float) Math.toDegrees(Math.acos((distance / 2f) / radius)) * 2;
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public void setPressed(boolean pressed) {
+            super.setPressed(pressed);
+            if (pressed && params.buttonBounce == null) {
+                params.buttonBounce = new ButtonBounce(this, 1.5f, 5f);
+            }
+            if (params.buttonBounce != null) {
+                params.buttonBounce.setPressed(pressed);
+            }
+        }
+
+        @Override
+        public void invalidate() {
+            if (mini || drawInParent && getParent() != null) {
+                if (getParent() == listViewMini) {
+                    listViewMini.invalidate();
+                } else {
+                    DialogStoriesCell.this.invalidate();
                 }
             }
             super.invalidate();
         }
 
-        @Override // android.view.View
-        public void invalidate(int i, int i2, int i3, int i4) {
-            if (this.mini || (this.drawInParent && getParent() != null)) {
-                ViewParent parent = getParent();
-                RecyclerListView recyclerListView = DialogStoriesCell.this.listViewMini;
-                if (parent == recyclerListView) {
-                    recyclerListView.invalidate();
+        @Override
+        public void invalidate(int l, int t, int r, int b) {
+            if (mini || drawInParent && getParent() != null) {
+                if (getParent() == listViewMini) {
+                    listViewMini.invalidate();
                 }
                 DialogStoriesCell.this.invalidate();
             }
-            super.invalidate(i, i2, i3, i4);
+            super.invalidate(l, t, r, b);
         }
 
-        public void drawPlus(Canvas canvas, float f, float f2, float f3) {
-            if (this.isSelf && !DialogStoriesCell.this.storiesController.hasStories(this.dialogId) && Utilities.isNullOrEmpty(DialogStoriesCell.this.storiesController.getUploadingStories(this.dialogId))) {
-                float fDp = f + AndroidUtilities.dp(16.0f);
-                float fDp2 = f2 + AndroidUtilities.dp(16.0f);
-                DialogStoriesCell dialogStoriesCell = DialogStoriesCell.this;
-                dialogStoriesCell.addCirclePaint.setColor(Theme.multAlpha(dialogStoriesCell.getThemedColor(Theme.key_telegram_color), f3));
-                int i = DialogStoriesCell.this.type;
-                DialogStoriesCell dialogStoriesCell2 = DialogStoriesCell.this;
-                if (i == 0) {
-                    dialogStoriesCell2.backgroundPaint.setColor(Theme.multAlpha(dialogStoriesCell2.getThemedColor(Theme.key_actionBarDefault), f3));
-                } else {
-                    dialogStoriesCell2.backgroundPaint.setColor(Theme.multAlpha(dialogStoriesCell2.getThemedColor(Theme.key_actionBarDefaultArchived), f3));
-                }
-                canvas.drawCircle(fDp, fDp2, AndroidUtilities.dp(11.0f), DialogStoriesCell.this.backgroundPaint);
-                canvas.drawCircle(fDp, fDp2, AndroidUtilities.dp(9.0f), DialogStoriesCell.this.addCirclePaint);
-                int themedColor = DialogStoriesCell.this.getThemedColor(DialogStoriesCell.this.type == 0 ? Theme.key_actionBarDefault : Theme.key_actionBarDefaultArchived);
-                if (themedColor != DialogStoriesCell.this.addNewStoryLastColor) {
-                    Drawable drawable = DialogStoriesCell.this.addNewStoryDrawable;
-                    DialogStoriesCell.this.addNewStoryLastColor = themedColor;
-                    drawable.setColorFilter(new PorterDuffColorFilter(themedColor, PorterDuff.Mode.MULTIPLY));
-                }
-                DialogStoriesCell.this.addNewStoryDrawable.setAlpha((int) (f3 * 255.0f));
-                DialogStoriesCell.this.addNewStoryDrawable.setBounds((int) (fDp - (DialogStoriesCell.this.addNewStoryDrawable.getIntrinsicWidth() / 2.0f)), (int) (fDp2 - (DialogStoriesCell.this.addNewStoryDrawable.getIntrinsicHeight() / 2.0f)), (int) (fDp + (DialogStoriesCell.this.addNewStoryDrawable.getIntrinsicWidth() / 2.0f)), (int) (fDp2 + (DialogStoriesCell.this.addNewStoryDrawable.getIntrinsicHeight() / 2.0f)));
-                DialogStoriesCell.this.addNewStoryDrawable.draw(canvas);
-            }
-        }
-
-        public void drawFail(Canvas canvas, float f, float f2, float f3) {
-            if (f3 <= 0.0f) {
+        public void drawPlus(Canvas canvas, float cx, float cy, float alpha) {
+            if (!isSelf || storiesController.hasStories(dialogId) || !Utilities.isNullOrEmpty(storiesController.getUploadingStories(dialogId))) {
                 return;
             }
-            float fDp = f + AndroidUtilities.dp(17.0f);
-            float fDp2 = f2 + AndroidUtilities.dp(17.0f);
-            DialogStoriesCell dialogStoriesCell = DialogStoriesCell.this;
-            dialogStoriesCell.addCirclePaint.setColor(Theme.multAlpha(dialogStoriesCell.getThemedColor(Theme.key_text_RedBold), f3));
-            int i = DialogStoriesCell.this.type;
-            DialogStoriesCell dialogStoriesCell2 = DialogStoriesCell.this;
-            if (i == 0) {
-                dialogStoriesCell2.backgroundPaint.setColor(Theme.multAlpha(dialogStoriesCell2.getThemedColor(Theme.key_actionBarDefault), f3));
+            float cx2 = cx + dp(16);
+            float cy2 = cy + dp(16);
+            addCirclePaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_telegram_color), alpha));
+            if (type == TYPE_DIALOGS) {
+                backgroundPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_actionBarDefault), alpha));
             } else {
-                dialogStoriesCell2.backgroundPaint.setColor(Theme.multAlpha(dialogStoriesCell2.getThemedColor(Theme.key_actionBarDefaultArchived), f3));
+                backgroundPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_actionBarDefaultArchived), alpha));
             }
-            float fDp3 = AndroidUtilities.dp(9.0f) * CubicBezierInterpolator.EASE_OUT_BACK.getInterpolation(f3);
-            canvas.drawCircle(fDp, fDp2, AndroidUtilities.dp(2.0f) + fDp3, DialogStoriesCell.this.backgroundPaint);
-            canvas.drawCircle(fDp, fDp2, fDp3, DialogStoriesCell.this.addCirclePaint);
-            DialogStoriesCell dialogStoriesCell3 = DialogStoriesCell.this;
-            dialogStoriesCell3.addCirclePaint.setColor(Theme.multAlpha(dialogStoriesCell3.getTextColor(), f3));
-            RectF rectF = AndroidUtilities.rectTmp;
-            rectF.set(fDp - AndroidUtilities.dp(1.0f), fDp2 - AndroidUtilities.dpf2(4.6f), AndroidUtilities.dp(1.0f) + fDp, AndroidUtilities.dpf2(1.6f) + fDp2);
-            canvas.drawRoundRect(rectF, AndroidUtilities.dp(3.0f), AndroidUtilities.dp(3.0f), DialogStoriesCell.this.addCirclePaint);
-            rectF.set(fDp - AndroidUtilities.dp(1.0f), AndroidUtilities.dpf2(2.6f) + fDp2, fDp + AndroidUtilities.dp(1.0f), fDp2 + AndroidUtilities.dpf2(4.6f));
-            canvas.drawRoundRect(rectF, AndroidUtilities.dp(3.0f), AndroidUtilities.dp(3.0f), DialogStoriesCell.this.addCirclePaint);
+            canvas.drawCircle(cx2, cy2, dp(11), backgroundPaint);
+            canvas.drawCircle(cx2, cy2, dp(9), addCirclePaint);
+
+            int newDrawableColor = type == TYPE_DIALOGS ? getThemedColor(Theme.key_actionBarDefault) : getThemedColor(Theme.key_actionBarDefaultArchived);
+            if (newDrawableColor != addNewStoryLastColor) {
+                addNewStoryDrawable.setColorFilter(new PorterDuffColorFilter(addNewStoryLastColor = newDrawableColor, PorterDuff.Mode.MULTIPLY));
+            }
+            addNewStoryDrawable.setAlpha((int) (0xFF * alpha));
+            addNewStoryDrawable.setBounds(
+                    (int) (cx2 - addNewStoryDrawable.getIntrinsicWidth() / 2f),
+                    (int) (cy2 - addNewStoryDrawable.getIntrinsicHeight() / 2f),
+                    (int) (cx2 + addNewStoryDrawable.getIntrinsicWidth() / 2f),
+                    (int) (cy2 + addNewStoryDrawable.getIntrinsicHeight() / 2f)
+            );
+            addNewStoryDrawable.draw(canvas);
         }
 
-        @Override // android.view.ViewGroup, android.view.View
-        public void onAttachedToWindow() {
+        public void drawFail(Canvas canvas, float cx, float cy, float alpha) {
+            if (alpha <= 0) {
+                return;
+            }
+            float cx2 = cx + dp(17);
+            float cy2 = cy + dp(17);
+            addCirclePaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_text_RedBold), alpha));
+            if (type == TYPE_DIALOGS) {
+                backgroundPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_actionBarDefault), alpha));
+            } else {
+                backgroundPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_actionBarDefaultArchived), alpha));
+            }
+            float r = dp(9) * CubicBezierInterpolator.EASE_OUT_BACK.getInterpolation(alpha);
+            canvas.drawCircle(cx2, cy2, r + dp(2), backgroundPaint);
+            canvas.drawCircle(cx2, cy2, r, addCirclePaint);
+
+            addCirclePaint.setColor(Theme.multAlpha(getTextColor(), alpha));
+
+            AndroidUtilities.rectTmp.set(cx2 - dp(1), cy2 - AndroidUtilities.dpf2(4.6f), cx2 + dp(1), cy2 + AndroidUtilities.dpf2(1.6f));
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(3), dp(3), addCirclePaint);
+
+            AndroidUtilities.rectTmp.set(cx2 - dp(1), cy2 + AndroidUtilities.dpf2(2.6f), cx2 + dp(1), cy2 + AndroidUtilities.dpf2(2.6f + 2));
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(3), dp(3), addCirclePaint);
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
             super.onAttachedToWindow();
-            this.avatarImage.onAttachedToWindow();
-            this.crossfadeToAvatarImage.onAttachedToWindow();
+            avatarImage.onAttachedToWindow();
+            crossfadeToAvatarImage.onAttachedToWindow();
         }
 
-        @Override // android.view.ViewGroup, android.view.View
-        public void onDetachedFromWindow() {
+        @Override
+        protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
-            this.avatarImage.onDetachedFromWindow();
-            this.crossfadeToAvatarImage.onDetachedFromWindow();
-            this.params.onDetachFromWindow();
-            StoriesUtilities.EnsureStoryFileLoadedObject ensureStoryFileLoadedObject = this.cancellable;
-            if (ensureStoryFileLoadedObject != null) {
-                ensureStoryFileLoadedObject.cancel();
-                this.cancellable = null;
+            avatarImage.onDetachedFromWindow();
+            crossfadeToAvatarImage.onDetachedFromWindow();
+            params.onDetachFromWindow();
+            if (cancellable != null) {
+                cancellable.cancel();
+                cancellable = null;
             }
         }
 
-        public void setProgressToCollapsed(float f, float f2, float f3, boolean z) {
-            float fClamp;
-            if (this.progressToCollapsed != f || this.progressToCollapsed2 != f2 || this.overscrollProgress != f3 || this.selectedForOverscroll != z) {
-                this.selectedForOverscroll = z;
-                this.progressToCollapsed = f;
-                this.progressToCollapsed2 = f2;
+        public void setProgressToCollapsed(float progressToCollapsed, float progressToCollapsed2, float overscrollProgress, boolean selectedForOverscroll) {
+            if (this.progressToCollapsed != progressToCollapsed || this.progressToCollapsed2 != progressToCollapsed2 || this.overscrollProgress != overscrollProgress || this.selectedForOverscroll != selectedForOverscroll) {
+                this.selectedForOverscroll = selectedForOverscroll;
+                this.progressToCollapsed = progressToCollapsed;
+                this.progressToCollapsed2 = progressToCollapsed2;
                 invalidate();
-                DialogStoriesCell.this.recyclerListView.invalidate();
+                recyclerListView.invalidate();
             }
-            if (this.mini) {
-                fClamp = 0.0f;
-            } else {
-                DialogStoriesCell dialogStoriesCell = DialogStoriesCell.this;
-                fClamp = 1.0f - Utilities.clamp(dialogStoriesCell.collapsedProgress / dialogStoriesCell.K, 1.0f, 0.0f);
-            }
-            this.textAlphaTransition = fClamp;
-            float f4 = fClamp * this.textAlpha;
-            this.textViewContainer.setAlpha(f4);
-            this.textViewContainer.setVisibility(f4 > 0.0f ? 0 : 4);
+            textAlphaTransition = mini ? 0 : 1f - Utilities.clamp(collapsedProgress / K, 1f, 0);
+            final float alpha = textAlphaTransition * textAlpha;
+            textViewContainer.setAlpha(alpha);
+            textViewContainer.setVisibility(alpha > 0 ? View.VISIBLE : View.INVISIBLE);
         }
 
-        /* JADX WARN: Type inference fix 'apply assigned field type' failed
-        java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$PrimitiveArg
-        	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-        	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-        	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-         */
-        public void setCrossfadeTo(long j) {
-            TLRPC.Chat chat;
-            TLObject tLObject;
-            TLRPC.User user;
-            if (this.crossfadeToDialogId != j) {
-                this.crossfadeToDialogId = j;
-                boolean z = j != -1;
-                this.crossfadeToDialog = z;
-                if (z) {
-                    DialogStoriesCell dialogStoriesCell = DialogStoriesCell.this;
-                    if (j > 0) {
-                        user = MessagesController.getInstance(dialogStoriesCell.currentAccount).getUser(Long.valueOf(j));
-                        this.user = user;
-                        this.chat = null;
+        public void setCrossfadeTo(long dialogId) {
+            if (crossfadeToDialogId != dialogId) {
+                this.crossfadeToDialogId = dialogId;
+                crossfadeToDialog = dialogId != -1;
+                if (crossfadeToDialog) {
+                    TLObject object;
+                    if (dialogId > 0) {
+                        object = user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+                        chat = null;
                     } else {
-                        chat = MessagesController.getInstance(dialogStoriesCell.currentAccount).getChat(Long.valueOf(-j));
-                        this.chat = chat;
-                        this.user = null;
+                        object = chat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+                        user = null;
                     }
-                    if (tLObject == null) {
-                        tLObject = chat;
-                        tLObject = user;
-                        return;
-                    } else {
-                        tLObject = chat;
-                        tLObject = user;
-                        this.crossfadeAvatarDrawable.setInfo(DialogStoriesCell.this.currentAccount, tLObject);
-                        this.crossfadeToAvatarImage.setForUserOrChat(tLObject, this.crossfadeAvatarDrawable);
-                        return;
+                    if (object != null) {
+                        crossfadeAvatarDrawable.setInfo(currentAccount, object);
+                        crossfadeToAvatarImage.setForUserOrChat(object, crossfadeAvatarDrawable);
                     }
+                } else {
+                    crossfadeToAvatarImage.clearImage();
                 }
-                this.crossfadeToAvatarImage.clearImage();
             }
         }
     }
 
-    public Drawable createVerifiedDrawable() {
-        final Drawable drawableMutate = ContextCompat.getDrawable(getContext(), R.drawable.verified_area).mutate();
-        final Drawable drawableMutate2 = ContextCompat.getDrawable(getContext(), R.drawable.verified_check).mutate();
-        CombinedDrawable combinedDrawable = new CombinedDrawable(drawableMutate, drawableMutate2) { // from class: org.telegram.ui.Stories.DialogStoriesCell.12
-            int lastColor;
 
-            @Override // org.telegram.ui.Components.CombinedDrawable, android.graphics.drawable.Drawable
+    private Drawable createVerifiedDrawable() {
+        Drawable verifyDrawable = ContextCompat.getDrawable(getContext(), R.drawable.verified_area).mutate();
+        Drawable checkDrawable = ContextCompat.getDrawable(getContext(), R.drawable.verified_check).mutate();
+        CombinedDrawable combinedDrawable = new CombinedDrawable(
+                verifyDrawable,
+                checkDrawable
+        ) {
+
+            int lastColor;
+            @Override
             public void draw(Canvas canvas) {
-                int themedColor = DialogStoriesCell.this.getThemedColor(DialogStoriesCell.this.type == 0 ? Theme.key_actionBarDefault : Theme.key_actionBarDefaultArchived);
-                if (this.lastColor != themedColor) {
-                    this.lastColor = themedColor;
-                    int themedColor2 = DialogStoriesCell.this.getThemedColor(DialogStoriesCell.this.type == 0 ? Theme.key_actionBarDefaultTitle : Theme.key_actionBarDefaultArchivedTitle);
-                    Drawable drawable = drawableMutate;
-                    int iBlendARGB = ColorUtils.blendARGB(themedColor2, themedColor, 0.1f);
-                    PorterDuff.Mode mode = PorterDuff.Mode.MULTIPLY;
-                    drawable.setColorFilter(new PorterDuffColorFilter(iBlendARGB, mode));
-                    drawableMutate2.setColorFilter(new PorterDuffColorFilter(themedColor, mode));
+                int color = type == TYPE_DIALOGS ? getThemedColor(Theme.key_actionBarDefault) : getThemedColor(Theme.key_actionBarDefaultArchived);
+                if (lastColor != color) {
+                    lastColor = color;
+                    int textColor = type == TYPE_DIALOGS ? getThemedColor(Theme.key_actionBarDefaultTitle) : getThemedColor(Theme.key_actionBarDefaultArchivedTitle);//getThemedColor(Theme.key_actionBarDefaultTitle);
+                    verifyDrawable.setColorFilter(new PorterDuffColorFilter(ColorUtils.blendARGB(textColor , color, 0.1f), PorterDuff.Mode.MULTIPLY));
+                    checkDrawable.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY));
                 }
                 super.draw(canvas);
             }
@@ -502,220 +2027,206 @@ public abstract class DialogStoriesCell extends FrameLayout implements Notificat
         return combinedDrawable;
     }
 
-    private void updateCurrentState(int i) {
-        if (this.currentState == i) {
+    private void updateCurrentState(int state) {
+        if (this.currentState == state) {
             return;
         }
-        this.currentState = i;
-        if (i != 1 && this.updateOnIdleState) {
-            AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Stories.DialogStoriesCell$$ExternalSyntheticLambda15
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$updateCurrentState$16();
-                }
-            });
+        int prevState = this.currentState;
+        this.currentState = state;
+        if (currentState != TRANSITION_STATE && updateOnIdleState) {
+            AndroidUtilities.runOnUIThread(() -> updateItems(true, false));
         }
-        int i2 = this.currentState;
-        if (i2 == 0) {
-            AndroidUtilities.forEachViews((RecyclerView) this.recyclerListView, (Consumer<View>) new Consumer() { // from class: org.telegram.ui.Stories.DialogStoriesCell$$ExternalSyntheticLambda16
-                @Override // com.google.android.exoplayer2.util.Consumer
-                public final void accept(Object obj) {
-                    DialogStoriesCell.$r8$lambda$cLLcGrs3ecWcfBgfj5WeKmCtcUg((View) obj);
-                }
+        if (currentState == EXPANDED_STATE) {
+            AndroidUtilities.forEachViews(recyclerListView, view -> {
+                view.setAlpha(1f);
+                view.setTranslationX(0);
+                view.setTranslationY(0);
             });
-            this.listViewMini.setVisibility(4);
-            this.recyclerListView.setVisibility(0);
+            listViewMini.setVisibility(View.INVISIBLE);
+            recyclerListView.setVisibility(View.VISIBLE);
             checkExpanded();
-        } else if (i2 == 1) {
-            this.animateToDialogIds.clear();
-            for (int i3 = 0; i3 < this.items.size(); i3++) {
-                if (this.items.get(i3).dialogId != UserConfig.getInstance(this.currentAccount).getClientUserId() || shouldDrawSelfInMini()) {
-                    this.animateToDialogIds.add(Long.valueOf(this.items.get(i3).dialogId));
-                    if (this.animateToDialogIds.size() == 3) {
+        } else if (currentState == TRANSITION_STATE) {
+            animateToDialogIds.clear();
+            for (int i = 0; i < items.size(); i++) {
+                if (items.get(i).dialogId != UserConfig.getInstance(currentAccount).getClientUserId() || shouldDrawSelfInMini()) {
+                    animateToDialogIds.add(items.get(i).dialogId);
+                    if (animateToDialogIds.size() == 3) {
                         break;
                     }
                 }
             }
-            this.listViewMini.setVisibility(4);
-            this.recyclerListView.setVisibility(0);
-        } else if (i2 == 2) {
-            this.listViewMini.setVisibility(0);
-            this.recyclerListView.setVisibility(4);
-            this.layoutManager.scrollToPositionWithOffset(0, 0);
-            MessagesController.getInstance(this.currentAccount).getStoriesController().scheduleSort();
-            StoriesUtilities.EnsureStoryFileLoadedObject ensureStoryFileLoadedObject = this.globalCancelable;
-            if (ensureStoryFileLoadedObject != null) {
-                ensureStoryFileLoadedObject.cancel();
-                this.globalCancelable = null;
+            listViewMini.setVisibility(View.INVISIBLE);
+            recyclerListView.setVisibility(View.VISIBLE);
+        } else if (currentState == COLLAPSED_STATE) {
+            listViewMini.setVisibility(View.VISIBLE);
+            recyclerListView.setVisibility(View.INVISIBLE);
+            layoutManager.scrollToPositionWithOffset(0,  0);
+            MessagesController.getInstance(currentAccount).getStoriesController().scheduleSort();
+            if (globalCancelable != null) {
+                globalCancelable.cancel();
+                globalCancelable = null;
             }
         }
         invalidate();
     }
 
-    public /* synthetic */ void lambda$updateCurrentState$16() {
-        updateItems(true, false);
+    static float getAvatarRight(int width, float progressToCollapsed) {
+        float size = dp(48);
+        float collapsedSize = dp(COLLAPSED_SIZE);
+        float finalSize = AndroidUtilities.lerp(size, collapsedSize, progressToCollapsed);
+        float radius = finalSize / 2f;
+
+        float fromX = width / 2f - radius;
+        float x = AndroidUtilities.lerp(fromX, 0, progressToCollapsed);
+        return x + radius * 2;
     }
 
-    public static /* synthetic */ void $r8$lambda$cLLcGrs3ecWcfBgfj5WeKmCtcUg(View view) {
-        view.setAlpha(1.0f);
-        view.setTranslationX(0.0f);
-        view.setTranslationY(0.0f);
-    }
-
-    public static float getAvatarRight(int i, float f) {
-        float fLerp = AndroidUtilities.lerp(AndroidUtilities.dp(48.0f), AndroidUtilities.dp(26.33f), f) / 2.0f;
-        return AndroidUtilities.lerp((i / 2.0f) - fLerp, 0.0f, f) + (fLerp * 2.0f);
-    }
-
+    private long checkedStoryNotificationDeletion;
     private void checkExpanded() {
-        if (System.currentTimeMillis() < this.checkedStoryNotificationDeletion) {
+        if (System.currentTimeMillis() < checkedStoryNotificationDeletion) {
             return;
         }
-        this.checkedStoryNotificationDeletion = System.currentTimeMillis() + 60000;
+//        NotificationsController.getInstance(currentAccount).processIgnoreStories();
+        checkedStoryNotificationDeletion = System.currentTimeMillis() + 1000L * 60;
     }
 
-    @Override // android.view.View
-    public void setTranslationY(float f) {
-        super.setTranslationY(f);
-        HintView2 hintView2 = this.premiumHint;
-        if (hintView2 != null) {
-            hintView2.setTranslationY(f);
+    @Override
+    public void setTranslationY(float translationY) {
+        super.setTranslationY(translationY);
+        if (premiumHint != null) {
+            premiumHint.setTranslationY(translationY);
         }
     }
 
     public HintView2 getPremiumHint() {
-        return this.premiumHint;
+        return premiumHint;
     }
 
     private HintView2 makePremiumHint() {
-        HintView2 hintView2 = this.premiumHint;
-        if (hintView2 != null) {
-            return hintView2;
+        if (premiumHint != null) {
+            return premiumHint;
         }
-        this.premiumHint = new HintView2(getContext(), 1).setBgColor(getThemedColor(Theme.key_undo_background)).setMultilineText(true).setTextAlign(Layout.Alignment.ALIGN_CENTER).setJoint(0.0f, 29.0f);
-        SpannableStringBuilder spannableStringBuilderReplaceSingleTag = AndroidUtilities.replaceSingleTag(LocaleController.getString("StoriesPremiumHint2").replace('\n', ' '), Theme.key_undo_cancelColor, 0, new Runnable() { // from class: org.telegram.ui.Stories.DialogStoriesCell$$ExternalSyntheticLambda17
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$makePremiumHint$18();
+        premiumHint = new HintView2(getContext(), HintView2.DIRECTION_TOP)
+            .setBgColor(getThemedColor(Theme.key_undo_background))
+            .setMultilineText(true)
+            .setTextAlign(Layout.Alignment.ALIGN_CENTER)
+            .setJoint(0, 37 - 8);
+        Spannable text = AndroidUtilities.replaceSingleTag(LocaleController.getString("StoriesPremiumHint2").replace('\n', ' '), Theme.key_undo_cancelColor, 0, () -> {
+            if (premiumHint != null) {
+                premiumHint.hide();
             }
+            fragment.presentFragment(new PremiumPreviewFragment("stories"));
         });
-        ClickableSpan[] clickableSpanArr = (ClickableSpan[]) spannableStringBuilderReplaceSingleTag.getSpans(0, spannableStringBuilderReplaceSingleTag.length(), ClickableSpan.class);
-        if (clickableSpanArr != null && clickableSpanArr.length >= 1) {
-            spannableStringBuilderReplaceSingleTag.setSpan(new TypefaceSpan(AndroidUtilities.bold()), spannableStringBuilderReplaceSingleTag.getSpanStart(clickableSpanArr[0]), spannableStringBuilderReplaceSingleTag.getSpanEnd(clickableSpanArr[0]), 33);
+        ClickableSpan[] spans = text.getSpans(0, text.length(), ClickableSpan.class);
+        if (spans != null && spans.length >= 1) {
+            int start = text.getSpanStart(spans[0]);
+            int end = text.getSpanEnd(spans[0]);
+            text.setSpan(new TypefaceSpan(AndroidUtilities.bold()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        HintView2 hintView3 = this.premiumHint;
-        hintView3.setMaxWidthPx(HintView2.cutInFancyHalf(spannableStringBuilderReplaceSingleTag, hintView3.getTextPaint()));
-        this.premiumHint.setText(spannableStringBuilderReplaceSingleTag);
-        this.premiumHint.setPadding(AndroidUtilities.dp(8.0f), AndroidUtilities.dp(24.0f), AndroidUtilities.dp(8.0f), 0);
+        premiumHint.setMaxWidthPx(HintView2.cutInFancyHalf(text, premiumHint.getTextPaint()));
+        premiumHint.setText(text);
+        premiumHint.setPadding(dp(8), dp(24), dp(8), 0);
         if (getParent() instanceof FrameLayout) {
-            ((FrameLayout) getParent()).addView(this.premiumHint, LayoutHelper.createFrame(-1, 150, 51));
+            ((FrameLayout) getParent()).addView(premiumHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 150, Gravity.LEFT | Gravity.TOP));
         }
-        return this.premiumHint;
-    }
-
-    public /* synthetic */ void lambda$makePremiumHint$18() {
-        HintView2 hintView2 = this.premiumHint;
-        if (hintView2 != null) {
-            hintView2.hide();
-        }
-        this.fragment.presentFragment(new PremiumPreviewFragment("stories"));
+        return premiumHint;
     }
 
     public void showPremiumHint() {
         makePremiumHint();
-        HintView2 hintView2 = this.premiumHint;
-        if (hintView2 != null) {
-            if (hintView2.shown()) {
+        if (premiumHint != null) {
+            if (premiumHint.shown()) {
                 BotWebViewVibrationEffect.APP_ERROR.vibrate();
             }
-            this.premiumHint.show();
+            premiumHint.show();
         }
     }
 
-    @Override // android.view.View
-    public boolean onTouchEvent(MotionEvent motionEvent) {
-        if (this.currentState == 2) {
-            int size = this.miniItems.size();
-            this.miniItemsClickArea.setRect((int) this.listViewMini.getX(), (int) this.listViewMini.getY(), (int) (this.listViewMini.getX() + AndroidUtilities.dp((size * 26.33f) - (Math.max(0, size - 1) * 16.0f))), (int) (this.listViewMini.getY() + this.listViewMini.getHeight()));
-            if (this.miniItemsClickArea.checkTouchEvent(motionEvent)) {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (currentState == COLLAPSED_STATE) {
+            int k = miniItems.size();
+            int width = dp(COLLAPSED_SIZE * k - COLLAPSED_DIS * Math.max(0,  k - 1));
+            miniItemsClickArea.setRect((int) listViewMini.getX(), (int) listViewMini.getY(), (int) (listViewMini.getX() + width), (int) (listViewMini.getY() + listViewMini.getHeight()));
+            if (miniItemsClickArea.checkTouchEvent(event)) {
                 return true;
             }
         }
-        return super.onTouchEvent(motionEvent);
+        return super.onTouchEvent(event);
     }
 
-    public void updateStatus(TLRPC.User user, boolean z) {
-        if (this.statusDrawable == null || this.actionBar == null) {
+    private Drawable premiumStar;
+
+    public void updateStatus(TLRPC.User user, boolean animated) {
+        if (statusDrawable == null || actionBar == null) {
             return;
         }
-        Long emojiStatusDocumentId = UserObject.getEmojiStatusDocumentId(user);
-        if (ExteraConfig.getHideActionBarStatus() || !UserConfig.getInstance(this.currentAccount).isPremium()) {
-            this.statusDrawable.set((Drawable) null, z);
-            this.statusDrawable.setParticles(false, z);
-        } else if (emojiStatusDocumentId != null) {
-            boolean z2 = user.emoji_status instanceof TLRPC.TL_emojiStatusCollectible;
-            this.statusDrawable.set(emojiStatusDocumentId.longValue(), z);
-            this.statusDrawable.setParticles(z2, z);
-        } else if (user != null && MessagesController.getInstance(this.currentAccount).isPremiumUser(user)) {
-            if (this.premiumStar == null) {
-                this.premiumStar = getContext().getResources().getDrawable(R.drawable.msg_premium_liststar).mutate();
-                this.premiumStar = new AnimatedEmojiDrawable.WrapSizeDrawable(this.premiumStar, AndroidUtilities.dp(18.0f), AndroidUtilities.dp(18.0f)) { // from class: org.telegram.ui.Stories.DialogStoriesCell.13
-                    @Override // org.telegram.ui.Components.AnimatedEmojiDrawable.WrapSizeDrawable, android.graphics.drawable.Drawable
-                    public void draw(Canvas canvas) {
+        Long emojiStatusId = UserObject.getEmojiStatusDocumentId(user);
+        if (emojiStatusId != null) {
+            final boolean isCollectible = user.emoji_status instanceof TLRPC.TL_emojiStatusCollectible;
+            statusDrawable.set(emojiStatusId, animated);
+            statusDrawable.setParticles(isCollectible, animated);
+        } else if (user != null && MessagesController.getInstance(currentAccount).isPremiumUser(user)) {
+            if (premiumStar == null) {
+                premiumStar = getContext().getResources().getDrawable(R.drawable.msg_premium_liststar).mutate();
+                premiumStar = new AnimatedEmojiDrawable.WrapSizeDrawable(premiumStar, dp(18), dp(18)) {
+                    @Override
+                    public void draw(@NonNull Canvas canvas) {
                         canvas.save();
-                        canvas.translate(AndroidUtilities.dp(-2.0f), AndroidUtilities.dp(1.0f));
+                        canvas.translate(dp(-2), dp(1));
                         super.draw(canvas);
                         canvas.restore();
                     }
                 };
             }
-            this.premiumStar.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_profile_verifiedBackground), PorterDuff.Mode.MULTIPLY));
-            this.statusDrawable.set(this.premiumStar, z);
-            this.statusDrawable.setParticles(false, z);
+            premiumStar.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_profile_verifiedBackground), PorterDuff.Mode.MULTIPLY));
+            statusDrawable.set(premiumStar, animated);
+            statusDrawable.setParticles(false, animated);
         } else {
-            this.statusDrawable.set((Drawable) null, z);
-            this.statusDrawable.setParticles(false, z);
+            statusDrawable.set((Drawable) null, animated);
+            statusDrawable.setParticles(false, animated);
         }
-        this.statusDrawable.setColor(Integer.valueOf(getThemedColor(Theme.key_profile_verifiedBackground)));
-        this.emojiStatusView.invalidate();
+        statusDrawable.setColor(getThemedColor(Theme.key_profile_verifiedBackground));
+        emojiStatusView.invalidate();
     }
 
-    public int getThemedColor(int i) {
-        BaseFragment baseFragment = this.fragment;
-        if (baseFragment == null || baseFragment.getResourceProvider() == null) {
-            return Theme.getColor(i);
+    private int getThemedColor(int key) {
+        if (fragment == null || fragment.getResourceProvider() == null) {
+            return Theme.getColor(key);
         }
-        return this.fragment.getThemedColor(i);
+        return fragment.getThemedColor(key);
     }
 
-    @Override // me.vkryl.android.animator.FactorAnimator.Target
-    public void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
-        if (i == 1) {
+
+    @Override
+    public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
+        if (id == ANIMATOR_ID_HAS_TITLE_TEXT) {
             checkUi_titleVisibility();
         }
     }
 
     private void checkUi_titleVisibility() {
-        float fClamp = MathUtils.clamp(Math.min(this.collapsedProgress, this.collapsedProgress2), 0.0f, 1.0f);
-        AnimatedTextView animatedTextView = this.titleView;
-        if (animatedTextView != null) {
-            animatedTextView.setAlpha(fClamp);
-            this.titleView.setVisibility(fClamp > 0.0f ? 0 : 8);
+        final float progress = MathUtils.clamp(Math.min(collapsedProgress, collapsedProgress2), 0, 1);
+        final float titleVisibility = animatorHasTitleText.getFloatValue();
+        final float logoVisibility = 1f - titleVisibility;
+        final float titleAlpha = titleVisibility * progress;
+        final float logoAlpha = logoVisibility * progress;
+
+        if (titleView != null) {
+            titleView.setAlpha(titleAlpha);
+            titleView.setVisibility(titleAlpha > 0 ? VISIBLE : GONE);
         }
-        AnimatedTextView animatedTextView2 = this.titleViewOut;
-        if (animatedTextView2 != null && this.titleOverrideAnimator == null) {
-            animatedTextView2.setAlpha(fClamp);
-            this.titleViewOut.setVisibility(fClamp > 0.0f ? 0 : 8);
+        if (telegramLogoView != null) {
+            telegramLogoView.setAlpha(logoAlpha);
+            telegramLogoView.setVisibility(logoAlpha > 0 ? VISIBLE : GONE);
         }
-        ImageView imageView = this.emojiStatusView;
-        if (imageView != null) {
-            imageView.setAlpha(getEmojiStatusAlpha() * fClamp);
-            this.emojiStatusView.setVisibility(fClamp > 0.0f ? 0 : 8);
+        if (emojiStatusView != null) {
+            emojiStatusView.setAlpha(logoAlpha);
+            emojiStatusView.setVisibility(logoAlpha > 0 ? VISIBLE : GONE);
         }
-        ActionBarAnimatedSubtitleOverlayContainer actionBarAnimatedSubtitleOverlayContainer = this.subtitleOverlayContainer;
-        if (actionBarAnimatedSubtitleOverlayContainer != null) {
-            actionBarAnimatedSubtitleOverlayContainer.setAlpha(fClamp);
-            this.subtitleOverlayContainer.setVisibility(fClamp > 0.0f ? 0 : 8);
+        if (subtitleOverlayContainer != null) {
+            subtitleOverlayContainer.setAlpha(progress);
+            subtitleOverlayContainer.setVisibility(progress > 0 ? VISIBLE : GONE);
         }
     }
 }

@@ -1,34 +1,47 @@
 package org.telegram.ui.Components;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.lerp;
+import static org.telegram.messenger.AndroidUtilities.premiumText;
+import static org.telegram.messenger.LocaleController.getString;
+import static org.telegram.ui.Components.ImageUpdater.FOR_TYPE_CHANNEL;
+import static org.telegram.ui.Components.ImageUpdater.FOR_TYPE_COMMUNITY;
+import static org.telegram.ui.Components.ImageUpdater.FOR_TYPE_GROUP;
+import static org.telegram.ui.Components.ImageUpdater.TYPE_SUGGEST_PHOTO_FOR_USER;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.view.NestedScrollingParent;
 import androidx.core.view.NestedScrollingParentHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
-import java.util.Objects;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.ImageLocation;
@@ -37,9 +50,9 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_stars;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -55,1558 +68,1437 @@ import org.telegram.ui.PremiumPreviewFragment;
 import org.telegram.ui.SelectAnimatedEmojiDialog;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
+import java.util.ArrayList;
+import java.util.Objects;
+
 public class AvatarConstructorFragment extends BaseFragment {
-    public static final int[][] defaultColors = {new int[]{-11302949, -11562789, -10430789, -11480359}, new int[]{-11229725, -12014137, -10234219, -10819908}, new int[]{-12927610, -11158198, -3355566, -5191850}, new int[]{-8164117, -5281560, -2200166, -2525971}, new int[]{-1287263, -1350281, -1337532, -885148}, new int[]{-1419145, -1936819, -742839, -1014448}, new int[]{-1017772, -1212871, -998847, -1003446}};
-    public static final int[][] premiumColors = {new int[]{-7035984, -9667705}, new int[]{-1334949, -6199504}, new int[]{-1525432, -4686800}, new int[]{-11117215, -12893369}, new int[]{-15000805, -16777216}, new int[]{-10588271, -12496267}, new int[]{-5344541, -7842635}, new int[]{-5278276, -7777898}, new int[]{-4036162, -7650428}, new int[]{-2459992, -5351279}, new int[]{-1678221, -5814951}, new int[]{-9659148, -10720532}, new int[]{-12149549, -13731672}, new int[]{-12350279, -13802877}, new int[]{-10046854, -13404051}, new int[]{-8276302, -11822442}, new int[]{-10760507, -13200754}, new int[]{-10496401, -13525130}, new int[]{-1668548, -2862189}, new int[]{-9706766, -10062345}, new int[]{-3838476, -10456076}, new int[]{-1324753, -11225016}, new int[]{-10046854, -13404051}, new int[]{-3492512, -7569348}, new int[]{-5394320, -9732780}, new int[]{-7039865, -9408414}, new int[]{-5202023, -7373198}, new int[]{-3701922, -6397115}, new int[]{-4427695, -6859449}, new int[]{-7379371, -9944001}};
-    CanvasButton avatarClickableArea;
-    final ImageUpdater.AvatarFor avatarFor;
-    private BackgroundSelectView backgroundSelectView;
-    private FrameLayout bottomBulletinContainer;
-    private BottomSheet bottomSheet;
-    private ButtonWithCounterView button;
-    private boolean buttonIsLocked;
-    private CharSequence buttonText;
-    private TextView chooseBackgroundHint;
-    private TextView chooseEmojiHint;
-    int collapsedHeight;
-    BackgroundGradient colorPickerGradient;
-    boolean colorPickerInAnimatoin;
-    View colorPickerPreviewView;
-    Delegate delegate;
-    boolean drawForBlur;
-    ValueAnimator expandAnimator;
-    boolean expandWithKeyboard;
-    int expandedHeight;
-    boolean forGroup;
-    private boolean forUser;
-    private int gradientBackgroundItemWidth;
-    ImageUpdater imageUpdater;
-    boolean isLandscapeMode;
-    ValueAnimator keyboardVisibilityAnimator;
-    boolean keyboardVisible;
-    float keyboardVisibleProgress;
-    ValueAnimator lightProgressAnimator;
-    LinearLayout linearLayout;
-    private CharSequence lockedButtonText;
-    protected ActionBar overlayActionBar;
+
+    public final static float STICKER_DEFAULT_SCALE = 0.7f;
+    public final static float STICKER_DEFAULT_ROUND_RADIUS = 0.13f;
     PreviewView previewView;
-    float progressToExpand;
     private SelectAnimatedEmojiDialog selectAnimatedEmojiDialog;
-    private ActionBarMenuItem setPhotoItem;
+
+    int collapsedHeight;
+    int expandedHeight;
+    View colorPickerPreviewView;
+    boolean colorPickerInAnimatoin;
+    boolean drawForBlur;
     boolean wasChanged;
+    LinearLayout linearLayout;
+
+    boolean forGroup;
+    private CharSequence buttonText, lockedButtonText;
+    private boolean buttonIsLocked;
+    private ButtonWithCounterView button;
+    private FrameLayout bottomBulletinContainer;
+
+    float progressToExpand;
+    boolean expandWithKeyboard;
+    ValueAnimator expandAnimator;
+
+    protected ActionBar overlayActionBar;
+
+    Delegate delegate;
+    private BackgroundSelectView backgroundSelectView;
+    CanvasButton avatarClickableArea;
+    boolean keyboardVisible;
+
+    ValueAnimator keyboardVisibilityAnimator;
+    float keyboardVisibleProgress;
     Paint actionBarPaint = new Paint();
+    private int gradientBackgroundItemWidth;
+
+    public static final int[][] defaultColors = new int[][]{
+            new int[]{ 0xFF5387DB, 0xFF4F90DB, 0xFF60D6BB, 0xFF50D2D9 },
+            new int[]{ 0xFF54A5E3, 0xFF48ADC7, 0xFF63D695, 0xFF5AE6BC },
+            new int[]{ 0xFF3ABD86, 0xFF55BD4A, 0xFFCCCC52, 0xFFB0C756 },
+            new int[]{ 0xFF836CEB, 0xFFAF68E8, 0xFFDE6D9A, 0xFFD974ED },
+            new int[]{ 0xFFEC5BA1, 0xFFEB6577, 0xFFEB9744, 0xFFF27E64 },
+            new int[]{ 0xFFEA5877, 0xFFE2724D, 0xFFF4AA49, 0xFFF08550 },
+            new int[]{ 0xFFF07854, 0xFFED7E39, 0xFFF0C241, 0xFFF0B04A }
+    };
+    public static final int[][] premiumColors = new int[][] {
+            new int[] { 0xFF94A3B0, 0xFF6C7B87 },
+            new int[] { 0xFFEBA15B, 0xFFA16730 },
+            new int[] { 0xFFE8B948, 0xFFB87C30 },
+            new int[] { 0xFF565D61, 0xFF3B4347 },
+            new int[] { 0xFF1B1B1B, 0xFF000000 },
+            new int[] { 0xFF5E6F91, 0xFF415275 },
+            new int[] { 0xFFAE72E3, 0xFF8854B5 },
+            new int[] { 0xFFAF75BC, 0xFF895196 },
+            new int[] { 0xFFC269BE, 0xFF8B4384 },
+            new int[] { 0xFFDA76A8, 0xFFAE5891 },
+            new int[] { 0xFFE66473, 0xFFA74559 },
+            new int[] { 0xFF6C9CF4, 0xFF5C6AEC },
+            new int[] { 0xFF469CD3, 0xFF2E78A8 },
+            new int[] { 0xFF438CB9, 0xFF2D6283 },
+            new int[] { 0xFF66B27A, 0xFF33786D },
+            new int[] { 0xFF81B6B2, 0xFF4B9A96 },
+            new int[] { 0xFF5BCEC5, 0xFF36928E },
+            new int[] { 0xFF5FD66F, 0xFF319F76 },
+            new int[] { 0xFFE68A3C, 0xFFD45393 },
+            new int[] { 0xFF6BE2F2, 0xFF6675F7 },
+            new int[] { 0xFFC56DF4, 0xFF6073F4 },
+            new int[] { 0xFFEBC92F, 0xFF54B848 },
+            new int[] { 0xFF66B27A, 0xFF33786D },
+            new int[] { 0xFFCAB560, 0xFF8C803C },
+            new int[] { 0xFFADB070, 0xFF6B7D54 },
+            new int[] { 0xFF949487, 0xFF707062 },
+            new int[] { 0xFFB09F99, 0xFF8F7E72 },
+            new int[] { 0xFFC7835E, 0xFF9E6345 },
+            new int[] { 0xFFBC7051, 0xFF975547 },
+            new int[] { 0xFF8F6655, 0xFF68443F }
+    };
     public boolean finishOnDone = true;
-    boolean isLightInternal = false;
-    float progressToLightStatusBar = 0.0f;
-
-    public interface Delegate {
-        void onDone(BackgroundGradient backgroundGradient, long j, TLRPC.Document document, PreviewView previewView);
-    }
-
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public boolean isSwipeBackEnabled(MotionEvent motionEvent) {
-        return false;
-    }
+    private ActionBarMenuItem setPhotoItem;
+    private BottomSheet bottomSheet;
+    final ImageUpdater.AvatarFor avatarFor;
+    boolean isLandscapeMode;
+    private TextView chooseEmojiHint;
+    private TextView chooseBackgroundHint;
+    ImageUpdater imageUpdater;
 
     public AvatarConstructorFragment(ImageUpdater imageUpdater, ImageUpdater.AvatarFor avatarFor) {
         this.imageUpdater = imageUpdater;
         this.avatarFor = avatarFor;
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
     public View createView(Context context) {
-        String string;
-        this.hasOwnBackground = true;
-        this.actionBar.setBackgroundDrawable(null);
-        this.actionBar.setCastShadows(false);
-        this.actionBar.setAddToContainer(false);
-        this.actionBar.setOccupyStatusBar(true);
-        ActionBar actionBar = this.actionBar;
-        int i = Theme.key_windowBackgroundWhiteBlackText;
-        actionBar.setTitleColor(Theme.getColor(i));
-        this.actionBar.setItemsColor(Theme.getColor(i), false);
-        this.actionBar.setItemsBackgroundColor(Theme.getColor(Theme.key_listSelector), false);
-        this.actionBar.setBackButtonDrawable(new BackDrawable(false));
-        this.actionBar.setAllowOverlayTitle(false);
-        this.actionBar.setTitle(LocaleController.getString(R.string.PhotoEditor));
-        this.actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.1
-            @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
-            public void onItemClick(int i2) {
-                if (i2 == -1) {
-                    AvatarConstructorFragment.this.discardEditor();
+        hasOwnBackground = true;
+        actionBar.setBackgroundDrawable(null);
+        actionBar.setCastShadows(false);
+        actionBar.setAddToContainer(false);
+        actionBar.setOccupyStatusBar(true);
+        actionBar.setTitleColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        actionBar.setItemsColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), false);
+        actionBar.setItemsBackgroundColor(Theme.getColor(Theme.key_listSelector), false);
+        actionBar.setBackButtonDrawable(new BackDrawable(false));
+        actionBar.setAllowOverlayTitle(false);
+        actionBar.setTitle(getString(R.string.PhotoEditor));
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    discardEditor();
                 }
             }
         });
-        this.actionBar.getTitleTextView().setAlpha(0.0f);
-        ActionBar actionBar2 = new ActionBar(getContext());
-        this.overlayActionBar = actionBar2;
-        actionBar2.setCastShadows(false);
-        this.overlayActionBar.setAddToContainer(false);
-        this.overlayActionBar.setOccupyStatusBar(true);
-        this.overlayActionBar.setClipChildren(false);
-        int alphaComponent = ColorUtils.setAlphaComponent(-1, 60);
-        this.overlayActionBar.setItemsColor(-1, false);
-        this.overlayActionBar.setBackButtonDrawable(new BackDrawable(false));
-        this.overlayActionBar.setAllowOverlayTitle(false);
-        this.overlayActionBar.setItemsBackgroundColor(alphaComponent, false);
-        ActionBarMenu actionBarMenuCreateMenu = this.overlayActionBar.createMenu();
-        actionBarMenuCreateMenu.setClipChildren(false);
-        ImageUpdater.AvatarFor avatarFor = this.avatarFor;
-        if (avatarFor != null && avatarFor.type == 2) {
-            string = LocaleController.getString(R.string.SuggestPhoto);
-        } else {
-            string = LocaleController.getString(R.string.SetPhoto);
-        }
-        ActionBarMenuItem actionBarMenuItemAddItem = actionBarMenuCreateMenu.addItem(1, string);
-        this.setPhotoItem = actionBarMenuItemAddItem;
-        actionBarMenuItemAddItem.setBackground(Theme.createSelectorDrawable(alphaComponent, 3));
-        this.overlayActionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.2
-            @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
-            public void onItemClick(int i2) {
-                if (i2 == -1) {
-                    AvatarConstructorFragment.this.discardEditor();
+        actionBar.getTitleTextView().setAlpha(0);
+
+        overlayActionBar = new ActionBar(getContext());
+        overlayActionBar.setCastShadows(false);
+        overlayActionBar.setAddToContainer(false);
+        overlayActionBar.setOccupyStatusBar(true);
+        overlayActionBar.setClipChildren(false);
+        int selectorColor = ColorUtils.setAlphaComponent(Color.WHITE, 60);
+        overlayActionBar.setItemsColor(Color.WHITE, false);
+
+        overlayActionBar.setBackButtonDrawable(new BackDrawable(false));
+        overlayActionBar.setAllowOverlayTitle(false);
+        overlayActionBar.setItemsBackgroundColor(selectorColor, false);
+        ActionBarMenu menuOverlay = overlayActionBar.createMenu();
+        menuOverlay.setClipChildren(false);
+        setPhotoItem = menuOverlay.addItem(1, avatarFor != null && avatarFor.type == TYPE_SUGGEST_PHOTO_FOR_USER ?
+                getString(R.string.SuggestPhoto) :
+                getString(R.string.SetPhoto)
+        );
+        setPhotoItem.setBackground(Theme.createSelectorDrawable(selectorColor, Theme.RIPPLE_MASK_CIRCLE_TO_BOUND_EDGE));
+        overlayActionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    discardEditor();
                 }
-                if (i2 == 1) {
-                    AvatarConstructorFragment.this.onDonePressed();
+                if (id == 1) {
+                    onDonePressed();
                 }
             }
         });
-        this.linearLayout = new LinearLayout(getContext()) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.3
-            @Override // android.view.ViewGroup
-            public boolean drawChild(Canvas canvas, View view, long j) {
-                if (view == AvatarConstructorFragment.this.previewView) {
+
+        linearLayout = new LinearLayout(getContext()) {
+            @Override
+            protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+                if (child == previewView) {
                     return true;
                 }
-                return super.drawChild(canvas, view, j);
+                return super.drawChild(canvas, child, drawingTime);
             }
         };
-        final ContainerLayout containerLayout = new ContainerLayout(context) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.4
-            boolean isScrolling;
-            boolean maybeScroll;
-            float scrollFromX;
-            float scrollFromY;
-            float startFromProgressToExpand;
 
-            @Override // android.widget.FrameLayout, android.view.View
-            public void onMeasure(int i2, int i3) {
+        ContainerLayout nestedSizeNotifierLayout = new ContainerLayout(context) {
+
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 measureKeyboardHeight();
-                boolean z = View.MeasureSpec.getSize(i2) > View.MeasureSpec.getSize(i3) + this.keyboardHeight;
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                if (z != avatarConstructorFragment.isLandscapeMode) {
-                    avatarConstructorFragment.isLandscapeMode = z;
-                    AndroidUtilities.removeFromParent(avatarConstructorFragment.previewView);
-                    AndroidUtilities.requestAdjustNothing(AvatarConstructorFragment.this.getParentActivity(), AvatarConstructorFragment.this.getClassGuid());
-                    AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-                    if (avatarConstructorFragment2.isLandscapeMode) {
-                        avatarConstructorFragment2.setProgressToExpand(0.0f, false);
-                        AvatarConstructorFragment.this.previewView.setExpanded(false);
-                        addView(AvatarConstructorFragment.this.previewView, 0, LayoutHelper.createFrame(-1, -1.0f));
+                boolean isLandscapeModeLocal = MeasureSpec.getSize(widthMeasureSpec) > (MeasureSpec.getSize(heightMeasureSpec) + keyboardHeight);
+                if (isLandscapeModeLocal != isLandscapeMode) {
+                    isLandscapeMode = isLandscapeModeLocal;
+                    AndroidUtilities.removeFromParent(previewView);
+                    AndroidUtilities.requestAdjustNothing(getParentActivity(), getClassGuid());
+                    if (isLandscapeMode) {
+                        setProgressToExpand(0, false);
+                        previewView.setExpanded(false);
+                        addView(previewView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
                     } else {
-                        avatarConstructorFragment2.linearLayout.addView(avatarConstructorFragment2.previewView, 0, LayoutHelper.createFrame(-1, -2.0f));
+                        linearLayout.addView(previewView, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
                     }
-                    AndroidUtilities.requestAdjustResize(AvatarConstructorFragment.this.getParentActivity(), AvatarConstructorFragment.this.getClassGuid());
+                    AndroidUtilities.requestAdjustResize(getParentActivity(), getClassGuid());
                 }
-                AvatarConstructorFragment avatarConstructorFragment3 = AvatarConstructorFragment.this;
-                if (avatarConstructorFragment3.isLandscapeMode) {
-                    int size = (int) (View.MeasureSpec.getSize(i2) * 0.45f);
-                    int size2 = (int) (View.MeasureSpec.getSize(i2) * 0.55f);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.linearLayout.getLayoutParams()).bottomMargin = 0;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.linearLayout.getLayoutParams()).leftMargin = size;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.previewView.getLayoutParams()).rightMargin = size2;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.button.getLayoutParams()).rightMargin = size2 + AndroidUtilities.dp(16.0f);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.chooseBackgroundHint.getLayoutParams()).topMargin = 0;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.chooseEmojiHint.getLayoutParams()).topMargin = AndroidUtilities.dp(10.0f);
+                if (isLandscapeMode) {
+                    int avatarWidth = (int) (MeasureSpec.getSize(widthMeasureSpec) * 0.45f);
+                    int contentWidth = (int) (MeasureSpec.getSize(widthMeasureSpec) * 0.55f);
+                    ((MarginLayoutParams) linearLayout.getLayoutParams()).bottomMargin = 0;
+                    ((MarginLayoutParams) linearLayout.getLayoutParams()).leftMargin = avatarWidth;
+                    ((MarginLayoutParams) previewView.getLayoutParams()).rightMargin = contentWidth;
+                    ((MarginLayoutParams) button.getLayoutParams()).rightMargin = contentWidth + dp(16);
+                    ((MarginLayoutParams) chooseBackgroundHint.getLayoutParams()).topMargin = 0;
+                    ((MarginLayoutParams) chooseEmojiHint.getLayoutParams()).topMargin = dp(10);
                 } else {
-                    ((ViewGroup.MarginLayoutParams) avatarConstructorFragment3.linearLayout.getLayoutParams()).bottomMargin = AndroidUtilities.dp(64.0f);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.linearLayout.getLayoutParams()).leftMargin = 0;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.previewView.getLayoutParams()).rightMargin = 0;
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.button.getLayoutParams()).rightMargin = AndroidUtilities.dp(16.0f);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.chooseBackgroundHint.getLayoutParams()).topMargin = AndroidUtilities.dp(10.0f);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.chooseEmojiHint.getLayoutParams()).topMargin = AndroidUtilities.dp(18.0f);
+                    ((MarginLayoutParams) linearLayout.getLayoutParams()).bottomMargin = dp(64);
+                    ((MarginLayoutParams) linearLayout.getLayoutParams()).leftMargin = 0;
+                    ((MarginLayoutParams) previewView.getLayoutParams()).rightMargin = 0;
+                    ((MarginLayoutParams) button.getLayoutParams()).rightMargin = dp(16);
+                    ((MarginLayoutParams) chooseBackgroundHint.getLayoutParams()).topMargin = dp(10);
+                    ((MarginLayoutParams) chooseEmojiHint.getLayoutParams()).topMargin = dp(18);
                 }
-                AvatarConstructorFragment avatarConstructorFragment4 = AvatarConstructorFragment.this;
-                boolean z2 = avatarConstructorFragment4.keyboardVisible;
-                avatarConstructorFragment4.keyboardVisible = this.keyboardHeight >= AndroidUtilities.dp(20.0f);
-                if (z2 != AvatarConstructorFragment.this.keyboardVisible) {
-                    super.onMeasure(i2, i3);
-                    AvatarConstructorFragment avatarConstructorFragment5 = AvatarConstructorFragment.this;
-                    int measuredHeight = avatarConstructorFragment5.keyboardVisible ? (-avatarConstructorFragment5.selectAnimatedEmojiDialog.getTop()) + ((BaseFragment) AvatarConstructorFragment.this).actionBar.getMeasuredHeight() + AndroidUtilities.dp(8.0f) : 0;
-                    LinearLayout linearLayout = AvatarConstructorFragment.this.linearLayout;
-                    linearLayout.setTranslationY((linearLayout.getTranslationY() + ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.linearLayout.getLayoutParams()).topMargin) - measuredHeight);
-                    ((ViewGroup.MarginLayoutParams) AvatarConstructorFragment.this.linearLayout.getLayoutParams()).topMargin = measuredHeight;
-                    AvatarConstructorFragment avatarConstructorFragment6 = AvatarConstructorFragment.this;
-                    avatarConstructorFragment6.createKeyboardVisibleAnimator(avatarConstructorFragment6.keyboardVisible);
+                boolean oldKeyboardVisible = keyboardVisible;
+                keyboardVisible = keyboardHeight >= dp(20);
+
+                if (oldKeyboardVisible != keyboardVisible) {
+                    int newMargin;
+                    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                    if (keyboardVisible) {
+                        newMargin = -selectAnimatedEmojiDialog.getTop() + actionBar.getMeasuredHeight() + dp(8);
+                    } else {
+                        newMargin = 0;
+                    }
+                    linearLayout.setTranslationY(linearLayout.getTranslationY() + ((MarginLayoutParams) linearLayout.getLayoutParams()).topMargin - newMargin);
+                    ((MarginLayoutParams) linearLayout.getLayoutParams()).topMargin = newMargin;
+                    createKeyboardVisibleAnimator(keyboardVisible);
                 }
-                super.onMeasure(i2, i3);
-                AvatarConstructorFragment avatarConstructorFragment7 = AvatarConstructorFragment.this;
-                avatarConstructorFragment7.collapsedHeight = avatarConstructorFragment7.previewView.getMeasuredHeight();
-                AvatarConstructorFragment avatarConstructorFragment8 = AvatarConstructorFragment.this;
-                avatarConstructorFragment8.expandedHeight = avatarConstructorFragment8.previewView.getMeasuredWidth();
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+                collapsedHeight = previewView.getMeasuredHeight();
+                expandedHeight = previewView.getMeasuredWidth();
             }
 
-            /* JADX WARN: Code duplicated, block: B:11:0x0057  */
-            @Override // android.view.ViewGroup
-            public boolean drawChild(Canvas canvas, View view, long j) {
-                Canvas canvas2;
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                if (view == avatarConstructorFragment.overlayActionBar) {
+            @Override
+            protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+                if (child == overlayActionBar) {
                     return true;
                 }
-                if (view == ((BaseFragment) avatarConstructorFragment).actionBar) {
-                    AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-                    if (avatarConstructorFragment2.keyboardVisibleProgress > 0.0f) {
-                        avatarConstructorFragment2.actionBarPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-                        AvatarConstructorFragment avatarConstructorFragment3 = AvatarConstructorFragment.this;
-                        avatarConstructorFragment3.actionBarPaint.setAlpha((int) (avatarConstructorFragment3.keyboardVisibleProgress * 255.0f));
-                        canvas2 = canvas;
-                        canvas2.drawRect(0.0f, 0.0f, view.getMeasuredWidth(), view.getMeasuredHeight(), AvatarConstructorFragment.this.actionBarPaint);
-                        AvatarConstructorFragment.this.getParentLayout().drawHeaderShadow(canvas2, (int) (AvatarConstructorFragment.this.keyboardVisibleProgress * 255.0f), view.getMeasuredHeight());
-                    } else {
-                        canvas2 = canvas;
-                    }
-                } else {
-                    canvas2 = canvas;
+                if (child == actionBar && keyboardVisibleProgress > 0) {
+                    actionBarPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+                    actionBarPaint.setAlpha((int) (255 * keyboardVisibleProgress));
+                    canvas.drawRect(0, 0, child.getMeasuredWidth(), child.getMeasuredHeight(), actionBarPaint);
+                    getParentLayout().drawHeaderShadow(canvas, (int) (255 * keyboardVisibleProgress), child.getMeasuredHeight());
                 }
-                return super.drawChild(canvas2, view, j);
+                return super.drawChild(canvas, child, drawingTime);
             }
 
-            @Override // org.telegram.ui.Components.SizeNotifierFrameLayout, android.view.ViewGroup, android.view.View
-            public void dispatchDraw(Canvas canvas) {
-                Canvas canvas2;
-                int iSave = canvas.save();
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                int count = canvas.save();
                 super.dispatchDraw(canvas);
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                if (!avatarConstructorFragment.isLandscapeMode) {
-                    if (!avatarConstructorFragment.drawForBlur) {
+                if (!isLandscapeMode) {
+                    if (!drawForBlur) {
                         canvas.save();
-                        float x = AvatarConstructorFragment.this.linearLayout.getX() + AvatarConstructorFragment.this.previewView.getX();
-                        float y = AvatarConstructorFragment.this.linearLayout.getY() + AvatarConstructorFragment.this.previewView.getY();
-                        AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-                        int i2 = avatarConstructorFragment2.expandedHeight - avatarConstructorFragment2.collapsedHeight;
-                        int i3 = AndroidUtilities.statusBarHeight;
-                        int currentActionBarHeight = ActionBar.getCurrentActionBarHeight();
-                        AvatarConstructorFragment avatarConstructorFragment3 = AvatarConstructorFragment.this;
-                        float fLerp = AndroidUtilities.lerp(y, i3 + ((currentActionBarHeight - avatarConstructorFragment3.collapsedHeight) >> 1), avatarConstructorFragment3.keyboardVisibleProgress);
-                        canvas.translate(x, fLerp);
-                        AvatarConstructorFragment.this.previewView.draw(canvas);
-                        RectF rectF = AndroidUtilities.rectTmp;
-                        float f = i2 / 2.0f;
-                        AvatarConstructorFragment avatarConstructorFragment4 = AvatarConstructorFragment.this;
-                        rectF.set(x, fLerp - (avatarConstructorFragment4.progressToExpand * f), avatarConstructorFragment4.previewView.getMeasuredWidth() + x, AvatarConstructorFragment.this.previewView.getMeasuredHeight() + fLerp + (f * AvatarConstructorFragment.this.progressToExpand));
-                        float f2 = x + AvatarConstructorFragment.this.previewView.cx;
-                        float f3 = fLerp + AvatarConstructorFragment.this.previewView.cy;
-                        AvatarConstructorFragment avatarConstructorFragment5 = AvatarConstructorFragment.this;
-                        avatarConstructorFragment5.avatarClickableArea.setRect((int) (f2 - avatarConstructorFragment5.previewView.size), (int) (f3 - AvatarConstructorFragment.this.previewView.size), (int) (f2 + AvatarConstructorFragment.this.previewView.size), (int) (f3 + AvatarConstructorFragment.this.previewView.size));
+                        float x = linearLayout.getX() + previewView.getX();
+                        float y = linearLayout.getY() + previewView.getY();
+                        int additionalH = expandedHeight - collapsedHeight;
+                        int yKeyboardVisible = AndroidUtilities.statusBarHeight + ((ActionBar.getCurrentActionBarHeight() - collapsedHeight) >> 1);
+                        y = lerp(y, yKeyboardVisible, keyboardVisibleProgress);
+                        canvas.translate(x, y);
+                        previewView.draw(canvas);
+                        AndroidUtilities.rectTmp.set(x, y - additionalH / 2f * progressToExpand, x + previewView.getMeasuredWidth(), y + previewView.getMeasuredHeight() + additionalH / 2f * progressToExpand);
+                        float cx = x + previewView.cx;
+                        float cy = y + previewView.cy;
+                        avatarClickableArea.setRect((int) (cx - previewView.size), (int) (cy - previewView.size), (int) (cx + previewView.size), (int) (cy + previewView.size));
                         canvas.restore();
                     }
-                    canvas.restoreToCount(iSave);
-                    float alpha = AvatarConstructorFragment.this.previewView.expandProgress.get() * (1.0f - (AvatarConstructorFragment.this.colorPickerPreviewView.getVisibility() == 0 ? AvatarConstructorFragment.this.colorPickerPreviewView.getAlpha() : 0.0f));
-                    AvatarConstructorFragment avatarConstructorFragment6 = AvatarConstructorFragment.this;
-                    if (alpha != 0.0f) {
-                        avatarConstructorFragment6.overlayActionBar.setVisibility(0);
-                        int iSave2 = canvas.save();
-                        canvas.translate(AvatarConstructorFragment.this.overlayActionBar.getX(), AvatarConstructorFragment.this.overlayActionBar.getY());
-                        if (alpha != 1.0f) {
-                            canvas2 = canvas;
-                            canvas2.saveLayerAlpha(0.0f, 0.0f, AvatarConstructorFragment.this.overlayActionBar.getMeasuredWidth(), AvatarConstructorFragment.this.overlayActionBar.getMeasuredHeight(), (int) (alpha * 255.0f), 31);
-                        } else {
-                            canvas2 = canvas;
+                    canvas.restoreToCount(count);
+
+
+                    float alpha = previewView.expandProgress.get() * (1f - (colorPickerPreviewView.getVisibility() == View.VISIBLE ? colorPickerPreviewView.getAlpha() : 0));
+                    if (alpha != 0) {
+                        overlayActionBar.setVisibility(View.VISIBLE);
+                        count = canvas.save();
+                        canvas.translate(overlayActionBar.getX(), overlayActionBar.getY());
+
+                        if (alpha != 1) {
+                            canvas.saveLayerAlpha(0, 0, overlayActionBar.getMeasuredWidth(), overlayActionBar.getMeasuredHeight(), (int) (255 * alpha), Canvas.ALL_SAVE_FLAG);
                         }
-                        AvatarConstructorFragment.this.overlayActionBar.draw(canvas2);
-                        canvas2.restoreToCount(iSave2);
+                        overlayActionBar.draw(canvas);
+                        canvas.restoreToCount(count);
                     } else {
-                        avatarConstructorFragment6.overlayActionBar.setVisibility(8);
+                        overlayActionBar.setVisibility(View.GONE);
                     }
                 }
-                if (AvatarConstructorFragment.this.colorPickerInAnimatoin) {
+                if (colorPickerInAnimatoin) {
                     invalidate();
                 }
             }
 
-            @Override // android.view.ViewGroup
-            public boolean onInterceptTouchEvent(MotionEvent motionEvent) {
-                if (AvatarConstructorFragment.this.keyboardVisibleProgress == 0.0f) {
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent ev) {
+                if (keyboardVisibleProgress == 0) {
                     return false;
                 }
-                return onTouchEvent(motionEvent);
+                return onTouchEvent(ev);
             }
 
-            @Override // android.view.View
-            public boolean onTouchEvent(MotionEvent motionEvent) {
-                boolean z;
-                if (AvatarConstructorFragment.this.avatarClickableArea.checkTouchEvent(motionEvent)) {
+            boolean maybeScroll;
+            boolean isScrolling;
+            float startFromProgressToExpand;
+            float scrollFromX, scrollFromY;
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                if (avatarClickableArea.checkTouchEvent(event)) {
                     return true;
                 }
-                if (!AvatarConstructorFragment.this.isLandscapeMode) {
-                    if (motionEvent.getAction() == 0) {
-                        SelectAnimatedEmojiDialog selectAnimatedEmojiDialog = AvatarConstructorFragment.this.selectAnimatedEmojiDialog;
-                        Rect rect = AndroidUtilities.rectTmp2;
-                        selectAnimatedEmojiDialog.getHitRect(rect);
-                        rect.offset(0, (int) AvatarConstructorFragment.this.linearLayout.getY());
-                        if (AvatarConstructorFragment.this.keyboardVisibleProgress == 0.0f && !rect.contains((int) motionEvent.getX(), (int) motionEvent.getY())) {
-                            this.maybeScroll = true;
-                            this.scrollFromX = motionEvent.getX();
-                            this.scrollFromY = motionEvent.getY();
+
+                if (!isLandscapeMode) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        selectAnimatedEmojiDialog.getHitRect(AndroidUtilities.rectTmp2);
+                        AndroidUtilities.rectTmp2.offset(0, (int) linearLayout.getY());
+                        if (keyboardVisibleProgress == 0 && !AndroidUtilities.rectTmp2.contains((int) event.getX(), (int) event.getY())) {
+                            maybeScroll = true;
+                            scrollFromX = event.getX();
+                            scrollFromY = event.getY();
                         }
-                    } else if (motionEvent.getAction() == 2 && ((z = this.maybeScroll) || this.isScrolling)) {
-                        float f = this.scrollFromY;
-                        if (!z) {
-                            AvatarConstructorFragment.this.setProgressToExpand(Utilities.clamp(this.startFromProgressToExpand + ((-(f - motionEvent.getY())) / AvatarConstructorFragment.this.expandedHeight), 1.0f, 0.0f), true);
-                        } else if (Math.abs(f - motionEvent.getY()) > AndroidUtilities.touchSlop) {
-                            this.maybeScroll = false;
-                            this.isScrolling = true;
-                            this.startFromProgressToExpand = AvatarConstructorFragment.this.progressToExpand;
-                            this.scrollFromX = motionEvent.getX();
-                            this.scrollFromY = motionEvent.getY();
+                    } else if (event.getAction() == MotionEvent.ACTION_MOVE && (maybeScroll || isScrolling)) {
+                        if (maybeScroll) {
+                            if (Math.abs(scrollFromY - event.getY()) > AndroidUtilities.touchSlop) {
+                                maybeScroll = false;
+                                isScrolling = true;
+                                startFromProgressToExpand = progressToExpand;
+                                scrollFromX = event.getX();
+                                scrollFromY = event.getY();
+                            }
+                        } else {
+                            float dy = scrollFromY - event.getY();
+                            float progressToExpand = startFromProgressToExpand + (-dy / (float) expandedHeight);
+                            progressToExpand = Utilities.clamp(progressToExpand, 1f, 0f);
+                            setProgressToExpand(progressToExpand, true);
                         }
-                    } else if (motionEvent.getAction() == 1 || motionEvent.getAction() == 3) {
-                        if (this.isScrolling) {
-                            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                            avatarConstructorFragment.setExpanded(avatarConstructorFragment.progressToExpand > 0.5f, false, false);
+                    } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
+                        if (isScrolling) {
+                            setExpanded(progressToExpand > 0.5f, false, false);
                         }
-                        this.maybeScroll = false;
-                        this.isScrolling = false;
+                        maybeScroll = false;
+                        isScrolling = false;
                     }
                 }
-                return this.isScrolling || super.onTouchEvent(motionEvent) || this.maybeScroll;
+                return isScrolling || super.onTouchEvent(event) || maybeScroll;
             }
         };
-        containerLayout.setFitsSystemWindows(true);
-        containerLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
-        this.linearLayout.setClipChildren(false);
-        this.linearLayout.setClipToPadding(false);
-        this.linearLayout.setPadding(0, AndroidUtilities.statusBarHeight, 0, 0);
-        this.linearLayout.setOrientation(1);
-        LinearLayout linearLayout = this.linearLayout;
-        PreviewView previewView = new PreviewView(getContext()) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.5
-            @Override // org.telegram.ui.Components.AvatarConstructorFragment.PreviewView, android.view.View
+        nestedSizeNotifierLayout.setFitsSystemWindows(true);
+        nestedSizeNotifierLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+
+
+        linearLayout.setClipChildren(false);
+        linearLayout.setClipToPadding(false);
+        linearLayout.setPadding(0, AndroidUtilities.statusBarHeight, 0, 0);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.addView(previewView = new PreviewView(getContext()) {
+            @Override
             public void invalidate() {
                 super.invalidate();
-                containerLayout.invalidate();
+                nestedSizeNotifierLayout.invalidate();
             }
-        };
-        this.previewView = previewView;
-        linearLayout.addView(previewView);
-        TextView textView = new TextView(getContext());
-        this.chooseBackgroundHint = textView;
-        textView.setText(LocaleController.getString(R.string.ChooseBackground));
-        TextView textView2 = this.chooseBackgroundHint;
-        int i2 = Theme.key_windowBackgroundWhiteGrayText;
-        textView2.setTextColor(Theme.getColor(i2));
-        this.chooseBackgroundHint.setTextSize(1, 14.0f);
-        this.chooseBackgroundHint.setGravity(17);
-        this.linearLayout.addView(this.chooseBackgroundHint, LayoutHelper.createLinear(-1, -2, 0, 21, 10, 21, 10));
-        FrameLayout frameLayout = new FrameLayout(getContext()) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.6
-            private Path path = new Path();
-            private Paint paint = new Paint(1);
+        });
 
-            @Override // android.view.ViewGroup, android.view.View
-            public void dispatchDraw(Canvas canvas) {
-                Theme.applyDefaultShadow(this.paint);
-                this.paint.setColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, AvatarConstructorFragment.this.getResourceProvider()));
-                this.paint.setAlpha((int) (getAlpha() * 255.0f));
-                RectF rectF = AndroidUtilities.rectTmp;
-                rectF.set(0.0f, 0.0f, getMeasuredWidth(), getMeasuredHeight());
-                this.path.rewind();
-                this.path.addRoundRect(rectF, AndroidUtilities.dp(12.0f), AndroidUtilities.dp(12.0f), Path.Direction.CW);
-                canvas.drawPath(this.path, this.paint);
+        chooseBackgroundHint = new TextView(getContext());
+        chooseBackgroundHint.setText(getString(R.string.ChooseBackground));
+        chooseBackgroundHint.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        chooseBackgroundHint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        chooseBackgroundHint.setGravity(Gravity.CENTER);
+        linearLayout.addView(chooseBackgroundHint, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 21, 10, 21, 10));
+
+        FrameLayout backgroundContainer = new FrameLayout(getContext()) {
+
+            private Path path = new Path();
+            private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                Theme.applyDefaultShadow(paint);
+                paint.setColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, getResourceProvider()));
+                paint.setAlpha((int) (255 * getAlpha()));
+
+                AndroidUtilities.rectTmp.set(
+                        0, 0, getMeasuredWidth(), getMeasuredHeight()
+                );
+                path.rewind();
+                path.addRoundRect(AndroidUtilities.rectTmp, dp(12), dp(12), Path.Direction.CW);
+                canvas.drawPath(path, paint);
                 super.dispatchDraw(canvas);
             }
         };
-        BackgroundSelectView backgroundSelectView = new BackgroundSelectView(getContext());
-        this.backgroundSelectView = backgroundSelectView;
-        frameLayout.addView(backgroundSelectView);
-        this.linearLayout.addView(frameLayout, LayoutHelper.createLinear(-1, 48, 0, 12, 0, 12, 0));
-        TextView textView3 = new TextView(getContext());
-        this.chooseEmojiHint = textView3;
-        textView3.setText(LocaleController.getString(R.string.ChooseEmojiOrSticker));
-        this.chooseEmojiHint.setTextColor(Theme.getColor(i2));
-        this.chooseEmojiHint.setTextSize(1, 14.0f);
-        this.chooseEmojiHint.setGravity(17);
-        this.linearLayout.addView(this.chooseEmojiHint, LayoutHelper.createLinear(-1, -2, 0, 21, 18, 21, 10));
-        SelectAnimatedEmojiDialog selectAnimatedEmojiDialog = new SelectAnimatedEmojiDialog(this, getContext(), false, null, 4, true, null, 16, getThemedColor(i)) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.7
+        backgroundContainer.addView(backgroundSelectView = new BackgroundSelectView(getContext()));
+        linearLayout.addView(backgroundContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 0, 12, 0, 12, 0));
+
+        chooseEmojiHint = new TextView(getContext());
+        chooseEmojiHint.setText(getString(R.string.ChooseEmojiOrSticker));
+        chooseEmojiHint.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        chooseEmojiHint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        chooseEmojiHint.setGravity(Gravity.CENTER);
+        linearLayout.addView(chooseEmojiHint, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 21, 18, 21, 10));
+
+        selectAnimatedEmojiDialog = new SelectAnimatedEmojiDialog(this, getContext(), false, null, SelectAnimatedEmojiDialog.TYPE_AVATAR_CONSTRUCTOR, true, null, 16, getThemedColor(Theme.key_windowBackgroundWhiteBlackText)) {
+
             private boolean firstLayout = true;
 
-            @Override // org.telegram.ui.SelectAnimatedEmojiDialog, android.widget.FrameLayout, android.view.ViewGroup, android.view.View
-            public void onLayout(boolean z, int i3, int i4, int i5, int i6) {
-                super.onLayout(z, i3, i4, i5, i6);
-                if (this.firstLayout) {
-                    this.firstLayout = false;
-                    AvatarConstructorFragment.this.selectAnimatedEmojiDialog.onShow(null);
+            @Override
+            protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+                super.onLayout(changed, left, top, right, bottom);
+                if (firstLayout) {
+                    firstLayout = false;
+                    selectAnimatedEmojiDialog.onShow(null);
                 }
             }
 
-            @Override // org.telegram.ui.SelectAnimatedEmojiDialog
-            public void onEmojiSelected(View view, Long l, TLRPC.Document document, TL_stars.TL_starGiftUnique tL_starGiftUnique, Integer num) {
-                boolean zContains;
-                long jLongValue;
-                boolean z = this.forUser;
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                TLRPC.TL_emojiList tL_emojiList = z ? MediaDataController.getInstance(((BaseFragment) avatarConstructorFragment).currentAccount).profileAvatarConstructorDefault : MediaDataController.getInstance(((BaseFragment) avatarConstructorFragment).currentAccount).groupAvatarConstructorDefault;
-                if (tL_emojiList != null) {
-                    if (document != null) {
-                        jLongValue = document.id;
-                    } else {
-                        jLongValue = l != null ? l.longValue() : 0L;
-                    }
-                    zContains = tL_emojiList.document_id.contains(Long.valueOf(jLongValue));
-                } else {
-                    zContains = false;
+            protected void onEmojiSelected(View view, Long documentId, TLRPC.Document document, TL_stars.TL_starGiftUnique gift, Integer until) {
+//                final TLRPC.TL_inputStickerSetShortName inputStickerSet = new TLRPC.TL_inputStickerSetShortName();
+//                inputStickerSet.short_name = avatarsPack;
+//                final TLRPC.TL_messages_stickerSet set = MediaDataController.getInstance(currentAccount).getStickerSet(inputStickerSet, false);
+//                boolean isFree = false;
+//                if (set != null && set.documents != null) {
+//                    for (TLRPC.Document d : set.documents) {
+//                        if (d.id == (document != null ? document.id : (documentId != null ? documentId : 0))) {
+//                            isFree = true;
+//                            break;
+//                        }
+//                    }
+//                }
+                boolean isFree = false;
+                final TLRPC.TL_emojiList emojiList = forUser ? MediaDataController.getInstance(currentAccount).profileAvatarConstructorDefault : MediaDataController.getInstance(currentAccount).groupAvatarConstructorDefault;
+                if (emojiList != null) {
+                    final long did = document != null ? document.id : (documentId != null ? documentId : 0);
+                    isFree = emojiList.document_id.contains(did);
                 }
-                AvatarConstructorFragment.this.setPreview(zContains, l != null ? l.longValue() : 0L, document);
+                final long docId = documentId == null ? 0 : documentId;
+                setPreview(isFree, docId, document);
             }
         };
-        this.selectAnimatedEmojiDialog = selectAnimatedEmojiDialog;
-        selectAnimatedEmojiDialog.forUser = !this.forGroup;
-        selectAnimatedEmojiDialog.setAnimationsEnabled(this.fragmentBeginToShow);
-        this.selectAnimatedEmojiDialog.setClipChildren(false);
-        this.linearLayout.addView(this.selectAnimatedEmojiDialog, LayoutHelper.createLinear(-1, -1, 0, 12, 0, 12, 12));
-        this.linearLayout.setClipChildren(false);
-        containerLayout.addView(this.linearLayout, LayoutHelper.createFrame(-1, -1.0f, 0, 0.0f, 0.0f, 0.0f, 64.0f));
-        View view = new View(getContext());
-        this.colorPickerPreviewView = view;
-        view.setVisibility(8);
-        ButtonWithCounterView buttonWithCounterView = new ButtonWithCounterView(context, this.resourceProvider);
-        this.button = buttonWithCounterView;
-        buttonWithCounterView.setRound();
-        this.button.text.setHacks(false, true, false);
-        int i3 = this.imageUpdater.setForType;
-        if (i3 == 1) {
-            this.buttonText = LocaleController.getString(R.string.SetChannelPhoto);
-        } else if (i3 == 3) {
-            this.buttonText = LocaleController.getString(R.string.SetCommunityPhoto);
-        } else if (i3 == 2) {
-            this.buttonText = LocaleController.getString(R.string.SetGroupPhoto);
-        } else {
-            ImageUpdater.AvatarFor avatarFor2 = this.avatarFor;
-            if (avatarFor2 != null && avatarFor2.type == 2) {
-                this.buttonText = LocaleController.getString(R.string.SuggestPhoto);
-            } else {
-                this.buttonText = LocaleController.getString(R.string.SetMyProfilePhotoAvatarConstructor);
-            }
-        }
-        this.buttonText = new SpannableStringBuilder(this.buttonText);
-        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(this.buttonText);
-        spannableStringBuilder.append((CharSequence) " l");
-        spannableStringBuilder.setSpan(new ColoredImageSpan(R.drawable.msg_mini_lock2), spannableStringBuilder.length() - 1, spannableStringBuilder.length(), 33);
-        this.lockedButtonText = spannableStringBuilder;
-        this.buttonIsLocked = false;
-        this.button.setText(this.buttonText, false);
-        this.button.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda1
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view2) {
-                this.f$0.lambda$createView$0(view2);
-            }
-        });
-        this.bottomBulletinContainer = new FrameLayout(context);
-        containerLayout.addView(this.button, LayoutHelper.createFrame(-1, 48.0f, 80, 16.0f, 16.0f, 16.0f, 16.0f));
-        containerLayout.addView(this.bottomBulletinContainer, LayoutHelper.createFrame(-1, 80.0f, 80, 8.0f, 16.0f, 8.0f, 64.0f));
-        containerLayout.addView(this.actionBar);
-        containerLayout.addView(this.overlayActionBar);
-        containerLayout.addView(this.colorPickerPreviewView, LayoutHelper.createFrame(-1, -1.0f));
-        CanvasButton canvasButton = new CanvasButton(containerLayout);
-        this.avatarClickableArea = canvasButton;
-        canvasButton.setDelegate(new Runnable() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda2
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$createView$1();
-            }
-        });
-        this.fragmentView = containerLayout;
-        return containerLayout;
-    }
+        selectAnimatedEmojiDialog.forUser = !forGroup;
 
-    public /* synthetic */ void lambda$createView$0(View view) {
-        onDonePressed();
+        selectAnimatedEmojiDialog.setAnimationsEnabled(fragmentBeginToShow);
+        selectAnimatedEmojiDialog.setClipChildren(false);
+        linearLayout.addView(selectAnimatedEmojiDialog, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 12, 0, 12, 12));
+
+        linearLayout.setClipChildren(false);
+        nestedSizeNotifierLayout.addView(linearLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 0, 0, 0, 64));
+
+        colorPickerPreviewView = new View(getContext());
+        colorPickerPreviewView.setVisibility(View.GONE);
+
+        button = new ButtonWithCounterView(context, resourceProvider);
+        button.setRound();
+        button.text.setHacks(false, true, false);
+        if (imageUpdater.setForType == FOR_TYPE_CHANNEL) {
+            buttonText = getString(R.string.SetChannelPhoto);
+        } else if (imageUpdater.setForType == FOR_TYPE_COMMUNITY) {
+            buttonText = getString(R.string.SetCommunityPhoto);
+        } else if (imageUpdater.setForType == FOR_TYPE_GROUP) {
+            buttonText = getString(R.string.SetGroupPhoto);
+        } else if (avatarFor != null && avatarFor.type == TYPE_SUGGEST_PHOTO_FOR_USER) {
+            buttonText = getString(R.string.SuggestPhoto);
+        } else {
+            buttonText = getString(R.string.SetMyProfilePhotoAvatarConstructor);
+        }
+        buttonText = new SpannableStringBuilder(buttonText);
+        SpannableStringBuilder lockedButtonText = new SpannableStringBuilder(buttonText);
+        lockedButtonText.append(" l");
+        lockedButtonText.setSpan(new ColoredImageSpan(R.drawable.msg_mini_lock2), lockedButtonText.length() - 1, lockedButtonText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        this.lockedButtonText = lockedButtonText;
+        buttonIsLocked = false;
+        button.setText(buttonText, false);
+        button.setOnClickListener(v -> onDonePressed());
+
+        bottomBulletinContainer = new FrameLayout(context);
+
+        nestedSizeNotifierLayout.addView(button, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM, 16, 16, 16, 16));
+        nestedSizeNotifierLayout.addView(bottomBulletinContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 80, Gravity.BOTTOM, 8, 16, 8, 16 + 48));
+        nestedSizeNotifierLayout.addView(actionBar);
+
+        nestedSizeNotifierLayout.addView(overlayActionBar);
+        nestedSizeNotifierLayout.addView(colorPickerPreviewView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        avatarClickableArea = new CanvasButton(nestedSizeNotifierLayout);
+        avatarClickableArea.setDelegate(() -> {
+            onPreviewClick();
+        });
+        fragmentView = nestedSizeNotifierLayout;
+        return fragmentView;
     }
 
     private boolean isLocked() {
-        if (UserConfig.getInstance(this.currentAccount).isPremium()) {
-            return false;
-        }
-        PreviewView previewView = this.previewView;
-        BackgroundGradient backgroundGradient = previewView.backgroundGradient;
-        if ((backgroundGradient != null && backgroundGradient.premium) || previewView.isCustomGradient) {
+        if (UserConfig.getInstance(currentAccount).isPremium()) return false;
+        if (previewView.backgroundGradient != null && previewView.backgroundGradient.premium || previewView.isCustomGradient) {
             return true;
         }
-        boolean z = previewView.freeEmoji;
+        if (!previewView.freeEmoji) {
+            return false;
+        }
         return false;
     }
 
-    public void updateButton() {
-        boolean zIsLocked = isLocked();
-        if (this.buttonIsLocked != zIsLocked) {
-            ButtonWithCounterView buttonWithCounterView = this.button;
-            this.buttonIsLocked = zIsLocked;
-            buttonWithCounterView.setText(zIsLocked ? this.lockedButtonText : this.buttonText, true);
+    private void updateButton() {
+        final boolean locked = isLocked();
+        if (buttonIsLocked != locked) {
+            button.setText((buttonIsLocked = locked) ? lockedButtonText : buttonText, true);
         }
     }
 
-    public void setPreview(boolean z, long j, TLRPC.Document document) {
-        PreviewView previewView = this.previewView;
-        previewView.documentId = j;
+    private void setPreview(boolean free, long docId, TLRPC.Document document) {
+        previewView.documentId = docId;
         previewView.document = document;
-        previewView.freeEmoji = z;
-        if (j == 0) {
+        previewView.freeEmoji = free;
+        if (docId == 0) {
             previewView.backupImageView.setAnimatedEmojiDrawable(null);
-            this.previewView.backupImageView.getImageReceiver().setImage(ImageLocation.getForDocument(document), "100_100", null, null, DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundWhiteGrayIcon, 0.2f), 0L, "tgs", document, 0);
+            SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundWhiteGrayIcon, 0.2f);
+            previewView.backupImageView.getImageReceiver().setImage(ImageLocation.getForDocument(document), "100_100", null, null, svgThumb, 0, "tgs", document, 0);
         } else {
-            previewView.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(14, this.currentAccount, j));
-            this.previewView.backupImageView.getImageReceiver().clearImage();
+            previewView.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(AnimatedEmojiDrawable.CACHE_TYPE_AVATAR_CONSTRUCTOR_PREVIEW, currentAccount, docId));
+            previewView.backupImageView.getImageReceiver().clearImage();
         }
-        if (this.previewView.getImageReceiver() != null && this.previewView.getImageReceiver().getAnimation() != null) {
-            this.previewView.getImageReceiver().getAnimation().seekTo(0L, true);
+        if (previewView.getImageReceiver() != null && previewView.getImageReceiver().getAnimation() != null) {
+            previewView.getImageReceiver().getAnimation().seekTo(0, true);
         }
-        if (this.previewView.getImageReceiver() != null && this.previewView.getImageReceiver().getLottieAnimation() != null) {
-            this.previewView.getImageReceiver().getLottieAnimation().setCurrentFrame(0, false, true);
+        if (previewView.getImageReceiver() != null && previewView.getImageReceiver().getLottieAnimation() != null) {
+            previewView.getImageReceiver().getLottieAnimation().setCurrentFrame(0, false, true);
         }
-        this.wasChanged = true;
+        wasChanged = true;
         updateButton();
     }
 
-    public void discardEditor() {
+    private void discardEditor() {
         if (getParentActivity() == null) {
             return;
         }
-        if (this.wasChanged) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-            builder.setMessage(LocaleController.getString(R.string.PhotoEditorDiscardAlert));
-            builder.setTitle(LocaleController.getString(R.string.DiscardChanges));
-            builder.setPositiveButton(LocaleController.getString(R.string.PassportDiscard), new AlertDialog.OnButtonClickListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda6
-                @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
-                public final void onClick(AlertDialog alertDialog, int i) {
-                    this.f$0.lambda$discardEditor$2(alertDialog, i);
-                }
-            });
-            builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            AlertDialog alertDialogCreate = builder.create();
-            showDialog(alertDialogCreate);
-            alertDialogCreate.redPositive();
-            return;
-        }
-        finishFragment();
-    }
-
-    public /* synthetic */ void lambda$discardEditor$2(AlertDialog alertDialog, int i) {
-        finishFragment();
-    }
-
-    public void createKeyboardVisibleAnimator(final boolean z) {
-        if (this.isLandscapeMode) {
-            return;
-        }
-        final float translationY = 0.0f;
-        this.keyboardVisibilityAnimator = ValueAnimator.ofFloat(this.keyboardVisibleProgress, z ? 1.0f : 0.0f);
-        final float translationY2 = ((this.expandedHeight - this.collapsedHeight) - AndroidUtilities.statusBarHeight) * this.progressToExpand;
-        if (z) {
-            this.previewView.setExpanded(false);
-            translationY2 = this.linearLayout.getTranslationY();
+        if (wasChanged) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+            builder.setMessage(getString(R.string.PhotoEditorDiscardAlert));
+            builder.setTitle(getString(R.string.DiscardChanges));
+            builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> finishFragment());
+            builder.setNegativeButton(getString(R.string.Cancel), null);
+            AlertDialog dialog = builder.create();
+            showDialog(dialog);
+            dialog.redPositive();
         } else {
-            translationY = this.linearLayout.getTranslationY();
-        }
-        if (this.expandWithKeyboard && !z) {
-            this.previewView.setExpanded(true);
-        } else {
-            this.expandWithKeyboard = false;
-        }
-        this.keyboardVisibilityAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.8
-            @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                AvatarConstructorFragment.this.keyboardVisibleProgress = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-                float fLerp = AndroidUtilities.lerp(translationY2, translationY, AvatarConstructorFragment.this.keyboardVisibleProgress);
-                ((BaseFragment) AvatarConstructorFragment.this).actionBar.getTitleTextView().setAlpha(AvatarConstructorFragment.this.keyboardVisibleProgress);
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                if (avatarConstructorFragment.expandWithKeyboard && !z) {
-                    avatarConstructorFragment.setProgressToExpand(1.0f - avatarConstructorFragment.keyboardVisibleProgress, false);
-                }
-                AvatarConstructorFragment.this.linearLayout.setTranslationY(fLerp);
-                AvatarConstructorFragment.this.button.setTranslationY(fLerp);
-                AvatarConstructorFragment.this.fragmentView.invalidate();
-                ((BaseFragment) AvatarConstructorFragment.this).actionBar.invalidate();
-            }
-        });
-        this.keyboardVisibilityAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.9
-            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-            public void onAnimationEnd(Animator animator) {
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                avatarConstructorFragment.setProgressToExpand(avatarConstructorFragment.expandWithKeyboard ? 1.0f : 0.0f, false);
-                AvatarConstructorFragment.this.expandWithKeyboard = false;
-            }
-        });
-        this.keyboardVisibilityAnimator.setDuration(250L);
-        this.keyboardVisibilityAnimator.setInterpolator(AdjustPanLayoutHelper.keyboardInterpolator);
-        this.keyboardVisibilityAnimator.start();
-    }
-
-    public void onDonePressed() {
-        if (this.previewView.getImageReceiver() == null || !this.previewView.getImageReceiver().hasImageLoaded()) {
-            return;
-        }
-        if (isLocked()) {
-            BulletinFactory.of(this.bottomBulletinContainer, this.resourceProvider).createSimpleBulletin(R.raw.star_premium_2, AndroidUtilities.premiumText(LocaleController.getString(R.string.PremiumAvatarToast), new Runnable() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda5
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$onDonePressed$3();
-                }
-            })).show();
-            return;
-        }
-        Delegate delegate = this.delegate;
-        if (delegate != null) {
-            PreviewView previewView = this.previewView;
-            delegate.onDone(previewView.backgroundGradient, previewView.documentId, previewView.document, previewView);
-        }
-        if (this.finishOnDone) {
             finishFragment();
         }
     }
 
-    public /* synthetic */ void lambda$onDonePressed$3() {
-        presentFragment(new PremiumPreviewFragment("avatar"));
-    }
-
-    public void setExpanded(final boolean z, final boolean z2, boolean z3) {
-        if (this.isLandscapeMode) {
+    private void createKeyboardVisibleAnimator(boolean keyboardVisible) {
+        if (isLandscapeMode) {
             return;
         }
-        cancelExpandAnimator();
-        this.expandAnimator = ValueAnimator.ofFloat(this.progressToExpand, z ? 1.0f : 0.0f);
-        if (z2) {
-            this.previewView.overrideExpandProgress = this.progressToExpand;
-            NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.needCheckSystemBarColors, new Object[0]);
-        }
-        this.expandAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda4
-            @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-            public final void onAnimationUpdate(ValueAnimator valueAnimator) {
-                this.f$0.lambda$setExpanded$4(z2, valueAnimator);
-            }
-        });
-        this.expandAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.10
-            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-            public void onAnimationEnd(Animator animator) {
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                avatarConstructorFragment.expandAnimator = null;
-                avatarConstructorFragment.setProgressToExpand(z ? 1.0f : 0.0f, false);
-                if (z2) {
-                    PreviewView previewView = AvatarConstructorFragment.this.previewView;
-                    previewView.overrideExpandProgress = -1.0f;
-                    previewView.setExpanded(z);
-                }
-            }
-        });
-        ValueAnimator valueAnimator = this.expandAnimator;
-        if (z3) {
-            valueAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-            this.expandAnimator.setDuration(350L);
-            this.expandAnimator.setStartDelay(150L);
+        keyboardVisibilityAnimator = ValueAnimator.ofFloat(keyboardVisibleProgress, keyboardVisible ? 1f : 0f);
+        float offsetY = (expandedHeight - collapsedHeight - AndroidUtilities.statusBarHeight) * progressToExpand;
+        float translationYFrom, translationYTo;
+        if (keyboardVisible) {
+            previewView.setExpanded(false);
+            translationYFrom = linearLayout.getTranslationY();
+            translationYTo = 0;
         } else {
-            valueAnimator.setInterpolator(CubicBezierInterpolator.DEFAULT);
-            this.expandAnimator.setDuration(250L);
+            translationYFrom = offsetY;
+            translationYTo = linearLayout.getTranslationY();
         }
-        this.expandAnimator.start();
+        if (expandWithKeyboard && !keyboardVisible) {
+            previewView.setExpanded(true);
+        } else {
+            expandWithKeyboard = false;
+        }
+        keyboardVisibilityAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                keyboardVisibleProgress = (float) animation.getAnimatedValue();
+                float offset = lerp(translationYFrom, translationYTo, keyboardVisibleProgress);
+                actionBar.getTitleTextView().setAlpha(keyboardVisibleProgress);
+                if (expandWithKeyboard && !keyboardVisible) {
+                    setProgressToExpand(1f - keyboardVisibleProgress, false);
+                }
+                linearLayout.setTranslationY(offset);
+                button.setTranslationY(offset);
+                fragmentView.invalidate();
+                actionBar.invalidate();
+            }
+        });
+        keyboardVisibilityAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                setProgressToExpand(expandWithKeyboard ? 1f : 0f, false);
+                expandWithKeyboard = false;
+            }
+        });
+        keyboardVisibilityAnimator.setDuration(AdjustPanLayoutHelper.keyboardDuration);
+        keyboardVisibilityAnimator.setInterpolator(AdjustPanLayoutHelper.keyboardInterpolator);
+        keyboardVisibilityAnimator.start();
     }
 
-    public /* synthetic */ void lambda$setExpanded$4(boolean z, ValueAnimator valueAnimator) {
-        float fFloatValue = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-        setProgressToExpand(fFloatValue, false);
-        if (z) {
-            PreviewView previewView = this.previewView;
-            previewView.overrideExpandProgress = fFloatValue;
-            previewView.invalidate();
+    private void onDonePressed() {
+        if (previewView.getImageReceiver() == null || !previewView.getImageReceiver().hasImageLoaded()) {
+            return;
+        }
+        if (isLocked()) {
+            BulletinFactory.of(bottomBulletinContainer, resourceProvider).createSimpleBulletin(R.raw.star_premium_2, premiumText(getString(R.string.PremiumAvatarToast), () -> {
+                presentFragment(new PremiumPreviewFragment("avatar"));
+            })).show();
+            return;
+        }
+        if (delegate != null) {
+            delegate.onDone(previewView.backgroundGradient, previewView.documentId, previewView.document, previewView);
+        }
+        if (finishOnDone) {
+            finishFragment();
         }
     }
 
-    public void cancelExpandAnimator() {
-        ValueAnimator valueAnimator = this.expandAnimator;
-        if (valueAnimator != null) {
-            valueAnimator.removeAllListeners();
-            this.expandAnimator.cancel();
-            this.expandAnimator = null;
+
+    private void setExpanded(boolean expanded, boolean fromClick, boolean withColorPicker) {
+        if (isLandscapeMode) {
+            return;
+        }
+//        if (this.expanded != expanded) {
+//            this.expanded = expanded;
+        cancelExpandAnimator();
+        expandAnimator = ValueAnimator.ofFloat(progressToExpand, expanded ? 1f : 0f);
+        if (fromClick) {
+            previewView.overrideExpandProgress = progressToExpand;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
+            }
+        }
+        expandAnimator.addUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            setProgressToExpand(progress, false);
+            if (fromClick) {
+                previewView.overrideExpandProgress = progress;
+                previewView.invalidate();
+            }
+        });
+        expandAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                expandAnimator = null;
+                setProgressToExpand(expanded ? 1f : 0f, false);
+                if (fromClick) {
+                    previewView.overrideExpandProgress = -1;
+                    previewView.setExpanded(expanded);
+                }
+
+            }
+        });
+        if (withColorPicker) {
+            expandAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            expandAnimator.setDuration(350);
+            expandAnimator.setStartDelay(150);
+        } else {
+            expandAnimator.setInterpolator(CubicBezierInterpolator.DEFAULT);
+            expandAnimator.setDuration(250);
+        }
+        expandAnimator.start();
+        //  }
+    }
+
+    void cancelExpandAnimator() {
+        if (expandAnimator != null) {
+            expandAnimator.removeAllListeners();
+            expandAnimator.cancel();
+            expandAnimator = null;
         }
     }
 
-    public void setProgressToExpand(float f, boolean z) {
-        this.progressToExpand = f;
-        float f2 = ((this.expandedHeight - this.collapsedHeight) - AndroidUtilities.statusBarHeight) * f;
-        if (this.keyboardVisibleProgress == 0.0f) {
-            this.linearLayout.setTranslationY(f2);
-            this.button.setTranslationY(f2);
+    private void setProgressToExpand(float progressToExpand, boolean fromScroll) {
+        this.progressToExpand = progressToExpand;
+
+        float offsetY = (expandedHeight - collapsedHeight - AndroidUtilities.statusBarHeight) * progressToExpand;
+        if (keyboardVisibleProgress == 0) {
+            linearLayout.setTranslationY(offsetY);
+            button.setTranslationY(offsetY);
         }
-        this.previewView.setTranslationY(((-(this.expandedHeight - this.collapsedHeight)) / 2.0f) * f);
-        this.fragmentView.invalidate();
-        if (z) {
-            this.previewView.setExpanded(f > 0.5f);
+        previewView.setTranslationY(-(expandedHeight - collapsedHeight) / 2f * progressToExpand);
+        fragmentView.invalidate();
+        if (fromScroll) {
+            previewView.setExpanded(progressToExpand > 0.5f);
         }
     }
 
-    public void startFrom(AvatarConstructorPreviewCell avatarConstructorPreviewCell) {
-        BackgroundGradient backgroundGradient = avatarConstructorPreviewCell.getBackgroundGradient();
-        PreviewView previewView = this.previewView;
+    private boolean forUser;
+    public void startFrom(AvatarConstructorPreviewCell previewCell) {
+        BackgroundGradient gradient = previewCell.getBackgroundGradient();
         if (previewView == null) {
             return;
         }
-        previewView.setGradient(backgroundGradient, false);
+        previewView.setGradient(gradient, false);
         updateButton();
-        if (avatarConstructorPreviewCell.getAnimatedEmoji() != null) {
-            long documentId = avatarConstructorPreviewCell.getAnimatedEmoji().getDocumentId();
-            PreviewView previewView2 = this.previewView;
-            previewView2.documentId = documentId;
-            previewView2.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(14, this.currentAccount, documentId));
+        if (previewCell.getAnimatedEmoji() != null) {
+            long docId = previewCell.getAnimatedEmoji().getDocumentId();
+            previewView.documentId = docId;
+            previewView.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(AnimatedEmojiDrawable.CACHE_TYPE_AVATAR_CONSTRUCTOR_PREVIEW, currentAccount, docId));
         }
-        this.backgroundSelectView.selectGradient(backgroundGradient);
-        SelectAnimatedEmojiDialog selectAnimatedEmojiDialog = this.selectAnimatedEmojiDialog;
-        boolean z = avatarConstructorPreviewCell.forUser;
-        this.forUser = z;
-        selectAnimatedEmojiDialog.setForUser(z);
+        backgroundSelectView.selectGradient(gradient);
+        selectAnimatedEmojiDialog.setForUser(forUser = previewCell.forUser);
     }
 
-    public void startFrom(long j, boolean z) {
-        if (this.previewView == null) {
+    public void startFrom(long docId, boolean forUser) {
+        if (previewView == null) {
             return;
         }
-        BackgroundGradient backgroundGradient = new BackgroundGradient();
-        int[] iArr = defaultColors[0];
-        backgroundGradient.color1 = iArr[0];
-        backgroundGradient.color2 = iArr[1];
-        backgroundGradient.color3 = iArr[2];
-        backgroundGradient.color4 = iArr[3];
-        this.previewView.setGradient(backgroundGradient, false);
+        AvatarConstructorFragment.BackgroundGradient gradient = new AvatarConstructorFragment.BackgroundGradient();
+        gradient.color1 = AvatarConstructorFragment.defaultColors[0][0];
+        gradient.color2 = AvatarConstructorFragment.defaultColors[0][1];
+        gradient.color3 = AvatarConstructorFragment.defaultColors[0][2];
+        gradient.color4 = AvatarConstructorFragment.defaultColors[0][3];
+
+        previewView.setGradient(gradient, false);
         updateButton();
-        PreviewView previewView = this.previewView;
-        previewView.documentId = j;
-        previewView.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(14, this.currentAccount, j));
-        this.backgroundSelectView.selectGradient(backgroundGradient);
-        SelectAnimatedEmojiDialog selectAnimatedEmojiDialog = this.selectAnimatedEmojiDialog;
-        this.forUser = z;
-        selectAnimatedEmojiDialog.setForUser(z);
+        previewView.documentId = docId;
+        previewView.backupImageView.setAnimatedEmojiDrawable(new AnimatedEmojiDrawable(AnimatedEmojiDrawable.CACHE_TYPE_AVATAR_CONSTRUCTOR_PREVIEW, currentAccount, docId));
+        backgroundSelectView.selectGradient(gradient);
+        selectAnimatedEmojiDialog.setForUser(this.forUser = forUser);
     }
 
-    public void startFrom(TLRPC.VideoSize videoSize) {
-        BackgroundGradient backgroundGradient = new BackgroundGradient();
-        backgroundGradient.color1 = ColorUtils.setAlphaComponent(videoSize.background_colors.get(0).intValue(), 255);
-        backgroundGradient.color2 = videoSize.background_colors.size() > 1 ? ColorUtils.setAlphaComponent(videoSize.background_colors.get(1).intValue(), 255) : 0;
-        backgroundGradient.color3 = videoSize.background_colors.size() > 2 ? ColorUtils.setAlphaComponent(videoSize.background_colors.get(2).intValue(), 255) : 0;
-        backgroundGradient.color4 = videoSize.background_colors.size() > 3 ? ColorUtils.setAlphaComponent(videoSize.background_colors.get(3).intValue(), 255) : 0;
-        this.previewView.setGradient(backgroundGradient, false);
+    public void startFrom(TLRPC.VideoSize emojiMarkup) {
+        BackgroundGradient gradient = new BackgroundGradient();
+        gradient.color1 = ColorUtils.setAlphaComponent(emojiMarkup.background_colors.get(0), 255);
+        gradient.color2 = emojiMarkup.background_colors.size() > 1 ? ColorUtils.setAlphaComponent(emojiMarkup.background_colors.get(1), 255) : 0;
+        gradient.color3 = emojiMarkup.background_colors.size() > 2 ? ColorUtils.setAlphaComponent(emojiMarkup.background_colors.get(2), 255) : 0;
+        gradient.color4 = emojiMarkup.background_colors.size() > 3 ? ColorUtils.setAlphaComponent(emojiMarkup.background_colors.get(3), 255) : 0;
+        previewView.setGradient(gradient, false);
         updateButton();
-        TLRPC.Document document = null;
-        if (videoSize instanceof TLRPC.TL_videoSizeEmojiMarkup) {
-            setPreview(false, ((TLRPC.TL_videoSizeEmojiMarkup) videoSize).emoji_id, null);
+
+
+        if (emojiMarkup instanceof TLRPC.TL_videoSizeEmojiMarkup) {
+            setPreview(false, ((TLRPC.TL_videoSizeEmojiMarkup) emojiMarkup).emoji_id, null);
         } else {
-            TLRPC.TL_videoSizeStickerMarkup tL_videoSizeStickerMarkup = new TLRPC.TL_videoSizeStickerMarkup();
-            TLRPC.TL_messages_stickerSet stickerSet = MediaDataController.getInstance(this.currentAccount).getStickerSet(tL_videoSizeStickerMarkup.stickerset, false);
-            if (stickerSet != null) {
-                for (int i = 0; i < stickerSet.documents.size(); i++) {
-                    if (stickerSet.documents.get(i).id == tL_videoSizeStickerMarkup.sticker_id) {
-                        document = stickerSet.documents.get(i);
+            TLRPC.TL_videoSizeStickerMarkup stickerMarkup = new TLRPC.TL_videoSizeStickerMarkup();
+            TLRPC.TL_messages_stickerSet set = MediaDataController.getInstance(currentAccount).getStickerSet(stickerMarkup.stickerset, false);
+            TLRPC.Document document = null;
+            if (set != null) {
+                for (int i = 0; i < set.documents.size(); i++) {
+                    if (set.documents.get(i).id == stickerMarkup.sticker_id) {
+                        document = set.documents.get(i);
                     }
                 }
             }
-            setPreview(false, 0L, document);
+            setPreview(false, 0, document);
         }
-        this.backgroundSelectView.selectGradient(backgroundGradient);
-        SelectAnimatedEmojiDialog selectAnimatedEmojiDialog = this.selectAnimatedEmojiDialog;
-        this.forUser = true;
-        selectAnimatedEmojiDialog.setForUser(true);
+        backgroundSelectView.selectGradient(gradient);
+        selectAnimatedEmojiDialog.setForUser(forUser = true);
     }
 
     public class PreviewView extends FrameLayout {
-        BackgroundGradient backgroundGradient;
-        BackupImageView backupImageView;
-        float changeBackgroundProgress;
-        private ColorFilter colorFilter;
-        private float cx;
-        private float cy;
-        public TLRPC.Document document;
-        public long documentId;
-        AnimatedFloat expandProgress;
-        boolean expanded;
+
         public boolean freeEmoji;
-        GradientTools gradientTools;
+        public long documentId;
+        public TLRPC.Document document;
+        BackupImageView backupImageView;
+        GradientTools gradientTools = new GradientTools();
+        GradientTools outGradientTools = new GradientTools();
+        float changeBackgroundProgress = 1f;
+        BackgroundGradient backgroundGradient;
         boolean isCustomGradient;
-        GradientTools outGradientTools;
-        float overrideExpandProgress;
+
+        private ColorFilter colorFilter = new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        AnimatedFloat expandProgress = new AnimatedFloat(this, 200, CubicBezierInterpolator.EASE_OUT);
+        boolean expanded;
+        float overrideExpandProgress = -1f;
         private float size;
+        private float cx, cy;
 
         public PreviewView(Context context) {
             super(context);
-            this.gradientTools = new GradientTools();
-            this.outGradientTools = new GradientTools();
-            this.changeBackgroundProgress = 1.0f;
-            this.colorFilter = new PorterDuffColorFilter(-1, PorterDuff.Mode.SRC_IN);
-            this.expandProgress = new AnimatedFloat(this, 200L, CubicBezierInterpolator.EASE_OUT);
-            this.overrideExpandProgress = -1.0f;
-            BackupImageView backupImageView = new BackupImageView(context) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.PreviewView.1
-                @Override // android.view.View
+            backupImageView = new BackupImageView(context) {
+                @Override
                 public void invalidate() {
                     super.invalidate();
                     PreviewView.this.invalidate();
                 }
 
-                @Override // android.view.View
-                public void invalidate(Rect rect) {
-                    super.invalidate(rect);
+                @Override
+                public void invalidate(Rect dirty) {
+                    super.invalidate(dirty);
                     PreviewView.this.invalidate();
                 }
 
-                @Override // android.view.View
-                public void invalidate(int i, int i2, int i3, int i4) {
-                    super.invalidate(i, i2, i3, i4);
+                @Override
+                public void invalidate(int l, int t, int r, int b) {
+                    super.invalidate(l, t, r, b);
                     PreviewView.this.invalidate();
                 }
             };
-            this.backupImageView = backupImageView;
             backupImageView.getImageReceiver().setAutoRepeatCount(1);
-            this.backupImageView.getImageReceiver().setAspectFit(true);
+            backupImageView.getImageReceiver().setAspectFit(true);
             setClipChildren(false);
-            addView(this.backupImageView, LayoutHelper.createFrame(70, 70, 17));
+            addView(backupImageView, LayoutHelper.createFrame(70, 70, Gravity.CENTER));
         }
 
-        public void setExpanded(boolean z) {
-            if (this.expanded == z) {
+        public void setExpanded(boolean expanded) {
+            if (this.expanded == expanded) {
                 return;
             }
-            this.expanded = z;
-            if (z) {
-                AnimatedEmojiDrawable animatedEmojiDrawable = this.backupImageView.animatedEmojiDrawable;
-                if (animatedEmojiDrawable != null && animatedEmojiDrawable.getImageReceiver() != null) {
-                    this.backupImageView.animatedEmojiDrawable.getImageReceiver().startAnimation();
+            this.expanded = expanded;
+            if (expanded) {
+                if (backupImageView.animatedEmojiDrawable != null && backupImageView.animatedEmojiDrawable.getImageReceiver() != null) {
+                    backupImageView.animatedEmojiDrawable.getImageReceiver().startAnimation();
                 }
-                this.backupImageView.imageReceiver.startAnimation();
+                backupImageView.imageReceiver.startAnimation();
             }
-            NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.needCheckSystemBarColors, new Object[0]);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
+            }
             invalidate();
         }
 
-        @Override // android.widget.FrameLayout, android.view.View
-        public void onMeasure(int i, int i2) {
-            if (AvatarConstructorFragment.this.isLandscapeMode) {
-                super.onMeasure(i, i2);
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (isLandscapeMode) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             } else {
-                super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(140.0f), TLObject.FLAG_30));
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(140), MeasureSpec.EXACTLY));
             }
         }
 
-        @Override // android.view.ViewGroup, android.view.View
-        public void dispatchDraw(Canvas canvas) {
-            PreviewView previewView;
-            Canvas canvas2;
-            this.cx = getMeasuredWidth() / 2.0f;
-            this.cy = getMeasuredHeight() / 2.0f;
-            float measuredWidth = AvatarConstructorFragment.this.isLandscapeMode ? getMeasuredWidth() * 0.3f : AndroidUtilities.dp(50.0f);
-            this.expandProgress.set(this.expanded ? 1.0f : 0.0f);
-            float f = this.overrideExpandProgress;
-            if (f >= 0.0f) {
-                this.expandProgress.set(f, true);
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            cx = getMeasuredWidth() / 2f;
+            cy = getMeasuredHeight() / 2f;
+            float radius = isLandscapeMode ? getMeasuredWidth() * 0.3f : dp(50);
+            expandProgress.set(expanded ? 1f : 0f);
+            if (overrideExpandProgress >= 0) {
+                expandProgress.set(overrideExpandProgress, true);
             }
-            float fLerp = AndroidUtilities.lerp(measuredWidth, getMeasuredWidth() / 2.0f, this.expandProgress.get());
-            this.size = fLerp;
-            this.size = AndroidUtilities.lerp(fLerp, AndroidUtilities.dp(21.0f), AvatarConstructorFragment.this.keyboardVisibleProgress);
-            this.cx = AndroidUtilities.lerp(this.cx, (getMeasuredWidth() - AndroidUtilities.dp(12.0f)) - AndroidUtilities.dp(21.0f), AvatarConstructorFragment.this.keyboardVisibleProgress);
+            size = lerp(radius, getMeasuredWidth() / 2f, expandProgress.get());
+            size = lerp(size, dp(21), keyboardVisibleProgress);
+            cx = lerp(cx, getMeasuredWidth() - dp(12) - dp(21), keyboardVisibleProgress);
+
+
             canvas.save();
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            int i = avatarConstructorFragment.expandedHeight - avatarConstructorFragment.collapsedHeight;
-            canvas.clipRect(0.0f, (-i) / 2.0f, getMeasuredWidth(), getMeasuredHeight() + ((i / 2.0f) * AvatarConstructorFragment.this.progressToExpand));
-            BackgroundGradient backgroundGradient = this.backgroundGradient;
+            int additionalH = expandedHeight - collapsedHeight;
+            canvas.clipRect(0, -additionalH / 2f, getMeasuredWidth(), getMeasuredHeight() + additionalH / 2f * progressToExpand);
             if (backgroundGradient != null) {
-                this.gradientTools.setColors(backgroundGradient.color1, backgroundGradient.color2, backgroundGradient.color3, backgroundGradient.color4);
-                GradientTools gradientTools = this.gradientTools;
-                float f2 = this.cx;
-                float f3 = this.size;
-                float f4 = this.cy;
-                gradientTools.setBounds(f2 - f3, f4 - f3, f2 + f3, f4 + f3);
-                if (this.changeBackgroundProgress != 1.0f) {
-                    GradientTools gradientTools2 = this.outGradientTools;
-                    float f5 = this.cx;
-                    float f6 = this.size;
-                    float f7 = this.cy;
-                    gradientTools2.setBounds(f5 - f6, f7 - f6, f5 + f6, f7 + f6);
-                    this.outGradientTools.paint.setAlpha(255);
-                    canvas2 = canvas;
-                    drawBackround(canvas2, this.cx, this.cy, measuredWidth, this.size, this.outGradientTools.paint);
-                    this.gradientTools.paint.setAlpha((int) (this.changeBackgroundProgress * 255.0f));
-                    drawBackround(canvas2, this.cx, this.cy, measuredWidth, this.size, this.gradientTools.paint);
-                    float f8 = this.changeBackgroundProgress + 0.064f;
-                    this.changeBackgroundProgress = f8;
-                    if (f8 > 1.0f) {
-                        this.changeBackgroundProgress = 1.0f;
+                gradientTools.setColors(backgroundGradient.color1, backgroundGradient.color2, backgroundGradient.color3, backgroundGradient.color4);
+                gradientTools.setBounds(cx - size, cy - size, cx + size, cy + size);
+                if (changeBackgroundProgress != 1f) {
+                    outGradientTools.setBounds(cx - size, cy - size, cx + size, cy + size);
+                    outGradientTools.paint.setAlpha(255);
+                    drawBackround(canvas, cx, cy, radius, size, outGradientTools.paint);
+                    gradientTools.paint.setAlpha((int) (255 * changeBackgroundProgress));
+                    drawBackround(canvas, cx, cy, radius, size, gradientTools.paint);
+                    changeBackgroundProgress += 16 / 250f;
+                    if (changeBackgroundProgress > 1f) {
+                        changeBackgroundProgress = 1f;
                     }
                     invalidate();
-                    previewView = this;
                 } else {
-                    canvas2 = canvas;
-                    this.gradientTools.paint.setAlpha(255);
-                    previewView = this;
-                    previewView.drawBackround(canvas2, this.cx, this.cy, measuredWidth, this.size, this.gradientTools.paint);
+                    gradientTools.paint.setAlpha(255);
+                    drawBackround(canvas, cx, cy, radius, size, gradientTools.paint);
                 }
-            } else {
-                previewView = this;
-                canvas2 = canvas;
             }
-            float fLerp2 = AndroidUtilities.lerp(AndroidUtilities.lerp(AvatarConstructorFragment.this.isLandscapeMode ? (int) ((measuredWidth * 2.0f) * 0.7f) : AndroidUtilities.dp(70.0f), (int) (previewView.getMeasuredWidth() * 0.7f), previewView.expandProgress.get()), (int) (AndroidUtilities.dp(42.0f) * 0.7f), AvatarConstructorFragment.this.keyboardVisibleProgress) / 2.0f;
-            BackupImageView backupImageView = previewView.backupImageView;
-            AnimatedEmojiDrawable animatedEmojiDrawable = backupImageView.animatedEmojiDrawable;
-            if (animatedEmojiDrawable != null) {
-                if (animatedEmojiDrawable.getImageReceiver() != null) {
-                    previewView.backupImageView.animatedEmojiDrawable.getImageReceiver().setRoundRadius((int) (2.0f * fLerp2 * 0.13f));
+            int imageHeight = isLandscapeMode ? (int) (radius * 2 * STICKER_DEFAULT_SCALE) : dp(70);
+            int imageHeightExpanded = (int) (getMeasuredWidth() * STICKER_DEFAULT_SCALE);
+            int imageHeightKeyboardVisible = (int) (dp(42) * STICKER_DEFAULT_SCALE);
+            float imageSize = lerp(imageHeight, imageHeightExpanded, expandProgress.get());
+            imageSize = lerp(imageSize, imageHeightKeyboardVisible, keyboardVisibleProgress);
+            imageSize /= 2;
+            if (backupImageView.animatedEmojiDrawable != null) {
+                if (backupImageView.animatedEmojiDrawable.getImageReceiver() != null) {
+                    backupImageView.animatedEmojiDrawable.getImageReceiver().setRoundRadius((int) (imageSize * 2 * STICKER_DEFAULT_ROUND_RADIUS));
                 }
-                AnimatedEmojiDrawable animatedEmojiDrawable2 = previewView.backupImageView.animatedEmojiDrawable;
-                float f9 = previewView.cx;
-                float f10 = previewView.cy;
-                animatedEmojiDrawable2.setBounds((int) (f9 - fLerp2), (int) (f10 - fLerp2), (int) (f9 + fLerp2), (int) (f10 + fLerp2));
-                previewView.backupImageView.animatedEmojiDrawable.setColorFilter(previewView.colorFilter);
-                previewView.backupImageView.animatedEmojiDrawable.draw(canvas2);
-                return;
-            }
-            ImageReceiver imageReceiver = backupImageView.imageReceiver;
-            float f11 = previewView.cx - fLerp2;
-            float f12 = previewView.cy - fLerp2;
-            float f13 = fLerp2 * 2.0f;
-            imageReceiver.setImageCoords(f11, f12, f13, f13);
-            previewView.backupImageView.imageReceiver.setRoundRadius((int) (f13 * 0.13f));
-            previewView.backupImageView.imageReceiver.draw(canvas2);
-        }
-
-        private void drawBackround(Canvas canvas, float f, float f2, float f3, float f4, Paint paint) {
-            float f5 = this.expandProgress.get();
-            if (f5 == 0.0f) {
-                float f6 = f4 * 2.0f;
-                canvas.drawRoundRect(f - f4, f2 - f4, f + f4, f2 + f4, ExteraConfig.getAvatarCorners(f6, true), ExteraConfig.getAvatarCorners(f6, true), paint);
+                backupImageView.animatedEmojiDrawable.setBounds((int) (cx - imageSize), (int) (cy - imageSize), (int) (cx + imageSize), (int) (cy + imageSize));
+                backupImageView.animatedEmojiDrawable.setColorFilter(colorFilter);
+                backupImageView.animatedEmojiDrawable.draw(canvas);
             } else {
-                float fLerp = AndroidUtilities.lerp(ExteraConfig.getAvatarCorners(2.0f * f4, true), 0, f5);
-                RectF rectF = AndroidUtilities.rectTmp;
-                rectF.set(f - f4, f2 - f4, f + f4, f2 + f4);
-                canvas.drawRoundRect(rectF, fLerp, fLerp, paint);
+                backupImageView.imageReceiver.setImageCoords(cx - imageSize, cy - imageSize, imageSize * 2, imageSize * 2);
+                backupImageView.imageReceiver.setRoundRadius((int) (imageSize * 2 * STICKER_DEFAULT_ROUND_RADIUS));
+                backupImageView.imageReceiver.draw(canvas);
             }
         }
 
-        public void setGradient(BackgroundGradient backgroundGradient, boolean z) {
-            BackgroundGradient backgroundGradient2 = this.backgroundGradient;
-            if (backgroundGradient2 != null) {
-                this.outGradientTools.setColors(backgroundGradient2.color1, backgroundGradient2.color2, backgroundGradient2.color3, backgroundGradient2.color4);
-                this.changeBackgroundProgress = 0.0f;
-                AvatarConstructorFragment.this.wasChanged = true;
+        private void drawBackround(Canvas canvas, float cx, float cy, float radius, float size, Paint paint) {
+            float p = expandProgress.get();
+            if (p == 0) {
+                canvas.drawCircle(cx, cy, size, paint);
+            } else {
+                float roundRadius = lerp(radius, 0, p);
+                AndroidUtilities.rectTmp.set(cx - size, cy - size, cx + size, cy + size);
+                canvas.drawRoundRect(AndroidUtilities.rectTmp, roundRadius, roundRadius, paint);
+            }
+        }
+
+        public void setGradient(BackgroundGradient backgroundGradient, boolean isCustom) {
+            if (this.backgroundGradient != null) {
+                outGradientTools.setColors(this.backgroundGradient.color1, this.backgroundGradient.color2, this.backgroundGradient.color3, this.backgroundGradient.color4);
+                changeBackgroundProgress = 0f;
+                wasChanged = true;
             }
             this.backgroundGradient = backgroundGradient;
-            this.isCustomGradient = z;
-            NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.needCheckSystemBarColors, new Object[0]);
+            this.isCustomGradient = isCustom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
+            }
             invalidate();
         }
 
         public long getDuration() {
-            ImageReceiver imageReceiver = this.backupImageView.getImageReceiver();
-            AnimatedEmojiDrawable animatedEmojiDrawable = this.backupImageView.animatedEmojiDrawable;
-            if (animatedEmojiDrawable != null) {
-                imageReceiver = animatedEmojiDrawable.getImageReceiver();
+            ImageReceiver imageReceiver = backupImageView.getImageReceiver();
+            if (backupImageView.animatedEmojiDrawable != null) {
+                imageReceiver = backupImageView.animatedEmojiDrawable.getImageReceiver();
             }
-            if (imageReceiver == null || imageReceiver.getLottieAnimation() == null) {
-                return 5000L;
+            if (imageReceiver == null) {
+                return 5000;
             }
-            return imageReceiver.getLottieAnimation().getDuration();
+            if (imageReceiver.getLottieAnimation() != null) {
+                return imageReceiver.getLottieAnimation().getDuration();
+            }
+            return 5000;
         }
 
         public ImageReceiver getImageReceiver() {
-            ImageReceiver imageReceiver = this.backupImageView.getImageReceiver();
-            AnimatedEmojiDrawable animatedEmojiDrawable = this.backupImageView.animatedEmojiDrawable;
-            if (animatedEmojiDrawable == null) {
-                return imageReceiver;
+            ImageReceiver imageReceiver = backupImageView.getImageReceiver();
+            if (backupImageView.animatedEmojiDrawable != null) {
+                imageReceiver = backupImageView.animatedEmojiDrawable.getImageReceiver();
+                backupImageView.animatedEmojiDrawable.setColorFilter(colorFilter);
             }
-            ImageReceiver imageReceiver2 = animatedEmojiDrawable.getImageReceiver();
-            this.backupImageView.animatedEmojiDrawable.setColorFilter(this.colorFilter);
-            return imageReceiver2;
+            return imageReceiver;
         }
 
         public boolean hasAnimation() {
-            return (getImageReceiver().getAnimation() == null && getImageReceiver().getLottieAnimation() == null) ? false : true;
+            return getImageReceiver().getAnimation() != null || getImageReceiver().getLottieAnimation() != null;
         }
 
-        @Override // android.view.View
+        @Override
         public void invalidate() {
             super.invalidate();
-            AvatarConstructorFragment.this.fragmentView.invalidate();
+            fragmentView.invalidate();
         }
     }
 
-    public class BackgroundSelectView extends RecyclerListView {
-        RecyclerView.Adapter adapter;
+    private class BackgroundSelectView extends RecyclerListView {
+
+        ArrayList<BackgroundGradient> gradients = new ArrayList<>();
+
+        int stableIdPointer = 200;
+
+        int selectedItemId = -1;
+
+        Adapter adapter;
         BackgroundGradient customSelectedGradient;
-        ArrayList<BackgroundGradient> gradients;
-        int selectedItemId;
-        int stableIdPointer;
 
         public BackgroundSelectView(Context context) {
             super(context);
-            this.gradients = new ArrayList<>();
-            this.stableIdPointer = 200;
-            this.selectedItemId = -1;
-            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
-            linearLayoutManager.setOrientation(0);
-            setLayoutManager(linearLayoutManager);
-            int i = 0;
-            while (true) {
-                int[][] iArr = AvatarConstructorFragment.defaultColors;
-                if (i >= iArr.length) {
-                    break;
-                }
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+            layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+            setLayoutManager(layoutManager);
+            for (int i = 0; i < defaultColors.length; i++) {
                 BackgroundGradient backgroundGradient = new BackgroundGradient();
-                int i2 = this.stableIdPointer;
-                this.stableIdPointer = i2 + 1;
-                backgroundGradient.stableId = i2;
-                int[] iArr2 = iArr[i];
-                backgroundGradient.color1 = iArr2[0];
-                backgroundGradient.color2 = iArr2[1];
-                backgroundGradient.color3 = iArr2[2];
-                backgroundGradient.color4 = iArr2[3];
-                this.gradients.add(backgroundGradient);
-                i++;
+                backgroundGradient.stableId = stableIdPointer++;
+                backgroundGradient.color1 = defaultColors[i][0];
+                backgroundGradient.color2 = defaultColors[i][1];
+                backgroundGradient.color3 = defaultColors[i][2];
+                backgroundGradient.color4 = defaultColors[i][3];
+                gradients.add(backgroundGradient);
             }
-            int i3 = 0;
-            while (true) {
-                int[][] iArr3 = AvatarConstructorFragment.premiumColors;
-                if (i3 < iArr3.length) {
-                    BackgroundGradient backgroundGradient2 = new BackgroundGradient();
-                    int i4 = this.stableIdPointer;
-                    this.stableIdPointer = i4 + 1;
-                    backgroundGradient2.stableId = i4;
-                    int[] iArr4 = iArr3[i3];
-                    backgroundGradient2.color1 = iArr4[0];
-                    backgroundGradient2.color2 = iArr4[1];
-                    backgroundGradient2.color3 = 0;
-                    backgroundGradient2.color4 = 0;
-                    backgroundGradient2.premium = true;
-                    this.gradients.add(backgroundGradient2);
-                    i3++;
-                } else {
-                    setPadding(AndroidUtilities.dp(4.0f), 0, AndroidUtilities.dp(4.0f), 0);
-                    setClipToPadding(false);
-                    this.useLayoutPositionOnClick = true;
-                    setOnItemClickListener(new RecyclerListView.OnItemClickListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$BackgroundSelectView$$ExternalSyntheticLambda0
-                        @Override // org.telegram.ui.Components.RecyclerListView.OnItemClickListener
-                        public final void onItemClick(View view, int i5) {
-                            this.f$0.lambda$new$0(view, i5);
-                        }
-                    });
-                    RecyclerView.Adapter adapter = new RecyclerView.Adapter() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.BackgroundSelectView.1
-                        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-                        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i5) {
-                            BackgroundSelectView backgroundSelectView = BackgroundSelectView.this;
-                            return new RecyclerListView.Holder(AvatarConstructorFragment.this.new GradientSelectorView(backgroundSelectView.getContext()));
-                        }
-
-                        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-                        public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int i5) {
-                            GradientSelectorView gradientSelectorView = (GradientSelectorView) viewHolder.itemView;
-                            if (viewHolder.getItemViewType() == 0) {
-                                gradientSelectorView.setCustom(false);
-                                BackgroundGradient backgroundGradient3 = BackgroundSelectView.this.gradients.get(i5);
-                                gradientSelectorView.setLocked(backgroundGradient3.premium && !UserConfig.getInstance(((BaseFragment) AvatarConstructorFragment.this).currentAccount).isPremium());
-                                gradientSelectorView.setGradient(backgroundGradient3);
-                                BackgroundSelectView backgroundSelectView = BackgroundSelectView.this;
-                                gradientSelectorView.setSelectedInternal(backgroundSelectView.selectedItemId == backgroundSelectView.gradients.get(i5).stableId, true);
-                                return;
-                            }
-                            gradientSelectorView.setCustom(true);
-                            gradientSelectorView.setLocked(!UserConfig.getInstance(((BaseFragment) AvatarConstructorFragment.this).currentAccount).isPremium());
-                            gradientSelectorView.setGradient(BackgroundSelectView.this.customSelectedGradient);
-                            gradientSelectorView.setSelectedInternal(BackgroundSelectView.this.selectedItemId == 1, true);
-                        }
-
-                        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-                        public int getItemCount() {
-                            return BackgroundSelectView.this.gradients.size() + 1;
-                        }
-
-                        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-                        public long getItemId(int i5) {
-                            if (i5 >= BackgroundSelectView.this.gradients.size()) {
-                                return 1L;
-                            }
-                            return BackgroundSelectView.this.gradients.get(i5).stableId;
-                        }
-
-                        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-                        public int getItemViewType(int i5) {
-                            return i5 >= BackgroundSelectView.this.gradients.size() ? 1 : 0;
-                        }
-                    };
-                    this.adapter = adapter;
-                    setAdapter(adapter);
-                    setOverScrollMode(1);
-                    return;
-                }
+            for (int i = 0; i < premiumColors.length; i++) {
+                BackgroundGradient backgroundGradient = new BackgroundGradient();
+                backgroundGradient.stableId = stableIdPointer++;
+                backgroundGradient.color1 = premiumColors[i][0];
+                backgroundGradient.color2 = premiumColors[i][1];
+                backgroundGradient.color3 = 0;
+                backgroundGradient.color4 = 0;
+                backgroundGradient.premium = true;
+                gradients.add(backgroundGradient);
             }
-        }
-
-        public /* synthetic */ void lambda$new$0(View view, int i) {
-            BackgroundGradient backgroundGradient;
-            if (view instanceof GradientSelectorView) {
-                GradientSelectorView gradientSelectorView = (GradientSelectorView) view;
-                if (!gradientSelectorView.isCustom) {
-                    BackgroundGradient backgroundGradient2 = gradientSelectorView.backgroundGradient;
-                    this.selectedItemId = backgroundGradient2.stableId;
-                    AvatarConstructorFragment.this.previewView.setGradient(backgroundGradient2, false);
-                    RecyclerView.Adapter adapter = this.adapter;
+            setPadding(dp(4), 0, dp(4), 0);
+            setClipToPadding(false);
+            useLayoutPositionOnClick = true;
+            setOnItemClickListener((view, position) -> {
+                if (view instanceof GradientSelectorView && !((GradientSelectorView) view).isCustom) {
+                    selectedItemId = ((GradientSelectorView) view).backgroundGradient.stableId;
+                    previewView.setGradient(((GradientSelectorView) view).backgroundGradient, false);
                     if (adapter != null) {
                         adapter.notifyDataSetChanged();
                     }
-                    AvatarConstructorFragment.this.updateButton();
-                    return;
+                    updateButton();
+                } else {
+                    if (selectedItemId != 1 && customSelectedGradient != null) {
+                        selectedItemId = 1;
+                        previewView.setGradient(customSelectedGradient, true);
+                        if (adapter != null) {
+                            adapter.notifyDataSetChanged();
+                        }
+                        updateButton();
+                    } else {
+                        showColorPicker();
+                    }
                 }
-            }
-            if (this.selectedItemId != 1 && (backgroundGradient = this.customSelectedGradient) != null) {
-                this.selectedItemId = 1;
-                AvatarConstructorFragment.this.previewView.setGradient(backgroundGradient, true);
-                RecyclerView.Adapter adapter2 = this.adapter;
-                if (adapter2 != null) {
-                    adapter2.notifyDataSetChanged();
+            });
+            setAdapter(adapter = new Adapter() {
+
+                private final static int VIEW_TYPE_GRADIENT = 0;
+                private final static int VIEW_TYPE_ADD_CUSTOM = 1;
+
+                @NonNull
+                @Override
+                public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                    View view;
+                    switch (viewType) {
+                        case VIEW_TYPE_ADD_CUSTOM:
+                        case VIEW_TYPE_GRADIENT:
+                        default:
+                            view = new GradientSelectorView(getContext());
+                            break;
+                    }
+                    return new Holder(view);
                 }
-                AvatarConstructorFragment.this.updateButton();
-                return;
-            }
-            AvatarConstructorFragment.this.showColorPicker();
+
+                @Override
+                public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+                    final GradientSelectorView view = (GradientSelectorView) holder.itemView;
+                    if (holder.getItemViewType() == VIEW_TYPE_GRADIENT) {
+                        view.setCustom(false);
+                        final BackgroundGradient gradient = gradients.get(position);
+                        view.setLocked(gradient.premium && !UserConfig.getInstance(currentAccount).isPremium());
+                        view.setGradient(gradient);
+                        view.setSelectedInternal(selectedItemId == gradients.get(position).stableId, true);
+                    } else {
+                        view.setCustom(true);
+                        view.setLocked(!UserConfig.getInstance(currentAccount).isPremium());
+                        view.setGradient(customSelectedGradient);
+                        view.setSelectedInternal(selectedItemId == 1, true);
+                    }
+                }
+
+                @Override
+                public int getItemCount() {
+                    return gradients.size() + 1;
+                }
+
+                @Override
+                public long getItemId(int position) {
+                    if (position >= gradients.size()) {
+                        return 1;
+                    }
+                    return gradients.get(position).stableId;
+                }
+
+                @Override
+                public int getItemViewType(int position) {
+                    if (position >= gradients.size()) {
+                        return VIEW_TYPE_ADD_CUSTOM;
+                    }
+                    return VIEW_TYPE_GRADIENT;
+                }
+            });
+            setOverScrollMode(OVER_SCROLL_IF_CONTENT_SCROLLS);
         }
 
-        @Override // org.telegram.ui.Components.RecyclerListView, androidx.recyclerview.widget.RecyclerView, android.view.View
-        public void onMeasure(int i, int i2) {
-            AvatarConstructorFragment.this.gradientBackgroundItemWidth = View.MeasureSpec.getSize(i) / this.adapter.getItemCount();
-            int i3 = AvatarConstructorFragment.this.gradientBackgroundItemWidth;
-            int iDp = AndroidUtilities.dp(39.0f);
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            if (i3 < iDp) {
-                avatarConstructorFragment.gradientBackgroundItemWidth = AndroidUtilities.dp(39.0f);
-            } else if (avatarConstructorFragment.gradientBackgroundItemWidth > AndroidUtilities.dp(150.0f)) {
-                AvatarConstructorFragment.this.gradientBackgroundItemWidth = AndroidUtilities.dp(48.0f);
+        @Override
+        protected void onMeasure(int widthSpec, int heightSpec) {
+            int availableWidth = MeasureSpec.getSize(widthSpec);
+            int itemsCount = adapter.getItemCount();
+            gradientBackgroundItemWidth = availableWidth / itemsCount;
+            if (gradientBackgroundItemWidth < dp(39)) {
+                gradientBackgroundItemWidth = dp(39);
+            } else if (gradientBackgroundItemWidth > dp(150)) {
+                gradientBackgroundItemWidth = dp(48);
             }
-            super.onMeasure(i, i2);
+            super.onMeasure(widthSpec, heightSpec);
         }
 
-        public void selectGradient(BackgroundGradient backgroundGradient) {
-            for (int i = 0; i < this.gradients.size(); i++) {
-                if (this.gradients.get(i).equals(backgroundGradient)) {
-                    this.selectedItemId = this.gradients.get(i).stableId;
-                    this.adapter.notifyDataSetChanged();
+        public void selectGradient(BackgroundGradient gradient) {
+            boolean isDefault = false;
+            for (int i = 0; i < gradients.size(); i++) {
+                if (gradients.get(i).equals(gradient)) {
+                    selectedItemId = gradients.get(i).stableId;
+                    isDefault = true;
+                    break;
                 }
             }
-            this.customSelectedGradient = backgroundGradient;
-            this.selectedItemId = 1;
-            this.adapter.notifyDataSetChanged();
+            if (!isDefault) {
+                customSelectedGradient = gradient;
+                selectedItemId = 1;
+            }
+            adapter.notifyDataSetChanged();
         }
     }
 
-    /* JADX WARN: Type inference fix 'apply assigned field type' failed
-    java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$UnknownArg
-    	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-    	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-    	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-     */
-    public void showColorPicker() {
-        if (this.bottomSheet != null) {
+    BackgroundGradient colorPickerGradient;
+
+    private void showColorPicker() {
+        if (bottomSheet != null) {
             return;
         }
-        boolean z = true;
-        if (!this.previewView.expanded) {
+        if (!previewView.expanded) {
             setExpanded(true, true, true);
         }
-        BackgroundGradient backgroundGradient = this.previewView.backgroundGradient;
-        final boolean[] zArr = {false};
+
+        BackgroundGradient prevGradient = null;
+        if (previewView.backgroundGradient != null) {
+            prevGradient = previewView.backgroundGradient;
+        }
+        boolean[] onDoneButtonPressed = new boolean[]{false};
+        BackgroundGradient finalPrevGradient = prevGradient;
         AndroidUtilities.requestAdjustNothing(getParentActivity(), getClassGuid());
-        BottomSheet bottomSheet = new BottomSheet(getContext(), z) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.11
-            @Override // org.telegram.ui.ActionBar.BottomSheet, android.app.Dialog, android.content.DialogInterface, org.telegram.ui.ActionBar.BaseFragment.AttachedSheet
-            public void lambda$new$0() {
-                super.lambda$new$0();
-                AvatarConstructorFragment.this.backgroundSelectView.selectGradient(AvatarConstructorFragment.this.colorPickerGradient);
-                AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-                avatarConstructorFragment.colorPickerInAnimatoin = true;
-                avatarConstructorFragment.fragmentView.invalidate();
-                AvatarConstructorFragment.this.colorPickerPreviewView.animate().setListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.11.1
-                    @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                    public void onAnimationEnd(Animator animator) {
-                        AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-                        avatarConstructorFragment2.colorPickerInAnimatoin = false;
-                        avatarConstructorFragment2.colorPickerPreviewView.setVisibility(8);
+        bottomSheet = new BottomSheet(getContext(), true) {
+            @Override
+            public void dismiss() {
+                super.dismiss();
+                backgroundSelectView.selectGradient(colorPickerGradient);
+                colorPickerInAnimatoin = true;
+                fragmentView.invalidate();
+                colorPickerPreviewView.animate().setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        colorPickerInAnimatoin = false;
+                        colorPickerPreviewView.setVisibility(View.GONE);
                     }
-                }).alpha(0.0f).setDuration(200L).start();
+                }).alpha(0f).setDuration(200).start();
             }
 
-            @Override // org.telegram.ui.ActionBar.BottomSheet
+            @Override
             public void dismissInternal() {
                 super.dismissInternal();
-                AndroidUtilities.requestAdjustResize(AvatarConstructorFragment.this.getParentActivity(), AvatarConstructorFragment.this.getClassGuid());
-                AvatarConstructorFragment.this.bottomSheet = null;
+                AndroidUtilities.requestAdjustResize(getParentActivity(), getClassGuid());
+                bottomSheet = null;
             }
         };
-        this.bottomSheet = bottomSheet;
         bottomSheet.fixNavigationBar();
-        this.bottomSheet.pauseAllHeavyOperations = false;
-        this.drawForBlur = true;
-        this.colorPickerPreviewView.setBackground(new BitmapDrawable(getContext().getResources(), AndroidUtilities.makeBlurBitmap(this.fragmentView, 12.0f, 10)));
-        this.drawForBlur = false;
-        this.colorPickerPreviewView.setVisibility(0);
-        this.colorPickerPreviewView.setAlpha(0.0f);
-        this.colorPickerInAnimatoin = true;
-        this.fragmentView.invalidate();
-        this.colorPickerPreviewView.animate().setListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.AvatarConstructorFragment.12
-            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-            public void onAnimationEnd(Animator animator) {
-                super.onAnimationEnd(animator);
-                AvatarConstructorFragment.this.colorPickerInAnimatoin = false;
+        bottomSheet.pauseAllHeavyOperations = false;
+
+        drawForBlur = true;
+        colorPickerPreviewView.setBackground(new BitmapDrawable(getContext().getResources(), AndroidUtilities.makeBlurBitmap(fragmentView, 12f, 10)));
+        drawForBlur = false;
+        colorPickerPreviewView.setVisibility(View.VISIBLE);
+        colorPickerPreviewView.setAlpha(0);
+        colorPickerInAnimatoin = true;
+        fragmentView.invalidate();
+        colorPickerPreviewView.animate().setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                colorPickerInAnimatoin = false;
             }
-        }).alpha(1.0f).setDuration(200L).start();
-        this.colorPickerGradient = new BackgroundGradient();
-        ColorPicker colorPicker = new ColorPicker(getContext(), false, new ColorPicker.ColorPickerDelegate() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda7
-            @Override // org.telegram.ui.Components.ColorPicker.ColorPickerDelegate
-            public final void setColor(int i, int i2, boolean z2) {
-                this.f$0.lambda$showColorPicker$5(i, i2, z2);
+        }).alpha(1f).setDuration(200).start();
+
+        colorPickerGradient = new BackgroundGradient();
+        ColorPicker colorPicker = new ColorPicker(getContext(), false, (color, num, applyNow) -> {
+            switch (num) {
+                case 0:
+                    if (colorPickerGradient.color1 != color && (colorPickerGradient.color1 == 0 || color == 0)) {
+                        colorPickerGradient = colorPickerGradient.copy();
+                        previewView.setGradient(colorPickerGradient, true);
+                        updateButton();
+                    }
+                    colorPickerGradient.color1 = color;
+                    break;
+                case 1:
+                    if (colorPickerGradient.color2 != color && (colorPickerGradient.color2 == 0 || color == 0)) {
+                        colorPickerGradient = colorPickerGradient.copy();
+                        previewView.setGradient(colorPickerGradient, true);
+                        updateButton();
+                    }
+                    colorPickerGradient.color2 = color;
+                    break;
+                case 2:
+                    if (colorPickerGradient.color3 != color && (colorPickerGradient.color3 == 0 || color == 0)) {
+                        colorPickerGradient = colorPickerGradient.copy();
+                        previewView.setGradient(colorPickerGradient, true);
+                        updateButton();
+                    }
+                    colorPickerGradient.color3 = color;
+                    break;
+                case 3:
+                    if (colorPickerGradient.color4 != color && (colorPickerGradient.color4 == 0 || color == 0)) {
+                        colorPickerGradient = colorPickerGradient.copy();
+                        previewView.setGradient(colorPickerGradient, true);
+                        updateButton();
+                    }
+                    colorPickerGradient.color4 = color;
+                    break;
             }
-        }) { // from class: org.telegram.ui.Components.AvatarConstructorFragment.13
-            @Override // android.widget.FrameLayout, android.view.View
-            public void onMeasure(int i, int i2) {
-                super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(300.0f), TLObject.FLAG_30));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
+            }
+            previewView.invalidate();
+        }) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(300), MeasureSpec.EXACTLY));
             }
         };
-        BackgroundGradient backgroundGradient2 = this.previewView.backgroundGradient;
-        if (backgroundGradient2 != null) {
-            BackgroundGradient backgroundGradient3 = this.colorPickerGradient;
-            int i = backgroundGradient2.color4;
-            backgroundGradient3.color4 = i;
-            colorPicker.setColor(i, 3);
-            BackgroundGradient backgroundGradient4 = this.colorPickerGradient;
-            int i2 = this.previewView.backgroundGradient.color3;
-            backgroundGradient4.color3 = i2;
-            colorPicker.setColor(i2, 2);
-            BackgroundGradient backgroundGradient5 = this.colorPickerGradient;
-            int i3 = this.previewView.backgroundGradient.color2;
-            backgroundGradient5.color2 = i3;
-            colorPicker.setColor(i3, 1);
-            BackgroundGradient backgroundGradient6 = this.colorPickerGradient;
-            int i4 = this.previewView.backgroundGradient.color1;
-            backgroundGradient6.color1 = i4;
-            colorPicker.setColor(i4, 0);
+
+        if (previewView.backgroundGradient != null) {
+            colorPicker.setColor(colorPickerGradient.color4 = previewView.backgroundGradient.color4, 3);
+            colorPicker.setColor(colorPickerGradient.color3 = previewView.backgroundGradient.color3, 2);
+            colorPicker.setColor(colorPickerGradient.color2 = previewView.backgroundGradient.color2, 1);
+            colorPicker.setColor(colorPickerGradient.color1 = previewView.backgroundGradient.color1, 0);
         }
-        colorPicker.setType(-1, true, 4, this.colorPickerGradient.colorsCount(), false, 0, false);
-        this.previewView.setGradient(this.colorPickerGradient, true);
+
+        colorPicker.setType(-1, true, 4, colorPickerGradient.colorsCount(), false, 0, false);
+
+        previewView.setGradient(colorPickerGradient, true);
         updateButton();
-        LinearLayout linearLayout = new LinearLayout(getContext());
-        linearLayout.setOrientation(1);
-        linearLayout.setPadding(0, AndroidUtilities.dp(8.0f), 0, 0);
-        linearLayout.addView(colorPicker);
-        FrameLayout frameLayout = new FrameLayout(getContext());
-        frameLayout.setBackground(Theme.AdaptiveRipple.filledRectByKey(Theme.key_featuredStickers_addButton, 8.0f));
+
+        LinearLayout colorPickerContainer = new LinearLayout(getContext());
+        colorPickerContainer.setOrientation(LinearLayout.VERTICAL);
+        colorPickerContainer.setPadding(0, dp(8), 0, 0);
+        colorPickerContainer.addView(colorPicker);
+
+        FrameLayout button = new FrameLayout(getContext());
+        button.setBackground(Theme.AdaptiveRipple.filledRectByKey(Theme.key_featuredStickers_addButton, 8));
+
         TextView textView = new TextView(getContext());
-        textView.setTextSize(1, 14.0f);
-        textView.setText(LocaleController.getString(R.string.SetColor));
-        textView.setGravity(17);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        textView.setText(getString(R.string.SetColor));
+        textView.setGravity(Gravity.CENTER);
         textView.setTypeface(AndroidUtilities.bold());
         textView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
-        frameLayout.addView(textView, LayoutHelper.createFrame(-2, -2, 17));
-        linearLayout.addView(frameLayout, LayoutHelper.createFrame(-1, 48.0f, 0, 16.0f, -8.0f, 16.0f, 16.0f));
-        frameLayout.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda8
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$showColorPicker$6(zArr, view);
-            }
+        button.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+
+        colorPickerContainer.addView(button, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, 0, 16, -8, 16, 16));
+        button.setOnClickListener(v -> {
+            onDoneButtonPressed[0] = true;
+            backgroundSelectView.selectGradient(colorPickerGradient);
+            bottomSheet.dismiss();
         });
-        this.bottomSheet.setCustomView(linearLayout);
-        BottomSheet bottomSheet2 = this.bottomSheet;
-        bottomSheet2.smoothKeyboardAnimationEnabled = true;
-        bottomSheet2.setDimBehind(false);
-        this.bottomSheet.show();
+        bottomSheet.setCustomView(colorPickerContainer);
+        bottomSheet.smoothKeyboardAnimationEnabled = true;
+        bottomSheet.setDimBehind(false);
+        bottomSheet.show();
         isLightStatusBar();
     }
 
-    public /* synthetic */ void lambda$showColorPicker$5(int i, int i2, boolean z) {
-        if (i2 == 0) {
-            BackgroundGradient backgroundGradient = this.colorPickerGradient;
-            int i3 = backgroundGradient.color1;
-            if (i3 != i && (i3 == 0 || i == 0)) {
-                BackgroundGradient backgroundGradientCopy = backgroundGradient.copy();
-                this.colorPickerGradient = backgroundGradientCopy;
-                this.previewView.setGradient(backgroundGradientCopy, true);
-                updateButton();
-            }
-            this.colorPickerGradient.color1 = i;
-        } else if (i2 == 1) {
-            BackgroundGradient backgroundGradient2 = this.colorPickerGradient;
-            int i4 = backgroundGradient2.color2;
-            if (i4 != i && (i4 == 0 || i == 0)) {
-                BackgroundGradient backgroundGradientCopy2 = backgroundGradient2.copy();
-                this.colorPickerGradient = backgroundGradientCopy2;
-                this.previewView.setGradient(backgroundGradientCopy2, true);
-                updateButton();
-            }
-            this.colorPickerGradient.color2 = i;
-        } else if (i2 == 2) {
-            BackgroundGradient backgroundGradient3 = this.colorPickerGradient;
-            int i5 = backgroundGradient3.color3;
-            if (i5 != i && (i5 == 0 || i == 0)) {
-                BackgroundGradient backgroundGradientCopy3 = backgroundGradient3.copy();
-                this.colorPickerGradient = backgroundGradientCopy3;
-                this.previewView.setGradient(backgroundGradientCopy3, true);
-                updateButton();
-            }
-            this.colorPickerGradient.color3 = i;
-        } else if (i2 == 3) {
-            BackgroundGradient backgroundGradient4 = this.colorPickerGradient;
-            int i6 = backgroundGradient4.color4;
-            if (i6 != i && (i6 == 0 || i == 0)) {
-                BackgroundGradient backgroundGradientCopy4 = backgroundGradient4.copy();
-                this.colorPickerGradient = backgroundGradientCopy4;
-                this.previewView.setGradient(backgroundGradientCopy4, true);
-                updateButton();
-            }
-            this.colorPickerGradient.color4 = i;
-        }
-        NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.needCheckSystemBarColors, new Object[0]);
-        this.previewView.invalidate();
-    }
-
-    public /* synthetic */ void lambda$showColorPicker$6(boolean[] zArr, View view) {
-        zArr[0] = true;
-        this.backgroundSelectView.selectGradient(this.colorPickerGradient);
-        this.bottomSheet.lambda$new$0();
-    }
-
     public static class BackgroundGradient {
+
+        public int stableId;
+        public boolean premium;
+
         int color1;
         int color2;
         int color3;
         int color4;
-        public boolean premium;
-        public int stableId;
 
         public BackgroundGradient copy() {
             BackgroundGradient backgroundGradient = new BackgroundGradient();
-            backgroundGradient.color1 = this.color1;
-            backgroundGradient.color2 = this.color2;
-            backgroundGradient.color3 = this.color3;
-            backgroundGradient.color4 = this.color4;
-            backgroundGradient.premium = this.premium;
+            backgroundGradient.color1 = color1;
+            backgroundGradient.color2 = color2;
+            backgroundGradient.color3 = color3;
+            backgroundGradient.color4 = color4;
+            backgroundGradient.premium = premium;
             return backgroundGradient;
         }
 
         public int colorsCount() {
-            if (this.color4 != 0) {
+            if (color4 != 0) {
                 return 4;
             }
-            if (this.color3 != 0) {
+            if (color3 != 0) {
                 return 3;
             }
-            return this.color2 != 0 ? 2 : 1;
+            if (color2 != 0) {
+                return 2;
+            }
+            return 1;
         }
 
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (!(obj instanceof BackgroundGradient)) {
-                return false;
-            }
-            BackgroundGradient backgroundGradient = (BackgroundGradient) obj;
-            return this.color1 == backgroundGradient.color1 && this.color2 == backgroundGradient.color2 && this.color3 == backgroundGradient.color3 && this.color4 == backgroundGradient.color4;
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BackgroundGradient)) return false;
+            BackgroundGradient that = (BackgroundGradient) o;
+            return color1 == that.color1 && color2 == that.color2 && color3 == that.color3 && color4 == that.color4;
         }
 
+        @Override
         public int hashCode() {
-            return Objects.hash(Integer.valueOf(this.stableId), Integer.valueOf(this.color1), Integer.valueOf(this.color2), Integer.valueOf(this.color3), Integer.valueOf(this.color4));
+            return Objects.hash(stableId, color1, color2, color3, color4);
         }
 
         public int getAverageColor() {
-            int iBlendARGB = this.color1;
-            int i = this.color2;
-            if (i != 0) {
-                iBlendARGB = ColorUtils.blendARGB(iBlendARGB, i, 0.5f);
+            int color = color1;
+            if (color2 != 0) {
+                color = ColorUtils.blendARGB(color, color2, 0.5f);
             }
-            int i2 = this.color3;
-            if (i2 != 0) {
-                iBlendARGB = ColorUtils.blendARGB(iBlendARGB, i2, 0.5f);
+            if (color3 != 0) {
+                color = ColorUtils.blendARGB(color, color3, 0.5f);
             }
-            int i3 = this.color4;
-            return i3 != 0 ? ColorUtils.blendARGB(iBlendARGB, i3, 0.5f) : iBlendARGB;
+            if (color4 != 0) {
+                color = ColorUtils.blendARGB(color, color4, 0.5f);
+            }
+            return color;
         }
     }
 
-    public class GradientSelectorView extends View {
-        Drawable addIcon;
+    private class GradientSelectorView extends View {
+
         BackgroundGradient backgroundGradient;
-        Paint defaultPaint;
-        GradientTools gradientTools;
+
+        AnimatedFloat progressToSelect = new AnimatedFloat(400, AndroidUtilities.overshootInterpolator);
+        boolean selected;
         boolean isCustom;
-        private boolean isLocked;
+
+        GradientTools gradientTools = new GradientTools();
+        Drawable addIcon;
         Drawable lockIcon;
         boolean lockIconIsEmptyCustom;
         Paint optionsPaint;
-        AnimatedFloat progressToSelect;
-        boolean selected;
+        Paint defaultPaint;
 
         public GradientSelectorView(Context context) {
             super(context);
-            this.progressToSelect = new AnimatedFloat(400L, AndroidUtilities.overshootInterpolator);
-            this.gradientTools = new GradientTools();
-            this.progressToSelect.setParent(this);
+            progressToSelect.setParent(this);
         }
 
-        @Override // android.view.View
-        public void onMeasure(int i, int i2) {
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(AvatarConstructorFragment.this.gradientBackgroundItemWidth, TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30));
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            super.onMeasure(
+                MeasureSpec.makeMeasureSpec(gradientBackgroundItemWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY)
+            );
         }
 
-        /* JADX WARN: Code duplicated, block: B:28:0x00c0  */
-        /* JADX WARN: Code duplicated, block: B:35:0x00e1  */
-        @Override // android.view.View
-        public void onDraw(Canvas canvas) {
-            Paint paint;
+        @Override
+        protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            boolean z = false;
-            this.progressToSelect.set(this.selected ? 1.0f : 0.0f, false);
-            float measuredWidth = getMeasuredWidth() / 2.0f;
-            float measuredHeight = getMeasuredHeight() / 2.0f;
-            BackgroundGradient backgroundGradient = this.backgroundGradient;
+            progressToSelect.set(selected ? 1f : 0, false);
+            float cx = getMeasuredWidth() / 2f;
+            float cy = getMeasuredHeight() / 2f;
+
+            Paint paint;
             if (backgroundGradient != null) {
-                this.gradientTools.setColors(backgroundGradient.color1, backgroundGradient.color2, backgroundGradient.color3, backgroundGradient.color4);
-                this.gradientTools.setBounds(0.0f, 0.0f, getMeasuredWidth(), getMeasuredHeight());
-                paint = this.gradientTools.paint;
+                gradientTools.setColors(backgroundGradient.color1, backgroundGradient.color2, backgroundGradient.color3, backgroundGradient.color4);
+                gradientTools.setBounds(0, 0, getMeasuredWidth(), getMeasuredHeight());
+                paint = gradientTools.paint;
             } else {
-                if (this.defaultPaint == null) {
-                    Paint paint2 = new Paint(1);
-                    this.defaultPaint = paint2;
-                    paint2.setColor(Theme.getColor(Theme.key_chat_emojiPanelBackground));
+                if (defaultPaint == null) {
+                    defaultPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    defaultPaint.setColor(Theme.getColor(Theme.key_chat_emojiPanelBackground));
                 }
-                paint = this.defaultPaint;
+                paint = defaultPaint;
             }
-            if (this.progressToSelect.get() == 0.0f) {
-                canvas.drawCircle(measuredWidth, measuredHeight, AndroidUtilities.dp(15.0f), paint);
+            if (progressToSelect.get() == 0) {
+                canvas.drawCircle(cx, cy, dp(15), paint);
             } else {
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(AndroidUtilities.dp(2.0f));
-                canvas.drawCircle(measuredWidth, measuredHeight, AndroidUtilities.dpf2(13.5f), paint);
+                paint.setStrokeWidth(dp(2));
+                canvas.drawCircle(cx, cy, AndroidUtilities.dpf2(13.5f), paint);
                 paint.setStyle(Paint.Style.FILL);
-                canvas.drawCircle(measuredWidth, measuredHeight, AndroidUtilities.dp(10.0f) + (AndroidUtilities.dp(5.0f) * (1.0f - this.progressToSelect.get())), paint);
+                canvas.drawCircle(cx, cy, dp(10) + dp(5) * (1f - progressToSelect.get()), paint);
             }
-            if (this.isLocked) {
-                if (this.lockIcon != null) {
-                    if (this.lockIconIsEmptyCustom != (this.isCustom && this.backgroundGradient == null)) {
-                        this.lockIcon = getContext().getResources().getDrawable(R.drawable.msg_mini_lock2).mutate();
-                        if (this.isCustom && this.backgroundGradient == null) {
-                            z = true;
-                        }
-                        this.lockIconIsEmptyCustom = z;
-                        this.lockIcon.setColorFilter(new PorterDuffColorFilter(z ? Theme.getColor(Theme.key_chat_emojiSearchIcon) : -1, PorterDuff.Mode.SRC_IN));
-                    }
-                } else {
-                    this.lockIcon = getContext().getResources().getDrawable(R.drawable.msg_mini_lock2).mutate();
-                    if (this.isCustom) {
-                        z = true;
-                    }
-                    this.lockIconIsEmptyCustom = z;
-                    this.lockIcon.setColorFilter(new PorterDuffColorFilter(z ? Theme.getColor(Theme.key_chat_emojiSearchIcon) : -1, PorterDuff.Mode.SRC_IN));
+
+            if (isLocked) {
+                if (lockIcon == null || lockIconIsEmptyCustom != (isCustom && backgroundGradient == null)) {
+                    lockIcon = getContext().getResources().getDrawable(R.drawable.msg_mini_lock2).mutate();
+                    final int color = (lockIconIsEmptyCustom = isCustom && backgroundGradient == null) ? Theme.getColor(Theme.key_chat_emojiSearchIcon) : 0xFFFFFFFF;
+                    lockIcon.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
                 }
-                Drawable drawable = this.lockIcon;
-                drawable.setBounds((int) (measuredWidth - (drawable.getIntrinsicWidth() / 2.0f)), (int) (measuredHeight - (this.lockIcon.getIntrinsicHeight() / 2.0f)), (int) ((this.lockIcon.getIntrinsicWidth() / 2.0f) + measuredWidth), (int) ((this.lockIcon.getIntrinsicHeight() / 2.0f) + measuredHeight));
-                float fLerp = AndroidUtilities.lerp(1.05f, 0.92f, this.progressToSelect.get());
+                lockIcon.setBounds(
+                    (int) (cx - lockIcon.getIntrinsicWidth() / 2f), (int) (cy - lockIcon.getIntrinsicHeight() / 2f),
+                    (int) (cx + lockIcon.getIntrinsicWidth() / 2f), (int) (cy + lockIcon.getIntrinsicHeight() / 2f)
+                );
+                final float s = lerp(1.05f, 0.92f, progressToSelect.get());
                 canvas.save();
-                canvas.scale(fLerp, fLerp, measuredWidth, measuredHeight);
-                this.lockIcon.draw(canvas);
+                canvas.scale(s, s, cx, cy);
+                lockIcon.draw(canvas);
                 canvas.restore();
-                return;
-            }
-            if (this.isCustom) {
-                if (this.backgroundGradient == null) {
-                    if (this.addIcon == null) {
-                        Drawable drawable2 = ContextCompat.getDrawable(getContext(), R.drawable.msg_filled_plus);
-                        this.addIcon = drawable2;
-                        drawable2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_emojiSearchIcon), PorterDuff.Mode.MULTIPLY));
+            } else if (isCustom) {
+                if (backgroundGradient == null) {
+                    if (addIcon == null) {
+                        addIcon = ContextCompat.getDrawable(getContext(), R.drawable.msg_filled_plus);
+                        addIcon.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_emojiSearchIcon), PorterDuff.Mode.MULTIPLY));
                     }
-                    Drawable drawable3 = this.addIcon;
-                    drawable3.setBounds((int) (measuredWidth - (drawable3.getIntrinsicWidth() / 2.0f)), (int) (measuredHeight - (this.addIcon.getIntrinsicHeight() / 2.0f)), (int) (measuredWidth + (this.addIcon.getIntrinsicWidth() / 2.0f)), (int) (measuredHeight + (this.addIcon.getIntrinsicHeight() / 2.0f)));
-                    this.addIcon.draw(canvas);
-                    return;
+                    addIcon.setBounds(
+                        (int) (cx - addIcon.getIntrinsicWidth() / 2f), (int) (cy - addIcon.getIntrinsicHeight() / 2f),
+                        (int) (cx + addIcon.getIntrinsicWidth() / 2f), (int) (cy + addIcon.getIntrinsicHeight() / 2f)
+                    );
+                    addIcon.draw(canvas);
+                } else {
+                    if (optionsPaint == null) {
+                        optionsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                        optionsPaint.setColor(0xffffffff);
+                    }
+                    optionsPaint.setAlpha(Math.round(255f * Utilities.clamp(progressToSelect.get(), 1f, 0f)));
+                    canvas.drawCircle(cx, cy, dp(1.5f), optionsPaint);
+                    canvas.drawCircle(cx - dp(5) * progressToSelect.get(), cy, dp(1.5f), optionsPaint);
+                    canvas.drawCircle(cx + dp(5) * progressToSelect.get(), cy, dp(1.5f), optionsPaint);
                 }
-                if (this.optionsPaint == null) {
-                    Paint paint3 = new Paint(1);
-                    this.optionsPaint = paint3;
-                    paint3.setColor(-1);
-                }
-                this.optionsPaint.setAlpha(Math.round(Utilities.clamp(this.progressToSelect.get(), 1.0f, 0.0f) * 255.0f));
-                canvas.drawCircle(measuredWidth, measuredHeight, AndroidUtilities.dp(1.5f), this.optionsPaint);
-                canvas.drawCircle(measuredWidth - (AndroidUtilities.dp(5.0f) * this.progressToSelect.get()), measuredHeight, AndroidUtilities.dp(1.5f), this.optionsPaint);
-                canvas.drawCircle(measuredWidth + (AndroidUtilities.dp(5.0f) * this.progressToSelect.get()), measuredHeight, AndroidUtilities.dp(1.5f), this.optionsPaint);
             }
         }
 
-        public void setLocked(boolean z) {
-            if (this.isLocked == z) {
-                return;
-            }
-            this.isLocked = z;
+        private boolean isLocked;
+        void setLocked(boolean locked) {
+            if (this.isLocked == locked) return;
+            this.isLocked = locked;
             invalidate();
         }
 
-        public void setGradient(BackgroundGradient backgroundGradient) {
+        void setGradient(BackgroundGradient backgroundGradient) {
             this.backgroundGradient = backgroundGradient;
         }
 
-        public void setSelectedInternal(boolean z, boolean z2) {
-            if (this.selected != z) {
-                this.selected = z;
+        void setSelectedInternal(boolean selected, boolean animated) {
+            if (this.selected != selected) {
+                this.selected = selected;
                 invalidate();
             }
-            if (z2) {
-                return;
+            if (!animated) {
+                progressToSelect.set(selected ? 1f : 0, false);
             }
-            this.progressToSelect.set(z ? 1.0f : 0.0f, false);
         }
 
-        public void setCustom(boolean z) {
-            this.isCustom = z;
+        public void setCustom(boolean b) {
+            isCustom = b;
         }
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    boolean isLightInternal = false;
+    float progressToLightStatusBar = 0f;
+    ValueAnimator lightProgressAnimator;
+
+    @Override
     public boolean isLightStatusBar() {
-        PreviewView previewView = this.previewView;
-        boolean z = previewView == null || (!previewView.expanded && (previewView.overrideExpandProgress < 0.0f || previewView.backgroundGradient == null)) ? AndroidUtilities.computePerceivedBrightness(Theme.getColor(Theme.key_windowBackgroundGray)) > 0.721f : AndroidUtilities.computePerceivedBrightness(previewView.backgroundGradient.getAverageColor()) > 0.721f;
-        if (this.isLightInternal != z) {
-            this.isLightInternal = z;
-            if (this.actionBar.getAlpha() == 0.0f) {
-                setProgressToLightStatusBar(z ? 0.0f : 1.0f);
+        boolean isLight;
+        if (previewView != null && (previewView.expanded || previewView.overrideExpandProgress >= 0 && previewView.backgroundGradient != null)) {
+            int averageColor = previewView.backgroundGradient.getAverageColor();
+            isLight = AndroidUtilities.computePerceivedBrightness(averageColor) > 0.721f;
+        } else {
+            isLight = AndroidUtilities.computePerceivedBrightness(Theme.getColor(Theme.key_windowBackgroundGray)) > 0.721f;
+        }
+        if (isLightInternal != isLight) {
+            isLightInternal = isLight;
+            if (actionBar.getAlpha() == 0) {
+                setProgressToLightStatusBar(isLight ? 0f : 1f);
             } else {
-                ValueAnimator valueAnimator = this.lightProgressAnimator;
-                if (valueAnimator != null) {
-                    valueAnimator.removeAllListeners();
-                    this.lightProgressAnimator.cancel();
+                if (lightProgressAnimator != null) {
+                    lightProgressAnimator.removeAllListeners();
+                    lightProgressAnimator.cancel();
                 }
-                ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(this.progressToLightStatusBar, z ? 0.0f : 1.0f);
-                this.lightProgressAnimator = valueAnimatorOfFloat;
-                valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda0
-                    @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                    public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                        this.f$0.lambda$isLightStatusBar$7(valueAnimator2);
-                    }
+                lightProgressAnimator = ValueAnimator.ofFloat(progressToLightStatusBar, isLight ? 0f : 1f);
+                lightProgressAnimator.addUpdateListener(animation -> {
+                    setProgressToLightStatusBar((Float) animation.getAnimatedValue());
                 });
-                this.lightProgressAnimator.setDuration(150L).start();
+                lightProgressAnimator.setDuration(150).start();
             }
         }
-        BottomSheet bottomSheet = this.bottomSheet;
         if (bottomSheet != null) {
-            AndroidUtilities.setLightStatusBar(bottomSheet, z);
+            AndroidUtilities.setLightStatusBar(bottomSheet, isLight);
         }
-        return z;
+        return isLight;
     }
 
-    public /* synthetic */ void lambda$isLightStatusBar$7(ValueAnimator valueAnimator) {
-        setProgressToLightStatusBar(((Float) valueAnimator.getAnimatedValue()).floatValue());
-    }
-
-    private void setProgressToLightStatusBar(float f) {
-        if (this.progressToLightStatusBar != f) {
-            this.progressToLightStatusBar = f;
-            int iBlendARGB = ColorUtils.blendARGB(-16777216, -1, f);
-            int alphaComponent = ColorUtils.setAlphaComponent(iBlendARGB, 60);
-            this.overlayActionBar.setItemsColor(iBlendARGB, false);
-            this.setPhotoItem.setBackground(Theme.createSelectorDrawable(alphaComponent, 3));
+    private void setProgressToLightStatusBar(float value) {
+        if (progressToLightStatusBar != value) {
+            progressToLightStatusBar = value;
+            int color = ColorUtils.blendARGB(Color.BLACK, Color.WHITE, progressToLightStatusBar);
+            int selectorColor = ColorUtils.setAlphaComponent(color, 60);
+            overlayActionBar.setItemsColor(color, false);
+            setPhotoItem.setBackground(Theme.createSelectorDrawable(selectorColor, Theme.RIPPLE_MASK_CIRCLE_TO_BOUND_EDGE));
         }
     }
 
@@ -1614,116 +1506,121 @@ public class AvatarConstructorFragment extends BaseFragment {
         this.delegate = delegate;
     }
 
-    public void lambda$createView$1() {
-        if (this.isLandscapeMode) {
+    public void onPreviewClick() {
+        if (isLandscapeMode) {
             return;
         }
-        if (this.keyboardVisibleProgress > 0.0f) {
-            if (this.keyboardVisibilityAnimator != null) {
-                this.progressToExpand = 1.0f;
-                this.expandWithKeyboard = true;
+        if (keyboardVisibleProgress > 0) {
+            if (keyboardVisibilityAnimator != null) {
+                progressToExpand = 1f;
+                expandWithKeyboard = true;
             }
-            AndroidUtilities.hideKeyboard(this.fragmentView);
+            AndroidUtilities.hideKeyboard(fragmentView);
             return;
         }
-        setExpanded(!this.previewView.expanded, true, false);
+        setExpanded(!previewView.expanded, true, false);
     }
 
-    public class ContainerLayout extends SizeNotifierFrameLayout {
+    private class ContainerLayout extends SizeNotifierFrameLayout implements NestedScrollingParent {
+
         private NestedScrollingParentHelper nestedScrollingParentHelper;
-
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public boolean onNestedFling(View view, float f, float f2, boolean z) {
-            return false;
-        }
-
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public boolean onNestedPreFling(View view, float f, float f2) {
-            return false;
-        }
 
         public ContainerLayout(Context context) {
             super(context);
-            this.nestedScrollingParentHelper = new NestedScrollingParentHelper(this);
+            nestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         }
 
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public boolean onStartNestedScroll(View view, View view2, int i) {
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            return avatarConstructorFragment.keyboardVisibleProgress <= 0.0f && !avatarConstructorFragment.isLandscapeMode;
+        @Override
+        public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
+            if (keyboardVisibleProgress > 0 || isLandscapeMode) {
+                return false;
+            }
+            return true;
         }
 
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public void onNestedScrollAccepted(View view, View view2, int i) {
-            this.nestedScrollingParentHelper.onNestedScrollAccepted(view, view2, i);
-            AvatarConstructorFragment.this.cancelExpandAnimator();
+        @Override
+        public void onNestedScrollAccepted(View child, View target, int nestedScrollAxes) {
+            nestedScrollingParentHelper.onNestedScrollAccepted(child, target, nestedScrollAxes);
+            cancelExpandAnimator();
         }
 
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public void onStopNestedScroll(View view) {
-            this.nestedScrollingParentHelper.onStopNestedScroll(view);
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            avatarConstructorFragment.setExpanded(avatarConstructorFragment.progressToExpand > 0.5f, false, false);
+        @Override
+        public void onStopNestedScroll(View target) {
+            nestedScrollingParentHelper.onStopNestedScroll(target);
+            setExpanded(progressToExpand > 0.5f, false, false);
         }
 
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public void onNestedScroll(View view, int i, int i2, int i3, int i4) {
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            if (avatarConstructorFragment.keyboardVisibleProgress > 0.0f || avatarConstructorFragment.isLandscapeMode || i4 == 0) {
+        @Override
+        public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
+            if (keyboardVisibleProgress > 0 || isLandscapeMode) {
                 return;
             }
-            avatarConstructorFragment.cancelExpandAnimator();
-            AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-            AvatarConstructorFragment.this.setProgressToExpand(Utilities.clamp(avatarConstructorFragment2.progressToExpand - (i4 / avatarConstructorFragment2.expandedHeight), 1.0f, 0.0f), true);
+            if (dyUnconsumed != 0) {
+                cancelExpandAnimator();
+                float progressToExpand = AvatarConstructorFragment.this.progressToExpand - dyUnconsumed / (float) expandedHeight;
+                progressToExpand = Utilities.clamp(progressToExpand, 1f, 0f);
+                setProgressToExpand(progressToExpand, true);
+            }
         }
 
-        @Override // android.view.ViewGroup, android.view.ViewParent
-        public void onNestedPreScroll(View view, int i, int i2, int[] iArr) {
-            AvatarConstructorFragment avatarConstructorFragment = AvatarConstructorFragment.this;
-            if (avatarConstructorFragment.keyboardVisibleProgress > 0.0f || avatarConstructorFragment.isLandscapeMode || i2 <= 0 || avatarConstructorFragment.progressToExpand <= 0.0f) {
+        @Override
+        public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
+            if (keyboardVisibleProgress > 0 || isLandscapeMode) {
                 return;
             }
-            avatarConstructorFragment.cancelExpandAnimator();
-            AvatarConstructorFragment avatarConstructorFragment2 = AvatarConstructorFragment.this;
-            AvatarConstructorFragment.this.setProgressToExpand(Utilities.clamp(avatarConstructorFragment2.progressToExpand - (i2 / avatarConstructorFragment2.expandedHeight), 1.0f, 0.0f), true);
-            iArr[1] = i2;
+            if (dy > 0 && AvatarConstructorFragment.this.progressToExpand > 0) {
+                cancelExpandAnimator();
+                float progressToExpand = AvatarConstructorFragment.this.progressToExpand - dy / (float) expandedHeight;
+                progressToExpand = Utilities.clamp(progressToExpand, 1f, 0f);
+                setProgressToExpand(progressToExpand, true);
+                consumed[1] = dy;
+            }
         }
 
-        @Override // android.view.ViewGroup
+        @Override
+        public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
+            return false;
+        }
+
+        @Override
+        public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
+            return false;
+        }
+
+        @Override
         public int getNestedScrollAxes() {
-            return this.nestedScrollingParentHelper.getNestedScrollAxes();
+            return nestedScrollingParentHelper.getNestedScrollAxes();
         }
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public boolean onBackPressed(boolean z) {
-        if (!this.wasChanged) {
-            return super.onBackPressed(z);
-        }
-        if (!z) {
-            return false;
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-        builder.setMessage(LocaleController.getString(R.string.PhotoEditorDiscardAlert));
-        builder.setTitle(LocaleController.getString(R.string.DiscardChanges));
-        builder.setPositiveButton(LocaleController.getString(R.string.PassportDiscard), new AlertDialog.OnButtonClickListener() { // from class: org.telegram.ui.Components.AvatarConstructorFragment$$ExternalSyntheticLambda3
-            @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
-            public final void onClick(AlertDialog alertDialog, int i) {
-                this.f$0.lambda$onBackPressed$8(alertDialog, i);
-            }
-        });
-        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-        AlertDialog alertDialogCreate = builder.create();
-        showDialog(alertDialogCreate);
-        alertDialogCreate.redPositive();
+    @Override
+    public boolean isSwipeBackEnabled(MotionEvent event) {
         return false;
     }
 
-    public /* synthetic */ void lambda$onBackPressed$8(AlertDialog alertDialog, int i) {
-        finishFragment();
+    @Override
+    public boolean onBackPressed(boolean invoked) {
+        if (wasChanged) {
+            if (invoked) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+                builder.setMessage(getString(R.string.PhotoEditorDiscardAlert));
+                builder.setTitle(getString(R.string.DiscardChanges));
+                builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> finishFragment());
+                builder.setNegativeButton(getString(R.string.Cancel), null);
+                AlertDialog dialog = builder.create();
+                showDialog(dialog);
+                dialog.redPositive();
+            }
+            return false;
+        }
+        return super.onBackPressed(invoked);
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public interface Delegate {
+        void onDone(BackgroundGradient backgroundGradient, long documentId, TLRPC.Document document, PreviewView previewView);
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         AndroidUtilities.requestAdjustResize(getParentActivity(), getClassGuid());

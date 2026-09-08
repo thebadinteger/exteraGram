@@ -1,24 +1,24 @@
 package org.telegram.ui.iv;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.content.Context;
 import android.graphics.Outline;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
-import android.view.ViewPropertyAnimator;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.LocaleController;
+
 import org.telegram.messenger.R;
-import org.telegram.tgnet.TLObject;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AiButtonDrawable;
 import org.telegram.ui.Components.ChatActivityEnterView;
@@ -29,801 +29,677 @@ import org.telegram.ui.Components.RLottieDrawable;
 import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.ScaleStateListAnimator;
 
+import java.util.ArrayList;
+
 public class RichEditorToolbar extends FrameLayout {
-    private final ImageView addButton;
-    private final ImageView aiButton;
-    private final RichEditor.Button aiStyleButton;
-    private final ImageView backButton;
-    private final ArrayList<RichEditor.Button> blockButtons;
-    private final LinearLayout blocksLayout;
-    private final HorizontalScrollView blocksScrollView;
-    private final FrameLayout bottomContainer;
-    private final View bottomGradient;
-    private final FrameLayout bottomInnerContainer;
-    private final LinearLayout bottomPanel;
-    private final RichEditor.Button dateButton;
-    private final Delegate delegate;
-    private final ChatActivityEnterViewAnimatedIconView emojiButton;
-    private final ArrayList<RichEditor.Button> formattingButtons;
-    private LinearLayout formattingLayout1;
-    private LinearLayout formattingLayout2;
-    private LinearLayout formattingLayout3;
-    private final LinearLayout formattingPanel;
-    private final LinearLayout formattingPanelLayout;
-    private int formattingScrollMaxWidth;
-    private HorizontalScrollView formattingScrollView;
-    private final LinearLayout historyButtons;
-    private final RichEditor.Button linkButton;
-    private final RichEditor.Button mathButton;
-    private int panelType;
-    private final ArrayList<RichEditor.Button> premiumButtons;
-    private final RichEditor.Button quoteButton;
-    private final ImageView redoButton;
-    private int reorderSavedPanelType;
-    private final Theme.ResourcesProvider resourcesProvider;
-    private final ChatActivityEnterView.SendButton sendButton;
-    private boolean sendLoading;
-    private final View topGradient;
-    private final FrameLayout topPanel;
-    private boolean trashHovered;
-    private final FrameLayout trashPanel;
-    private final RLottieImageView trashPanelIcon;
-    private final ImageView undoButton;
+
+    public static final int BLOCK_TEXT = 1;
+    public static final int BLOCK_LIST = 2;
+    public static final int BLOCK_TABLE = 4;
+    public static final int BLOCK_MATH = 7;
+    public static final int BLOCK_DETAILS = 9;
 
     public interface Delegate {
         Theme.ResourcesProvider getResourcesProvider();
-
-        void onAi();
-
-        void onAiStyle();
-
-        void onAttach();
-
         void onBack();
-
-        void onBlockButton(int i, View view);
-
-        void onDate();
-
-        void onEmoji();
-
-        void onFormatting(int i);
-
-        void onLink();
-
-        void onMath();
-
-        void onQuote();
-
-        void onRedo();
-
-        void onSend();
-
-        boolean onSendLongClick(View view);
-
         void onUndo();
+        void onRedo();
+        void onEmoji();
+        void onAi();
+        void onAttach();
+        void onSend();
+        boolean onSendLongClick(View anchor);
+        void onBlockButton(int flag, View anchor);
+        void onFormatting(int styleFlag);
+        void onLink();
+        void onDate();
+        void onMath();
+        void onQuote();
+        void onAiStyle();
     }
 
-    public RichEditorToolbar(Context context, final Delegate delegate) {
+    private final Delegate delegate;
+    private final Theme.ResourcesProvider resourcesProvider;
+
+    private final View topGradient, bottomGradient;
+    private final FrameLayout topPanel;
+    private final ImageView backButton;
+    private final LinearLayout historyButtons;
+    private final ImageView undoButton, redoButton;
+
+    private final FrameLayout bottomContainer;
+    private final FrameLayout bottomInnerContainer;
+    private final LinearLayout bottomPanel;
+    private final ChatActivityEnterViewAnimatedIconView emojiButton;
+    private final ImageView aiButton;
+    private final HorizontalScrollView blocksScrollView;
+    private final LinearLayout blocksLayout;
+    private final ImageView addButton;
+    private final ChatActivityEnterView.SendButton sendButton;
+
+    private final LinearLayout formattingPanel;
+    private final FrameLayout trashPanel;
+    private final RLottieImageView trashPanelIcon;
+    private final LinearLayout formattingPanelLayout;
+    private HorizontalScrollView formattingScrollView;
+    private int formattingScrollMaxWidth = Integer.MAX_VALUE;
+    private LinearLayout formattingLayout1;
+    private LinearLayout formattingLayout2;
+    private LinearLayout formattingLayout3;
+    private final RichEditor.Button aiStyleButton;
+    private final RichEditor.Button linkButton, dateButton, mathButton, quoteButton;
+
+    private final ArrayList<RichEditor.Button> blockButtons = new ArrayList<>();
+    private final ArrayList<RichEditor.Button> formattingButtons = new ArrayList<>();
+    private final ArrayList<RichEditor.Button> premiumButtons = new ArrayList<>();
+
+    private boolean sendLoading;
+
+    public RichEditorToolbar(Context context, Delegate delegate) {
         super(context);
-        this.formattingScrollMaxWidth = Integer.MAX_VALUE;
-        this.blockButtons = new ArrayList<>();
-        this.formattingButtons = new ArrayList<>();
-        ArrayList<RichEditor.Button> arrayList = new ArrayList<>();
-        this.premiumButtons = arrayList;
-        this.panelType = -1;
-        this.reorderSavedPanelType = 0;
         this.delegate = delegate;
-        Theme.ResourcesProvider resourcesProvider = delegate.getResourcesProvider();
-        this.resourcesProvider = resourcesProvider;
+        this.resourcesProvider = delegate.getResourcesProvider();
+
         setClipChildren(false);
         setClipToPadding(false);
-        View view = new View(context);
-        this.topGradient = view;
-        GradientDrawable.Orientation orientation = GradientDrawable.Orientation.TOP_BOTTOM;
-        int i = Theme.key_windowBackgroundWhite;
-        view.setBackground(new GradientDrawable(orientation, new int[]{color(i), Theme.multAlpha(color(i), 0.0f)}));
-        addView(view, LayoutHelper.createFrame(-1, 68, 55));
-        View view2 = new View(context);
-        this.bottomGradient = view2;
-        view2.setBackground(new GradientDrawable(orientation, new int[]{Theme.multAlpha(color(i), 0.0f), color(i)}));
-        addView(view2, LayoutHelper.createFrame(-1, 68, 87));
-        FrameLayout frameLayout = new FrameLayout(context);
-        this.topPanel = frameLayout;
-        frameLayout.setClipChildren(false);
-        frameLayout.setClipToPadding(false);
-        addView(frameLayout, LayoutHelper.createFrame(-1, -1, 55));
-        ImageView imageView = new ImageView(context);
-        this.backButton = imageView;
-        imageView.setImageResource(R.drawable.ic_ab_back);
-        ImageView.ScaleType scaleType = ImageView.ScaleType.CENTER;
-        imageView.setScaleType(scaleType);
-        int i2 = Theme.key_glass_targetMainTabs;
-        int iColor = color(i2);
-        int iColor2 = color(i2);
-        int i3 = Theme.key_listSelector;
-        imageView.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(iColor, Theme.blendOver(iColor2, color(i3)), AndroidUtilities.dp(22.0f), AndroidUtilities.dp(22.0f))));
-        int i4 = Theme.key_windowBackgroundWhiteBlackText;
-        int iColor3 = color(i4);
-        PorterDuff.Mode mode = PorterDuff.Mode.SRC_IN;
-        imageView.setColorFilter(new PorterDuffColorFilter(iColor3, mode));
-        ScaleStateListAnimator.apply(imageView);
-        imageView.setContentDescription(LocaleController.getString(R.string.AccDescrGoBack));
-        imageView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda0
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onBack();
-            }
-        });
-        frameLayout.addView(imageView, LayoutHelper.createFrame(44, 44.0f, 51, 8.0f, 8.0f, 8.0f, 8.0f));
-        LinearLayout linearLayout = new LinearLayout(context);
-        this.historyButtons = linearLayout;
-        linearLayout.setOrientation(0);
-        linearLayout.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        frameLayout.addView(linearLayout, LayoutHelper.createFrame(82, 44.0f, 53, 8.0f, 8.0f, 8.0f, 8.0f));
-        ImageView imageView2 = new ImageView(context);
-        this.undoButton = imageView2;
-        imageView2.setImageResource(R.drawable.iv_undo);
-        imageView2.setScaleType(scaleType);
-        imageView2.setBackground(Theme.createSelectorDrawable(color(i3)));
-        imageView2.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        ScaleStateListAnimator.apply(imageView2);
-        imageView2.setContentDescription("Undo");
-        imageView2.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda4
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onUndo();
-            }
-        });
-        linearLayout.addView(imageView2, LayoutHelper.createLinear(41, 41, 16));
-        ImageView imageView3 = new ImageView(context);
-        this.redoButton = imageView3;
-        imageView3.setImageResource(R.drawable.iv_redo);
-        imageView3.setScaleType(scaleType);
-        imageView3.setBackground(Theme.createSelectorDrawable(color(i3)));
-        imageView3.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        ScaleStateListAnimator.apply(imageView3);
-        imageView3.setContentDescription("Redo");
-        imageView3.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda5
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onRedo();
-            }
-        });
-        linearLayout.addView(imageView3, LayoutHelper.createLinear(41, 41, 16));
-        FrameLayout frameLayout2 = new FrameLayout(context);
-        this.bottomContainer = frameLayout2;
-        frameLayout2.setClipChildren(false);
-        frameLayout2.setClipToPadding(false);
-        addView(frameLayout2, LayoutHelper.createFrame(-1, -1, 87));
-        FrameLayout frameLayout3 = new FrameLayout(context);
-        this.bottomInnerContainer = frameLayout3;
-        frameLayout3.setClipChildren(false);
-        frameLayout3.setClipToPadding(false);
-        frameLayout2.addView(frameLayout3, LayoutHelper.createFrame(-1, 60, 87));
-        LinearLayout linearLayout2 = new LinearLayout(context);
-        this.bottomPanel = linearLayout2;
-        linearLayout2.setClipToPadding(false);
-        linearLayout2.setClipChildren(false);
-        linearLayout2.setPadding(AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f));
-        frameLayout3.addView(linearLayout2, LayoutHelper.createFrame(-1, 60, 87));
-        ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView = new ChatActivityEnterViewAnimatedIconView(context, 24);
-        this.emojiButton = chatActivityEnterViewAnimatedIconView;
-        chatActivityEnterViewAnimatedIconView.setPadding(AndroidUtilities.dp(10.0f), AndroidUtilities.dp(10.0f), AndroidUtilities.dp(10.0f), AndroidUtilities.dp(10.0f));
-        chatActivityEnterViewAnimatedIconView.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        chatActivityEnterViewAnimatedIconView.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(i2), Theme.blendOver(color(i2), color(i3)), AndroidUtilities.dp(22.0f), AndroidUtilities.dp(22.0f))));
-        chatActivityEnterViewAnimatedIconView.setState(ChatActivityEnterViewAnimatedIconView.State.SMILE, false);
-        linearLayout2.addView(chatActivityEnterViewAnimatedIconView, LayoutHelper.createLinear(44, 44, 0.0f, 19, 0, 0, 8, 0));
-        ScaleStateListAnimator.apply(chatActivityEnterViewAnimatedIconView);
-        chatActivityEnterViewAnimatedIconView.setContentDescription("Emoji");
-        chatActivityEnterViewAnimatedIconView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda6
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onEmoji();
-            }
-        });
-        ImageView imageView4 = new ImageView(context);
-        this.aiButton = imageView4;
-        imageView4.setImageDrawable(new AiButtonDrawable(context));
-        imageView4.setScaleType(scaleType);
-        imageView4.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        imageView4.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(i2), Theme.blendOver(color(i2), color(i3)), AndroidUtilities.dp(22.0f), AndroidUtilities.dp(22.0f))));
-        imageView4.setVisibility(ExteraConfig.getTelegramAiEditor() ? 0 : 8);
-        linearLayout2.addView(imageView4, LayoutHelper.createLinear(44, 44, 0.0f, 19, 0, 0, 8, 0));
-        ScaleStateListAnimator.apply(imageView4);
-        imageView4.setContentDescription("AI");
-        imageView4.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda7
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onAi();
-            }
-        });
-        FrameLayout frameLayout4 = new FrameLayout(context);
-        frameLayout4.setClipToPadding(false);
-        frameLayout4.setClipChildren(false);
-        FrameLayout frameLayout5 = new FrameLayout(context);
-        frameLayout5.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        frameLayout4.addView(frameLayout5, LayoutHelper.createFrame(-2, 44, 81));
-        HorizontalScrollView horizontalScrollView = new HorizontalScrollView(context) { // from class: org.telegram.ui.iv.RichEditorToolbar.1
-            @Override // android.widget.HorizontalScrollView, android.widget.FrameLayout, android.view.View
-            public void onMeasure(int i5, int i6) {
-                int mode2 = View.MeasureSpec.getMode(i5);
-                int size = View.MeasureSpec.getSize(i5);
-                if (mode2 == 1073741824) {
-                    super.onMeasure(i5, i6);
+
+        topGradient = new View(context);
+        topGradient.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{
+            color(Theme.key_windowBackgroundWhite),
+            Theme.multAlpha(color(Theme.key_windowBackgroundWhite), 0.0f)
+        }));
+        addView(topGradient, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 8 + 44 + 16, Gravity.FILL_HORIZONTAL | Gravity.TOP));
+
+        bottomGradient = new View(context);
+        bottomGradient.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{
+            Theme.multAlpha(color(Theme.key_windowBackgroundWhite), 0.0f),
+            color(Theme.key_windowBackgroundWhite)
+        }));
+        addView(bottomGradient, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 8 + 44 + 16, Gravity.FILL_HORIZONTAL | Gravity.BOTTOM));
+
+        topPanel = new FrameLayout(context);
+        topPanel.setClipChildren(false);
+        topPanel.setClipToPadding(false);
+        addView(topPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.FILL_HORIZONTAL));
+
+        backButton = new ImageView(context);
+        backButton.setImageResource(R.drawable.ic_ab_back);
+        backButton.setScaleType(ImageView.ScaleType.CENTER);
+        backButton.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(Theme.key_glass_targetMainTabs), Theme.blendOver(color(Theme.key_glass_targetMainTabs), color(Theme.key_listSelector)), dp(22), dp(22))));
+        backButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        ScaleStateListAnimator.apply(backButton);
+        backButton.setContentDescription(getString(R.string.AccDescrGoBack));
+        backButton.setOnClickListener(v -> delegate.onBack());
+        topPanel.addView(backButton, LayoutHelper.createFrame(44, 44, Gravity.TOP | Gravity.LEFT, 8, 8, 8, 8));
+
+        historyButtons = new LinearLayout(context);
+        historyButtons.setOrientation(LinearLayout.HORIZONTAL);
+        historyButtons.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        topPanel.addView(historyButtons, LayoutHelper.createFrame(82, 44, Gravity.TOP | Gravity.RIGHT, 8, 8, 8, 8));
+
+        undoButton = new ImageView(context);
+        undoButton.setImageResource(R.drawable.iv_undo);
+        undoButton.setScaleType(ImageView.ScaleType.CENTER);
+        undoButton.setBackground(Theme.createSelectorDrawable(color(Theme.key_listSelector)));
+        undoButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        ScaleStateListAnimator.apply(undoButton);
+        undoButton.setContentDescription("Undo");
+        undoButton.setOnClickListener(v -> delegate.onUndo());
+        historyButtons.addView(undoButton, LayoutHelper.createLinear(41, 41, Gravity.CENTER_VERTICAL));
+
+        redoButton = new ImageView(context);
+        redoButton.setImageResource(R.drawable.iv_redo);
+        redoButton.setScaleType(ImageView.ScaleType.CENTER);
+        redoButton.setBackground(Theme.createSelectorDrawable(color(Theme.key_listSelector)));
+        redoButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        ScaleStateListAnimator.apply(redoButton);
+        redoButton.setContentDescription("Redo");
+        redoButton.setOnClickListener(v -> delegate.onRedo());
+        historyButtons.addView(redoButton, LayoutHelper.createLinear(41, 41, Gravity.CENTER_VERTICAL));
+
+        bottomContainer = new FrameLayout(context);
+        bottomContainer.setClipChildren(false);
+        bottomContainer.setClipToPadding(false);
+        addView(bottomContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL));
+
+        bottomInnerContainer = new FrameLayout(context);
+        bottomInnerContainer.setClipChildren(false);
+        bottomInnerContainer.setClipToPadding(false);
+        bottomContainer.addView(bottomInnerContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 8 + 44 + 8, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL));
+
+        bottomPanel = new LinearLayout(context);
+        bottomPanel.setClipToPadding(false);
+        bottomPanel.setClipChildren(false);
+        bottomPanel.setPadding(dp(8), dp(8), dp(8), dp(8));
+        bottomInnerContainer.addView(bottomPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 8 + 44 + 8, Gravity.FILL_HORIZONTAL | Gravity.BOTTOM));
+
+        emojiButton = new ChatActivityEnterViewAnimatedIconView(context, 24);
+        emojiButton.setPadding(dp(10), dp(10), dp(10), dp(10));
+        emojiButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        emojiButton.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(Theme.key_glass_targetMainTabs), Theme.blendOver(color(Theme.key_glass_targetMainTabs), color(Theme.key_listSelector)), dp(22), dp(22))));
+        emojiButton.setState(ChatActivityEnterViewAnimatedIconView.State.SMILE, false);
+        bottomPanel.addView(emojiButton, LayoutHelper.createLinear(44, 44, 0, Gravity.LEFT | Gravity.CENTER_VERTICAL, 0, 0, 8, 0));
+        ScaleStateListAnimator.apply(emojiButton);
+        emojiButton.setContentDescription("Emoji");
+        emojiButton.setOnClickListener(v -> delegate.onEmoji());
+
+        aiButton = new ImageView(context);
+        aiButton.setImageDrawable(new AiButtonDrawable(context));
+        aiButton.setScaleType(ImageView.ScaleType.CENTER);
+        aiButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        aiButton.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(Theme.key_glass_targetMainTabs), Theme.blendOver(color(Theme.key_glass_targetMainTabs), color(Theme.key_listSelector)), dp(22), dp(22))));
+        bottomPanel.addView(aiButton, LayoutHelper.createLinear(44, 44, 0, Gravity.LEFT | Gravity.CENTER_VERTICAL, 0, 0, 8, 0));
+        ScaleStateListAnimator.apply(aiButton);
+        aiButton.setContentDescription("AI");
+        aiButton.setOnClickListener(v -> delegate.onAi());
+
+        final FrameLayout blocksContainer2 = new FrameLayout(context);
+        blocksContainer2.setClipToPadding(false);
+        blocksContainer2.setClipChildren(false);
+
+        final FrameLayout blocksContainer = new FrameLayout(context);
+        blocksContainer.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        blocksContainer2.addView(blocksContainer, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+
+        blocksScrollView = new HorizontalScrollView(context) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                final int mode = MeasureSpec.getMode(widthMeasureSpec);
+                final int available = MeasureSpec.getSize(widthMeasureSpec);
+                if (mode == MeasureSpec.EXACTLY) {
+                    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
                     return;
                 }
-                super.onMeasure(View.MeasureSpec.makeMeasureSpec(size, 0), i6);
-                int measuredWidth = getMeasuredWidth();
-                if (mode2 == Integer.MIN_VALUE) {
-                    measuredWidth = Math.min(measuredWidth, size);
-                }
-                setMeasuredDimension(measuredWidth, getMeasuredHeight());
+                super.onMeasure(MeasureSpec.makeMeasureSpec(available, MeasureSpec.UNSPECIFIED), heightMeasureSpec);
+                final int content = getMeasuredWidth();
+                final int width = mode == MeasureSpec.AT_MOST ? Math.min(content, available) : content;
+                setMeasuredDimension(width, getMeasuredHeight());
             }
         };
-        this.blocksScrollView = horizontalScrollView;
-        horizontalScrollView.setClipToOutline(true);
-        horizontalScrollView.setOutlineProvider(new ViewOutlineProvider() { // from class: org.telegram.ui.iv.RichEditorToolbar.2
-            @Override // android.view.ViewOutlineProvider
-            public void getOutline(View view3, Outline outline) {
-                outline.setRoundRect(0, 0, view3.getWidth(), view3.getHeight(), AndroidUtilities.dp(22.0f));
+        blocksScrollView.setClipToOutline(true);
+        blocksScrollView.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(22));
             }
         });
-        LinearLayout linearLayout3 = new LinearLayout(context);
-        this.blocksLayout = linearLayout3;
-        linearLayout3.setPadding(AndroidUtilities.dp(2.0f), 0, AndroidUtilities.dp(2.0f), 0);
-        linearLayout3.setOrientation(0);
-        horizontalScrollView.addView(linearLayout3);
-        frameLayout5.addView(horizontalScrollView, LayoutHelper.createFrame(-1, -1.0f));
-        addBlockButton(R.drawable.iv_text, 1, false);
-        addBlockButton(R.drawable.iv_lists, 2, true);
-        addBlockButton(R.drawable.iv_table, 4, true);
-        addBlockButton(R.drawable.iv_math, 7, true);
-        linearLayout2.addView(frameLayout4, LayoutHelper.createLinear(0, 44, 1.0f));
-        ImageView imageView5 = new ImageView(context);
-        this.addButton = imageView5;
-        imageView5.setImageResource(R.drawable.outline_poll_attach_24);
-        imageView5.setScaleType(scaleType);
-        imageView5.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        imageView5.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(i2), Theme.blendOver(color(i2), color(i3)), AndroidUtilities.dp(22.0f), AndroidUtilities.dp(22.0f))));
-        linearLayout2.addView(imageView5, LayoutHelper.createLinear(44, 44, 0.0f, 21, 8, 0, 0, 0));
-        ScaleStateListAnimator.apply(imageView5);
-        imageView5.setContentDescription("Attach");
-        imageView5.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda8
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onAttach();
-            }
-        });
-        LinearLayout linearLayout4 = new LinearLayout(context) { // from class: org.telegram.ui.iv.RichEditorToolbar.3
-            @Override // android.widget.LinearLayout, android.view.View
-            public void onMeasure(int i5, int i6) {
-                int size = View.MeasureSpec.getSize(i5);
-                int paddingLeft = getPaddingLeft() + getPaddingRight();
-                if (RichEditorToolbar.this.formattingLayout1 != null && RichEditorToolbar.this.formattingLayout1.getVisibility() == 0) {
-                    RichEditorToolbar.this.formattingLayout1.measure(View.MeasureSpec.makeMeasureSpec(size, Integer.MIN_VALUE), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44.0f), TLObject.FLAG_30));
-                    ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) RichEditorToolbar.this.formattingLayout1.getLayoutParams();
-                    paddingLeft += RichEditorToolbar.this.formattingLayout1.getMeasuredWidth() + marginLayoutParams.leftMargin + marginLayoutParams.rightMargin;
+        blocksLayout = new LinearLayout(context);
+        blocksLayout.setPadding(dp(2), 0, dp(2), 0);
+        blocksLayout.setOrientation(LinearLayout.HORIZONTAL);
+        blocksScrollView.addView(blocksLayout);
+        blocksContainer.addView(blocksScrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        addBlockButton(R.drawable.iv_text, BLOCK_TEXT, false);
+        addBlockButton(R.drawable.iv_lists, BLOCK_LIST, true);
+        addBlockButton(R.drawable.iv_table, BLOCK_TABLE, true);
+        addBlockButton(R.drawable.iv_math, BLOCK_MATH, true);
+
+        bottomPanel.addView(blocksContainer2, LayoutHelper.createLinear(0, 44, 1f));
+
+        addButton = new ImageView(context);
+        addButton.setImageResource(R.drawable.outline_poll_attach_24);
+        addButton.setScaleType(ImageView.ScaleType.CENTER);
+        addButton.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        addButton.setBackground(RichEditor.withShadow(Theme.createRadSelectorDrawable(color(Theme.key_glass_targetMainTabs), Theme.blendOver(color(Theme.key_glass_targetMainTabs), color(Theme.key_listSelector)), dp(22), dp(22))));
+        bottomPanel.addView(addButton, LayoutHelper.createLinear(44, 44, 0, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 8, 0, 0, 0));
+        ScaleStateListAnimator.apply(addButton);
+        addButton.setContentDescription("Attach");
+        addButton.setOnClickListener(v -> delegate.onAttach());
+
+        formattingPanel = new LinearLayout(context) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                final int avail = MeasureSpec.getSize(widthMeasureSpec);
+                int reserved = getPaddingLeft() + getPaddingRight();
+                if (formattingLayout1 != null) {
+                    formattingLayout1.measure(
+                        MeasureSpec.makeMeasureSpec(avail, MeasureSpec.AT_MOST),
+                        MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
+                    final ViewGroup.MarginLayoutParams lp1 = (ViewGroup.MarginLayoutParams) formattingLayout1.getLayoutParams();
+                    reserved += formattingLayout1.getMeasuredWidth() + lp1.leftMargin + lp1.rightMargin;
                 }
-                if (RichEditorToolbar.this.formattingLayout2 != null) {
-                    RichEditorToolbar.this.formattingLayout2.measure(View.MeasureSpec.makeMeasureSpec(size, Integer.MIN_VALUE), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44.0f), TLObject.FLAG_30));
-                    ViewGroup.MarginLayoutParams marginLayoutParams2 = (ViewGroup.MarginLayoutParams) RichEditorToolbar.this.formattingLayout2.getLayoutParams();
-                    paddingLeft += RichEditorToolbar.this.formattingLayout2.getMeasuredWidth() + marginLayoutParams2.leftMargin + marginLayoutParams2.rightMargin;
+                if (formattingLayout2 != null) {
+                    formattingLayout2.measure(
+                        MeasureSpec.makeMeasureSpec(avail, MeasureSpec.AT_MOST),
+                        MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
+                    final ViewGroup.MarginLayoutParams lp2 = (ViewGroup.MarginLayoutParams) formattingLayout2.getLayoutParams();
+                    reserved += formattingLayout2.getMeasuredWidth() + lp2.leftMargin + lp2.rightMargin;
                 }
-                if (RichEditorToolbar.this.formattingLayout3 != null) {
-                    RichEditorToolbar.this.formattingLayout3.measure(View.MeasureSpec.makeMeasureSpec(size, Integer.MIN_VALUE), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44.0f), TLObject.FLAG_30));
-                    ViewGroup.MarginLayoutParams marginLayoutParams3 = (ViewGroup.MarginLayoutParams) RichEditorToolbar.this.formattingLayout3.getLayoutParams();
-                    paddingLeft += RichEditorToolbar.this.formattingLayout3.getMeasuredWidth() + marginLayoutParams3.leftMargin + marginLayoutParams3.rightMargin;
+                if (formattingLayout3 != null) {
+                    formattingLayout3.measure(
+                            MeasureSpec.makeMeasureSpec(avail, MeasureSpec.AT_MOST),
+                            MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
+                    final ViewGroup.MarginLayoutParams lp2 = (ViewGroup.MarginLayoutParams) formattingLayout3.getLayoutParams();
+                    reserved += formattingLayout3.getMeasuredWidth() + lp2.leftMargin + lp2.rightMargin;
                 }
-                RichEditorToolbar.this.formattingScrollMaxWidth = Math.max(0, size - paddingLeft);
-                super.onMeasure(i5, i6);
+                formattingScrollMaxWidth = Math.max(0, avail - reserved);
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             }
         };
-        this.formattingPanel = linearLayout4;
-        linearLayout4.setOrientation(0);
-        linearLayout4.setClipToPadding(false);
-        linearLayout4.setClipChildren(false);
-        linearLayout4.setPadding(AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f));
-        frameLayout2.addView(linearLayout4, LayoutHelper.createFrame(-2, 60, 81));
-        FrameLayout frameLayout6 = new FrameLayout(context);
-        this.trashPanel = frameLayout6;
-        frameLayout6.setClipChildren(false);
-        frameLayout6.setClipToPadding(false);
-        frameLayout6.setPadding(AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f), AndroidUtilities.dp(8.0f));
-        frameLayout2.addView(frameLayout6, LayoutHelper.createFrame(80, 60, 81));
-        RLottieImageView rLottieImageView = new RLottieImageView(context);
-        this.trashPanelIcon = rLottieImageView;
-        rLottieImageView.setAnimation(R.raw.group_pip_delete_icon, AndroidUtilities.dp(16.0f), AndroidUtilities.dp(16.0f));
-        RLottieDrawable animatedDrawable = rLottieImageView.getAnimatedDrawable();
-        if (animatedDrawable != null) {
-            animatedDrawable.setPlayInDirectionOfCustomEndFrame(true);
-            animatedDrawable.setAutoRepeat(0);
-            animatedDrawable.setCustomEndFrame(0);
+        formattingPanel.setOrientation(LinearLayout.HORIZONTAL);
+        formattingPanel.setClipToPadding(false);
+        formattingPanel.setClipChildren(false);
+        formattingPanel.setPadding(dp(8), dp(8), dp(8), dp(8));
+        bottomContainer.addView(formattingPanel, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 8 + 44 + 8, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM));
+
+        trashPanel = new FrameLayout(context);
+        trashPanel.setClipChildren(false);
+        trashPanel.setClipToPadding(false);
+        trashPanel.setPadding(dp(8), dp(8), dp(8), dp(8));
+        bottomContainer.addView(trashPanel, LayoutHelper.createFrame(8 + 64 + 8, 8 + 44 + 8, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM));
+
+        trashPanelIcon = new RLottieImageView(context);
+        trashPanelIcon.setAnimation(R.raw.group_pip_delete_icon, dp(16), dp(16));
+        final RLottieDrawable trashDrawable = trashPanelIcon.getAnimatedDrawable();
+        if (trashDrawable != null) {
+            trashDrawable.setPlayInDirectionOfCustomEndFrame(true);
+            trashDrawable.setAutoRepeat(0);
+            trashDrawable.setCustomEndFrame(0);
         }
-        rLottieImageView.setScaleType(scaleType);
-        rLottieImageView.setColorFilter(new PorterDuffColorFilter(color(i4), mode));
-        rLottieImageView.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        frameLayout6.addView(rLottieImageView, LayoutHelper.createFrame(-1, -1, 119));
-        FrameLayout frameLayout7 = new FrameLayout(context);
-        frameLayout7.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        linearLayout4.addView(frameLayout7, LayoutHelper.createFrame(-2, 44.0f));
-        HorizontalScrollView horizontalScrollView2 = new HorizontalScrollView(context) { // from class: org.telegram.ui.iv.RichEditorToolbar.4
-            @Override // android.widget.HorizontalScrollView, android.widget.FrameLayout, android.view.View
-            public void onMeasure(int i5, int i6) {
-                int mode2 = View.MeasureSpec.getMode(i5);
-                if (mode2 == 1073741824) {
-                    super.onMeasure(i5, i6);
+        trashPanelIcon.setScaleType(ImageView.ScaleType.CENTER);
+        trashPanelIcon.setColorFilter(new PorterDuffColorFilter(color(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        trashPanelIcon.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        trashPanel.addView(trashPanelIcon, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
+
+        final FrameLayout formattingStylesContainer = new FrameLayout(context);
+        formattingStylesContainer.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        formattingPanel.addView(formattingStylesContainer, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44));
+
+        formattingScrollView = new HorizontalScrollView(context) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                final int mode = MeasureSpec.getMode(widthMeasureSpec);
+                if (mode == MeasureSpec.EXACTLY) {
+                    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
                     return;
                 }
-                super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i5), 0), i6);
-                int measuredWidth = getMeasuredWidth();
-                int iMin = RichEditorToolbar.this.formattingScrollMaxWidth;
-                if (mode2 == Integer.MIN_VALUE) {
-                    iMin = Math.min(iMin, View.MeasureSpec.getSize(i5));
+                super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.UNSPECIFIED), heightMeasureSpec);
+                final int content = getMeasuredWidth();
+                int cap = formattingScrollMaxWidth;
+                if (mode == MeasureSpec.AT_MOST) {
+                    cap = Math.min(cap, MeasureSpec.getSize(widthMeasureSpec));
                 }
-                setMeasuredDimension(Math.min(measuredWidth, iMin), getMeasuredHeight());
+                setMeasuredDimension(Math.min(content, cap), getMeasuredHeight());
             }
         };
-        this.formattingScrollView = horizontalScrollView2;
-        horizontalScrollView2.setHorizontalScrollBarEnabled(false);
-        this.formattingScrollView.setClipToOutline(true);
-        this.formattingScrollView.setOutlineProvider(new ViewOutlineProvider() { // from class: org.telegram.ui.iv.RichEditorToolbar.5
-            @Override // android.view.ViewOutlineProvider
-            public void getOutline(View view3, Outline outline) {
-                outline.setRoundRect(0, 0, view3.getWidth(), view3.getHeight(), AndroidUtilities.dp(22.0f));
+        formattingScrollView.setHorizontalScrollBarEnabled(false);
+        formattingScrollView.setClipToOutline(true);
+        formattingScrollView.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(22));
             }
         });
-        frameLayout7.addView(this.formattingScrollView, LayoutHelper.createFrame(-1, -1.0f));
-        LinearLayout linearLayout5 = new LinearLayout(context);
-        this.formattingPanelLayout = linearLayout5;
-        linearLayout5.setOrientation(0);
-        linearLayout5.setPadding(AndroidUtilities.dp(2.0f), 0, AndroidUtilities.dp(2.0f), 0);
-        this.formattingScrollView.addView(linearLayout5, new FrameLayout.LayoutParams(-2, -1));
-        addFormattingButton(R.drawable.formatting_bold, 1);
-        addFormattingButton(R.drawable.formatting_italic, 2);
-        addFormattingButton(R.drawable.formatting_underline, 16);
-        addFormattingButton(R.drawable.formatting_strikethrough, 8);
-        addFormattingButton(R.drawable.formatting_spoiler, 256);
-        addFormattingButton(R.drawable.iv_code, 4);
-        addFormattingButton(R.drawable.iv_sub, 16384, true);
-        addFormattingButton(R.drawable.iv_super, 32768, true);
-        RichEditor.Button button = new RichEditor.Button(context, R.drawable.iv_quote, resourcesProvider);
-        this.quoteButton = button;
-        button.setBackgroundColorKey(i2);
-        button.setContentDescription(LocaleController.getString(R.string.Quote));
-        button.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda9
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onQuote();
-            }
-        });
-        linearLayout5.addView(button, LayoutHelper.createLinear(38, 38, 16, linearLayout5.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
-        LinearLayout linearLayout6 = new LinearLayout(context);
-        this.formattingLayout2 = linearLayout6;
-        linearLayout6.setOrientation(0);
-        this.formattingLayout2.setPadding(AndroidUtilities.dp(2.0f), 0, AndroidUtilities.dp(2.0f), 0);
-        this.formattingLayout2.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        linearLayout4.addView(this.formattingLayout2, LayoutHelper.createFrame(-2, 44.0f, 80, 8.0f, 0.0f, 0.0f, 0.0f));
-        RichEditor.Button button2 = new RichEditor.Button(context, R.drawable.media_link_24, resourcesProvider);
-        this.linkButton = button2;
-        button2.setBackgroundColorKey(i2);
-        button2.setContentDescription(LocaleController.getString(R.string.CreateLink));
-        button2.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda10
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onLink();
-            }
-        });
-        this.formattingLayout2.addView(button2, LayoutHelper.createLinear(38, 38, 16));
-        RichEditor.Button button3 = new RichEditor.Button(context, R.drawable.msg_calendar2, resourcesProvider);
-        this.dateButton = button3;
-        button3.setBackgroundColorKey(i2);
-        button3.setContentDescription(LocaleController.getString(R.string.AccDescrIVInsertDate));
-        button3.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda11
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onDate();
-            }
-        });
-        this.formattingLayout2.addView(button3, LayoutHelper.createLinear(38, 38, 16));
-        LinearLayout linearLayout7 = new LinearLayout(context);
-        this.formattingLayout3 = linearLayout7;
-        linearLayout7.setOrientation(0);
-        this.formattingLayout3.setPadding(AndroidUtilities.dp(2.0f), 0, AndroidUtilities.dp(2.0f), 0);
-        this.formattingLayout3.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        linearLayout4.addView(this.formattingLayout3, LayoutHelper.createFrame(-2, 44.0f, 80, 8.0f, 0.0f, 0.0f, 0.0f));
-        RichEditor.Button button4 = new RichEditor.Button(context, R.drawable.iv_math, resourcesProvider);
-        this.mathButton = button4;
-        button4.setBackgroundColorKey(i2);
-        button4.setPremium();
-        arrayList.add(button4);
-        button4.setContentDescription(LocaleController.getString(R.string.AccDescrIVFormula));
-        button4.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda12
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onMath();
-            }
-        });
-        this.formattingLayout3.addView(button4, LayoutHelper.createLinear(38, 38, 16));
-        LinearLayout linearLayout8 = new LinearLayout(context);
-        this.formattingLayout1 = linearLayout8;
-        linearLayout8.setOrientation(0);
-        this.formattingLayout1.setPadding(AndroidUtilities.dp(2.0f), 0, AndroidUtilities.dp(2.0f), 0);
-        this.formattingLayout1.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(i2))));
-        this.formattingLayout1.setVisibility(ExteraConfig.getTelegramAiEditor() ? 0 : 8);
-        linearLayout4.addView(this.formattingLayout1, 0, LayoutHelper.createFrame(-2, 44.0f, 80, 0.0f, 0.0f, 8.0f, 0.0f));
-        RichEditor.Button button5 = new RichEditor.Button(context, R.drawable.input_ai, resourcesProvider);
-        this.aiStyleButton = button5;
-        button5.setImageDrawable(new AiButtonDrawable(context));
-        button5.setBackgroundColorKey(i2);
-        button5.setContentDescription(LocaleController.getString(R.string.AIEditor));
-        button5.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda1
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onAiStyle();
-            }
-        });
-        this.formattingLayout1.addView(button5, LayoutHelper.createLinear(38, 38, 16));
-        ChatActivityEnterView.SendButton sendButton = new ChatActivityEnterView.SendButton(context, R.drawable.send_extera_24, resourcesProvider, true) { // from class: org.telegram.ui.iv.RichEditorToolbar.6
-            @Override // org.telegram.ui.Components.ChatActivityEnterView.SendButton
+        formattingStylesContainer.addView(formattingScrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        formattingPanelLayout = new LinearLayout(context);
+        formattingPanelLayout.setOrientation(LinearLayout.HORIZONTAL);
+        formattingPanelLayout.setPadding(dp(2), 0, dp(2), 0);
+        formattingScrollView.addView(formattingPanelLayout, new FrameLayout.LayoutParams(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT));
+
+        addFormattingButton(R.drawable.formatting_bold, RichTextStyle.BOLD);
+        addFormattingButton(R.drawable.formatting_italic, RichTextStyle.ITALIC);
+        addFormattingButton(R.drawable.formatting_underline, RichTextStyle.UNDERLINE);
+        addFormattingButton(R.drawable.formatting_strikethrough, RichTextStyle.STRIKE);
+        addFormattingButton(R.drawable.formatting_spoiler, RichTextStyle.SPOILER);
+        addFormattingButton(R.drawable.iv_code, RichTextStyle.MONO);
+        addFormattingButton(R.drawable.iv_sub, RichTextStyle.SUBSCRIPT, true);
+        addFormattingButton(R.drawable.iv_super, RichTextStyle.SUPERSCRIPT, true);
+
+        quoteButton = new RichEditor.Button(context, R.drawable.iv_quote, resourcesProvider);
+        quoteButton.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
+        quoteButton.setContentDescription(getString(R.string.Quote));
+        quoteButton.setOnClickListener(v -> delegate.onQuote());
+        formattingPanelLayout.addView(quoteButton, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL, formattingPanelLayout.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
+
+        formattingLayout2 = new LinearLayout(context);
+        formattingLayout2.setOrientation(LinearLayout.HORIZONTAL);
+        formattingLayout2.setPadding(dp(2), 0, dp(2), 0);
+        formattingLayout2.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        formattingPanel.addView(formattingLayout2, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.BOTTOM, 8, 0, 0, 0));
+
+        linkButton = new RichEditor.Button(context, R.drawable.media_link_24, resourcesProvider);
+        linkButton.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
+        linkButton.setContentDescription(getString(R.string.CreateLink));
+        linkButton.setOnClickListener(v -> delegate.onLink());
+        formattingLayout2.addView(linkButton, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL));
+        dateButton = new RichEditor.Button(context, R.drawable.msg_calendar2, resourcesProvider);
+        dateButton.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
+        dateButton.setContentDescription(getString(R.string.AccDescrIVInsertDate));
+        dateButton.setOnClickListener(v -> delegate.onDate());
+        formattingLayout2.addView(dateButton, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL));
+
+        formattingLayout3 = new LinearLayout(context);
+        formattingLayout3.setOrientation(LinearLayout.HORIZONTAL);
+        formattingLayout3.setPadding(dp(2), 0, dp(2), 0);
+        formattingLayout3.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        formattingPanel.addView(formattingLayout3, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.BOTTOM, 8, 0, 0, 0));
+
+        mathButton = new RichEditor.Button(context, R.drawable.iv_math, resourcesProvider);
+        mathButton.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
+        mathButton.setPremium();
+        premiumButtons.add(mathButton);
+        mathButton.setContentDescription(getString(R.string.AccDescrIVFormula));
+        mathButton.setOnClickListener(v -> delegate.onMath());
+        formattingLayout3.addView(mathButton, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL));
+
+        formattingLayout1 = new LinearLayout(context);
+        formattingLayout1.setOrientation(LinearLayout.HORIZONTAL);
+        formattingLayout1.setPadding(dp(2), 0, dp(2), 0);
+        formattingLayout1.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_glass_targetMainTabs))));
+        formattingPanel.addView(formattingLayout1, 0, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.BOTTOM, 0, 0, 8, 0));
+
+        aiStyleButton = new RichEditor.Button(context, R.drawable.input_ai, resourcesProvider);
+        aiStyleButton.setImageDrawable(new AiButtonDrawable(context));
+        aiStyleButton.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
+        aiStyleButton.setContentDescription(getString(R.string.AIEditor));
+        aiStyleButton.setOnClickListener(v -> delegate.onAiStyle());
+        formattingLayout1.addView(aiStyleButton, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL));
+
+        sendButton = new ChatActivityEnterView.SendButton(context, R.drawable.send_plane_24, resourcesProvider, true) {
+            @Override
             public boolean isOpen() {
-                return RichEditorToolbar.this.sendLoading || super.isOpen();
+                return sendLoading || super.isOpen();
             }
         };
-        this.sendButton = sendButton;
-        sendButton.centeredBackground = true;
-        sendButton.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(AndroidUtilities.dp(22.0f), color(Theme.key_chat_messagePanelSend))));
+        sendButton.setBackground(RichEditor.withShadow(Theme.createRoundRectDrawable(dp(22), color(Theme.key_chat_messagePanelSend))));
         ScaleStateListAnimator.apply(sendButton);
-        linearLayout2.addView(sendButton, LayoutHelper.createLinear(44, 44, 0.0f, 5, 8, 0, 0, 0));
+        bottomPanel.addView(sendButton, LayoutHelper.createLinear(44, 44, 0, Gravity.RIGHT, 8, 0, 0, 0));
         sendButton.setContentDescription("Send");
-        sendButton.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda2
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view3) {
-                delegate.onSend();
-            }
-        });
-        sendButton.setOnLongClickListener(new View.OnLongClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda3
-            @Override // android.view.View.OnLongClickListener
-            public final boolean onLongClick(View view3) {
-                return delegate.onSendLongClick(view3);
-            }
-        });
-        updatePanel(0, false);
+        sendButton.setOnClickListener(v -> delegate.onSend());
+        sendButton.setOnLongClickListener(v -> delegate.onSendLongClick(v));
+
+        updatePanel(PANEL_TOOLBAR, false);
     }
 
-    private RichEditor.Button addBlockButton(int i, final int i2, boolean z) {
-        RichEditor.Button button = new RichEditor.Button(this.blocksLayout.getContext(), i, this.resourcesProvider);
+    private RichEditor.Button addBlockButton(int icon, int flag, boolean premium) {
+        final RichEditor.Button button = new RichEditor.Button(blocksLayout.getContext(), icon, resourcesProvider);
         button.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
-        if (z) {
+        if (premium) {
             button.setPremium();
-            this.premiumButtons.add(button);
+            premiumButtons.add(button);
         }
-        button.setTag(Integer.valueOf(i2));
-        button.setContentDescription(RichEditor.blockButtonContentDescription(i2));
-        button.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda14
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$addBlockButton$13(i2, view);
-            }
-        });
-        this.blockButtons.add(button);
-        LinearLayout linearLayout = this.blocksLayout;
-        linearLayout.addView(button, LayoutHelper.createLinear(38, 38, 16, linearLayout.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
+        button.setTag(flag);
+        button.setContentDescription(RichEditor.blockButtonContentDescription(flag));
+        button.setOnClickListener(v -> delegate.onBlockButton(flag, v));
+        blockButtons.add(button);
+        blocksLayout.addView(button, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL, blocksLayout.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
         return button;
     }
 
-    public /* synthetic */ void lambda$addBlockButton$13(int i, View view) {
-        this.delegate.onBlockButton(i, view);
+    private void addFormattingButton(int icon, int styleFlag) {
+        addFormattingButton(icon, styleFlag, false);
     }
 
-    private void addFormattingButton(int i, int i2) {
-        addFormattingButton(i, i2, false);
-    }
-
-    private void addFormattingButton(int i, final int i2, boolean z) {
-        RichEditor.Button button = new RichEditor.Button(getContext(), i, this.resourcesProvider);
+    private void addFormattingButton(int icon, int styleFlag, boolean premium) {
+        final RichEditor.Button button = new RichEditor.Button(getContext(), icon, resourcesProvider);
         button.setBackgroundColorKey(Theme.key_glass_targetMainTabs);
-        if (z) {
+        if (premium) {
             button.setPremium();
-            this.premiumButtons.add(button);
+            premiumButtons.add(button);
         }
-        button.setTag(Integer.valueOf(i2));
-        button.setContentDescription(RichEditor.formattingButtonContentDescription(i2));
-        button.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda13
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$addFormattingButton$14(i2, view);
-            }
-        });
-        this.formattingButtons.add(button);
-        LinearLayout linearLayout = this.formattingPanelLayout;
-        linearLayout.addView(button, LayoutHelper.createLinear(38, 38, 16, linearLayout.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
+        button.setTag(styleFlag);
+        button.setContentDescription(RichEditor.formattingButtonContentDescription(styleFlag));
+        button.setOnClickListener(v -> delegate.onFormatting(styleFlag));
+        formattingButtons.add(button);
+        formattingPanelLayout.addView(button, LayoutHelper.createLinear(38, 38, Gravity.CENTER_VERTICAL, formattingPanelLayout.getChildCount() == 0 ? 0 : 2, 0, 0, 0));
     }
 
-    public /* synthetic */ void lambda$addFormattingButton$14(int i, View view) {
-        this.delegate.onFormatting(i);
-    }
-
-    public void setPremiumLocked(boolean z) {
-        ArrayList<RichEditor.Button> arrayList = this.premiumButtons;
-        int size = arrayList.size();
-        int i = 0;
-        while (i < size) {
-            RichEditor.Button button = arrayList.get(i);
-            i++;
-            button.setPremiumLocked(z);
+    public void setPremiumLocked(boolean locked) {
+        for (final RichEditor.Button button : premiumButtons) {
+            button.setPremiumLocked(locked);
         }
     }
 
-    public void setBackVisible(boolean z) {
-        this.backButton.setVisibility(z ? 0 : 8);
+    // ---- public state setters ----
+
+    public void setBackVisible(boolean visible) {
+        backButton.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
-    public void setTopPanelVisible(boolean z) {
-        this.topPanel.setVisibility(z ? 0 : 8);
-        this.topGradient.setVisibility(z ? 0 : 8);
+    public void setTopPanelVisible(boolean visible) {
+        topPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+        topGradient.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
-    public void setTopGradientVisible(boolean z) {
-        this.topGradient.setVisibility(z ? 0 : 8);
+    public void setTopGradientVisible(boolean visible) {
+        topGradient.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
-    public void setTopButtonsOffset(int i) {
-        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) this.historyButtons.getLayoutParams();
-        if (layoutParams.topMargin != i) {
-            layoutParams.topMargin = i;
-            this.historyButtons.setLayoutParams(layoutParams);
+    /** Vertical offset (px) of the undo/redo (and back) buttons from the toolbar top. */
+    public void setTopButtonsOffset(int px) {
+        final FrameLayout.LayoutParams hp = (FrameLayout.LayoutParams) historyButtons.getLayoutParams();
+        if (hp.topMargin != px) {
+            hp.topMargin = px;
+            historyButtons.setLayoutParams(hp);
         }
-        FrameLayout.LayoutParams layoutParams2 = (FrameLayout.LayoutParams) this.backButton.getLayoutParams();
-        if (layoutParams2.topMargin != i) {
-            layoutParams2.topMargin = i;
-            this.backButton.setLayoutParams(layoutParams2);
+        final FrameLayout.LayoutParams bp = (FrameLayout.LayoutParams) backButton.getLayoutParams();
+        if (bp.topMargin != px) {
+            bp.topMargin = px;
+            backButton.setLayoutParams(bp);
         }
     }
 
-    public void setHistoryEnabled(boolean z, boolean z2) {
-        this.undoButton.setEnabled(z);
-        this.undoButton.setAlpha(z ? 1.0f : 0.35f);
-        this.redoButton.setEnabled(z2);
-        this.redoButton.setAlpha(z2 ? 1.0f : 0.35f);
+    public void setHistoryEnabled(boolean canUndo, boolean canRedo) {
+        undoButton.setEnabled(canUndo);
+        undoButton.setAlpha(canUndo ? 1f : 0.35f);
+        redoButton.setEnabled(canRedo);
+        redoButton.setAlpha(canRedo ? 1f : 0.35f);
     }
 
-    public void setSelectedBlockType(int i) {
-        setSelectedBlockType(i, 0);
+    public void setSelectedBlockType(int type) {
+        setSelectedBlockType(type, 0);
     }
 
-    public void setSelectedBlockType(int i, int i2) {
-        ArrayList<RichEditor.Button> arrayList = this.blockButtons;
-        int size = arrayList.size();
-        int i3 = 0;
-        while (i3 < size) {
-            RichEditor.Button button = arrayList.get(i3);
-            i3++;
-            RichEditor.Button button2 = button;
-            boolean z = i == ((Integer) button2.getTag()).intValue();
-            button2.setSelected(z);
-            if (z && i2 != 0) {
-                button2.updateIcon(i2);
-            } else {
-                button2.resetIcon();
+    public void setSelectedBlockType(int type, int selectedIcon) {
+        for (final RichEditor.Button button : blockButtons) {
+            final int flag = (Integer) button.getTag();
+            final boolean sel = type == flag;
+            button.setSelected(sel);
+            if (sel && selectedIcon != 0) button.updateIcon(selectedIcon);
+            else button.resetIcon();
+        }
+    }
+
+    public void setFormattingState(int appliedMask, boolean linkApplied, boolean dateApplied, boolean inlineEnabled, boolean boldItalicEnabled) {
+        for (final RichEditor.Button button : formattingButtons) {
+            final int styleFlag = (Integer) button.getTag();
+            button.setSelected((appliedMask & styleFlag) != 0);
+            // Headings render in a fixed typeface, so bold/italic don't apply — disable them there.
+            if (styleFlag == RichTextStyle.BOLD || styleFlag == RichTextStyle.ITALIC) {
+                button.setEnabled(boldItalicEnabled);
             }
         }
+        linkButton.setSelected(linkApplied);
+        dateButton.setSelected(dateApplied);
+        linkButton.setEnabled(inlineEnabled);
+        dateButton.setEnabled(inlineEnabled);
+        mathButton.setEnabled(inlineEnabled);
     }
 
-    public void setFormattingState(int i, boolean z, boolean z2, boolean z3, boolean z4) {
-        ArrayList<RichEditor.Button> arrayList = this.formattingButtons;
-        int size = arrayList.size();
-        int i2 = 0;
-        while (i2 < size) {
-            RichEditor.Button button = arrayList.get(i2);
-            i2++;
-            RichEditor.Button button2 = button;
-            int iIntValue = ((Integer) button2.getTag()).intValue();
-            button2.setSelected((i & iIntValue) != 0);
-            if (iIntValue == 1 || iIntValue == 2) {
-                button2.setEnabled(z4);
-            }
+    public void setQuoteState(boolean quoted) {
+        quoteButton.setSelected(quoted);
+    }
+
+    private static final int PANEL_TOOLBAR = 0;
+    private static final int PANEL_FORMATTING = 1;
+    private static final int PANEL_TRASH = 2;
+
+    private int panelType = -1;
+    private int reorderSavedPanelType = PANEL_TOOLBAR;
+    private boolean trashHovered;
+
+    public void showFormattingPanel(boolean formatting, boolean animated) {
+        if (panelType == PANEL_TRASH) {
+            reorderSavedPanelType = formatting ? PANEL_FORMATTING : PANEL_TOOLBAR;
+            return;
         }
-        this.linkButton.setSelected(z);
-        this.dateButton.setSelected(z2);
-        this.linkButton.setEnabled(z3);
-        this.dateButton.setEnabled(z3);
-        this.mathButton.setEnabled(z3);
+        updatePanel(formatting ? PANEL_FORMATTING : PANEL_TOOLBAR, animated);
     }
 
-    public void setQuoteState(boolean z) {
-        this.quoteButton.setSelected(z);
-    }
-
-    public void showFormattingPanel(boolean z, boolean z2) {
-        if (this.panelType == 2) {
-            this.reorderSavedPanelType = z ? 1 : 0;
+    private void updatePanel(int type, boolean animated) {
+        if (panelType == type) return;
+        panelType = type;
+        if (animated) {
+            bottomPanel.setVisibility(View.VISIBLE);
+            bottomPanel.animate()
+                .alpha(type == PANEL_TOOLBAR ? 1.0f : 0.0f)
+                .scaleX(type == PANEL_TOOLBAR ? 1.0f : 0.8f)
+                .scaleY(type == PANEL_TOOLBAR ? 1.0f : 0.8f)
+                .translationY(type == PANEL_TOOLBAR ? 0 : dp(30))
+                .setDuration(420)
+                .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
+                .withEndAction(() -> {
+                    if (panelType != PANEL_TOOLBAR) bottomPanel.setVisibility(View.GONE);
+                })
+                .start();
+            formattingPanel.setVisibility(View.VISIBLE);
+            formattingPanel.animate()
+                .alpha(type == PANEL_FORMATTING ? 1.0f : 0.0f)
+                .scaleX(type == PANEL_FORMATTING ? 1.0f : 0.8f)
+                .scaleY(type == PANEL_FORMATTING ? 1.0f : 0.8f)
+                .translationY(type == PANEL_FORMATTING ? 0 : dp(30))
+                .setDuration(420)
+                .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
+                .withEndAction(() -> {
+                    if (panelType != PANEL_FORMATTING) formattingPanel.setVisibility(View.GONE);
+                })
+                .start();
+            trashPanel.setVisibility(View.VISIBLE);
+            trashPanel.animate()
+                .alpha(type == PANEL_TRASH ? 1.0f : 0.0f)
+                .scaleX(type == PANEL_TRASH ? 1.0f : 0.8f)
+                .scaleY(type == PANEL_TRASH ? 1.0f : 0.8f)
+                .setDuration(420)
+                .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
+                .withEndAction(() -> {
+                    if (panelType != PANEL_TRASH) trashPanel.setVisibility(View.GONE);
+                })
+                .start();
         } else {
-            updatePanel(z ? 1 : 0, z2);
+            bottomPanel.setVisibility(type == PANEL_TOOLBAR ? View.VISIBLE : View.GONE);
+            bottomPanel.setAlpha(type == PANEL_TOOLBAR ? 1.0f : 0.0f);
+            bottomPanel.setScaleX(type == PANEL_TOOLBAR ? 1.0f : 0.8f);
+            bottomPanel.setScaleY(type == PANEL_TOOLBAR ? 1.0f : 0.8f);
+            bottomPanel.setTranslationY(type == PANEL_TOOLBAR ? 0 : dp(30));
+            formattingPanel.setVisibility(type == PANEL_FORMATTING ? View.VISIBLE : View.GONE);
+            formattingPanel.setAlpha(type == PANEL_FORMATTING ? 1.0f : 0.0f);
+            formattingPanel.setScaleX(type == PANEL_FORMATTING ? 1.0f : 0.8f);
+            formattingPanel.setScaleY(type == PANEL_FORMATTING ? 1.0f : 0.8f);
+            formattingPanel.setTranslationY(type == PANEL_FORMATTING ? 0 : dp(30));
+            trashPanel.setVisibility(type == PANEL_TRASH ? View.VISIBLE : View.GONE);
+            trashPanel.setAlpha(type == PANEL_TRASH ? 1.0f : 0.0f);
+            trashPanel.setScaleX(type == PANEL_TRASH ? 1.0f : 0.8f);
+            trashPanel.setScaleY(type == PANEL_TRASH ? 1.0f : 0.8f);
         }
     }
 
-    private void updatePanel(int i, boolean z) {
-        if (this.panelType == i) {
-            return;
-        }
-        this.panelType = i;
-        LinearLayout linearLayout = this.bottomPanel;
-        if (z) {
-            linearLayout.setVisibility(0);
-            ViewPropertyAnimator duration = this.bottomPanel.animate().alpha(i == 0 ? 1.0f : 0.0f).scaleX(i == 0 ? 1.0f : 0.8f).scaleY(i == 0 ? 1.0f : 0.8f).translationY(i == 0 ? 0.0f : AndroidUtilities.dp(30.0f)).setDuration(420L);
-            CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
-            duration.setInterpolator(cubicBezierInterpolator).withEndAction(new Runnable() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda15
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$updatePanel$15();
-                }
-            }).start();
-            this.formattingPanel.setVisibility(0);
-            this.formattingPanel.animate().alpha(i == 1 ? 1.0f : 0.0f).scaleX(i == 1 ? 1.0f : 0.8f).scaleY(i == 1 ? 1.0f : 0.8f).translationY(i == 1 ? 0.0f : AndroidUtilities.dp(30.0f)).setDuration(420L).setInterpolator(cubicBezierInterpolator).withEndAction(new Runnable() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda16
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$updatePanel$16();
-                }
-            }).start();
-            this.trashPanel.setVisibility(0);
-            this.trashPanel.animate().alpha(i == 2 ? 1.0f : 0.0f).scaleX(i == 2 ? 1.0f : 0.8f).scaleY(i == 2 ? 1.0f : 0.8f).setDuration(420L).setInterpolator(cubicBezierInterpolator).withEndAction(new Runnable() { // from class: org.telegram.ui.iv.RichEditorToolbar$$ExternalSyntheticLambda17
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$updatePanel$17();
-                }
-            }).start();
-            return;
-        }
-        linearLayout.setVisibility(i == 0 ? 0 : 8);
-        this.bottomPanel.setAlpha(i == 0 ? 1.0f : 0.0f);
-        this.bottomPanel.setScaleX(i == 0 ? 1.0f : 0.8f);
-        this.bottomPanel.setScaleY(i == 0 ? 1.0f : 0.8f);
-        this.bottomPanel.setTranslationY(i == 0 ? 0.0f : AndroidUtilities.dp(30.0f));
-        this.formattingPanel.setVisibility(i == 1 ? 0 : 8);
-        this.formattingPanel.setAlpha(i == 1 ? 1.0f : 0.0f);
-        this.formattingPanel.setScaleX(i == 1 ? 1.0f : 0.8f);
-        this.formattingPanel.setScaleY(i == 1 ? 1.0f : 0.8f);
-        this.formattingPanel.setTranslationY(i == 1 ? 0.0f : AndroidUtilities.dp(30.0f));
-        this.trashPanel.setVisibility(i != 2 ? 8 : 0);
-        this.trashPanel.setAlpha(i == 2 ? 1.0f : 0.0f);
-        this.trashPanel.setScaleX(i == 2 ? 1.0f : 0.8f);
-        this.trashPanel.setScaleY(i == 2 ? 1.0f : 0.8f);
-    }
-
-    public /* synthetic */ void lambda$updatePanel$15() {
-        if (this.panelType != 0) {
-            this.bottomPanel.setVisibility(8);
-        }
-    }
-
-    public /* synthetic */ void lambda$updatePanel$16() {
-        if (this.panelType != 1) {
-            this.formattingPanel.setVisibility(8);
-        }
-    }
-
-    public /* synthetic */ void lambda$updatePanel$17() {
-        if (this.panelType != 2) {
-            this.trashPanel.setVisibility(8);
-        }
-    }
+    // ---- reorder / trash ----
 
     public void onReorderStart() {
-        int i = this.panelType;
-        if (i == 2) {
-            i = 0;
-        }
-        this.reorderSavedPanelType = i;
+        reorderSavedPanelType = panelType == PANEL_TRASH ? PANEL_TOOLBAR : panelType;
         setTrashHovered(false, false);
-        updatePanel(2, true);
+        updatePanel(PANEL_TRASH, true);
     }
 
-    public boolean onReorderMove(float f, float f2) {
-        boolean zIsOverTrash = isOverTrash(f2);
-        setTrashHovered(zIsOverTrash, true);
-        return zIsOverTrash;
+    public boolean onReorderMove(float screenX, float screenY) {
+        final boolean over = isOverTrash(screenY);
+        setTrashHovered(over, true);
+        return over;
     }
 
     public void onReorderEnd() {
         setTrashHovered(false, true);
-        int i = this.reorderSavedPanelType;
-        updatePanel(i != 2 ? i : 0, true);
+        updatePanel(reorderSavedPanelType == PANEL_TRASH ? PANEL_TOOLBAR : reorderSavedPanelType, true);
     }
 
-    private boolean isOverTrash(float f) {
-        FrameLayout frameLayout = this.trashPanel;
-        if (frameLayout == null) {
-            return false;
-        }
-        int[] iArr = new int[2];
-        frameLayout.getLocationOnScreen(iArr);
-        return f >= ((float) iArr[1]);
+    private boolean isOverTrash(float screenY) {
+        if (trashPanel == null) return false;
+        final int[] loc = new int[2];
+        trashPanel.getLocationOnScreen(loc);
+        return screenY >= loc[1];
     }
 
-    private void setTrashHovered(boolean z, boolean z2) {
-        if (this.trashHovered == z && z2) {
-            return;
-        }
-        this.trashHovered = z;
-        float f = z ? 1.15f : 1.0f;
-        RLottieImageView rLottieImageView = this.trashPanelIcon;
-        if (z2) {
-            rLottieImageView.animate().scaleX(f).scaleY(f).setDuration(180L).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).start();
+    private void setTrashHovered(boolean hovered, boolean animated) {
+        if (trashHovered == hovered && animated) return;
+        trashHovered = hovered;
+        final float scale = hovered ? 1.15f : 1.0f;
+        if (animated) {
+            trashPanelIcon.animate()
+                .scaleX(scale).scaleY(scale)
+                .setDuration(180)
+                .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
+                .start();
         } else {
-            rLottieImageView.animate().cancel();
-            this.trashPanelIcon.setScaleX(f);
-            this.trashPanelIcon.setScaleY(f);
+            trashPanelIcon.animate().cancel();
+            trashPanelIcon.setScaleX(scale);
+            trashPanelIcon.setScaleY(scale);
         }
-        this.trashPanelIcon.setColorFilter(new PorterDuffColorFilter(color(z ? Theme.key_text_RedBold : Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
-        RLottieDrawable animatedDrawable = this.trashPanelIcon.getAnimatedDrawable();
-        if (animatedDrawable != null) {
-            if (z) {
-                if (animatedDrawable.getCurrentFrame() > 34) {
-                    animatedDrawable.setCurrentFrame(0, false);
-                }
-                animatedDrawable.setCustomEndFrame(33);
+        trashPanelIcon.setColorFilter(new PorterDuffColorFilter(color(hovered ? Theme.key_text_RedBold : Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        // Play the lid-open part of the lottie on hover (frames 0..33), reverse back to 0 otherwise,
+        // matching StoryRecorder.TrashView.
+        final RLottieDrawable d = trashPanelIcon.getAnimatedDrawable();
+        if (d != null) {
+            if (hovered) {
+                if (d.getCurrentFrame() > 34) d.setCurrentFrame(0, false);
+                d.setCustomEndFrame(33);
             } else {
-                animatedDrawable.setCustomEndFrame(0);
+                d.setCustomEndFrame(0);
             }
-            animatedDrawable.start();
+            d.start();
         }
     }
 
-    public void setSendEditing(boolean z) {
-        this.sendButton.setResourceId(z ? R.drawable.input_done : R.drawable.send_extera_24);
+    public void setSendEditing(boolean editing) {
+        sendButton.setResourceId(editing ? R.drawable.input_done : R.drawable.send_plane_24);
     }
 
-    public void setSendLoading(boolean z) {
-        if (this.sendLoading == z) {
-            return;
-        }
-        this.sendLoading = z;
-        this.sendButton.invalidate();
+    public void setSendLoading(boolean loading) {
+        if (sendLoading == loading) return;
+        sendLoading = loading;
+        sendButton.invalidate();
     }
 
-    public void setSendEnabled(boolean z) {
-        if (this.sendButton.isEnabled() == z) {
-            return;
-        }
-        this.sendButton.setEnabled(z);
-        this.sendButton.animate().alpha(z ? 1.0f : 0.5f).setDuration(150L).start();
+    public void setSendEnabled(boolean enabled) {
+        if (sendButton.isEnabled() == enabled) return;
+        sendButton.setEnabled(enabled);
+        sendButton.animate().alpha(enabled ? 1.0f : 0.5f).setDuration(150).start();
     }
 
-    public void setEmojiOpened(boolean z) {
-        this.emojiButton.setState(z ? ChatActivityEnterViewAnimatedIconView.State.KEYBOARD : ChatActivityEnterViewAnimatedIconView.State.SMILE, true);
-        this.emojiButton.setContentDescription(z ? "Keyboard" : "Emoji");
+    public void setEmojiOpened(boolean opened) {
+        emojiButton.setState(opened ? ChatActivityEnterViewAnimatedIconView.State.KEYBOARD : ChatActivityEnterViewAnimatedIconView.State.SMILE, true);
+        emojiButton.setContentDescription(opened ? "Keyboard" : "Emoji");
     }
 
     public ChatActivityEnterView.SendButton getSendButton() {
-        return this.sendButton;
+        return sendButton;
     }
 
     public ImageView getAddButton() {
-        return this.addButton;
+        return addButton;
     }
 
     public View getEmojiButton() {
-        return this.emojiButton;
+        return emojiButton;
     }
 
     public LinearLayout getBottomPanel() {
-        return this.bottomPanel;
+        return bottomPanel;
     }
 
     public FrameLayout getBottomContainer() {
-        return this.bottomContainer;
+        return bottomContainer;
     }
 
-    public void setBottomGradientTranslationY(float f) {
-        this.bottomGradient.setTranslationY(f);
+    public void setBottomGradientTranslationY(float ty) {
+        bottomGradient.setTranslationY(ty);
     }
 
     public FrameLayout getBottomInnerContainer() {
-        return this.bottomInnerContainer;
+        return bottomInnerContainer;
     }
 
-    private int color(int i) {
-        return Theme.getColor(i, this.resourcesProvider);
+    private int color(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 }

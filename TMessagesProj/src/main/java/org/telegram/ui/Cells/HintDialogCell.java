@@ -1,17 +1,29 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import com.exteragram.messenger.ExteraConfig;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.Emoji;
@@ -20,9 +32,7 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
-import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
 import org.telegram.ui.ActionBar.Theme;
@@ -30,310 +40,278 @@ import org.telegram.ui.Components.AnimatedFloat;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.CheckBox2;
-import org.telegram.ui.Components.CheckBoxBase;
 import org.telegram.ui.Components.CounterView;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.Premium.PremiumGradient;
 
 public class HintDialogCell extends FrameLayout {
-    private AvatarDrawable avatarDrawable;
-    private int backgroundColorKey;
-    CheckBox2 checkBox;
-    CounterView counterView;
-    private int currentAccount;
-    private TLRPC.User currentUser;
-    private long dialogId;
-    private final boolean drawCheckbox;
+
     private BackupImageView imageView;
-    private int lastUnreadCount;
-    private Drawable lockDrawable;
     private TextView nameTextView;
-    private boolean premiumBlocked;
-    private final AnimatedFloat premiumBlockedT;
-    private PremiumGradient.PremiumGradientTools premiumGradient;
-    private RectF rect;
+    private AvatarDrawable avatarDrawable = new AvatarDrawable();
+    private RectF rect = new RectF();
     private Theme.ResourcesProvider resourcesProvider;
+
+    private int lastUnreadCount;
+    private TLRPC.User currentUser;
+
+    private long dialogId;
+    private int currentAccount = UserConfig.selectedAccount;
     float showOnlineProgress;
-    private boolean showPremiumBlocked;
-    private final AnimatedFloat starsBlockedT;
-    private long starsPriceBlocked;
     boolean wasDraw;
 
+    CounterView counterView;
+    CheckBox2 checkBox;
+    private final boolean drawCheckbox;
+
+    private boolean showPremiumBlocked;
+    private final AnimatedFloat premiumBlockedT = new AnimatedFloat(this, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+    private boolean premiumBlocked;
+    private final AnimatedFloat starsBlockedT = new AnimatedFloat(this, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+    private long starsPriceBlocked;
+
     public boolean isBlocked() {
-        return this.premiumBlocked;
+        return premiumBlocked;
     }
 
-    public HintDialogCell(Context context, boolean z, Theme.ResourcesProvider resourcesProvider) {
+    public HintDialogCell(Context context, boolean drawCheckbox, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.avatarDrawable = new AvatarDrawable();
-        this.rect = new RectF();
-        this.currentAccount = UserConfig.selectedAccount;
-        CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
-        this.premiumBlockedT = new AnimatedFloat(this, 0L, 350L, cubicBezierInterpolator);
-        this.starsBlockedT = new AnimatedFloat(this, 0L, 350L, cubicBezierInterpolator);
-        this.backgroundColorKey = Theme.key_windowBackgroundWhite;
-        this.drawCheckbox = z;
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.imageView = backupImageView;
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(54.0f, false, false, z));
-        addView(this.imageView, LayoutHelper.createFrame(54, 54.0f, 49, 0.0f, 7.0f, 0.0f, 0.0f));
-        TextView textView = new TextView(context) { // from class: org.telegram.ui.Cells.HintDialogCell.1
-            @Override // android.widget.TextView
-            public void setText(CharSequence charSequence, TextView.BufferType bufferType) {
-                super.setText(Emoji.replaceEmoji(charSequence, getPaint().getFontMetricsInt(), false), bufferType);
+        this.drawCheckbox = drawCheckbox;
+
+        imageView = new BackupImageView(context);
+        imageView.setRoundRadius(AndroidUtilities.dp(27));
+        addView(imageView, LayoutHelper.createFrame(54, 54, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 7, 0, 0));
+
+        nameTextView = new TextView(context) {
+            @Override
+            public void setText(CharSequence text, BufferType type) {
+                text = Emoji.replaceEmoji(text, getPaint().getFontMetricsInt(), false);
+                super.setText(text, type);
             }
         };
-        this.nameTextView = textView;
-        NotificationCenter.listenEmojiLoading(textView);
-        this.nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-        this.nameTextView.setTextSize(1, 12.0f);
-        this.nameTextView.setMaxLines(1);
-        this.nameTextView.setGravity(49);
-        this.nameTextView.setLines(1);
-        this.nameTextView.setEllipsize(TextUtils.TruncateAt.END);
-        addView(this.nameTextView, LayoutHelper.createFrame(-1, -2.0f, 51, 6.0f, 64.0f, 6.0f, 0.0f));
-        CounterView counterView = new CounterView(context, resourcesProvider);
-        this.counterView = counterView;
-        addView(counterView, LayoutHelper.createFrame(-1, 28.0f, 48, 0.0f, 4.0f, 0.0f, 0.0f));
-        this.counterView.setColors(Theme.key_chats_unreadCounterText, Theme.key_chats_unreadCounter);
-        this.counterView.setGravity(5);
-        if (z) {
-            CheckBox2 checkBox2 = new CheckBox2(context, 21, resourcesProvider);
-            this.checkBox = checkBox2;
-            checkBox2.setColor(Theme.key_dialogRoundCheckBox, Theme.key_dialogBackground, Theme.key_dialogRoundCheckBoxCheck);
-            this.checkBox.setDrawUnchecked(false);
-            this.checkBox.setDrawBackgroundAsArc(4);
-            this.checkBox.setProgressDelegate(new CheckBoxBase.ProgressDelegate() { // from class: org.telegram.ui.Cells.HintDialogCell$$ExternalSyntheticLambda1
-                @Override // org.telegram.ui.Components.CheckBoxBase.ProgressDelegate
-                public final void setProgress(float f) {
-                    this.f$0.lambda$new$0(f);
-                }
+        NotificationCenter.listenEmojiLoading(nameTextView);
+        nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+        nameTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+        nameTextView.setMaxLines(1);
+        nameTextView.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        nameTextView.setLines(1);
+        nameTextView.setEllipsize(TextUtils.TruncateAt.END);
+        addView(nameTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 6, 64, 6, 0));
+
+        counterView = new CounterView(context, resourcesProvider);
+        addView(counterView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 28, Gravity.TOP,0 ,4,0,0));
+        counterView.setColors(Theme.key_chats_unreadCounterText, Theme.key_chats_unreadCounter);
+        counterView.setGravity(Gravity.RIGHT);
+
+        if (drawCheckbox) {
+            checkBox = new CheckBox2(context, 21, resourcesProvider);
+            checkBox.setColor(Theme.key_dialogRoundCheckBox, Theme.key_dialogBackground, Theme.key_dialogRoundCheckBoxCheck);
+            checkBox.setDrawUnchecked(false);
+            checkBox.setDrawBackgroundAsArc(4);
+            checkBox.setProgressDelegate(progress -> {
+                float scale = 1.0f - (1.0f - 0.857f) * checkBox.getProgress();
+                imageView.setScaleX(scale);
+                imageView.setScaleY(scale);
+                invalidate();
             });
-            addView(this.checkBox, LayoutHelper.createFrame(24, 24.0f, 49, 19.0f, 42.0f, 0.0f, 0.0f));
-            this.checkBox.setChecked(false, false);
+            addView(checkBox, LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 19, 42, 0, 0));
+            checkBox.setChecked(false, false);
             setWillNotDraw(false);
         }
     }
 
-    public void lambda$showPremiumBlocked$1(Object[] objArr) {
-        updatePremiumBlocked(true);
+    public void showPremiumBlocked() {
+        if (showPremiumBlocked) return;
+        showPremiumBlocked = true;
+        NotificationCenter.getInstance(currentAccount).listen(this, NotificationCenter.userIsPremiumBlockedUpadted, args -> {
+            updatePremiumBlocked(true);
+        });
     }
 
-    private void updatePremiumBlocked(boolean z) {
-        TL_account.RequirementToContact requirementToContactIsUserContactBlocked = (!this.showPremiumBlocked || this.currentUser == null) ? null : MessagesController.getInstance(this.currentAccount).isUserContactBlocked(this.currentUser.id);
-        if (this.premiumBlocked == DialogObject.isPremiumBlocked(requirementToContactIsUserContactBlocked) && this.starsPriceBlocked == DialogObject.getMessagesStarsPrice(requirementToContactIsUserContactBlocked)) {
-            return;
-        }
-        this.premiumBlocked = DialogObject.isPremiumBlocked(requirementToContactIsUserContactBlocked);
-        this.starsPriceBlocked = DialogObject.getMessagesStarsPrice(requirementToContactIsUserContactBlocked);
-        if (!z) {
-            this.premiumBlockedT.set(this.premiumBlocked, true);
-            this.starsBlockedT.set(this.starsPriceBlocked > 0, true);
-        }
-        invalidate();
-    }
-
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(86.0f), TLObject.FLAG_30));
-        this.counterView.counterDrawable.horizontalPadding = AndroidUtilities.dp(13.0f);
-    }
-
-    public void update(int i) {
-        int i2;
-        if ((MessagesController.UPDATE_MASK_STATUS & i) != 0 && this.currentUser != null) {
-            this.currentUser = MessagesController.getInstance(this.currentAccount).getUser(Long.valueOf(this.currentUser.id));
-            this.imageView.invalidate();
+    private void updatePremiumBlocked(boolean animated) {
+        final TL_account.RequirementToContact r = showPremiumBlocked && currentUser != null ? MessagesController.getInstance(currentAccount).isUserContactBlocked(currentUser.id) : null;
+        if (premiumBlocked != DialogObject.isPremiumBlocked(r) || starsPriceBlocked != DialogObject.getMessagesStarsPrice(r)) {
+            premiumBlocked = DialogObject.isPremiumBlocked(r);
+            starsPriceBlocked = DialogObject.getMessagesStarsPrice(r);
+            if (!animated) {
+                premiumBlockedT.set(premiumBlocked, true);
+                starsBlockedT.set(starsPriceBlocked > 0, true);
+            }
             invalidate();
         }
-        if (i != 0 && (MessagesController.UPDATE_MASK_READ_DIALOG_MESSAGE & i) == 0 && (i & MessagesController.UPDATE_MASK_NEW_MESSAGE) == 0) {
-            return;
-        }
-        TLRPC.Dialog dialog = MessagesController.getInstance(this.currentAccount).dialogs_dict.get(this.dialogId);
-        if (dialog != null && (i2 = dialog.unread_count) != 0) {
-            if (this.lastUnreadCount != i2) {
-                this.lastUnreadCount = i2;
-                this.counterView.setCount(i2, this.wasDraw);
-                return;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(86), MeasureSpec.EXACTLY));
+        counterView.counterDrawable.horizontalPadding = AndroidUtilities.dp(13);
+    }
+
+    public void update(int mask) {
+        if ((mask & MessagesController.UPDATE_MASK_STATUS) != 0) {
+            if (currentUser != null) {
+                currentUser = MessagesController.getInstance(currentAccount).getUser(currentUser.id);
+                imageView.invalidate();
+                invalidate();
             }
+        }
+        if (mask != 0 && (mask & MessagesController.UPDATE_MASK_READ_DIALOG_MESSAGE) == 0 && (mask & MessagesController.UPDATE_MASK_NEW_MESSAGE) == 0) {
             return;
         }
-        this.lastUnreadCount = 0;
-        this.counterView.setCount(0, this.wasDraw);
+        TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(dialogId);
+        if (dialog != null && dialog.unread_count != 0) {
+            if (lastUnreadCount != dialog.unread_count) {
+                lastUnreadCount = dialog.unread_count;
+                counterView.setCount(lastUnreadCount, wasDraw);
+            }
+        } else {
+            lastUnreadCount = 0;
+            counterView.setCount(0, wasDraw);
+        }
     }
 
     public void update() {
-        boolean zIsUserDialog = DialogObject.isUserDialog(this.dialogId);
-        int i = this.currentAccount;
-        if (zIsUserDialog) {
-            TLRPC.User user = MessagesController.getInstance(i).getUser(Long.valueOf(this.dialogId));
-            this.currentUser = user;
-            this.avatarDrawable.setInfo(this.currentAccount, user);
+        if (DialogObject.isUserDialog(dialogId)) {
+            currentUser = MessagesController.getInstance(currentAccount).getUser(dialogId);
+            avatarDrawable.setInfo(currentAccount, currentUser);
         } else {
-            this.avatarDrawable.setInfo(this.currentAccount, MessagesController.getInstance(i).getChat(Long.valueOf(-this.dialogId)));
-            this.currentUser = null;
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+            avatarDrawable.setInfo(currentAccount, chat);
+            currentUser = null;
         }
         updatePremiumBlocked(true);
     }
 
-    public void setColors(int i, int i2) {
-        this.nameTextView.setTextColor(Theme.getColor(i, this.resourcesProvider));
-        this.backgroundColorKey = i2;
-        this.checkBox.setColor(Theme.key_dialogRoundCheckBox, i2, Theme.key_dialogRoundCheckBoxCheck);
+    public void setColors(int textColorKey, int backgroundColorKey) {
+        nameTextView.setTextColor(Theme.getColor(textColorKey, resourcesProvider));
+        this.backgroundColorKey = backgroundColorKey;
+        checkBox.setColor(Theme.key_dialogRoundCheckBox, backgroundColorKey, Theme.key_dialogRoundCheckBoxCheck);
     }
 
-    public void setDialog(long j, boolean z, CharSequence charSequence) {
-        if (this.dialogId != j) {
-            this.wasDraw = false;
+    public void setDialog(long uid, boolean counter, CharSequence name) {
+        if (dialogId != uid) {
+            wasDraw = false;
             invalidate();
         }
-        this.dialogId = j;
-        boolean zIsUserDialog = DialogObject.isUserDialog(j);
-        int i = this.currentAccount;
-        if (zIsUserDialog) {
-            TLRPC.User user = MessagesController.getInstance(i).getUser(Long.valueOf(j));
-            this.currentUser = user;
-            if (charSequence != null) {
-                this.nameTextView.setText(charSequence);
+        dialogId = uid;
+        if (DialogObject.isUserDialog(uid)) {
+            currentUser = MessagesController.getInstance(currentAccount).getUser(uid);
+            if (name != null) {
+                nameTextView.setText(name);
+            } else if (currentUser != null) {
+                nameTextView.setText(UserObject.getFirstName(currentUser));
             } else {
-                TextView textView = this.nameTextView;
-                if (user != null) {
-                    textView.setText(UserObject.getFirstName(user));
-                } else {
-                    textView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-                }
+                nameTextView.setText("");
             }
-            this.avatarDrawable.setInfo(this.currentAccount, this.currentUser);
-            this.imageView.setForUserOrChat(this.currentUser, this.avatarDrawable);
+            avatarDrawable.setInfo(currentAccount, currentUser);
+            imageView.setForUserOrChat(currentUser, avatarDrawable);
         } else {
-            TLRPC.Chat chat = MessagesController.getInstance(i).getChat(Long.valueOf(-j));
-            if (charSequence != null) {
-                this.nameTextView.setText(charSequence);
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-uid);
+            if (name != null) {
+                nameTextView.setText(name);
+            } else if (chat != null) {
+                nameTextView.setText(chat.title);
             } else {
-                TextView textView2 = this.nameTextView;
-                if (chat != null) {
-                    textView2.setText(chat.title);
-                } else {
-                    textView2.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-                }
+                nameTextView.setText("");
             }
-            this.avatarDrawable.setInfo(this.currentAccount, chat);
-            this.currentUser = null;
-            this.imageView.setForUserOrChat(chat, this.avatarDrawable);
+            avatarDrawable.setInfo(currentAccount, chat);
+            currentUser = null;
+            imageView.setForUserOrChat(chat, avatarDrawable);
         }
         updatePremiumBlocked(false);
-        if (z) {
+        if (counter) {
             update(0);
         }
     }
 
-    /* JADX WARN: Code duplicated, block: B:32:0x006c A[DONT_INVERT] */
-    /* JADX WARN: Code duplicated, block: B:33:0x006e  */
-    /* JADX WARN: Code duplicated, block: B:35:0x0074  */
-    /* JADX WARN: Code duplicated, block: B:37:0x007b  */
-    @Override // android.view.ViewGroup
-    public boolean drawChild(Canvas canvas, View view, long j) {
-        float f;
-        float f2;
-        TLRPC.User user;
-        TLRPC.UserStatus userStatus;
-        boolean zDrawChild = super.drawChild(canvas, view, j);
-        if (view == this.imageView) {
-            boolean z = (this.premiumBlocked || (user = this.currentUser) == null || user.bot || (((userStatus = user.status) == null || userStatus.expires <= ConnectionsManager.getInstance(this.currentAccount).getCurrentTime()) && !MessagesController.getInstance(this.currentAccount).onlinePrivacy.containsKey(Long.valueOf(this.currentUser.id)))) ? false : true;
-            if (!this.wasDraw) {
-                this.showOnlineProgress = z ? 1.0f : 0.0f;
+    private int backgroundColorKey = Theme.key_windowBackgroundWhite;
+
+    private PremiumGradient.PremiumGradientTools premiumGradient;
+    private Drawable lockDrawable;
+
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        boolean result = super.drawChild(canvas, child, drawingTime);
+        if (child == imageView) {
+            boolean showOnline = !premiumBlocked && currentUser != null && !currentUser.bot && (currentUser.status != null && currentUser.status.expires > ConnectionsManager.getInstance(currentAccount).getCurrentTime() || MessagesController.getInstance(currentAccount).onlinePrivacy.containsKey(currentUser.id));
+            if (!wasDraw) {
+                showOnlineProgress = showOnline ? 1f : 0f;
             }
-            if (z) {
-                float f3 = this.showOnlineProgress;
-                if (f3 != 1.0f) {
-                    float f4 = f3 + 0.10666667f;
-                    this.showOnlineProgress = f4;
-                    if (f4 > 1.0f) {
-                        this.showOnlineProgress = 1.0f;
-                    }
-                    invalidate();
-                } else if (!z) {
-                    f = this.showOnlineProgress;
-                    if (f != 0.0f) {
-                        f2 = f - 0.10666667f;
-                        this.showOnlineProgress = f2;
-                        if (f2 < 0.0f) {
-                            this.showOnlineProgress = 0.0f;
-                        }
-                        invalidate();
-                    }
+            if (showOnline && showOnlineProgress != 1f) {
+                showOnlineProgress += 16f / 150;
+                if (showOnlineProgress > 1) {
+                    showOnlineProgress = 1f;
                 }
-            } else if (!z) {
-                f = this.showOnlineProgress;
-                if (f != 0.0f) {
-                    f2 = f - 0.10666667f;
-                    this.showOnlineProgress = f2;
-                    if (f2 < 0.0f) {
-                        this.showOnlineProgress = 0.0f;
-                    }
-                    invalidate();
+                invalidate();
+            } else if (!showOnline && showOnlineProgress != 0) {
+                showOnlineProgress -= 16f / 150;
+                if (showOnlineProgress < 0) {
+                    showOnlineProgress = 0;
                 }
+                invalidate();
             }
-            float f5 = this.premiumBlockedT.set(this.premiumBlocked);
-            if (f5 > 0.0f) {
-                float y = view.getY() + (view.getHeight() / 2.0f) + AndroidUtilities.dp(18.0f);
-                float x = view.getX() + (view.getWidth() / 2.0f) + AndroidUtilities.dp(18.0f);
+
+            final float lockT = premiumBlockedT.set(premiumBlocked);
+            if (lockT > 0) {
+                float top = child.getY() + child.getHeight() / 2f + dp(18);
+                float left = child.getX() + child.getWidth() / 2f + dp(18);
+
                 canvas.save();
-                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(this.backgroundColorKey, this.resourcesProvider));
-                canvas.drawCircle(x, y, AndroidUtilities.dp(11.33f) * f5, Theme.dialogs_onlineCirclePaint);
-                if (this.premiumGradient == null) {
-                    this.premiumGradient = new PremiumGradient.PremiumGradientTools(Theme.key_premiumGradient1, Theme.key_premiumGradient2, -1, -1, -1, this.resourcesProvider);
+                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(backgroundColorKey, resourcesProvider));
+                canvas.drawCircle(left, top, dp(10 + 1.33f) * lockT, Theme.dialogs_onlineCirclePaint);
+                if (premiumGradient == null) {
+                    premiumGradient = new PremiumGradient.PremiumGradientTools(Theme.key_premiumGradient1, Theme.key_premiumGradient2, -1, -1, -1, resourcesProvider);
                 }
-                this.premiumGradient.gradientMatrix((int) (x - AndroidUtilities.dp(10.0f)), (int) (y - AndroidUtilities.dp(10.0f)), (int) (AndroidUtilities.dp(10.0f) + x), (int) (AndroidUtilities.dp(10.0f) + y), 0.0f, 0.0f);
-                canvas.drawCircle(x, y, AndroidUtilities.dp(10.0f) * f5, this.premiumGradient.paint);
-                if (this.lockDrawable == null) {
-                    Drawable drawableMutate = getContext().getResources().getDrawable(R.drawable.msg_mini_lock2).mutate();
-                    this.lockDrawable = drawableMutate;
-                    drawableMutate.setColorFilter(new PorterDuffColorFilter(-1, PorterDuff.Mode.SRC_IN));
+                premiumGradient.gradientMatrix((int) (left - dp(10)), (int) (top - dp(10)), (int) (left + dp(10)), (int) (top + dp(10)), 0, 0);
+                canvas.drawCircle(left, top, dp(10) * lockT, premiumGradient.paint);
+                if (lockDrawable == null) {
+                    lockDrawable = getContext().getResources().getDrawable(R.drawable.msg_mini_lock2).mutate();
+                    lockDrawable.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
                 }
-                Drawable drawable = this.lockDrawable;
-                drawable.setBounds((int) (x - (((drawable.getIntrinsicWidth() / 2.0f) * 0.875f) * f5)), (int) (y - (((this.lockDrawable.getIntrinsicHeight() / 2.0f) * 0.875f) * f5)), (int) (x + ((this.lockDrawable.getIntrinsicWidth() / 2.0f) * 0.875f * f5)), (int) (y + ((this.lockDrawable.getIntrinsicHeight() / 2.0f) * 0.875f * f5)));
-                this.lockDrawable.setAlpha((int) (f5 * 255.0f));
-                this.lockDrawable.draw(canvas);
+                lockDrawable.setBounds(
+                        (int) (left - lockDrawable.getIntrinsicWidth() / 2f * .875f * lockT),
+                        (int) (top  - lockDrawable.getIntrinsicHeight() / 2f * .875f * lockT),
+                        (int) (left + lockDrawable.getIntrinsicWidth() / 2f * .875f * lockT),
+                        (int) (top  + lockDrawable.getIntrinsicHeight() / 2f * .875f * lockT)
+                );
+                lockDrawable.setAlpha((int) (0xFF * lockT));
+                lockDrawable.draw(canvas);
                 canvas.restore();
-            } else if (this.showOnlineProgress != 0.0f) {
-                int iDp = AndroidUtilities.dp(53.0f);
-                int iDp2 = AndroidUtilities.dp(59.0f);
+            } else if (showOnlineProgress != 0) {
+                int top = AndroidUtilities.dp(53);
+                int left = AndroidUtilities.dp(59);
                 canvas.save();
-                float f6 = this.showOnlineProgress;
-                float f7 = iDp2;
-                float f8 = iDp;
-                canvas.scale(f6, f6, f7, f8);
-                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(this.backgroundColorKey));
-                canvas.drawCircle(f7, f8, AndroidUtilities.dp(7.0f), Theme.dialogs_onlineCirclePaint);
+                canvas.scale(showOnlineProgress, showOnlineProgress, left, top);
+                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(backgroundColorKey));
+                canvas.drawCircle(left, top, AndroidUtilities.dp(7), Theme.dialogs_onlineCirclePaint);
                 Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(Theme.key_chats_onlineCircle));
-                canvas.drawCircle(f7, f8, AndroidUtilities.dp(5.0f), Theme.dialogs_onlineCirclePaint);
+                canvas.drawCircle(left, top, AndroidUtilities.dp(5), Theme.dialogs_onlineCirclePaint);
                 canvas.restore();
             }
-            this.wasDraw = true;
+            wasDraw = true;
         }
-        return zDrawChild;
+        return result;
     }
 
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        if (this.drawCheckbox) {
-            int left = this.imageView.getLeft() + (this.imageView.getMeasuredWidth() / 2);
-            int top = this.imageView.getTop() + (this.imageView.getMeasuredHeight() / 2);
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (drawCheckbox) {
+            int cx = imageView.getLeft() + imageView.getMeasuredWidth() / 2;
+            int cy = imageView.getTop() + imageView.getMeasuredHeight() / 2;
             Theme.checkboxSquare_checkPaint.setColor(Theme.getColor(Theme.key_dialogRoundCheckBox));
-            Theme.checkboxSquare_checkPaint.setAlpha((int) (this.checkBox.getProgress() * 255.0f));
-            canvas.drawRoundRect(left - AndroidUtilities.dp(28.0f), top - AndroidUtilities.dp(28.0f), left + AndroidUtilities.dp(28.0f), top + AndroidUtilities.dp(28.0f), ExteraConfig.getAvatarCorners(56.0f), ExteraConfig.getAvatarCorners(56.0f), Theme.checkboxSquare_checkPaint);
+            Theme.checkboxSquare_checkPaint.setAlpha((int) (checkBox.getProgress() * 255));
+            canvas.drawCircle(cx, cy, AndroidUtilities.dp(28), Theme.checkboxSquare_checkPaint);
         }
     }
 
-    public void setChecked(boolean z, boolean z2) {
-        if (this.drawCheckbox) {
-            this.checkBox.setChecked(z, z2);
+    public void setChecked(boolean checked, boolean animated) {
+        if (drawCheckbox) {
+            checkBox.setChecked(checked, animated);
         }
     }
 
     public long getDialogId() {
-        return this.dialogId;
+        return dialogId;
     }
 }

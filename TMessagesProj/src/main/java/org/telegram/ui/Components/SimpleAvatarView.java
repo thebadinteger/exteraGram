@@ -7,127 +7,134 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
+import android.util.AttributeSet;
 import android.view.View;
-import com.exteragram.messenger.ExteraConfig;
+
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.tgnet.TLObject;
 import org.telegram.ui.ActionBar.Theme;
 
 public class SimpleAvatarView extends View {
-    private ValueAnimator animator;
-    private AvatarDrawable avatarDrawable;
-    private ImageReceiver avatarImage;
-    private boolean isAvatarHidden;
-    private Paint selectPaint;
+    public final static int SELECT_ANIMATION_DURATION = 200;
+
+    private ImageReceiver avatarImage = new ImageReceiver(this);
+    private AvatarDrawable avatarDrawable = new AvatarDrawable();
+    private Paint selectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float selectProgress;
+    private boolean isAvatarHidden;
+    private ValueAnimator animator;
 
     public SimpleAvatarView(Context context) {
         super(context);
-        this.avatarImage = new ImageReceiver(this);
-        this.avatarDrawable = new AvatarDrawable();
-        this.selectPaint = new Paint(1);
-        this.avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(56.0f));
-        this.selectPaint.setStrokeWidth(AndroidUtilities.dp(2.0f));
-        this.selectPaint.setStyle(Paint.Style.STROKE);
     }
 
-    @Override // android.view.View
-    public void onAttachedToWindow() {
+    public SimpleAvatarView(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public SimpleAvatarView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+    }
+
+    {
+        avatarImage.setRoundRadius(AndroidUtilities.dp(28));
+        selectPaint.setStrokeWidth(AndroidUtilities.dp(2));
+        selectPaint.setStyle(Paint.Style.STROKE);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        this.avatarImage.onAttachedToWindow();
+
+        avatarImage.onAttachedToWindow();
     }
 
-    @Override // android.view.View
-    public void onDetachedFromWindow() {
+    @Override
+    protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        this.avatarImage.onDetachedFromWindow();
+
+        avatarImage.onDetachedFromWindow();
     }
 
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        Canvas canvas2;
+    @Override
+    protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         canvas.save();
-        float f = (this.selectProgress * 0.1f) + 0.9f;
-        canvas.scale(f, f);
-        this.selectPaint.setColor(Theme.getColor(Theme.key_dialogTextBlue));
-        Paint paint = this.selectPaint;
-        paint.setAlpha((int) (Color.alpha(paint.getColor()) * this.selectProgress));
-        float strokeWidth = this.selectPaint.getStrokeWidth();
-        RectF rectF = AndroidUtilities.rectTmp;
-        rectF.set(strokeWidth, strokeWidth, getWidth() - strokeWidth, getHeight() - strokeWidth);
-        if (ExteraConfig.getAvatarCorners() != 28.0f) {
-            float f2 = strokeWidth * 2.0f;
-            canvas.drawRoundRect(rectF, ExteraConfig.getAvatarCorners(getWidth() - f2, true), ExteraConfig.getAvatarCorners(getWidth() - f2, true), this.selectPaint);
-            canvas2 = canvas;
-        } else {
-            canvas2 = canvas;
-            canvas2.drawArc(rectF, -90.0f, this.selectProgress * 360.0f, false, this.selectPaint);
+        float scale = 0.9f + selectProgress * 0.1f;
+        canvas.scale(scale, scale);
+        selectPaint.setColor(Theme.getColor(Theme.key_dialogTextBlue));
+        selectPaint.setAlpha((int) (Color.alpha(selectPaint.getColor()) * selectProgress));
+        float stroke = selectPaint.getStrokeWidth();
+        AndroidUtilities.rectTmp.set(stroke, stroke, getWidth() - stroke, getHeight() - stroke);
+        canvas.drawArc(AndroidUtilities.rectTmp, -90, selectProgress * 360, false, selectPaint);
+        canvas.restore();
+
+        if (!isAvatarHidden) {
+            float pad = selectPaint.getStrokeWidth() * 2.5f * selectProgress;
+            avatarImage.setImageCoords(pad, pad, getWidth() - pad * 2, getHeight() - pad * 2);
+            avatarImage.draw(canvas);
         }
-        canvas2.restore();
-        if (this.isAvatarHidden) {
-            return;
-        }
-        float strokeWidth2 = this.selectPaint.getStrokeWidth() * 2.5f * this.selectProgress;
-        float f3 = 2.0f * strokeWidth2;
-        this.avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(getWidth() - f3, true));
-        this.avatarImage.setImageCoords(strokeWidth2, strokeWidth2, getWidth() - f3, getHeight() - f3);
-        this.avatarImage.draw(canvas2);
     }
 
-    public void setAvatar(TLObject tLObject) {
-        this.avatarDrawable.setInfo(tLObject);
-        this.avatarImage.setForUserOrChat(tLObject, this.avatarDrawable);
+    /**
+     * Sets new User or Chat to be bound as the avatar
+     * @param obj User or chat
+     */
+    public void setAvatar(TLObject obj) {
+        avatarDrawable.setInfo(obj);
+        avatarImage.setForUserOrChat(obj, avatarDrawable);
     }
 
-    public void setAvatarCorners(int i) {
-        this.avatarImage.setRoundRadius(i);
-    }
-
-    @Override // android.view.View
+    /**
+     * @return If avatar is currently selected
+     */
     public boolean isSelected() {
-        return this.selectProgress == 1.0f;
+        return selectProgress == 1;
     }
 
-    public void setSelected(boolean z, boolean z2) {
-        ValueAnimator valueAnimator = this.animator;
-        if (valueAnimator != null) {
-            valueAnimator.cancel();
+    /**
+     * Sets avatar selected value
+     * @param s If avatar is selected
+     * @param animate If we should animate status change
+     */
+    public void setSelected(boolean s, boolean animate) {
+        if (animator != null) {
+            animator.cancel();
         }
-        if (z2) {
-            ValueAnimator duration = ValueAnimator.ofFloat(this.selectProgress, z ? 1.0f : 0.0f).setDuration(250L);
-            duration.setInterpolator(CubicBezierInterpolator.DEFAULT);
-            duration.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.SimpleAvatarView$$ExternalSyntheticLambda0
-                @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$setSelected$0(valueAnimator2);
-                }
+        if (animate) {
+            float to = s ? 1 : 0;
+            ValueAnimator anim = ValueAnimator.ofFloat(selectProgress, to).setDuration(SELECT_ANIMATION_DURATION);
+            anim.setInterpolator(CubicBezierInterpolator.DEFAULT);
+            anim.addUpdateListener(animation -> {
+                selectProgress = (float) animation.getAnimatedValue();
+                invalidate();
             });
-            duration.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.SimpleAvatarView.1
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    if (SimpleAvatarView.this.animator == animator) {
-                        SimpleAvatarView.this.animator = null;
+            anim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (animator == animation) {
+                        animator = null;
                     }
                 }
             });
-            duration.start();
-            this.animator = duration;
-            return;
+            anim.start();
+            animator = anim;
+        } else {
+            selectProgress = s ? 1 : 0;
+            invalidate();
         }
-        this.selectProgress = z ? 1.0f : 0.0f;
-        invalidate();
     }
 
-    public /* synthetic */ void lambda$setSelected$0(ValueAnimator valueAnimator) {
-        this.selectProgress = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-        invalidate();
-    }
-
-    public void setHideAvatar(boolean z) {
-        this.isAvatarHidden = z;
+    /**
+     * Sets avatar hidden
+     * @param h If we should hide avatar from view
+     */
+    public void setHideAvatar(boolean h) {
+        isAvatarHidden = h;
         invalidate();
     }
 }

@@ -1,124 +1,138 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Components;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 
-public abstract class JoinCallByUrlAlert extends BottomSheet {
+public class JoinCallByUrlAlert extends BottomSheet {
+
     private boolean joinAfterDismiss;
 
-    public abstract void onJoin();
-
     public static class BottomSheetCell extends FrameLayout {
+
         private View background;
         private TextView textView;
+        private LinearLayout linearLayout;
 
         public BottomSheetCell(Context context) {
             super(context);
-            View view = new View(context);
-            this.background = view;
-            view.setBackground(Theme.AdaptiveRipple.filledRectByKey(Theme.key_featuredStickers_addButton, 4.0f));
-            addView(this.background, LayoutHelper.createFrame(-1, -1.0f, 0, 16.0f, 16.0f, 16.0f, 16.0f));
-            TextView textView = new TextView(context);
-            this.textView = textView;
+
+            background = new View(context);
+            background.setBackground(Theme.AdaptiveRipple.filledRectByKey(Theme.key_featuredStickers_addButton, 4));
+            addView(background, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 16, 16, 16, 16));
+
+            textView = new TextView(context);
             textView.setLines(1);
-            this.textView.setSingleLine(true);
-            this.textView.setGravity(1);
-            this.textView.setEllipsize(TextUtils.TruncateAt.END);
-            this.textView.setGravity(17);
-            this.textView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
-            this.textView.setTextSize(1, 14.0f);
-            this.textView.setTypeface(AndroidUtilities.bold());
-            addView(this.textView, LayoutHelper.createFrame(-2, -2, 17));
+            textView.setSingleLine(true);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setGravity(Gravity.CENTER);
+            textView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            textView.setTypeface(AndroidUtilities.bold());
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
         }
 
-        @Override // android.widget.FrameLayout, android.view.View
-        public void onMeasure(int i, int i2) {
-            super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(80.0f), TLObject.FLAG_30));
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(80), MeasureSpec.EXACTLY));
         }
 
-        public void setText(CharSequence charSequence) {
-            this.textView.setText(charSequence);
+        public void setText(CharSequence text) {
+            textView.setText(text);
         }
     }
 
-    public JoinCallByUrlAlert(Context context, TLRPC.Chat chat) {
+    public JoinCallByUrlAlert(final Context context, TLRPC.Chat chat) {
         super(context, true);
         setApplyBottomPadding(false);
         setApplyTopPadding(false);
+
         LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setOrientation(1);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
         setCustomView(linearLayout);
-        BackupImageView backupImageView = new BackupImageView(context);
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(90.0f));
-        linearLayout.addView(backupImageView, LayoutHelper.createLinear(90, 90, 49, 0, 29, 0, 0));
-        backupImageView.setForUserOrChat(chat, new AvatarDrawable(chat));
-        TextView textView = new TextView(context);
-        textView.setTypeface(AndroidUtilities.bold());
-        textView.setTextSize(1, 18.0f);
-        textView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        textView.setGravity(1);
-        linearLayout.addView(textView, LayoutHelper.createLinear(-2, -2, 49, 17, 24, 17, 0));
-        TextView textView2 = new TextView(context);
-        textView2.setTextSize(1, 14.0f);
-        textView2.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
-        textView2.setGravity(1);
-        linearLayout.addView(textView2, LayoutHelper.createLinear(-2, -2, 49, 30, 8, 30, 0));
-        ChatObject.Call groupCall = AccountInstance.getInstance(this.currentAccount).getMessagesController().getGroupCall(chat.id, false);
-        if (groupCall != null) {
-            if (TextUtils.isEmpty(groupCall.call.title)) {
-                textView.setText(chat.title);
+
+        BackupImageView avatarImageView = new BackupImageView(context);
+        avatarImageView.setRoundRadius(AndroidUtilities.dp(45));
+        linearLayout.addView(avatarImageView, LayoutHelper.createLinear(90, 90, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 29, 0, 0));
+
+        AvatarDrawable avatarDrawable = new AvatarDrawable(chat);
+        avatarImageView.setForUserOrChat(chat, avatarDrawable);
+
+        TextView percentTextView = new TextView(context);
+        percentTextView.setTypeface(AndroidUtilities.bold());
+        percentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+        percentTextView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+        percentTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+        linearLayout.addView(percentTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 17, 24, 17, 0));
+
+        TextView infoTextView = new TextView(context);
+        infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        infoTextView.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
+        infoTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        linearLayout.addView(infoTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 30, 8, 30, 0));
+        ChatObject.Call call = AccountInstance.getInstance(currentAccount).getMessagesController().getGroupCall(chat.id, false);
+        if (call != null) {
+            if (TextUtils.isEmpty(call.call.title)) {
+                percentTextView.setText(chat.title);
             } else {
-                textView.setText(groupCall.call.title);
+                percentTextView.setText(call.call.title);
             }
-            int i = groupCall.call.participants_count;
-            if (i == 0) {
-                textView2.setText(LocaleController.getString(R.string.NoOneJoinedYet));
+            if (call.call.participants_count == 0) {
+                infoTextView.setText(LocaleController.getString(R.string.NoOneJoinedYet));
             } else {
-                textView2.setText(LocaleController.formatPluralString("Participants", i, new Object[0]));
+                infoTextView.setText(LocaleController.formatPluralString("Participants", call.call.participants_count));
             }
         } else {
-            textView.setText(chat.title);
-            textView2.setText(LocaleController.getString(R.string.NoOneJoinedYet));
+            percentTextView.setText(chat.title);
+            infoTextView.setText(LocaleController.getString(R.string.NoOneJoinedYet));
         }
-        BottomSheetCell bottomSheetCell = new BottomSheetCell(context);
-        bottomSheetCell.setBackground(null);
+
+        BottomSheetCell clearButton = new BottomSheetCell(context);
+        clearButton.setBackground(null);
         if (ChatObject.isChannelOrGiga(chat)) {
-            bottomSheetCell.setText(LocaleController.getString(R.string.VoipChannelJoinVoiceChatUrl));
+            clearButton.setText(LocaleController.getString(R.string.VoipChannelJoinVoiceChatUrl));
         } else {
-            bottomSheetCell.setText(LocaleController.getString(R.string.VoipGroupJoinVoiceChatUrl));
+            clearButton.setText(LocaleController.getString(R.string.VoipGroupJoinVoiceChatUrl));
         }
-        bottomSheetCell.background.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.JoinCallByUrlAlert$$ExternalSyntheticLambda0
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
-            }
+        clearButton.background.setOnClickListener(v -> {
+            joinAfterDismiss = true;
+            dismiss();
         });
-        linearLayout.addView(bottomSheetCell, LayoutHelper.createLinear(-1, 50, 51, 0, 30, 0, 0));
+        linearLayout.addView(clearButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 50, Gravity.LEFT | Gravity.TOP, 0, 30, 0, 0));
     }
 
-    public /* synthetic */ void lambda$new$0(View view) {
-        this.joinAfterDismiss = true;
-        lambda$new$0();
+    protected void onJoin() {
+
     }
 
-    @Override // org.telegram.ui.ActionBar.BottomSheet
+    @Override
     public void dismissInternal() {
         super.dismissInternal();
-        if (this.joinAfterDismiss) {
+        if (joinAfterDismiss) {
             onJoin();
         }
     }

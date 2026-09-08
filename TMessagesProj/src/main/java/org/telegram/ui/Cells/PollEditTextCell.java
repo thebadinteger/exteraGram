@@ -1,5 +1,16 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+
+import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
@@ -13,8 +24,9 @@ import android.graphics.Rect;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Property;
+import android.util.TypedValue;
 import android.view.ActionMode;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,16 +34,16 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import java.util.ArrayList;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
+
+import androidx.annotation.NonNull;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.tgnet.TLObject;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.ChatActivityEnterViewAnimatedIconView;
 import org.telegram.ui.Components.CheckBox2;
 import org.telegram.ui.Components.CubicBezierInterpolator;
@@ -42,582 +54,527 @@ import org.telegram.ui.Components.ScaleStateListAnimator;
 import org.telegram.ui.Components.SuggestEmojiView;
 import org.telegram.ui.Components.poll.PollAttachButton;
 
-@SuppressLint({"ViewConstructor"})
-public class PollEditTextCell extends FrameLayout implements SuggestEmojiView.AnchorViewDelegate, FactorAnimator.Target {
-    private boolean alwaysShowText2;
-    private final BoolAnimator animatorCheckboxMultiselect;
-    private final BoolAnimator animatorEmojiButtonVisible;
-    public PollAttachButton attachView;
-    private CheckBox2 checkBox;
-    private AnimatorSet checkBoxAnimation;
-    public ImageView deleteImageView;
-    private ChatActivityEnterViewAnimatedIconView emojiButton;
-    public ImageView moveImageView;
-    private boolean needDivider;
-    private final Theme.ResourcesProvider resourcesProvider;
-    private Integer right;
-    private boolean showNextButton;
-    public EditTextBoldCursor textView;
-    private SimpleTextView textView2;
+import java.util.ArrayList;
 
-    public boolean drawDivider() {
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+
+@SuppressLint("ViewConstructor")
+public class PollEditTextCell extends FrameLayout implements SuggestEmojiView.AnchorViewDelegate, FactorAnimator.Target {
+    private static final int ANIMATOR_ID_CHECKBOX_MULTISELECT = 0;
+    private static final int ANIMATOR_ID_EMOJI_BUTTON_VISIBLE = 1;
+
+    private final BoolAnimator animatorCheckboxMultiselect = new BoolAnimator(ANIMATOR_ID_CHECKBOX_MULTISELECT,
+        this, CubicBezierInterpolator.EASE_OUT_QUINT, 380L);
+
+    private final BoolAnimator animatorEmojiButtonVisible = new BoolAnimator(ANIMATOR_ID_EMOJI_BUTTON_VISIBLE,
+        this, CubicBezierInterpolator.EASE_OUT_QUINT, 380L);
+
+
+    public static final int TYPE_DEFAULT = 0;
+    public static final int TYPE_EMOJI = 1;
+    private final Theme.ResourcesProvider resourcesProvider;
+
+    public EditTextBoldCursor textView;
+    public PollAttachButton attachView;
+    public ImageView deleteImageView;
+    public ImageView moveImageView;
+    private SimpleTextView textView2;
+    private CheckBox2 checkBox;
+    private boolean showNextButton;
+    private boolean needDivider;
+    private AnimatorSet checkBoxAnimation;
+    private boolean alwaysShowText2;
+    private ChatActivityEnterViewAnimatedIconView emojiButton;
+
+    public PollEditTextCell(Context context, OnClickListener onDelete) {
+        this(context, false, TYPE_DEFAULT, onDelete);
+    }
+
+    public PollEditTextCell(Context context, boolean caption, int type, OnClickListener onDelete) {
+        this(context, caption, type, onDelete, null);
+    }
+
+    public PollEditTextCell(Context context, boolean caption, int type, OnClickListener onDelete, Theme.ResourcesProvider resourcesProvider) {
+        super(context);
+
+        this.resourcesProvider = resourcesProvider;
+        textView = new EditTextCaption(context, resourcesProvider) {
+            @Override
+            protected int emojiCacheType() {
+                return AnimatedEmojiDrawable.CACHE_TYPE_ALERT_PREVIEW;
+            }
+
+            @Override
+            public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                InputConnection conn = super.onCreateInputConnection(outAttrs);
+                if (showNextButton) {
+                    outAttrs.imeOptions &= ~EditorInfo.IME_FLAG_NO_ENTER_ACTION;
+                }
+                return conn;
+            }
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                onEditTextDraw(this, canvas);
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                if (!isEnabled()) {
+                    return false;
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    onFieldTouchUp(this);
+                }
+                return super.onTouchEvent(event);
+            }
+
+            @Override
+            protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
+                super.onFocusChanged(focused, direction, previouslyFocusedRect);
+                onEditTextFocusChanged(focused);
+            }
+
+            @Override
+            public ActionMode startActionMode(ActionMode.Callback callback, int type) {
+                ActionMode actionMode = super.startActionMode(callback, type);
+                onActionModeStart(this, actionMode);
+                return actionMode;
+            }
+
+            @Override
+            public ActionMode startActionMode(ActionMode.Callback callback) {
+                ActionMode actionMode = super.startActionMode(callback);
+                onActionModeStart(this, actionMode);
+                return actionMode;
+            }
+
+            @Override
+            public boolean onTextContextMenuItem(int id) {
+                if (id == android.R.id.paste) {
+                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clipData = clipboard.getPrimaryClip();
+                    if (clipData != null && clipData.getItemCount() == 1 && AndroidUtilities.charSequenceIndexOf(clipData.getItemAt(0).getText(), "\n") > 0) {
+                        CharSequence text = clipData.getItemAt(0).getText();
+                        ArrayList<CharSequence> parts = new ArrayList<>();
+                        StringBuilder current = new StringBuilder();
+                        for (int i = 0; i < text.length(); i++) {
+                            char c = text.charAt(i);
+                            if (c == '\n') {
+                                parts.add(current.toString());
+                                current.setLength(0);
+                            } else {
+                                current.append(c);
+                            }
+                        }
+                        if (!TextUtils.isEmpty(current)) {
+                            parts.add(current);
+                        }
+                        if (onPastedMultipleLines(parts)) {
+                            return true;
+                        }
+                    }
+                }
+                return super.onTextContextMenuItem(id);
+            }
+        };
+        ((EditTextCaption) textView).setAllowTextEntitiesIntersection(true);
+        textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+        textView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
+        textView.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setBackground(null);
+        textView.setImeOptions(textView.getImeOptions() | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        textView.setInputType(textView.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        textView.setPadding(dp(4), dp(10), dp(4), dp(11));
+
+        if (onDelete != null) {
+            int endMargin = type == TYPE_EMOJI ? 92 : 58;
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, LocaleController.isRTL ? endMargin : 54, 0, !LocaleController.isRTL ? endMargin : 54, 0));
+
+            moveImageView = new ImageView(context);
+            moveImageView.setFocusable(false);
+            moveImageView.setScaleType(ImageView.ScaleType.CENTER);
+            moveImageView.setImageResource(R.drawable.menu_poll_order_24);
+            moveImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+            addView(moveImageView, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 6, 2, 6, 0));
+
+            deleteImageView = new ImageView(context);
+            deleteImageView.setFocusable(false);
+            deleteImageView.setScaleType(ImageView.ScaleType.CENTER);
+            deleteImageView.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
+            deleteImageView.setImageResource(R.drawable.poll_remove);
+            deleteImageView.setOnClickListener(onDelete);
+            deleteImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+            deleteImageView.setContentDescription(LocaleController.getString(R.string.Delete));
+            addView(deleteImageView, LayoutHelper.createFrame(48, 50, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, LocaleController.isRTL ? 3 : 0, 0, LocaleController.isRTL ? 0 : 3, 0));
+
+            textView2 = new SimpleTextView(context);
+            textView2.setTextSize(13);
+            textView2.setGravity((LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP);
+            addView(textView2, LayoutHelper.createFrame(48, 24, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, LocaleController.isRTL ? 20 : 0, 43, LocaleController.isRTL ? 0 : 20, 0));
+
+            checkBox = new CheckBox2(context, 21, resourcesProvider);
+            checkBox.setColor(-1, Theme.key_windowBackgroundWhiteGrayIcon, Theme.key_checkboxCheck);
+            checkBox.setContentDescription(LocaleController.getString(R.string.AccDescrQuizCorrectAnswer));
+            checkBox.setDrawUnchecked(true);
+            checkBox.setChecked(true, false);
+            checkBox.setAlpha(0.0f);
+            checkBox.setDrawBackgroundAsArc(8);
+            addView(checkBox, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 6, 2, 6, 0));
+            checkBox.setOnClickListener(v -> {
+                if (checkBox.getTag() == null) {
+                    return;
+                }
+                onCheckBoxClick(PollEditTextCell.this, !checkBox.isChecked());
+            });
+        } else {
+            int endMargin = type == TYPE_EMOJI ? 70 : 19;
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL,  LocaleController.isRTL ? endMargin : 19, 0, LocaleController.isRTL ? 19 : endMargin, 0));
+        }
+
+        if (type == TYPE_EMOJI) {
+            emojiButton = new ChatActivityEnterViewAnimatedIconView(context);
+            emojiButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.SRC_IN));
+            emojiButton.setState(ChatActivityEnterViewAnimatedIconView.State.SMILE, false);
+            int padding = dp(9.5f);
+            emojiButton.setPadding(padding, padding, padding, padding);
+            emojiButton.setVisibility(View.GONE);
+            int endMargin = deleteImageView == null ? 3 : 38;
+            addView(emojiButton, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT), LocaleController.isRTL ? endMargin : 0, 0, LocaleController.isRTL ? 0 : endMargin, 0));
+            emojiButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
+            emojiButton.setOnClickListener(view -> onEmojiButtonClicked(this));
+            emojiButton.setContentDescription(LocaleController.getString(R.string.Emoji));
+        }
+    }
+
+    public View addAttachView() {
+        if (deleteImageView != null) {
+            deleteImageView.setVisibility(GONE);
+        }
+
+        attachView = new PollAttachButton(getContext(), resourcesProvider);
+        attachView.setFocusable(false);
+        attachView.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
+        ScaleStateListAnimator.apply(attachView);
+        addView(attachView, LayoutHelper.createFrame(48, 50, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, LocaleController.isRTL ? 4 : 0, 0, LocaleController.isRTL ? 0 : 4, 0));
+
+        if (emojiButton != null) {
+            int endMargin = 44;
+            emojiButton.setLayoutParams(LayoutHelper.createFrame(48, 48, (Gravity.TOP | (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT)), LocaleController.isRTL ? endMargin : 0, 1, LocaleController.isRTL ? 0 : endMargin, 0));
+        }
+
+        if (textView != null) {
+            float startMargin = (LocaleController.isRTL ?
+                ((MarginLayoutParams) textView.getLayoutParams()).rightMargin :
+                ((MarginLayoutParams) textView.getLayoutParams()).leftMargin
+            ) / AndroidUtilities.density;
+            int endMargin = (emojiButton != null ? 70 : 19) + 24;
+            textView.setLayoutParams(LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, LocaleController.isRTL ? endMargin : startMargin, 0, !LocaleController.isRTL ? endMargin : startMargin, 0));
+        }
+
+        return attachView;
+    }
+
+    public void setIconsColor(int key) {
+        if (moveImageView != null) {
+            moveImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(key, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        }
+        if (deleteImageView != null) {
+            deleteImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(key, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        }
+        if (emojiButton != null) {
+            emojiButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(key, resourcesProvider), PorterDuff.Mode.SRC_IN));
+        }
+    }
+
+    public boolean onPastedMultipleLines(ArrayList<CharSequence> parts) {
+        return false;
+    }
+
+    protected void onEditTextFocusChanged(boolean focused) {
+
+    }
+
+    public void createErrorTextView() {
+        alwaysShowText2 = true;
+        textView2 = new SimpleTextView(getContext());
+        textView2.setTextSize(13);
+        textView2.setGravity((LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP);
+        addView(textView2, LayoutHelper.createFrame(48, 24, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, LocaleController.isRTL ? 20 : 0, 17, LocaleController.isRTL ? 0 : 20, 0));
+    }
+
+    private Integer right;
+    public void setTextRight(int r) {
+        this.right = r;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        for (int i = 0; i < getChildCount(); ++i) {
+            final View child = getChildAt(i);
+            if (child == textView) continue;
+            if (child == deleteImageView) {
+                deleteImageView.measure(MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY));
+            } else if (child == emojiButton) {
+                emojiButton.measure(MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY));
+            } else if (child == moveImageView) {
+                moveImageView.measure(MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY));
+            } else if (child == textView2) {
+                textView2.measure(MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(24), MeasureSpec.EXACTLY));
+            } else if (child == checkBox) {
+                checkBox.measure(MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY));
+            } else {
+                final ViewGroup.LayoutParams lp = child.getLayoutParams();
+                if (lp != null) {
+                    child.measure(MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY));
+                } else {
+                    child.measure(widthMeasureSpec, heightMeasureSpec);
+                }
+            }
+        }
+        int right;
+        if (this.right != null) {
+            right = this.right;
+        } else if (textView2 == null) {
+            right = 42;
+        } else if (deleteImageView == null) {
+            right = 70;
+        } else if (emojiButton != null) {
+            right = 144;
+        } else {
+            right = 122;
+        }
+        textView.measure(MeasureSpec.makeMeasureSpec(width - getPaddingLeft() - getPaddingRight() - dp(right), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        int h = textView.getMeasuredHeight();
+        setMeasuredDimension(width, Math.max(dp(50), textView.getMeasuredHeight()) + (needDivider ? 1 : 0));
+        if (textView2 != null && !alwaysShowText2) {
+            textView2.setAlpha(h >= dp(52) ? 1.0f : 0.0f);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (checkBox != null) {
+            setShowCheckBox(shouldShowCheckBox(), false);
+            checkBox.setChecked(isChecked(this), false);
+        }
+    }
+
+    protected void onCheckBoxClick(PollEditTextCell editText, boolean checked) {
+        checkBox.setChecked(checked, true);
+    }
+
+    protected boolean isChecked(PollEditTextCell editText) {
+        return false;
+    }
+
+    protected void onActionModeStart(EditTextBoldCursor editText, ActionMode actionMode) {
+
+    }
+
+    public void callOnDelete() {
+        if (deleteImageView == null) {
+            return;
+        }
+        deleteImageView.callOnClick();
+    }
+
+    public void setShowNextButton(boolean value) {
+        showNextButton = value;
+    }
+
+    public EditTextBoldCursor getTextView() {
+        return textView;
+    }
+
+    public CheckBox2 getCheckBox() {
+        return checkBox;
+    }
+
+    public void addTextWatcher(TextWatcher watcher) {
+        textView.addTextChangedListener(watcher);
+    }
+
+    protected boolean drawDivider() {
         return true;
     }
 
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
+    protected void onEditTextDraw(EditTextBoldCursor editText, Canvas canvas) {
+
+    }
+
+    protected boolean shouldShowCheckBox() {
+        return false;
+    }
+
+    public void setChecked(boolean checked, boolean animated) {
+        checkBox.setChecked(checked, animated);
+    }
+
+    public String getText() {
+        return textView.getText().toString();
+    }
+
+    public int length() {
+        return textView.length();
+    }
+
+    public void setTextColor(int color) {
+        textView.setTextColor(color);
+    }
+
+    public void setShowCheckBox(boolean show, boolean animated) {
+        if (show == (checkBox.getTag() != null)) {
+            return;
+        }
+        if (checkBoxAnimation != null) {
+            checkBoxAnimation.cancel();
+            checkBoxAnimation = null;
+        }
+        checkBox.setTag(show ? 1 : null);
+        if (animated) {
+            checkBoxAnimation = new AnimatorSet();
+            checkBoxAnimation.playTogether(
+                    ObjectAnimator.ofFloat(checkBox, View.ALPHA, show ? 1.0f : 0.0f),
+                    ObjectAnimator.ofFloat(moveImageView, View.ALPHA, show ? 0.0f : 1.0f));
+            checkBoxAnimation.setDuration(180);
+            checkBoxAnimation.start();
+        } else {
+            checkBox.setAlpha(show ? 1.0f : 0.0f);
+            moveImageView.setAlpha(show ? 0.0f : 1.0f);
+        }
+    }
+
+    public void setText(CharSequence text, boolean divider) {
+        textView.setText(text);
+        needDivider = divider;
+        setWillNotDraw(!divider);
+    }
+
+    public void setTextAndHint(CharSequence text, String hint, boolean divider) {
+        if (deleteImageView != null) {
+            deleteImageView.setTag(null);
+        }
+        textView.setText(text);
+        if (!TextUtils.isEmpty(text)) {
+            textView.setSelection(textView.length());
+        }
+        textView.setHint(hint);
+        needDivider = divider;
+        setWillNotDraw(!divider);
+    }
+
+    public ChatActivityEnterViewAnimatedIconView getEmojiButton() {
+        return emojiButton;
+    }
+
+    public void setEnabled(boolean value, ArrayList<Animator> animators) {
+        setEnabled(value);
+    }
+
+    protected void onFieldTouchUp(EditTextBoldCursor editText) {
+
+    }
+
+    protected void onEmojiButtonClicked(PollEditTextCell cell) {
+
+    }
+
+    public void setText2(String text) {
+        if (textView2 == null) {
+            return;
+        }
+        textView2.setText(text);
+    }
+
+    public SimpleTextView getTextView2() {
+        return textView2;
+    }
+
+    public void setEmojiButtonVisibility(boolean visible) {
+        animatorEmojiButtonVisible.setValue(visible, true);
+    }
+
+    @Override
+    protected void onDraw(@NonNull Canvas canvas) {
+        if (needDivider && drawDivider()) {
+            canvas.drawLine(LocaleController.isRTL ? 0 : dp(moveImageView != null ? 58 : 20), getMeasuredHeight() - 1, getMeasuredWidth() - (LocaleController.isRTL ? dp(moveImageView != null ? 58 : 20) : 0), getMeasuredHeight() - 1, Theme.dividerPaint);
+        }
+    }
+
+    @Override
     public BaseFragment getParentFragment() {
         return null;
     }
 
-    public boolean isChecked(PollEditTextCell pollEditTextCell) {
-        return false;
+    @Override
+    public void setFieldText(CharSequence text) {
+        textView.setText(text);
     }
 
-    public void onActionModeStart(EditTextBoldCursor editTextBoldCursor, ActionMode actionMode) {
+    @Override
+    public void addTextChangedListener(TextWatcher watcher) {
+        textView.addTextChangedListener(watcher);
     }
 
-    public void onEditTextDraw(EditTextBoldCursor editTextBoldCursor, Canvas canvas) {
-    }
-
-    public void onEditTextFocusChanged(boolean z) {
-    }
-
-    public void lambda$new$1(PollEditTextCell pollEditTextCell) {
-    }
-
-    public void onFieldTouchUp(EditTextBoldCursor editTextBoldCursor) {
-    }
-
-    public boolean onPastedMultipleLines(ArrayList<CharSequence> arrayList) {
-        return false;
-    }
-
-    public boolean shouldShowCheckBox() {
-        return false;
-    }
-
-    public PollEditTextCell(Context context, View.OnClickListener onClickListener) {
-        this(context, false, 0, onClickListener);
-    }
-
-    public PollEditTextCell(Context context, boolean z, int i, View.OnClickListener onClickListener) {
-        this(context, z, i, onClickListener, null);
-    }
-
-    public PollEditTextCell(Context context, boolean z, int i, View.OnClickListener onClickListener, Theme.ResourcesProvider resourcesProvider) {
-        super(context);
-        CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
-        this.animatorCheckboxMultiselect = new BoolAnimator(0, this, cubicBezierInterpolator, 380L);
-        this.animatorEmojiButtonVisible = new BoolAnimator(1, this, cubicBezierInterpolator, 380L);
-        this.resourcesProvider = resourcesProvider;
-        EditTextCaption editTextCaption = new EditTextCaption(context, resourcesProvider) { // from class: org.telegram.ui.Cells.PollEditTextCell.1
-            @Override // org.telegram.ui.Components.EditTextEffects
-            public int emojiCacheType() {
-                return 3;
-            }
-
-            @Override 
-            public InputConnection onCreateInputConnection(EditorInfo editorInfo) {
-                InputConnection inputConnectionOnCreateInputConnection = super.onCreateInputConnection(editorInfo);
-                if (PollEditTextCell.this.showNextButton) {
-                    editorInfo.imeOptions &= -1073741825;
-                }
-                return inputConnectionOnCreateInputConnection;
-            }
-
-            @Override // org.telegram.ui.Components.EditTextCaption, org.telegram.ui.Components.EditTextBoldCursor, org.telegram.ui.Components.EditTextEffects, android.widget.TextView, android.view.View
-            public void onDraw(Canvas canvas) {
-                super.onDraw(canvas);
-                PollEditTextCell.this.onEditTextDraw(this, canvas);
-            }
-
-            @Override // org.telegram.ui.Components.EditTextBoldCursor, android.widget.TextView, android.view.View
-            public boolean onTouchEvent(MotionEvent motionEvent) {
-                if (!isEnabled()) {
-                    return false;
-                }
-                if (motionEvent.getAction() == 1) {
-                    PollEditTextCell.this.onFieldTouchUp(this);
-                }
-                return super.onTouchEvent(motionEvent);
-            }
-
-            @Override // org.telegram.ui.Components.EditTextBoldCursor, android.widget.TextView, android.view.View
-            public void onFocusChanged(boolean z2, int i2, Rect rect) {
-                super.onFocusChanged(z2, i2, rect);
-                PollEditTextCell.this.onEditTextFocusChanged(z2);
-            }
-
-            @Override // org.telegram.ui.Components.EditTextCaption, org.telegram.ui.Components.EditTextBoldCursor, android.view.View
-            public ActionMode startActionMode(ActionMode.Callback callback, int i2) {
-                ActionMode actionModeStartActionMode = super.startActionMode(callback, i2);
-                PollEditTextCell.this.onActionModeStart(this, actionModeStartActionMode);
-                return actionModeStartActionMode;
-            }
-
-            @Override // org.telegram.ui.Components.EditTextCaption, org.telegram.ui.Components.EditTextBoldCursor, android.view.View
-            public ActionMode startActionMode(ActionMode.Callback callback) {
-                ActionMode actionModeStartActionMode = super.startActionMode(callback);
-                PollEditTextCell.this.onActionModeStart(this, actionModeStartActionMode);
-                return actionModeStartActionMode;
-            }
-
-            @Override 
-            public boolean onTextContextMenuItem(int i2) {
-                ClipData primaryClip;
-                if (i2 == 16908322 && (primaryClip = ((ClipboardManager) getContext().getSystemService("clipboard")).getPrimaryClip()) != null && primaryClip.getItemCount() == 1 && AndroidUtilities.charSequenceIndexOf(primaryClip.getItemAt(0).getText(), "\n") > 0) {
-                    CharSequence text = primaryClip.getItemAt(0).getText();
-                    ArrayList<CharSequence> arrayList = new ArrayList<>();
-                    StringBuilder sb = new StringBuilder();
-                    for (int i3 = 0; i3 < text.length(); i3++) {
-                        char cCharAt = text.charAt(i3);
-                        if (cCharAt == '\n') {
-                            arrayList.add(sb.toString());
-                            sb.setLength(0);
-                        } else {
-                            sb.append(cCharAt);
-                        }
-                    }
-                    if (!TextUtils.isEmpty(sb)) {
-                        arrayList.add(sb);
-                    }
-                    if (PollEditTextCell.this.onPastedMultipleLines(arrayList)) {
-                        return true;
-                    }
-                }
-                return super.onTextContextMenuItem(i2);
-            }
-        };
-        this.textView = editTextCaption;
-        editTextCaption.setAllowTextEntitiesIntersection(true);
-        this.textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-        this.textView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
-        this.textView.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
-        this.textView.setTextSize(1, 16.0f);
-        this.textView.setMaxLines(Integer.MAX_VALUE);
-        this.textView.setBackground(null);
-        EditTextBoldCursor editTextBoldCursor = this.textView;
-        editTextBoldCursor.setImeOptions(editTextBoldCursor.getImeOptions() | 268435456);
-        EditTextBoldCursor editTextBoldCursor2 = this.textView;
-        editTextBoldCursor2.setInputType(editTextBoldCursor2.getInputType() | 16384);
-        this.textView.setPadding(AndroidUtilities.dp(4.0f), AndroidUtilities.dp(10.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(11.0f));
-        if (onClickListener != null) {
-            int i2 = i == 1 ? 92 : 58;
-            EditTextBoldCursor editTextBoldCursor3 = this.textView;
-            boolean z2 = LocaleController.isRTL;
-            addView(editTextBoldCursor3, LayoutHelper.createFrame(-1, -2.0f, (z2 ? 5 : 3) | 16, z2 ? i2 : 54.0f, 0.0f, z2 ? 54.0f : i2, 0.0f));
-            ImageView imageView = new ImageView(context);
-            this.moveImageView = imageView;
-            imageView.setFocusable(false);
-            ImageView imageView2 = this.moveImageView;
-            ImageView.ScaleType scaleType = ImageView.ScaleType.CENTER;
-            imageView2.setScaleType(scaleType);
-            this.moveImageView.setImageResource(R.drawable.menu_poll_order_24);
-            ImageView imageView3 = this.moveImageView;
-            int i3 = Theme.key_windowBackgroundWhiteGrayIcon;
-            int color = Theme.getColor(i3, resourcesProvider);
-            PorterDuff.Mode mode = PorterDuff.Mode.MULTIPLY;
-            imageView3.setColorFilter(new PorterDuffColorFilter(color, mode));
-            addView(this.moveImageView, LayoutHelper.createFrame(48, 48.0f, (LocaleController.isRTL ? 5 : 3) | 48, 6.0f, 2.0f, 6.0f, 0.0f));
-            ImageView imageView4 = new ImageView(context);
-            this.deleteImageView = imageView4;
-            imageView4.setFocusable(false);
-            this.deleteImageView.setScaleType(scaleType);
-            this.deleteImageView.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
-            this.deleteImageView.setImageResource(R.drawable.poll_remove);
-            this.deleteImageView.setOnClickListener(onClickListener);
-            this.deleteImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i3, resourcesProvider), mode));
-            this.deleteImageView.setContentDescription(LocaleController.getString(R.string.Delete));
-            ImageView imageView5 = this.deleteImageView;
-            boolean z3 = LocaleController.isRTL;
-            addView(imageView5, LayoutHelper.createFrame(48, 50.0f, (z3 ? 3 : 5) | 48, z3 ? 3.0f : 0.0f, 0.0f, z3 ? 0.0f : 3.0f, 0.0f));
-            SimpleTextView simpleTextView = new SimpleTextView(context);
-            this.textView2 = simpleTextView;
-            simpleTextView.setTextSize(13);
-            this.textView2.setGravity((LocaleController.isRTL ? 3 : 5) | 48);
-            SimpleTextView simpleTextView2 = this.textView2;
-            boolean z4 = LocaleController.isRTL;
-            addView(simpleTextView2, LayoutHelper.createFrame(48, 24.0f, (z4 ? 3 : 5) | 48, z4 ? 20.0f : 0.0f, 43.0f, z4 ? 0.0f : 20.0f, 0.0f));
-            CheckBox2 checkBox2 = new CheckBox2(context, 21, resourcesProvider);
-            this.checkBox = checkBox2;
-            checkBox2.setColor(-1, i3, Theme.key_checkboxCheck);
-            this.checkBox.setContentDescription(LocaleController.getString(R.string.AccDescrQuizCorrectAnswer));
-            this.checkBox.setDrawUnchecked(true);
-            this.checkBox.setChecked(true, false);
-            this.checkBox.setAlpha(0.0f);
-            this.checkBox.setDrawBackgroundAsArc(8);
-            addView(this.checkBox, LayoutHelper.createFrame(48, 48.0f, (LocaleController.isRTL ? 5 : 3) | 48, 6.0f, 2.0f, 6.0f, 0.0f));
-            this.checkBox.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Cells.PollEditTextCell$$ExternalSyntheticLambda0
-                @Override // android.view.View.OnClickListener
-                public final void onClick(View view) {
-                    this.f$0.lambda$new$0(view);
-                }
-            });
-        } else {
-            int i4 = i == 1 ? 70 : 19;
-            EditTextBoldCursor editTextBoldCursor4 = this.textView;
-            boolean z5 = LocaleController.isRTL;
-            addView(editTextBoldCursor4, LayoutHelper.createFrame(-1, -2.0f, (z5 ? 5 : 3) | 16, z5 ? i4 : 19.0f, 0.0f, z5 ? 19.0f : i4, 0.0f));
-        }
-        if (i == 1) {
-            ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView = new ChatActivityEnterViewAnimatedIconView(context);
-            this.emojiButton = chatActivityEnterViewAnimatedIconView;
-            chatActivityEnterViewAnimatedIconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.SRC_IN));
-            this.emojiButton.setState(ChatActivityEnterViewAnimatedIconView.State.SMILE, false);
-            int iDp = AndroidUtilities.dp(9.5f);
-            this.emojiButton.setPadding(iDp, iDp, iDp, iDp);
-            this.emojiButton.setVisibility(8);
-            int i5 = this.deleteImageView == null ? 3 : 38;
-            ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView2 = this.emojiButton;
-            boolean z6 = LocaleController.isRTL;
-            addView(chatActivityEnterViewAnimatedIconView2, LayoutHelper.createFrame(48, 48.0f, z6 ? 3 : 5, z6 ? i5 : 0.0f, 0.0f, z6 ? 0.0f : i5, 0.0f));
-            this.emojiButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
-            this.emojiButton.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Cells.PollEditTextCell$$ExternalSyntheticLambda1
-                @Override // android.view.View.OnClickListener
-                public final void onClick(View view) {
-                    this.f$0.lambda$new$1(view);
-                }
-            });
-            this.emojiButton.setContentDescription(LocaleController.getString(R.string.Emoji));
-        }
-    }
-
-    public /* synthetic */ void lambda$new$0(View view) {
-        if (this.checkBox.getTag() == null) {
-            return;
-        }
-        onCheckBoxClick(this, !this.checkBox.isChecked());
-    }
-
-    public View addAttachView() {
-        int i;
-        ImageView imageView = this.deleteImageView;
-        if (imageView != null) {
-            imageView.setVisibility(8);
-        }
-        PollAttachButton pollAttachButton = new PollAttachButton(getContext(), this.resourcesProvider);
-        this.attachView = pollAttachButton;
-        pollAttachButton.setFocusable(false);
-        this.attachView.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, this.resourcesProvider)));
-        ScaleStateListAnimator.apply(this.attachView);
-        PollAttachButton pollAttachButton2 = this.attachView;
-        boolean z = LocaleController.isRTL;
-        addView(pollAttachButton2, LayoutHelper.createFrame(48, 50.0f, (z ? 3 : 5) | 48, z ? 4.0f : 0.0f, 0.0f, z ? 0.0f : 4.0f, 0.0f));
-        ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView = this.emojiButton;
-        if (chatActivityEnterViewAnimatedIconView != null) {
-            boolean z2 = LocaleController.isRTL;
-            chatActivityEnterViewAnimatedIconView.setLayoutParams(LayoutHelper.createFrame(48, 48.0f, (z2 ? 3 : 5) | 48, z2 ? 44.0f : 0.0f, 1.0f, z2 ? 0.0f : 44.0f, 0.0f));
-        }
-        EditTextBoldCursor editTextBoldCursor = this.textView;
-        if (editTextBoldCursor != null) {
-            if (LocaleController.isRTL) {
-                i = ((ViewGroup.MarginLayoutParams) editTextBoldCursor.getLayoutParams()).rightMargin;
-            } else {
-                i = ((ViewGroup.MarginLayoutParams) editTextBoldCursor.getLayoutParams()).leftMargin;
-            }
-            float f = i / AndroidUtilities.density;
-            int i2 = (this.emojiButton != null ? 70 : 19) + 24;
-            EditTextBoldCursor editTextBoldCursor2 = this.textView;
-            boolean z3 = LocaleController.isRTL;
-            int i3 = (z3 ? 5 : 3) | 16;
-            float f2 = z3 ? i2 : f;
-            if (!z3) {
-                f = i2;
-            }
-            editTextBoldCursor2.setLayoutParams(LayoutHelper.createFrame(-1, -2.0f, i3, f2, 0.0f, f, 0.0f));
-        }
-        return this.attachView;
-    }
-
-    public void setIconsColor(int i) {
-        ImageView imageView = this.moveImageView;
-        if (imageView != null) {
-            imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i, this.resourcesProvider), PorterDuff.Mode.MULTIPLY));
-        }
-        ImageView imageView2 = this.deleteImageView;
-        if (imageView2 != null) {
-            imageView2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i, this.resourcesProvider), PorterDuff.Mode.MULTIPLY));
-        }
-        ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView = this.emojiButton;
-        if (chatActivityEnterViewAnimatedIconView != null) {
-            chatActivityEnterViewAnimatedIconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i, this.resourcesProvider), PorterDuff.Mode.SRC_IN));
-        }
-    }
-
-    public void createErrorTextView() {
-        this.alwaysShowText2 = true;
-        SimpleTextView simpleTextView = new SimpleTextView(getContext());
-        this.textView2 = simpleTextView;
-        simpleTextView.setTextSize(13);
-        this.textView2.setGravity((LocaleController.isRTL ? 3 : 5) | 48);
-        SimpleTextView simpleTextView2 = this.textView2;
-        boolean z = LocaleController.isRTL;
-        addView(simpleTextView2, LayoutHelper.createFrame(48, 24.0f, (z ? 3 : 5) | 48, z ? 20.0f : 0.0f, 17.0f, z ? 0.0f : 20.0f, 0.0f));
-    }
-
-    public void setTextRight(int i) {
-        this.right = Integer.valueOf(i);
-    }
-
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        int iIntValue;
-        int size = View.MeasureSpec.getSize(i);
-        for (int i3 = 0; i3 < getChildCount(); i3++) {
-            View childAt = getChildAt(i3);
-            if (childAt != this.textView) {
-                ImageView imageView = this.deleteImageView;
-                if (childAt == imageView) {
-                    imageView.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30));
-                } else {
-                    ChatActivityEnterViewAnimatedIconView chatActivityEnterViewAnimatedIconView = this.emojiButton;
-                    if (childAt == chatActivityEnterViewAnimatedIconView) {
-                        chatActivityEnterViewAnimatedIconView.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30));
-                    } else {
-                        ImageView imageView2 = this.moveImageView;
-                        if (childAt == imageView2) {
-                            imageView2.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30));
-                        } else {
-                            SimpleTextView simpleTextView = this.textView2;
-                            if (childAt == simpleTextView) {
-                                simpleTextView.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(24.0f), TLObject.FLAG_30));
-                            } else {
-                                CheckBox2 checkBox2 = this.checkBox;
-                                if (childAt == checkBox2) {
-                                    checkBox2.measure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48.0f), TLObject.FLAG_30));
-                                } else {
-                                    ViewGroup.LayoutParams layoutParams = childAt.getLayoutParams();
-                                    if (layoutParams != null) {
-                                        childAt.measure(View.MeasureSpec.makeMeasureSpec(layoutParams.width, TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(layoutParams.height, TLObject.FLAG_30));
-                                    } else {
-                                        childAt.measure(i, i2);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Integer num = this.right;
-        if (num != null) {
-            iIntValue = num.intValue();
-        } else if (this.textView2 == null) {
-            iIntValue = 42;
-        } else if (this.deleteImageView == null) {
-            iIntValue = 70;
-        } else {
-            iIntValue = this.emojiButton != null ? 144 : 122;
-        }
-        this.textView.measure(View.MeasureSpec.makeMeasureSpec(((size - getPaddingLeft()) - getPaddingRight()) - AndroidUtilities.dp(iIntValue), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(0, 0));
-        int measuredHeight = this.textView.getMeasuredHeight();
-        setMeasuredDimension(size, Math.max(AndroidUtilities.dp(50.0f), this.textView.getMeasuredHeight()) + (this.needDivider ? 1 : 0));
-        SimpleTextView simpleTextView2 = this.textView2;
-        if (simpleTextView2 == null || this.alwaysShowText2) {
-            return;
-        }
-        simpleTextView2.setAlpha(measuredHeight >= AndroidUtilities.dp(52.0f) ? 1.0f : 0.0f);
-    }
-
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (this.checkBox != null) {
-            setShowCheckBox(shouldShowCheckBox(), false);
-            this.checkBox.setChecked(isChecked(this), false);
-        }
-    }
-
-    public void onCheckBoxClick(PollEditTextCell pollEditTextCell, boolean z) {
-        this.checkBox.setChecked(z, true);
-    }
-
-    public void callOnDelete() {
-        ImageView imageView = this.deleteImageView;
-        if (imageView == null) {
-            return;
-        }
-        imageView.callOnClick();
-    }
-
-    public void setShowNextButton(boolean z) {
-        this.showNextButton = z;
-    }
-
-    public EditTextBoldCursor getTextView() {
-        return this.textView;
-    }
-
-    public CheckBox2 getCheckBox() {
-        return this.checkBox;
-    }
-
-    public void addTextWatcher(TextWatcher textWatcher) {
-        this.textView.addTextChangedListener(textWatcher);
-    }
-
-    public void setChecked(boolean z, boolean z2) {
-        this.checkBox.setChecked(z, z2);
-    }
-
-    public String getText() {
-        return this.textView.getText().toString();
-    }
-
-    public void setTextColor(int i) {
-        this.textView.setTextColor(i);
-    }
-
-    public void setShowCheckBox(boolean z, boolean z2) {
-        if (z == (this.checkBox.getTag() != null)) {
-            return;
-        }
-        AnimatorSet animatorSet = this.checkBoxAnimation;
-        if (animatorSet != null) {
-            animatorSet.cancel();
-            this.checkBoxAnimation = null;
-        }
-        this.checkBox.setTag(z ? 1 : null);
-        if (z2) {
-            AnimatorSet animatorSet2 = new AnimatorSet();
-            this.checkBoxAnimation = animatorSet2;
-            CheckBox2 checkBox2 = this.checkBox;
-            float[] fArr = {z ? 1.0f : 0.0f};
-            Property property = View.ALPHA;
-            animatorSet2.playTogether(ObjectAnimator.ofFloat(checkBox2, (Property<CheckBox2, Float>) property, fArr), ObjectAnimator.ofFloat(this.moveImageView, (Property<ImageView, Float>) property, z ? 0.0f : 1.0f));
-            this.checkBoxAnimation.setDuration(180L);
-            this.checkBoxAnimation.start();
-            return;
-        }
-        this.checkBox.setAlpha(z ? 1.0f : 0.0f);
-        this.moveImageView.setAlpha(z ? 0.0f : 1.0f);
-    }
-
-    public void setTextAndHint(CharSequence charSequence, String str, boolean z) {
-        ImageView imageView = this.deleteImageView;
-        if (imageView != null) {
-            imageView.setTag(null);
-        }
-        this.textView.setText(charSequence);
-        if (!TextUtils.isEmpty(charSequence)) {
-            EditTextBoldCursor editTextBoldCursor = this.textView;
-            editTextBoldCursor.setSelection(editTextBoldCursor.length());
-        }
-        this.textView.setHint(str);
-        this.needDivider = z;
-        setWillNotDraw(!z);
-    }
-
-    public ChatActivityEnterViewAnimatedIconView getEmojiButton() {
-        return this.emojiButton;
-    }
-
-    public void setText2(String str) {
-        SimpleTextView simpleTextView = this.textView2;
-        if (simpleTextView == null) {
-            return;
-        }
-        simpleTextView.setText(str);
-    }
-
-    public SimpleTextView getTextView2() {
-        return this.textView2;
-    }
-
-    public void setEmojiButtonVisibility(boolean z) {
-        this.animatorEmojiButtonVisible.setValue(z, true);
-    }
-
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        float fDp;
-        int iDp;
-        if (this.needDivider && drawDivider()) {
-            if (LocaleController.isRTL) {
-                fDp = 0.0f;
-            } else {
-                fDp = AndroidUtilities.dp(this.moveImageView != null ? 58.0f : 20.0f);
-            }
-            float f = fDp;
-            float measuredHeight = getMeasuredHeight() - 1;
-            int measuredWidth = getMeasuredWidth();
-            if (LocaleController.isRTL) {
-                iDp = AndroidUtilities.dp(this.moveImageView != null ? 58.0f : 20.0f);
-            } else {
-                iDp = 0;
-            }
-            canvas.drawLine(f, measuredHeight, measuredWidth - iDp, getMeasuredHeight() - 1, Theme.dividerPaint);
-        }
-    }
-
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
-    public void setFieldText(CharSequence charSequence) {
-        this.textView.setText(charSequence);
-    }
-
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
-    public void addTextChangedListener(TextWatcher textWatcher) {
-        this.textView.addTextChangedListener(textWatcher);
-    }
-
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
+    @Override
     public EditTextBoldCursor getEditField() {
-        return this.textView;
+        return textView;
     }
 
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
+    @Override
     public CharSequence getFieldText() {
-        if (this.textView.length() > 0) {
-            return this.textView.getText();
+        if (textView.length() > 0) {
+            return textView.getText();
         }
         return null;
     }
 
-    @Override // org.telegram.ui.Components.SuggestEmojiView.AnchorViewDelegate
+    @Override
     public Editable getEditText() {
-        return this.textView.getText();
+        return textView.getText();
     }
+
+
 
     public void supportMultiselect() {
-        CheckBox2 checkBox2 = this.checkBox;
-        if (checkBox2 != null) {
-            checkBox2.getCheckBoxBase().setCustomRadius(AndroidUtilities.dp(6.0f));
-            this.checkBox.getCheckBoxBase().setCustomRadiusFactor(this.animatorCheckboxMultiselect.getFloatValue());
+        if (checkBox != null) {
+            checkBox.getCheckBoxBase().setCustomRadius(dp(6));
+            checkBox.getCheckBoxBase().setCustomRadiusFactor(animatorCheckboxMultiselect.getFloatValue());
         }
     }
 
-    public void setCheckboxMultiselect(boolean z, boolean z2) {
-        this.animatorCheckboxMultiselect.setValue(z, z2);
+    public void setCheckboxMultiselect(boolean multiselect, boolean animated) {
+        animatorCheckboxMultiselect.setValue(multiselect, animated);
     }
 
-    @Override // me.vkryl.android.animator.FactorAnimator.Target
-    public void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
-        if (i == 0) {
-            CheckBox2 checkBox2 = this.checkBox;
-            if (checkBox2 != null) {
-                checkBox2.getCheckBoxBase().setCustomRadiusFactor(this.animatorCheckboxMultiselect.getFloatValue());
-                this.checkBox.invalidate();
-                return;
+    @Override
+    public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
+        if (id == ANIMATOR_ID_CHECKBOX_MULTISELECT) {
+            if (checkBox != null) {
+                checkBox.getCheckBoxBase().setCustomRadiusFactor(animatorCheckboxMultiselect.getFloatValue());
+                checkBox.invalidate();
             }
-            return;
-        }
-        if (i != 1 || this.emojiButton == null) {
-            return;
-        }
-        float floatValue = this.animatorEmojiButtonVisible.getFloatValue();
-        float f3 = 0.85f * floatValue;
-        this.emojiButton.setScaleX(f3);
-        this.emojiButton.setScaleY(f3);
-        this.emojiButton.setAlpha(floatValue);
-        this.emojiButton.setVisibility(floatValue > 0.0f ? 0 : 8);
-        SimpleTextView simpleTextView = this.textView2;
-        if (simpleTextView != null && this.deleteImageView == null && simpleTextView.getVisibility() == 0) {
-            PollAttachButton pollAttachButton = this.attachView;
-            SimpleTextView simpleTextView2 = this.textView2;
-            if (pollAttachButton != null) {
-                simpleTextView2.setTranslationY(AndroidUtilities.dp(36.0f));
-            } else {
-                simpleTextView2.setTranslationY(AndroidUtilities.dp(26.0f) * floatValue);
+        } else if (id == ANIMATOR_ID_EMOJI_BUTTON_VISIBLE) {
+            if (emojiButton != null) {
+                final float value = animatorEmojiButtonVisible.getFloatValue();
+                emojiButton.setScaleX(value * 0.85f);
+                emojiButton.setScaleY(value * 0.85f);
+                emojiButton.setAlpha(value);
+                emojiButton.setVisibility(value > 0 ? VISIBLE : GONE);
+                if (textView2 != null && deleteImageView == null && textView2.getVisibility() == View.VISIBLE) {
+                    if (attachView != null) {
+                        textView2.setTranslationY(dp(36));
+                    } else {
+                        textView2.setTranslationY(dp(26) * value);
+                    }
+                }
             }
         }
     }

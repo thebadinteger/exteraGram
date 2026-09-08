@@ -1,14 +1,22 @@
 package org.telegram.ui.Components;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.lerp;
+import static org.telegram.messenger.LocaleController.formatString;
+import static org.telegram.messenger.LocaleController.getPluralString;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
@@ -16,30 +24,29 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.ChatListItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
-import java.util.HashSet;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
-import me.vkryl.core.BitwiseUtils;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.NotificationsController;
 import org.telegram.messenger.R;
@@ -48,7 +55,6 @@ import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
-import org.telegram.tgnet.RequestDelegate;
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
@@ -62,889 +68,1295 @@ import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.GradientClip;
 import org.telegram.ui.TopicCreateFragment;
 
-@SuppressLint({"ViewConstructor"})
+import java.util.ArrayList;
+import java.util.HashSet;
+
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+import me.vkryl.core.BitwiseUtils;
+
+@SuppressLint("ViewConstructor")
 public class TopicsTabsView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
-    private boolean allTopicsHidden;
-    private long animateFromSelectedTopicId;
-    private ValueAnimator animator;
-    private final BoolAnimator animatorCloseButtonVisibility;
-    private final BoolAnimator animatorTopicsVisibility;
-    private final boolean bot;
-    private final HorizontalTabView botCreateTopicButtonHorizontal;
-    private final VerticalTabView botCreateTopicButtonVertical;
-    private final boolean canShowProgress;
-    private final ImageView closeButtonSide;
-    private final ImageView closeButtonTop;
+    public static final int ANIMATOR_ID_TOPICS_VISIBILITY = 0;
+
+    public static final int TOP_TABS_HEIGHT = 36;
+    public static final int SIDE_TABS_WIDTH = 64;
+
+    private final BoolAnimator animatorTopicsVisibility = new BoolAnimator(ANIMATOR_ID_TOPICS_VISIBILITY,
+        this, CubicBezierInterpolator.EASE_OUT_QUINT, 380L, true);
+
     private final int currentAccount;
-    private long currentTopicId;
     private final long dialogId;
-    private final HashSet<Integer> excludeTopics;
-    private final BaseFragment fragment;
-    private long lastSelectedTopicId;
-    private final boolean mono;
-    private boolean notificationsAttached;
-    private Utilities.Callback2<Long, Boolean> onDialogSelected;
-    private Runnable onTopicCreated;
-    private Utilities.Callback2<Integer, Boolean> onTopicSelected;
-    private Runnable onUpdateSideMenuPosition;
-    private Boolean pendingSidemenu;
     private final Theme.ResourcesProvider resourcesProvider;
+    private final boolean mono;
+    private final boolean bot;
+    private final BaseFragment fragment;
+    private final boolean canShowProgress;
+
+    private final FrameLayout topTabsContainer;
+    private final UniversalRecyclerView topTabs;
+    private final @Nullable VerticalTabView botCreateTopicButtonVertical;
+    private final @Nullable HorizontalTabView botCreateTopicButtonHorizontal;
+    private final ImageView closeButtonTop;
+    private final ImageView closeButtonSide;
+    private final ImageView toggleButtonTop;
+    private final ImageView toggleButtonSide;
+    private final FrameLayout sideTabsContainer;
+    private final UniversalRecyclerView sideTabs;
+
+    private long lastSelectedTopicId;
+    private long animateFromSelectedTopicId;
+
+    public TopicsTabsView(Context context, BaseFragment fragment, int currentAccount, long dialogId, Theme.ResourcesProvider resourcesProvider) {
+        super(context);
+
+        this.fragment = fragment;
+        this.currentAccount = currentAccount;
+        this.dialogId = dialogId;
+        this.resourcesProvider = resourcesProvider;
+
+        mono = ChatObject.isMonoForum(MessagesController.getInstance(currentAccount).getChat(-dialogId));
+        bot = UserObject.isBotForumWithEditableTopics(MessagesController.getInstance(currentAccount).getUser(dialogId));
+        canShowProgress = !UserConfig.getInstance(currentAccount).getPreferences().getBoolean("topics_end_reached_" + -dialogId, false);
+
+        setClipChildren(true);
+        setClipToPadding(true);
+        setWillNotDraw(false);
+
+        topTabsContainer = new FrameLayout(context);
+        addView(topTabsContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, TOP_TABS_HEIGHT, Gravity.TOP | Gravity.FILL_HORIZONTAL, 7, 7, 7, 7));
+
+        sideTabsContainer = new FrameLayout(context);
+        addView(sideTabsContainer, LayoutHelper.createFrame(64, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.FILL_VERTICAL, 7, 7, 7, 7));
+
+        topTabs = new UniversalRecyclerView(context, currentAccount, 0, this::fillHorizontalTabs, this::onTabClick, this::onTabLongClick, resourcesProvider) {
+            private final GradientClip clip = new GradientClip();
+            private final AnimatedFloat animatedClipL = new AnimatedFloat(this, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
+            private final AnimatedFloat animatedClipR = new AnimatedFloat(this, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
+            private final RectF lineRect = new RectF();
+            private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            private final AnimatedFloat animateTab = new AnimatedFloat(this, 420, CubicBezierInterpolator.EASE_OUT_QUINT);
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                final float clipAlphaL = animatedClipL.set(canScrollHorizontally(-1));
+                final float clipAlphaR = animatedClipR.set(canScrollHorizontally(1));
+                final boolean needClip = clipAlphaL > 0 || clipAlphaR > 0;
+                if (needClip) {
+                    canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
+                }
+                drawPinnedBackground(canvas);
+                super.dispatchDraw(canvas);
+                if (lastSelectedTopicId != currentTopicId) {
+                    animateFromSelectedTopicId = lastSelectedTopicId;
+                    animateTab.force(0.0f);
+                }
+                lastSelectedTopicId = currentTopicId;
+                HorizontalTabView fromSelectedTab = null;
+                HorizontalTabView selectedTab = null;
+                for (int i = 0; i < getChildCount(); ++i) {
+                    View child = getChildAt(i);
+                    if (child instanceof HorizontalTabView) {
+                        HorizontalTabView tab = (HorizontalTabView) child;
+                        if (tab.isAdd)
+                            continue;
+                        if (tab.getTopicId() == currentTopicId) {
+                            selectedTab = tab;
+                        }
+                        if (tab.getTopicId() == animateFromSelectedTopicId) {
+                            fromSelectedTab = tab;
+                        }
+                    }
+                }
+                if (selectedTab != null) {
+                    lineRect.set(
+                        selectedTab.getX() + dp(1),
+                        selectedTab.getY() + dp(4),
+                        selectedTab.getX() + selectedTab.getWidth() - dp(1),
+                        selectedTab.getY() + getHeight() - dp(4));
+                    if (fromSelectedTab != null) {
+                        AndroidUtilities.rectTmp.set(
+                            fromSelectedTab.getX() + dp(1),
+                            fromSelectedTab.getY() + dp(4),
+                            fromSelectedTab.getX() + fromSelectedTab.getWidth() - dp(1),
+                            fromSelectedTab.getY() + getHeight() - dp(4));
+                        lerp(AndroidUtilities.rectTmp, lineRect, animateTab.set(1.0f), lineRect);
+                    }
+                    linePaint.setColor(ColorUtils.setAlphaComponent(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), 31));
+                    canvas.drawRoundRect(lineRect, dp(14), dp(14), linePaint);
+                }
+                if (needClip) {
+                    canvas.save();
+                    if (clipAlphaL > 0) {
+                        AndroidUtilities.rectTmp.set(0, 0, dp(12), getHeight());
+                        clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.LEFT, clipAlphaL);
+                    }
+                    if (clipAlphaR > 0) {
+                        AndroidUtilities.rectTmp.set(getWidth() - dp(12), 0, getWidth(), getHeight());
+                        clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.RIGHT, clipAlphaR);
+                    }
+                    canvas.restore();
+                    canvas.restore();
+                }
+            }
+
+            private Drawable pinIcon;
+            private int pinIconColor;
+            private final Paint pinnedBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            private void drawPinnedBackground(Canvas canvas) {
+                int rpos = -1, lpos = -1;
+                float r = 0, l = getWidth();
+                for (int i = 0; i < getChildCount(); ++i) {
+                    final View child = getChildAt(i);
+                    if (!(child instanceof HorizontalTabView)) continue;
+                    final HorizontalTabView tab = (HorizontalTabView) child;
+                    if (tab.pinned) {
+                        if (l > tab.getX()) {
+                            l = tab.getX();
+                            lpos = getChildAdapterPosition(tab);
+                        }
+                        if (r < tab.getX() + tab.getWidth()) {
+                            r = tab.getX() + tab.getWidth();
+                            rpos = getChildAdapterPosition(tab);
+                        }
+                    }
+                }
+                if (r > l) {
+                    pinnedBackgroundPaint.setColor(Theme.multAlpha(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider), 0.06f));
+                    AndroidUtilities.rectTmp.set(l + dp(1), (getHeight() - dp(28)) / 2f, r - dp(1), (getHeight() + dp(28)) / 2f);
+                    canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(14), dp(14), pinnedBackgroundPaint);
+
+                    if (pinIcon == null) {
+                        pinIcon = getContext().getResources().getDrawable(R.drawable.msg_limit_pin).mutate();
+                    }
+                    final int pinColor = Theme.getColor(Theme.key_chats_pinnedIcon, resourcesProvider);
+                    if (pinIconColor != pinColor) {
+                        pinIcon.setColorFilter(new PorterDuffColorFilter(pinIconColor = pinColor, PorterDuff.Mode.SRC_IN));
+                    }
+                    pinIcon.setBounds((int) (r + dp(-17)), (int) (AndroidUtilities.rectTmp.top + dp(10)), (int) (r + dp(-17 + 10)), (int) (AndroidUtilities.rectTmp.top + dp(10 + 10)));
+                    pinIcon.draw(canvas);
+                }
+            }
+
+            @Override
+            public Integer getSelectorColor(int position) {
+                return 0;
+            }
+        };
+        topTabs.listenReorder(this::whenReordered);
+        topTabs.setWillNotDraw(false);
+        topTabs.adapter.setApplyBackground(false);
+        topTabs.makeHorizontal();
+        topTabsContainer.addView(topTabs, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, /*bot ? (72):*/ 41, 0, 0, 0));
+        topTabs.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (isLoadingVisible()) {
+                    loadMore();
+                }
+            }
+        });
+
+
+        if (bot) {
+            botCreateTopicButtonHorizontal = null; // new HorizontalTabView(context, currentAccount, resourcesProvider);
+            //botCreateTopicButtonHorizontal.setAll(true, false, currentTopicId == 0);
+            //botCreateTopicButtonHorizontal.setOnClickListener(v -> {
+            //    onTopicSelected.run(0, false);
+            //});
+            //topTabsContainer.addView(botCreateTopicButtonHorizontal, LayoutHelper.createFrame(36, TOP_TABS_HEIGHT, Gravity.LEFT | Gravity.TOP, 36, 0, 0, 0));
+
+
+            botCreateTopicButtonVertical = new VerticalTabView(context, currentAccount, resourcesProvider);
+            botCreateTopicButtonVertical.setAll(true, false, currentTopicId == 0);
+            botCreateTopicButtonVertical.setOnClickListener(v -> {
+                onTopicSelected.run(0, false);
+            });
+            sideTabsContainer.addView(botCreateTopicButtonVertical, LayoutHelper.createFrame(64, 42, Gravity.LEFT | Gravity.TOP, 0, 48, 0, 0));
+        } else {
+            botCreateTopicButtonHorizontal = null;
+            botCreateTopicButtonVertical = null;
+        }
+
+        sideTabs = new UniversalRecyclerView(context, currentAccount, 0, this::fillVerticalTabs, this::onTabClick, this::onTabLongClick, resourcesProvider) {
+            private final GradientClip clip = new GradientClip();
+            private final AnimatedFloat animatedClip = new AnimatedFloat(this, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                final float clipAlpha = animatedClip.set(canScrollVertically(-1));
+                if (clipAlpha > 0) {
+                    canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
+                }
+                drawPinnedBackground(canvas);
+                super.dispatchDraw(canvas);
+                if (clipAlpha > 0) {
+                    canvas.save();
+                    AndroidUtilities.rectTmp.set(0, 0, getWidth(), dp(12));
+                    clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.TOP, clipAlpha);
+                    canvas.restore();
+                    canvas.restore();
+                }
+            }
+
+            private Drawable pinIcon;
+            private int pinIconColor;
+            private final Paint pinnedBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            private void drawPinnedBackground(Canvas canvas) {
+                int bpos = -1, tpos = -1;
+                float b = 0, t = getHeight();
+                for (int i = 0; i < getChildCount(); ++i) {
+                    final View child = getChildAt(i);
+                    if (!(child instanceof VerticalTabView)) continue;
+                    final VerticalTabView tab = (VerticalTabView) child;
+                    if (tab.pinned) {
+                        if (t > tab.getY()) {
+                            t = tab.getY();
+                            tpos = getChildAdapterPosition(tab);
+                        }
+                        if (b < tab.getY() + tab.getHeight()) {
+                            b = tab.getY() + tab.getHeight();
+                            bpos = getChildAdapterPosition(tab);
+                        }
+                    }
+                }
+                if (b > t) {
+                    pinnedBackgroundPaint.setColor(Theme.getColor(Theme.key_chats_pinnedOverlay, resourcesProvider));
+                    AndroidUtilities.rectTmp.set((getWidth() - dp(56)) / 2f, t, (getWidth() + dp(56)) / 2f, b);
+                    canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(6), dp(6), pinnedBackgroundPaint);
+
+                    if (pinIcon == null) {
+                        pinIcon = getContext().getResources().getDrawable(R.drawable.msg_limit_pin).mutate();
+                    }
+                    final int pinColor = Theme.getColor(Theme.key_chats_pinnedIcon, resourcesProvider);
+                    if (pinIconColor != pinColor) {
+                        pinIcon.setColorFilter(new PorterDuffColorFilter(pinIconColor = pinColor, PorterDuff.Mode.SRC_IN));
+                    }
+                    pinIcon.setBounds((int) (AndroidUtilities.rectTmp.left + dp(4)), (int) (AndroidUtilities.rectTmp.top + dp(2.66f)), (int) (AndroidUtilities.rectTmp.left + dp(4 + 9.66f)), (int) (AndroidUtilities.rectTmp.top + dp(2.66f + 9.66f)));
+                    pinIcon.draw(canvas);
+                }
+            }
+        };
+        sideTabs.listenReorder(this::whenReordered);
+        sideTabs.adapter.setApplyBackground(false);
+        sideTabs.setClipToPadding(false);
+        sideTabs.setClipChildren(false);
+        sideTabsContainer.addView(sideTabs, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, bot ? (48 + 42) : 48, 0, 0));
+        sideTabs.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (isLoadingVisible()) {
+                    loadMore();
+                }
+            }
+        });
+
+        toggleButtonTop = createButton(context, R.drawable.menu_sidebar_left, this::onSideMenuButtonClick);
+        toggleButtonSide = createButton(context, R.drawable.menu_sidebar_left, this::onSideMenuButtonClick);
+        topTabsContainer.addView(toggleButtonTop, LayoutHelper.createFrame(44, TOP_TABS_HEIGHT, Gravity.LEFT | Gravity.TOP));
+        sideTabsContainer.addView(toggleButtonSide, LayoutHelper.createFrame(64, 48, Gravity.LEFT | Gravity.TOP));
+
+        closeButtonTop = createButton(context, R.drawable.msg_select, this::onCloseButtonClick);
+        closeButtonSide = createButton(context, R.drawable.msg_select, this::onCloseButtonClick);
+        topTabsContainer.addView(closeButtonTop, LayoutHelper.createFrame(44, TOP_TABS_HEIGHT, Gravity.LEFT | Gravity.TOP));
+        sideTabsContainer.addView(closeButtonSide, LayoutHelper.createFrame(64, 48, Gravity.LEFT | Gravity.TOP));
+
+        MessagesController.getInstance(currentAccount).getTopicsController().loadTopics(-dialogId, false, TopicsController.LOAD_TYPE_HASH_CHECK);
+
+        SharedPreferences sp = MessagesController.getInstance(currentAccount).getMainSettings();
+        if (sp.getBoolean("topicssidetabs" + dialogId, false)) {
+            sidemenuT = 1.0f;
+            sidemenuEnabled = true;
+        }
+        topicBottom = sp.getBoolean("topicssidetabsb" + dialogId, false);
+        toggleButtonSide.setImageResource(topicBottom ? R.drawable.menu_sidebar_top : R.drawable.menu_sidebar_bottom);
+
+        checkTopicsVisibility(false);
+        checkUi_closeButtonVisibility();
+        updateSidemenuPosition();
+        updateTabs();
+    }
+
+    private void checkTopicsVisibility(boolean animated) {
+        final ArrayList<TLRPC.TL_forumTopic> topicsList = MessagesController.getInstance(currentAccount).getTopicsController().getTopics(-dialogId);
+        animatorTopicsVisibility.setValue(topicsList != null && !topicsList.isEmpty() && !allTopicsHidden, animated);
+    }
+
+    private void onSideMenuButtonClick(View v) {
+        animateSidemenuTo(pendingSidemenu != null ? !pendingSidemenu : !sidemenuEnabled);
+    }
+
+    private void onCloseButtonClick(View v) {
+        sideTabs.allowReorder(false);
+        topTabs.allowReorder(false);
+        animatorCloseButtonVisibility.setValue(false, true);
+        AndroidUtilities.updateVisibleRows(sideTabs);
+        AndroidUtilities.updateVisibleRows(topTabs);
+    }
+
+    private ImageView createButton(Context context, @DrawableRes int iconRes, View.OnClickListener onClickListener) {
+        ImageView button = new ImageView(context);
+        button.setImageResource(iconRes);
+        button.setScaleType(ImageView.ScaleType.CENTER);
+        button.setOnClickListener(onClickListener);
+        ScaleStateListAnimator.apply(button);
+        return button;
+    }
+
+    private final BoolAnimator animatorCloseButtonVisibility = new BoolAnimator(0,
+        (a, b, c, d) -> checkUi_closeButtonVisibility(),
+        CubicBezierInterpolator.EASE_OUT_QUINT, 320);
+
+    private void checkUi_closeButtonVisibility() {
+        {
+            final float visibility = animatorCloseButtonVisibility.getFloatValue();
+
+            closeButtonTop.setAlpha(visibility);
+            closeButtonTop.setScaleX(lerp(0.4f, 1f, visibility));
+            closeButtonTop.setScaleY(lerp(0.4f, 1f, visibility));
+            closeButtonTop.setVisibility(visibility > 0 ? VISIBLE : GONE);
+
+            closeButtonSide.setAlpha(visibility);
+            closeButtonSide.setScaleX(lerp(0.4f, 1f, visibility));
+            closeButtonSide.setScaleY(lerp(0.4f, 1f, visibility));
+            closeButtonSide.setVisibility(visibility > 0 ? VISIBLE : GONE);
+        }
+        {
+            final float visibility = 1f - animatorCloseButtonVisibility.getFloatValue();
+
+            toggleButtonTop.setAlpha(visibility);
+            toggleButtonTop.setScaleX(lerp(0.4f, 1f, visibility));
+            toggleButtonTop.setScaleY(lerp(0.4f, 1f, visibility));
+            toggleButtonTop.setVisibility(visibility > 0 ? VISIBLE : GONE);
+
+            toggleButtonSide.setAlpha(visibility);
+            toggleButtonSide.setScaleX(lerp(0.4f, 1f, visibility));
+            toggleButtonSide.setScaleY(lerp(0.4f, 1f, visibility));
+            toggleButtonSide.setVisibility(visibility > 0 ? VISIBLE : GONE);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(@NonNull Canvas canvas) {
+        if (sideTabsContainer.getVisibility() == VISIBLE) {
+            sideMenuBackgroundDrawable.setBounds(
+                    (int) (sideTabsContainer.getTranslationX()),
+                    (int) sideMenuBackgroundMarginTop,
+                    (int) (sideTabsContainer.getTranslationX() + dp(7 + 7 + 64)),
+                    (int) (getMeasuredHeight() - sideMenuBackgroundMarginBottom));
+            sideMenuBackgroundDrawable.draw(canvas);
+        }
+        if (topTabsContainer.getVisibility() == VISIBLE) {
+            topMenuBackgroundDrawable.setAlpha((int) (255 * topTabsContainer.getAlpha()));
+            topMenuBackgroundDrawable.setBounds(
+                    0, (int) topTabsContainer.getTranslationY(),
+                    getMeasuredWidth(), (int) (topTabsContainer.getTranslationY() + dp(TOP_TABS_HEIGHT + 7 + 7)));
+            topMenuBackgroundDrawable.draw(canvas);
+        }
+
+        canvas.save();
+        canvas.clipRect(0, 0, getWidth(), getHeight());
+        super.dispatchDraw(canvas);
+        canvas.restore();
+    }
+
+
+    @Override
+    protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+        canvas.save();
+        if (child == sideTabsContainer) {
+            canvas.clipPath(sideMenuBackgroundDrawable.getPath());
+        }
+        if (child == topTabsContainer) {
+            canvas.clipPath(topMenuBackgroundDrawable.getPath());
+        }
+        final boolean result = super.drawChild(canvas, child, drawingTime);
+        canvas.restore();
+        return result;
+    }
+
     private BlurredBackgroundDrawable sideMenuBackgroundDrawable;
+    private BlurredBackgroundDrawable topMenuBackgroundDrawable;
     private float sideMenuBackgroundMarginBottom;
     private float sideMenuBackgroundMarginTop;
-    private final UniversalRecyclerView sideTabs;
-    private final FrameLayout sideTabsContainer;
-    private boolean sidemenuAnimating;
-    private boolean sidemenuEnabled;
-    private float sidemenuT;
-    private final ImageView toggleButtonSide;
-    private final ImageView toggleButtonTop;
-    private BlurredBackgroundDrawable topMenuBackgroundDrawable;
-    private final UniversalRecyclerView topTabs;
-    private final FrameLayout topTabsContainer;
+
+    public void setSideMenuBackgroundDrawable(BlurredBackgroundDrawable sideMenuBackgroundDrawable) {
+        this.sideMenuBackgroundDrawable = sideMenuBackgroundDrawable;
+        this.sideMenuBackgroundDrawable.setRadius(dp(16));
+        this.sideMenuBackgroundDrawable.setPadding(dp(7));
+    }
+
+    public void setTopMenuBackgroundDrawable(BlurredBackgroundDrawable sideMenuBackgroundDrawable) {
+        this.topMenuBackgroundDrawable = sideMenuBackgroundDrawable;
+        this.topMenuBackgroundDrawable.setRadius(dp(18));
+        this.topMenuBackgroundDrawable.setPadding(dp(7));
+    }
+
+
+
+    public void setSideMenuBackgroundMarginBottom(float margin) {
+        sideMenuBackgroundMarginBottom = margin;
+        checkUi_topicsVerticalPosition();
+        checkSideTabsPadding(true);
+        invalidate();
+    }
+
+    public void setSideMenuBackgroundMarginTop(float margin) {
+        sideMenuBackgroundMarginTop = margin;
+        sideTabsContainer.setTranslationY(margin);
+        checkUi_topicsVerticalPosition();
+        checkSideTabsPadding(true);
+        invalidate();
+    }
+
+    private void checkSideTabsPadding(final boolean force) {
+        final int oldPadding = sideTabsContainer.getPaddingBottom();
+        final int padding = Math.round(sideMenuBackgroundMarginBottom + sideMenuBackgroundMarginTop);
+
+        if (oldPadding == padding) {
+            return;
+        }
+
+        if (force) {
+            sideTabsContainer.setPadding(0, 0, 0, padding);
+            return;
+        }
+
+        if (padding < oldPadding) {
+            sideTabsContainer.setPadding(0, 0, 0, 0);
+        }
+    }
+
+    private Runnable onUpdateSideMenuPosition;
+
+    public void doOnUpdateSideMenuPosition(Runnable runnable) {
+        onUpdateSideMenuPosition = runnable;
+    }
+
     private boolean topicBottom;
-
-    public enum Position {
-        TOP,
-        LEFT,
-        BOTTOM
-    }
-
-    public static void lambda$new$0(View view) {
-        this.onTopicSelected.run(0, Boolean.FALSE);
-    }
-
-    private void checkTopicsVisibility(boolean z) {
-        ArrayList<TLRPC.TL_forumTopic> topics = MessagesController.getInstance(this.currentAccount).getTopicsController().getTopics(-this.dialogId);
-        this.animatorTopicsVisibility.setValue((topics == null || topics.isEmpty() || this.allTopicsHidden) ? false : true, z);
-    }
-
-    public void onSideMenuButtonClick(View view) {
-        Boolean bool = this.pendingSidemenu;
-        boolean z = false;
-        if (bool == null ? !this.sidemenuEnabled : !bool.booleanValue()) {
-            z = true;
+    private boolean sidemenuEnabled;
+    private float sidemenuT = 0.0f;
+    private boolean sidemenuAnimating;
+    public void updateSidemenuPosition() {
+        if (onUpdateSideMenuPosition != null) {
+            onUpdateSideMenuPosition.run();
         }
-        animateSidemenuTo(z);
+
+        checkUi_topicsVerticalPosition();
+
+        final float leftTabsVisibility = getTabsVisibility(Position.LEFT);
+        sideTabsContainer.setTranslationX(lerp(-dp(64 + 7 + 7), 0, leftTabsVisibility));
+        sideTabsContainer.setVisibility(leftTabsVisibility > 0 ? VISIBLE : GONE);
+
+        toggleButtonTop.setColorFilter(new PorterDuffColorFilter(
+            ColorUtils.blendARGB(
+                Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider),
+                Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider),
+                1f - sidemenuT
+            ),
+            PorterDuff.Mode.SRC_IN
+        ));
+        toggleButtonSide.setColorFilter(new PorterDuffColorFilter(
+                ColorUtils.blendARGB(
+                        Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider),
+                        Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider),
+                        sidemenuT
+                ),
+                PorterDuff.Mode.SRC_IN
+        ));
+        closeButtonTop.setColorFilter(new PorterDuffColorFilter(
+            Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider),
+            PorterDuff.Mode.SRC_IN
+        ));
+        closeButtonSide.setColorFilter(new PorterDuffColorFilter(
+                Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider),
+                PorterDuff.Mode.SRC_IN
+        ));
+
+        invalidate();
     }
 
-    public void onCloseButtonClick(View view) {
-        this.sideTabs.allowReorder(false);
-        this.topTabs.allowReorder(false);
-        this.animatorCloseButtonVisibility.setValue(false, true);
-        AndroidUtilities.updateVisibleRows(this.sideTabs);
-        AndroidUtilities.updateVisibleRows(this.topTabs);
-    }
-
-    private ImageView createButton(Context context, int i, View.OnClickListener onClickListener) {
-        ImageView imageView = new ImageView(context);
-        imageView.setImageResource(i);
-        imageView.setScaleType(ImageView.ScaleType.CENTER);
-        imageView.setOnClickListener(onClickListener);
-        ScaleStateListAnimator.apply(imageView);
-        return imageView;
-    }
-
-    public void lambda$onTabLongClick$5(ItemOptions itemOptions, final long j, TLRPC.Chat chat) {
-        itemOptions.dismiss();
-        TLRPC.User user = MessagesController.getInstance(this.currentAccount).getUser(Long.valueOf(j));
-        if (user != null) {
-            AlertsCreator.createClearDaysDialogAlert(this.fragment, -1, user, chat, true, new MessagesStorage.BooleanCallback() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda19
-                @Override 
-                public final void run(boolean z) {
-                    this.f$0.lambda$onTabLongClick$4(j, z);
-                }
-            }, this.fragment.getResourceProvider());
+    private void checkUi_topicsVerticalPosition() {
+        topTabsContainer.setAlpha(lerp(1.0f, 0f, sidemenuT));
+        topTabsContainer.setVisibility(((1f - sidemenuT) * animatorTopicsVisibility.getFloatValue()) > 0 ? View.VISIBLE : View.GONE);
+        if (topicBottom) {
+            topTabsContainer.setTranslationY(getMeasuredHeight() - dp(TOP_TABS_HEIGHT + 7 + 7) - sideMenuBackgroundMarginBottom + lerp(dp(TOP_TABS_HEIGHT + 7), 0, getTabsVisibility(Position.BOTTOM)));
+        } else {
+            topTabsContainer.setTranslationY(sideMenuBackgroundMarginTop + lerp(-dp(TOP_TABS_HEIGHT + 7), 0, getTabsVisibility(Position.TOP)));
         }
     }
 
-    public /* synthetic */ void lambda$onTabLongClick$4(long j, boolean z) {
-        BaseFragment baseFragment = this.fragment;
-        if (baseFragment instanceof ChatActivity) {
-            ((ChatActivity) baseFragment).performHistoryClear(j, false, true);
-        }
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$10(final ActionBarMenuSubItem actionBarMenuSubItem, final ItemOptions itemOptions, final long j, final TLRPC.User user, final TLRPC.Chat chat, final boolean z, TLRPC.TL_chatAdminRights tL_chatAdminRights, String str) {
-        AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda20
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$onTabLongClick$9(z, actionBarMenuSubItem, itemOptions, j, user, chat);
-            }
-        });
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$9(boolean z, ActionBarMenuSubItem actionBarMenuSubItem, final ItemOptions itemOptions, final long j, final TLRPC.User user, final TLRPC.Chat chat) {
-        final boolean z2 = !z;
-        actionBarMenuSubItem.setVisibility(0);
-        actionBarMenuSubItem.setText(LocaleController.getString(!z ? R.string.UnbanUserMonoforum : R.string.BanUserMonoforum));
-        actionBarMenuSubItem.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda24
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$onTabLongClick$8(itemOptions, z2, j, user, chat, view);
-            }
-        });
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$8(ItemOptions itemOptions, boolean z, long j, TLRPC.User user, TLRPC.Chat chat, View view) {
-        itemOptions.dismiss();
-        if (!z) {
-            MessagesController.getInstance(this.currentAccount).deleteParticipantFromChat(j, user, (TLRPC.Chat) null, false, false);
-            return;
-        }
-        TLRPC.TL_channels_editBanned tL_channels_editBanned = new TLRPC.TL_channels_editBanned();
-        tL_channels_editBanned.participant = MessagesController.getInputPeer(user);
-        tL_channels_editBanned.channel = MessagesController.getInputChannel(chat);
-        tL_channels_editBanned.banned_rights = new TLRPC.TL_chatBannedRights();
-        ConnectionsManager.getInstance(this.currentAccount).sendRequest(tL_channels_editBanned, new RequestDelegate() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda25
-            @Override // org.telegram.tgnet.RequestDelegate
-            public final void run(TLObject tLObject, TLRPC.TL_error tL_error) {
-                this.f$0.lambda$onTabLongClick$7(tLObject, tL_error);
-            }
-        });
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$7(TLObject tLObject, TLRPC.TL_error tL_error) {
-        if (tLObject != null) {
-            final TLRPC.Updates updates = (TLRPC.Updates) tLObject;
-            MessagesController.getInstance(this.currentAccount).processUpdates(updates, false);
-            if (updates.chats.isEmpty()) {
+    private Boolean pendingSidemenu;
+    private ValueAnimator animator;
+    private void animateSidemenuTo(boolean side) {
+        if (sidemenuEnabled == side) return;
+        if (animator != null) {
+            animator.cancel();
+            if (sidemenuAnimating) {
+                pendingSidemenu = side;
                 return;
             }
-            AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda28
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$onTabLongClick$6(updates);
+        }
+
+        if (!side) {
+            topicBottom = !topicBottom;
+        }
+
+        sidemenuEnabled = side;
+        sidemenuAnimating = true;
+        animator = ValueAnimator.ofFloat(sidemenuT, side ? 1.0f : 0.0f);
+        animator.addUpdateListener(anm -> {
+            sidemenuT = (float) anm.getAnimatedValue();
+            updateSidemenuPosition();
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (animator == animation) {
+                    sidemenuT = side ? 1.0f : 0.0f;
+                    updateSidemenuPosition();
+                    sidemenuAnimating = false;
+                    toggleButtonSide.setImageResource(topicBottom ? R.drawable.menu_sidebar_top : R.drawable.menu_sidebar_bottom);
+                    animator = null;
+                    MessagesController.getInstance(currentAccount).getMainSettings().edit()
+                        .putBoolean("topicssidetabs" + dialogId, sidemenuEnabled)
+                        .putBoolean("topicssidetabsb" + dialogId, topicBottom)
+                        .apply();
+                    if (pendingSidemenu != null && side != pendingSidemenu) {
+                        final boolean newValue = pendingSidemenu;
+                        pendingSidemenu = null;
+                        animateSidemenuTo(newValue);
+                    }
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (isLoadingVisible()) {
+                            loadMore();
+                        }
+                    });
                 }
-            }, 1000L);
-        }
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$6(TLRPC.Updates updates) {
-        MessagesController.getInstance(this.currentAccount).loadFullChat(updates.chats.get(0).id, 0, true);
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$11(ItemOptions itemOptions, MessagesController messagesController, TLRPC.TL_forumTopic tL_forumTopic) {
-        itemOptions.dismiss();
-        messagesController.getTopicsController().pinTopic(-this.dialogId, tL_forumTopic.id, !tL_forumTopic.pinned, this.fragment);
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$12() {
-        this.sideTabs.allowReorder(true);
-        this.topTabs.allowReorder(true);
-        this.animatorCloseButtonVisibility.setValue(true, true);
-        AndroidUtilities.updateVisibleRows(this.topTabs);
-        AndroidUtilities.updateVisibleRows(this.sideTabs);
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$13(ItemOptions itemOptions, TLRPC.TL_forumTopic tL_forumTopic) {
-        itemOptions.dismiss();
-        this.fragment.presentFragment(TopicCreateFragment.create(-this.dialogId, tL_forumTopic.id));
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$14(MessagesController messagesController, TLRPC.TL_forumTopic tL_forumTopic, ItemOptions itemOptions, ItemOptions itemOptions2) {
-        if (messagesController.isDialogMuted(this.dialogId, tL_forumTopic.id)) {
-            itemOptions.dismiss();
-            NotificationsController.getInstance(this.currentAccount).muteDialog(this.dialogId, tL_forumTopic.id, false);
-            if (BulletinFactory.canShowBulletin(this.fragment)) {
-                BulletinFactory.createMuteBulletin(this.fragment, 4, 0, this.resourcesProvider).show();
-                return;
             }
-            return;
+        });
+//        animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+//        animator.setDuration(320);
+        animator.setInterpolator(ChatListItemAnimator.DEFAULT_INTERPOLATOR);
+        animator.setDuration(ChatListItemAnimator.DEFAULT_DURATION);
+        animator.start();
+    }
+
+    private long currentTopicId;
+    private void updateTabs() {
+        checkTopicsVisibility(true);
+
+        boolean wasOnLeft = !topTabs.canScrollHorizontally(-1);
+        topTabs.adapter.update(true);
+        if (wasOnLeft) {
+            topTabs.scrollToPosition(0);
         }
-        itemOptions.openSwipeback(itemOptions2);
-    }
 
-    public /* synthetic */ void lambda$onTabLongClick$15(ItemOptions itemOptions, TLRPC.TL_forumTopic tL_forumTopic) {
-        itemOptions.dismiss();
-        MessagesController.getInstance(this.currentAccount).getTopicsController().toggleCloseTopic(-this.dialogId, tL_forumTopic.id, !tL_forumTopic.closed);
-    }
-
-    public /* synthetic */ void lambda$onTabLongClick$17(ItemOptions itemOptions, TLRPC.TL_forumTopic tL_forumTopic) {
-        itemOptions.dismiss();
-        HashSet<Integer> hashSet = new HashSet<>();
-        hashSet.add(Integer.valueOf(tL_forumTopic.id));
-        deleteTopics(hashSet, new Runnable() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda21
-            @Override // java.lang.Runnable
-            public final void run() {
-                TopicsTabsView.$r8$lambda$whz9_2q0Ul6L4zdHpqUqnJxFQVc();
+        boolean wasOnTop = !sideTabs.canScrollVertically(-1);
+        sideTabs.adapter.update(true);
+        if (wasOnTop) {
+            sideTabs.scrollToPosition(0);
+        }
+        AndroidUtilities.runOnUIThread(() -> {
+            if (isLoadingVisible()) {
+                loadMore();
             }
         });
     }
 
-    public TLRPC.TL_forumTopic getTopic(long j) {
-        ArrayList<TLRPC.TL_forumTopic> topics = MessagesController.getInstance(this.currentAccount).getTopicsController().getTopics(-this.dialogId);
-        if (topics == null) {
-            return null;
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.topicsDidLoaded) {
+            if ((Long) args[0] != -dialogId)
+                return;
+            updateTabs();
+        } else if (id == NotificationCenter.updateInterfaces) {
+            int mask = (Integer) args[0];
+            if (/*!mono &&*/ (mask & MessagesController.UPDATE_MASK_SELECT_DIALOG) > 0) {
+                MessagesController.getInstance(currentAccount).getTopicsController().sortTopics(-dialogId, false);
+                updateTabs();
+            }
         }
-        int size = topics.size();
-        int i = 0;
-        while (i < size) {
-            TLRPC.TL_forumTopic tL_forumTopic = topics.get(i);
-            i++;
-            TLRPC.TL_forumTopic tL_forumTopic2 = tL_forumTopic;
-            if (tL_forumTopic2.id == j) {
-                return tL_forumTopic2;
+    }
+
+    private void whenReordered(int id, ArrayList<UItem> items) {
+        // if (mono) return;
+        final TopicsController controller = MessagesController.getInstance(currentAccount).getTopicsController();
+        final ArrayList<Integer> topics = new ArrayList<>();
+        for (int i = 0; i < items.size(); ++i) {
+            topics.add(items.get(i).id);
+        }
+        controller.reorderPinnedTopics(-dialogId, topics);
+        controller.sortTopics(-dialogId, false);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        setAttached(true);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        setAttached(false);
+    }
+
+    private boolean notificationsAttached;
+    private void setAttached(boolean attach) {
+        if (notificationsAttached == attach) return;
+        if (notificationsAttached = attach) {
+            NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.topicsDidLoaded);
+            NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.updateInterfaces);
+            MessagesController.getInstance(currentAccount).getTopicsController().onTopicFragmentResume(-dialogId);
+        } else {
+            MessagesController.getInstance(currentAccount).getTopicsController().onTopicFragmentPause(-dialogId);
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.topicsDidLoaded);
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.updateInterfaces);
+        }
+    }
+
+    private void fillVerticalTabs(ArrayList<UItem> items, UniversalAdapter adapter) {
+        final TLRPC.Chat currentChat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+        final TLRPC.User currentUser = MessagesController.getInstance(currentAccount).getUser(dialogId);
+        final TopicsController controller = MessagesController.getInstance(currentAccount).getTopicsController();
+        final ArrayList<TLRPC.TL_forumTopic> topics = controller.getTopics(-dialogId);
+        if (!bot) {
+            items.add(VerticalTabView.Factory.asAll(bot, mono).setChecked(currentTopicId == 0));
+        }
+
+        boolean reorder = false;
+        if (topics != null) {
+            for (TLRPC.TL_forumTopic topic : topics) {
+                if (bot && topic.id == 1) continue;
+                if (excludeTopics.contains(topic.id)) continue;
+                if (!topic.pinned && reorder) {
+                    adapter.reorderSectionEnd();
+                    reorder = false;
+                } else if (topic.pinned && !reorder) {
+                    adapter.reorderSectionStart();
+                    reorder = true;
+                }
+                items.add(VerticalTabView.Factory.asTab(dialogId, topic, mono).setChecked(currentTopicId == getTopicId(topic)));
+            }
+        }
+        if (reorder) {
+            adapter.reorderSectionEnd();
+        }
+        if (topics != null && !topics.isEmpty() && !controller.endIsReached(-dialogId) && canShowProgress) {
+            items.add(VerticalTabView.Factory.asLoading(-2));
+            items.add(VerticalTabView.Factory.asLoading(-3));
+            items.add(VerticalTabView.Factory.asLoading(-4));
+        }
+        if (!bot && !mono && (currentChat != null && ChatObject.canCreateTopic(currentChat) || UserObject.isBotForumWithEditableTopics(currentUser))) {
+            items.add(VerticalTabView.Factory.asAdd(false));
+        }
+    }
+
+    private void fillHorizontalTabs(ArrayList<UItem> items, UniversalAdapter adapter) {
+        final TLRPC.Chat currentChat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+        final TLRPC.User currentUser = MessagesController.getInstance(currentAccount).getUser(dialogId);
+        final TopicsController controller = MessagesController.getInstance(currentAccount).getTopicsController();
+        final ArrayList<TLRPC.TL_forumTopic> topics = controller.getTopics(-dialogId);
+        items.add(HorizontalTabView.Factory.asAll(bot, mono).setChecked(currentTopicId == 0));
+
+        boolean reorder = false;
+        if (topics != null) {
+            for (TLRPC.TL_forumTopic topic : topics) {
+                if (bot && topic.id == 1) continue;
+                if (excludeTopics.contains(topic.id)) continue;
+                if (!topic.pinned && reorder) {
+                    if (!items.isEmpty()) {
+                        items.get(items.size() - 1).flags |= 8;
+                    }
+                    adapter.reorderSectionEnd();
+                    reorder = false;
+                } else if (topic.pinned && !reorder) {
+                    adapter.reorderSectionStart();
+                    reorder = true;
+                }
+                items.add(HorizontalTabView.Factory.asTab(dialogId, topic, mono).setChecked(currentTopicId == getTopicId(topic)));
+            }
+        }
+        if (reorder) {
+            adapter.reorderSectionEnd();
+        }
+        if (topics != null && !topics.isEmpty() && !controller.endIsReached(-dialogId) && canShowProgress) {
+            items.add(HorizontalTabView.Factory.asLoading(-2));
+            items.add(HorizontalTabView.Factory.asLoading(-3));
+            items.add(HorizontalTabView.Factory.asLoading(-4));
+        }
+        if (!bot && !mono && (currentChat != null && ChatObject.canCreateTopic(currentChat) || UserObject.isBotForumWithEditableTopics(currentUser))) {
+            items.add(HorizontalTabView.Factory.asAdd());
+        }
+    }
+
+    private boolean isLoadingVisible() {
+        if (sidemenuT > 0.5f) {
+            for (int i = 0; i < sideTabs.getChildCount(); ++i) {
+                final View child = sideTabs.getChildAt(i);
+                final int position = sideTabs.getChildAdapterPosition(child);
+                final UItem item = sideTabs.adapter.getItem(position);
+                if (item != null && item.red) return true;
+            }
+        } else {
+            for (int i = 0; i < topTabs.getChildCount(); ++i) {
+                final View child = topTabs.getChildAt(i);
+                final int position = topTabs.getChildAdapterPosition(child);
+                final UItem item = topTabs.adapter.getItem(position);
+                if (item != null && item.red) return true;
+            }
+        }
+        return false;
+    }
+
+    private void loadMore() {
+        final TopicsController controller = MessagesController.getInstance(currentAccount).getTopicsController();
+        if (!controller.endIsReached(-dialogId)) {
+            controller.loadTopics(-dialogId);
+        }
+    }
+
+    private void onTabClick(UItem item, View view, int position, float x, float y) {
+        if (mono) {
+            if (onDialogSelected != null) {
+                onDialogSelected.run(item.longValue, false);
+            }
+        } else {
+            if (item.longValue == -2) {
+                if (onTopicCreated != null) {
+                    onTopicCreated.run();
+                }
+            } else if (onTopicSelected != null) {
+                onTopicSelected.run(item.id, false);
+            }
+        }
+    }
+
+    private boolean onTabLongClick(UItem item, View view, int position, float x, float y) {
+        if (sideTabs.isReorderAllowed() || topTabs.isReorderAllowed()) return false;
+        if (item.object instanceof TLRPC.TL_forumTopic) {
+            final TLRPC.TL_forumTopic topic = (TLRPC.TL_forumTopic) item.object;
+            final MessagesController messagesController = MessagesController.getInstance(currentAccount);
+            final TLRPC.Chat currentChat = dialogId < 0 ? messagesController.getChat(-dialogId) : null;
+            final TLRPC.User currentUser = dialogId > 0 ? messagesController.getUser(dialogId) : null;
+            final ItemOptions options = ItemOptions.makeOptions(fragment, view, true);
+
+            if (ChatObject.isMonoForum(currentChat)) {
+                final long topicId = DialogObject.getPeerDialogId(topic.from_id);
+                if (topicId == 0 || !ChatObject.canManageMonoForum(currentAccount, currentChat)) {
+                    return false;
+                }
+                options.add(
+                    R.drawable.msg_clear,
+                    getString(R.string.ClearHistory),
+                    () -> {
+                        options.dismiss();
+                        final TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(topicId);
+                        if (user != null) {
+                            AlertsCreator.createClearDaysDialogAlert(fragment, -1, user, currentChat, true, revoke -> {
+                                if (fragment instanceof ChatActivity) {
+                                    ((ChatActivity) fragment).performHistoryClear(topicId, false, true);
+                                }
+                            }, fragment.getResourceProvider());
+                        }
+                    }
+                );
+                long _chatId = currentChat.id;
+                if (ChatObject.isMonoForum(currentChat) && ChatObject.canManageMonoForum(currentAccount, currentChat) && currentChat.linked_monoforum_id != 0) {
+                    _chatId = currentChat.linked_monoforum_id;
+                }
+                final long chatId = _chatId;
+                final TLRPC.Chat channel = MessagesController.getInstance(currentAccount).getChat(chatId);
+                final TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(topicId);
+                if (user != null && ChatObject.canBlockUsers(channel)) {
+                    options.add(R.drawable.msg_remove, getString(R.string.BanUserMonoforum), null);
+                    ActionBarMenuSubItem subitem = options.getLast();
+                    subitem.setVisibility(View.GONE);
+                    MessagesController.getInstance(currentAccount).checkIsInChat(true, channel, user, (isInChat, currentAdminRights, rank) -> {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            final boolean banned = !isInChat;
+                            subitem.setVisibility(View.VISIBLE);
+                            subitem.setText(getString(banned ? R.string.UnbanUserMonoforum : R.string.BanUserMonoforum));
+                            subitem.setOnClickListener(v -> {
+                                options.dismiss();
+                                if (!banned) {
+                                    MessagesController.getInstance(currentAccount).deleteParticipantFromChat(chatId, user, null, false, false);
+                                } else {
+                                    TLRPC.TL_channels_editBanned req = new TLRPC.TL_channels_editBanned();
+                                    req.participant = MessagesController.getInputPeer(user);
+                                    req.channel = MessagesController.getInputChannel(channel);
+                                    req.banned_rights = new TLRPC.TL_chatBannedRights();
+                                    ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
+                                        if (response != null) {
+                                            final TLRPC.Updates updates = (TLRPC.Updates) response;
+                                            MessagesController.getInstance(currentAccount).processUpdates(updates, false);
+                                            if (!updates.chats.isEmpty()) {
+                                                AndroidUtilities.runOnUIThread(() -> {
+                                                    TLRPC.Chat chat = updates.chats.get(0);
+                                                    MessagesController.getInstance(currentAccount).loadFullChat(chat.id, 0, true);
+                                                }, 1000);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                    });
+                }
+            } else {
+                if (ChatObject.canManageTopics(currentChat) || UserObject.isBotForumWithEditableTopics(currentUser)) {
+                    options.add(
+                            topic.pinned ? R.drawable.msg_unpin : R.drawable.msg_pin,
+                            getString(topic.pinned ? R.string.DialogUnpin : R.string.DialogPin),
+                            () -> {
+                                options.dismiss();
+                                messagesController.getTopicsController()
+                                        .pinTopic(-dialogId, topic.id, !topic.pinned, fragment);
+                            }
+                    );
+
+                    if (topic.pinned) {
+                        options.add(
+                                R.drawable.tabs_reorder,
+                                getString(R.string.FilterReorder),
+                                () -> {
+                                    sideTabs.allowReorder(true);
+                                    topTabs.allowReorder(true);
+                                    animatorCloseButtonVisibility.setValue(true, true);
+                                    AndroidUtilities.updateVisibleRows(topTabs);
+                                    AndroidUtilities.updateVisibleRows(sideTabs);
+                                }
+                        );
+                    }
+                }
+
+                if (ChatObject.canManageTopics(currentChat) || UserObject.isBotForumWithEditableTopics(currentUser)) {
+                    options.add(R.drawable.outline_profile_edit_24, getString(R.string.EditTopic), () -> {
+                        options.dismiss();
+                        fragment.presentFragment(TopicCreateFragment.create(-dialogId, topic.id));
+                    });
+                }
+
+                final ItemOptions muteOptions = ChatNotificationsPopupWrapper.addAsItemOptions(fragment, options, dialogId, topic.id);
+                final boolean muted = messagesController.isDialogMuted(dialogId, topic.id);
+                options.add(
+                        muted ? R.drawable.msg_unmute : R.drawable.msg_mute,
+                        muted ? getString(R.string.Unmute) : getString(R.string.Mute),
+                        () -> {
+                            if (messagesController.isDialogMuted(dialogId, topic.id)) {
+                                options.dismiss();
+                                NotificationsController.getInstance(currentAccount).muteDialog(dialogId, topic.id, false);
+                                if (BulletinFactory.canShowBulletin(fragment)) {
+                                    BulletinFactory.createMuteBulletin(fragment, NotificationsController.SETTING_MUTE_UNMUTE, 0, resourcesProvider).show();
+                                }
+                            } else {
+                                options.openSwipeback(muteOptions);
+                            }
+                        }
+                );
+                if (ChatObject.canManageTopic(currentAccount, currentChat, topic) && !UserObject.isBotForum(currentUser)) {
+                    options.add(
+                            topic.closed ? R.drawable.msg_topic_restart : R.drawable.msg_topic_close,
+                            topic.closed ? getString(R.string.RestartTopic) : getString(R.string.CloseTopic),
+                            () -> {
+                                options.dismiss();
+                                MessagesController.getInstance(currentAccount).getTopicsController().toggleCloseTopic(-dialogId, topic.id, !topic.closed);
+                            }
+                    );
+                }
+                if (ChatObject.canDeleteTopic(currentAccount, currentChat, topic)) {
+                    options.add(R.drawable.msg_delete, getPluralString("DeleteTopics", 1), () -> {
+                        options.dismiss();
+                        HashSet<Integer> hashSet = new HashSet();
+                        hashSet.add(topic.id);
+                        deleteTopics(hashSet, () -> {
+                        });
+                    });
+                }
+            }
+            if (view instanceof HorizontalTabView) {
+                options.setScrimViewBackground(new Drawable() {
+                    private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    private RectF bound = new RectF();
+
+                    {
+                        paint.setColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, resourcesProvider));
+                    }
+
+                    @Override
+                    public void draw(@NonNull Canvas canvas) {
+                        bound.set(getBounds());
+                        float insetY = (bound.height() - dp(28)) / 2f;
+                        bound.inset(dp(1), insetY);
+                        canvas.drawRoundRect(bound, dp(14), dp(14), paint);
+                    }
+
+                    @Override
+                    public void setAlpha(int alpha) {
+                        paint.setAlpha(alpha);
+                    }
+
+                    @Override
+                    public void setColorFilter(@Nullable ColorFilter colorFilter) {
+
+                    }
+
+                    @Override
+                    public int getOpacity() {
+                        return PixelFormat.TRANSPARENT;
+                    }
+                });
+                options.translate(dp(16), 0);
+            } else {
+                options.setScrimViewBackground(Theme.createRoundRectDrawable(0, dp(5), dp(5), 0, Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)));
+            }
+            options.show();
+            return true;
+        }
+        return false;
+    }
+
+    public TLRPC.TL_forumTopic getTopic(long id) {
+        final ArrayList<TLRPC.TL_forumTopic> topics = MessagesController.getInstance(currentAccount).getTopicsController().getTopics(-dialogId);
+        if (topics != null) {
+            for (TLRPC.TL_forumTopic topic : topics) {
+                if (topic.id == id)
+                    return topic;
             }
         }
         return null;
     }
 
-    public void setCurrentTopic(long j) {
-        this.currentTopicId = j;
-        this.topTabs.adapter.update(true);
-        this.topTabs.invalidate();
-        this.sideTabs.adapter.update(true);
-        VerticalTabView verticalTabView = this.botCreateTopicButtonVertical;
-        if (verticalTabView != null) {
-            verticalTabView.setAll(true, false, j == 0);
+    public void setCurrentTopic(long topicId) {
+        this.currentTopicId = topicId;
+        topTabs.adapter.update(true);
+        topTabs.invalidate();
+        sideTabs.adapter.update(true);
+        if (botCreateTopicButtonVertical != null) {
+            botCreateTopicButtonVertical.setAll(true, false, topicId == 0);
         }
-        HorizontalTabView horizontalTabView = this.botCreateTopicButtonHorizontal;
-        if (horizontalTabView != null) {
-            horizontalTabView.setAll(true, false, j == 0);
+        if (botCreateTopicButtonHorizontal != null) {
+            botCreateTopicButtonHorizontal.setAll(true, false, topicId == 0);
         }
     }
 
-    public void setOnTopicSelected(Utilities.Callback2<Integer, Boolean> callback2) {
-        this.onTopicSelected = callback2;
+    private Utilities.Callback2<Integer, Boolean> onTopicSelected;
+    public void setOnTopicSelected(Utilities.Callback2<Integer, Boolean> listener) {
+        onTopicSelected = listener;
     }
-
-    public void setOnNewTopicSelected(Runnable runnable) {
-        this.onTopicCreated = runnable;
+    private Runnable onTopicCreated;
+    public void setOnNewTopicSelected(Runnable listener) {
+        onTopicCreated = listener;
     }
-
-    public void selectTopic(long j, boolean z) {
-        if (this.mono) {
-            Utilities.Callback2<Long, Boolean> callback2 = this.onDialogSelected;
-            if (callback2 != null) {
-                callback2.run(Long.valueOf(j), Boolean.valueOf(z));
-                return;
+    public void selectTopic(long topicId, boolean fromMessage) {
+        if (mono) {
+            if (onDialogSelected != null) {
+                onDialogSelected.run(topicId, fromMessage);
             }
-            return;
-        }
-        Utilities.Callback2<Integer, Boolean> callback3 = this.onTopicSelected;
-        if (callback3 != null) {
-            callback3.run(Integer.valueOf((int) j), Boolean.valueOf(z));
+        } else {
+            if (onTopicSelected != null) {
+                onTopicSelected.run((int) topicId, fromMessage);
+            }
         }
     }
 
-    public void setOnDialogSelected(Utilities.Callback2<Long, Boolean> callback2) {
-        this.onDialogSelected = callback2;
+    private Utilities.Callback2<Long, Boolean> onDialogSelected;
+    public void setOnDialogSelected(Utilities.Callback2<Long, Boolean> listener) {
+        onDialogSelected = listener;
     }
 
     public static class VerticalTabView extends FrameLayout {
-        private final AvatarDrawable avatarDrawable;
-        private float countScale;
-        private ValueAnimator counterAnimator;
-        private int counterBackgroundColorKey;
-        private final AnimatedTextView.AnimatedTextDrawable counterText;
+
         private final int currentAccount;
+        private final Theme.ResourcesProvider resourcesProvider;
+        private Shaker shaker;
+
+        private final LinearLayout layout;
+        private final FrameLayout.LayoutParams imageViewParams;
+        private final AnimatedTextView.AnimatedTextDrawable counterText;
         private final FrameLayout imageLayoutView;
         private final BackupImageView imageView;
-        private final FrameLayout.LayoutParams imageViewParams;
-        private boolean isAdd;
-        private boolean lastMention;
-        private boolean lastReactions;
-        private int lastUnread;
-        private final LinearLayout layout;
-        private final View lineView;
-        private LoadingDrawable loadingDrawable;
-        private CharSequence mentionString;
-        private boolean mono;
-        private boolean pinned;
-        private CharSequence reactionString;
-        private boolean reorder;
-        private final Theme.ResourcesProvider resourcesProvider;
-        private ValueAnimator selectAnimator;
-        private float selectT;
-        private boolean selected;
-        private Shaker shaker;
-        private boolean staticImage;
+        private final AvatarDrawable avatarDrawable;
         private final TextView textView;
-        private long topicId;
+        private final View lineView;
 
-        public static /* bridge */ /* synthetic */ float m13484$$Nest$fgetcountScale(VerticalTabView verticalTabView) {
-            return verticalTabView.countScale;
+        private boolean reorder;
+        public void setReorder(boolean value) {
+            this.reorder = value;
+            layout.invalidate();
         }
 
-        public static /* bridge */ /* synthetic */ int m13485$$Nest$fgetcounterBackgroundColorKey(VerticalTabView verticalTabView) {
-            return verticalTabView.counterBackgroundColorKey;
-        }
-
-        public static /* bridge */ /* synthetic */ AnimatedTextView.AnimatedTextDrawable m13486$$Nest$fgetcounterText(VerticalTabView verticalTabView) {
-            return verticalTabView.counterText;
-        }
-
-        public void setReorder(boolean z) {
-            this.reorder = z;
-            this.layout.invalidate();
-        }
-
-        public VerticalTabView(Context context, int i, Theme.ResourcesProvider resourcesProvider) {
+        public VerticalTabView(Context context, int currentAccount, Theme.ResourcesProvider resourcesProvider) {
             super(context);
-            this.mono = false;
-            this.pinned = false;
-            this.counterBackgroundColorKey = Theme.key_chats_unreadCounter;
-            this.countScale = 1.0f;
-            this.topicId = 0L;
-            this.isAdd = false;
-            this.staticImage = false;
-            this.currentAccount = i;
+            this.currentAccount = currentAccount;
             this.resourcesProvider = resourcesProvider;
-            LinearLayout linearLayout = new LinearLayout(context) { // from class: org.telegram.ui.Components.TopicsTabsView.VerticalTabView.1
-                private final AnimatedFloat shakeAlpha = new AnimatedFloat(this, 360, CubicBezierInterpolator.EASE_OUT_QUINT);
 
-                @Override // android.view.ViewGroup, android.view.View
-                public void dispatchDraw(Canvas canvas) {
+            layout = new LinearLayout(context) {
+                private final AnimatedFloat shakeAlpha = new AnimatedFloat(this, 360, CubicBezierInterpolator.EASE_OUT_QUINT);
+                @Override
+                protected void dispatchDraw(@NonNull Canvas canvas) {
                     canvas.save();
-                    float f = this.shakeAlpha.set(VerticalTabView.this.reorder);
-                    if (f > 0.0f) {
-                        if (VerticalTabView.this.shaker == null) {
-                            VerticalTabView.this.shaker = new Shaker(this);
-                        }
-                        canvas.translate(getWidth() / 2.0f, getHeight() / 2.0f);
-                        VerticalTabView.this.shaker.concat(canvas, f);
-                        canvas.translate((-getWidth()) / 2.0f, (-getHeight()) / 2.0f);
+                    final float shakeAlpha = this.shakeAlpha.set(reorder);
+                    if (shakeAlpha > 0) {
+                        if (shaker == null) shaker = new Shaker(this);
+                        canvas.translate(getWidth() / 2f, getHeight() / 2f);
+                        shaker.concat(canvas, shakeAlpha);
+                        canvas.translate(-getWidth() / 2f, -getHeight() / 2f);
                     }
                     super.dispatchDraw(canvas);
                     canvas.restore();
                 }
             };
-            this.layout = linearLayout;
-            linearLayout.setWillNotDraw(false);
-            linearLayout.setOrientation(1);
-            addView(linearLayout, LayoutHelper.createFrame(-1, -1.0f, 119, 1.0f, 0.0f, 0.0f, 0.0f));
-            ScaleStateListAnimator.apply(linearLayout);
-            AnimatedTextView.AnimatedTextDrawable animatedTextDrawable = new AnimatedTextView.AnimatedTextDrawable();
-            this.counterText = animatedTextDrawable;
-            animatedTextDrawable.setTextSize(AndroidUtilities.dp(11.0f));
-            animatedTextDrawable.setTypeface(AndroidUtilities.bold());
-            animatedTextDrawable.setTextColor(Theme.getColor(Theme.key_chats_unreadCounterText, resourcesProvider));
-            animatedTextDrawable.setOverrideFullWidth(AndroidUtilities.displaySize.x);
-            animatedTextDrawable.setGravity(17);
-            FrameLayout frameLayout = new FrameLayout(context, resourcesProvider) { // from class: org.telegram.ui.Components.TopicsTabsView.VerticalTabView.2
-                private final AnimatedPaint backgroundPaint;
-                private final Paint clipPaint;
-                final /* synthetic */ Theme.ResourcesProvider val$resourcesProvider;
+            layout.setWillNotDraw(false);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            addView(layout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 1, 0, 0, 0));
+            ScaleStateListAnimator.apply(layout);
 
+            counterText = new AnimatedTextView.AnimatedTextDrawable();
+            counterText.setTextSize(dp(11));
+            counterText.setTypeface(AndroidUtilities.bold());
+            counterText.setTextColor(Theme.getColor(Theme.key_chats_unreadCounterText, resourcesProvider));
+            counterText.setOverrideFullWidth(AndroidUtilities.displaySize.x);
+            counterText.setGravity(Gravity.CENTER);
+            imageLayoutView = new FrameLayout(context) {
+                private final Paint clipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                private final AnimatedPaint backgroundPaint = new AnimatedPaint(this, resourcesProvider);
                 {
-                    this.val$resourcesProvider = resourcesProvider;
-                    Paint paint = new Paint(1);
-                    this.clipPaint = paint;
-                    this.backgroundPaint = new AnimatedPaint(this, resourcesProvider);
-                    paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-                    VerticalTabView.this.counterText.setCallback(this);
+                    clipPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                    counterText.setCallback(this);
+                }
+                @Override
+                protected boolean verifyDrawable(@NonNull Drawable who) {
+                    return counterText == who || super.verifyDrawable(who);
                 }
 
-                @Override // android.view.View
-                public boolean verifyDrawable(Drawable drawable) {
-                    return VerticalTabView.this.counterText == drawable || super.verifyDrawable(drawable);
-                }
+                @Override
+                protected void dispatchDraw(@NonNull Canvas canvas) {
+                    final float counterAlpha = counterText.isNotEmpty();
+                    final boolean counterVisible = counterAlpha > 0.0f;
+                    final float counterScale = lerp(0.5f, 1.0f, counterAlpha) * countScale;
+                    final float R = dp(10f), r = dp(8.33f);
+                    final float cx = getWidth() / 2f + dp(12);
+                    final float cy = dp(22 - 10);
+                    final float w = Math.max(r + r, counterText.getCurrentWidth() + dp(10));
 
-                /* JADX WARN: Failed to calculate best type for var: r0v2 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r0v2 ??, new type: org.telegram.ui.Components.AnimatedTextView$AnimatedTextDrawable
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r15v0 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r15v0 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r15v1 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r15v1 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r16v0 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r16v0 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r16v1 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r16v1 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r19v0 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r19v0 ??, new type: android.graphics.Canvas
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r1v10 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r1v10 ??, new type: android.graphics.Canvas
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r1v11 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r1v11 ??, new type: android.graphics.Canvas
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r1v15 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r1v15 ??, new type: android.graphics.Canvas
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r2v11 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v11 ??, new type: android.graphics.RectF
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r2v14 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v14 ??, new type: android.graphics.RectF
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r2v7 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v7 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.calculateFromBounds(FixTypesVisitor.java:159)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.setBestType(FixTypesVisitor.java:136)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.deduceType(FixTypesVisitor.java:241)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryDeduceTypes(FixTypesVisitor.java:224)
-                	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r2v7 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v7 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r2v8 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v8 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r3v10 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r3v10 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r3v11 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r3v11 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r3v2 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r3v2 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r3v6 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r3v6 ??, new type: org.telegram.ui.Components.AnimatedTextView$AnimatedTextDrawable
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r3v9 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r3v9 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r4v1 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r4v1 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r4v10 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r4v10 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r4v9 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r4v9 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r5v3 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r5v3 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to calculate best type for var: r6v1 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r6v1 ??, new type: float
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.calculateFromBounds(TypeInferenceVisitor.java:147)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setBestType(TypeInferenceVisitor.java:125)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$1(TypeInferenceVisitor.java:103)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:103)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /* JADX WARN: Failed to set immutable type for var: r19v0 ??
-                jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r19v0 ??, new type: android.graphics.Canvas
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                	at jadx.core.dex.visitors.typeinference.TypeUpdate.applyWithWiderIgnSame(TypeUpdate.java:73)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.setImmutableType(TypeInferenceVisitor.java:111)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.lambda$runTypePropagation$0(TypeInferenceVisitor.java:102)
-                	at java.base/java.util.ArrayList.forEach(Unknown Source)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.runTypePropagation(TypeInferenceVisitor.java:102)
-                	at jadx.core.dex.visitors.typeinference.TypeInferenceVisitor.visit(TypeInferenceVisitor.java:75)
-                Caused by: java.lang.NullPointerException
-                 */
-                /*  JADX ERROR: Types fix failed
-                    jadx.core.utils.exceptions.JadxRuntimeException: Type update failed for variable: r2v7 ??, new type: float
-                    	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:109)
-                    	at jadx.core.dex.visitors.typeinference.TypeUpdate.apply(TypeUpdate.java:59)
-                    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryPossibleTypes(FixTypesVisitor.java:186)
-                    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.deduceType(FixTypesVisitor.java:245)
-                    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryDeduceTypes(FixTypesVisitor.java:224)
-                    	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-                    Caused by: java.lang.NullPointerException
-                    */
-                @Override // android.view.ViewGroup, android.view.View
-                public void dispatchDraw(android.graphics.Canvas r19) {
-                    /*
-                        Method dump skipped, instruction units count: 249
-                        To view this dump add '--comments-level debug' option
-                    */
-                    throw new UnsupportedOperationException("Method not decompiled: org.telegram.ui.Components.TopicsTabsView.VerticalTabView.AnonymousClass2.dispatchDraw(android.graphics.Canvas):void");
+                    if (counterVisible) {
+                        canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
+                    }
+                    super.dispatchDraw(canvas);
+                    if (counterVisible) {
+                        AndroidUtilities.rectTmp.set(cx - w / 2f - dp(1.33f), cy - R, cx + w / 2f + dp(1.33f), cy + R);
+                        AndroidUtilities.scaleRect(AndroidUtilities.rectTmp, counterAlpha);
+                        canvas.drawRoundRect(AndroidUtilities.rectTmp, R * counterAlpha, R * counterAlpha, clipPaint);
+                        canvas.restore();
+                    }
+
+                    if (counterAlpha > 0.0f) {
+                        canvas.save();
+                        canvas.scale(counterScale, counterScale, cx, cy);
+                        AndroidUtilities.rectTmp.set(cx - w / 2f, cy - r, cx + w / 2f, cy + r);
+                        canvas.drawRoundRect(AndroidUtilities.rectTmp, r, r, backgroundPaint.setByKey(counterBackgroundColorKey, counterAlpha));
+                        counterText.setBounds(AndroidUtilities.rectTmp);
+                        counterText.setAlpha((int) (0xFF * counterAlpha));
+                        counterText.draw(canvas);
+                        canvas.restore();
+                    }
                 }
             };
-            this.imageLayoutView = frameLayout;
-            frameLayout.setWillNotDraw(false);
-            frameLayout.setPadding(0, AndroidUtilities.dp(4.0f), 0, 0);
-            linearLayout.addView(frameLayout, LayoutHelper.createLinear(-1, -2, 17));
-            BackupImageView backupImageView = new BackupImageView(context);
-            this.imageView = backupImageView;
-            FrameLayout.LayoutParams layoutParamsCreateFrame = LayoutHelper.createFrame(34, 34, 17);
-            this.imageViewParams = layoutParamsCreateFrame;
-            frameLayout.addView(backupImageView, layoutParamsCreateFrame);
-            this.avatarDrawable = new AvatarDrawable();
-            TextView textView = new TextView(context);
-            this.textView = textView;
-            int color = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider);
-            int i2 = Theme.key_featuredStickers_addButton;
-            textView.setTextColor(ColorUtils.blendARGB(color, Theme.getColor(i2, resourcesProvider), this.selectT));
-            textView.setTextSize(1, 10.0f);
-            textView.setGravity(17);
+            imageLayoutView.setWillNotDraw(false);
+            imageLayoutView.setPadding(0, dp(4), 0, 0);
+            layout.addView(imageLayoutView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+
+            imageView = new BackupImageView(context);
+            imageLayoutView.addView(imageView, imageViewParams = LayoutHelper.createFrame(34, 34, Gravity.CENTER));
+            avatarDrawable = new AvatarDrawable();
+
+            textView = new TextView(context);
+            textView.setTextColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), selectT));
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 10);
+            textView.setGravity(Gravity.CENTER);
             textView.setTypeface(AndroidUtilities.bold());
             textView.setMaxLines(3);
             textView.setEllipsize(TextUtils.TruncateAt.END);
-            linearLayout.addView(textView, LayoutHelper.createLinear(-1, -2, 17, 4, 0, 4, 0));
-            linearLayout.setPadding(0, 0, 0, AndroidUtilities.dp(4.0f));
-            View imageView = new ImageView(context);
-            this.lineView = imageView;
-            imageView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(2.33f), Theme.getColor(i2, resourcesProvider)));
-            addView(imageView, LayoutHelper.createFrame(6, -1.0f, 115, -3.0f, 3.0f, 0.0f, 3.0f));
-            imageView.setTranslationX(-AndroidUtilities.dp(3.0f));
-            imageView.setVisibility(8);
+            layout.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 4, 0, 4, 0));
+            layout.setPadding(0, 0, 0, dp(4));
+
+            lineView = new ImageView(context);
+            lineView.setBackground(Theme.createRoundRectDrawable(dp(2.33f), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider)));
+            addView(lineView, LayoutHelper.createFrame(6, LayoutHelper.MATCH_PARENT, Gravity.FILL_VERTICAL | Gravity.LEFT, -3, 3, 0, 3));
+            lineView.setTranslationX(-dp(3));
+            lineView.setVisibility(View.GONE);
         }
 
-        private void setLayout(boolean z) {
-            if (this.mono == z) {
-                return;
+        private boolean mono = false;
+        private void setLayout(boolean mono) {
+            if (this.mono == mono) return;
+            this.mono = mono;
+            imageView.setRoundRadius(dp(mono ? 36 : 3));
+            imageLayoutView.setPadding(0, dp(mono ? 7 : 4), 0, 0);
+            imageViewParams.width = mono ? dp(28) : dp(30);
+            imageViewParams.height = mono ? dp(28) : dp(30);
+        }
+
+        private boolean pinned = false;
+        private void setPinned(boolean pinned, boolean animated) {
+            if (this.pinned != pinned) {
+                this.pinned = pinned;
+//                final int overlay = Theme.getColor(Theme.key_chats_pinnedOverlay, resourcesProvider);
+//                if (Theme.isCurrentThemeDark()) {
+//                    setBackgroundColor(pinned ? overlay : 0);
+//                } else {
+//                    setBackgroundColor(pinned ? Theme.blendOver(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider), overlay) : 0);
+//                }
             }
-            this.mono = z;
-            this.imageView.setRoundRadius(ExteraConfig.getAvatarCorners(28.0f));
-            this.imageLayoutView.setPadding(0, AndroidUtilities.dp(z ? 7.0f : 4.0f), 0, 0);
-            this.imageViewParams.width = z ? AndroidUtilities.dp(28.0f) : AndroidUtilities.dp(30.0f);
-            this.imageViewParams.height = z ? AndroidUtilities.dp(28.0f) : AndroidUtilities.dp(30.0f);
         }
 
-        private void setPinned(boolean z, boolean z2) {
-            if (this.pinned != z) {
-                this.pinned = z;
-            }
-        }
-
-        private void setCounter(boolean z, int i, boolean z2, boolean z3, boolean z4) {
-            if (z3) {
-                this.counterBackgroundColorKey = Theme.key_dialogReactionMentionBackground;
-                if (this.reactionString == null) {
-                    SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("❤️");
-                    ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.mini_like_filled);
-                    coloredImageSpan.setScale(0.8f, 0.8f);
-                    coloredImageSpan.spaceScaleX = 0.5f;
-                    coloredImageSpan.translate(-AndroidUtilities.dp(3.0f), 0.0f);
-                    spannableStringBuilder.setSpan(coloredImageSpan, 0, spannableStringBuilder.length(), 33);
-                    this.reactionString = spannableStringBuilder;
+        private int counterBackgroundColorKey = Theme.key_chats_unreadCounter;
+        private CharSequence mentionString;
+        private CharSequence reactionString;
+        private int lastUnread;
+        private boolean lastMuted, lastMention, lastReactions;
+        private void setCounter(boolean muted, int unread, boolean mention, boolean reactions, boolean animated) {
+            if (reactions) {
+                counterBackgroundColorKey = Theme.key_dialogReactionMentionBackground;
+                if (reactionString == null) {
+                    final SpannableStringBuilder sb = new SpannableStringBuilder("❤️");
+                    final ColoredImageSpan span = new ColoredImageSpan(R.drawable.mini_like_filled);
+                    span.setScale(0.8f, 0.8f);
+                    span.spaceScaleX = 0.5f;
+                    span.translate(-dp(3), 0);
+                    sb.setSpan(span, 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    reactionString = sb;
                 }
-                this.counterText.setText(this.reactionString, z4);
-            } else if (z2) {
-                this.counterBackgroundColorKey = z ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
-                if (this.mentionString == null) {
-                    SpannableStringBuilder spannableStringBuilder2 = new SpannableStringBuilder("@");
-                    ColoredImageSpan coloredImageSpan2 = new ColoredImageSpan(R.drawable.mini_mention_filled_16);
-                    coloredImageSpan2.setScale(0.8f, 0.8f);
-                    coloredImageSpan2.spaceScaleX = 0.5f;
-                    coloredImageSpan2.translate(-AndroidUtilities.dp(3.0f), 0.0f);
-                    spannableStringBuilder2.setSpan(coloredImageSpan2, 0, 1, 33);
-                    this.mentionString = spannableStringBuilder2;
+                counterText.setText(reactionString, animated);
+            } else if (mention) {
+                counterBackgroundColorKey = muted ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
+                if (mentionString == null) {
+                    final SpannableStringBuilder sb = new SpannableStringBuilder("@");
+                    final ColoredImageSpan span = new ColoredImageSpan(R.drawable.mini_mention_filled_16);
+                    span.setScale(0.8f, 0.8f);
+                    span.spaceScaleX = 0.5f;
+                    span.translate(-dp(3), 0);
+                    sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    mentionString = sb;
                 }
-                this.counterText.setText(this.mentionString, z4);
-            } else if (i > 0) {
-                this.counterBackgroundColorKey = z ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
-                this.counterText.setText(LocaleController.formatNumber(i, ','), z4);
+                counterText.setText(mentionString, animated);
+            } else if (unread > 0) {
+                counterBackgroundColorKey = muted ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
+                counterText.setText(LocaleController.formatNumber(unread, ','), animated);
             } else {
-                this.counterBackgroundColorKey = Theme.key_chats_unreadCounterMuted;
-                this.counterText.setText(_UrlKt.FRAGMENT_ENCODE_SET, z4);
+                counterBackgroundColorKey = Theme.key_chats_unreadCounterMuted;
+                counterText.setText("", animated);
             }
-            if (z4 && (this.lastUnread < i || ((!this.lastMention && z2) || (!this.lastReactions && z3)))) {
+            if (animated && (lastUnread < unread || !lastMention && mention || !lastReactions && reactions)) {
                 animateCounterBounce();
             }
-            this.lastUnread = i;
-            this.lastMention = z2;
-            this.lastReactions = z3;
-            this.imageLayoutView.invalidate();
+            lastUnread = unread;
+            lastMention = mention;
+            lastReactions = reactions;
+            imageLayoutView.invalidate();
         }
 
+        private float countScale = 1;
+        private ValueAnimator counterAnimator;
         private void animateCounterBounce() {
-            ValueAnimator valueAnimator = this.counterAnimator;
-            if (valueAnimator != null) {
-                valueAnimator.cancel();
-                this.counterAnimator = null;
+            if (counterAnimator != null) {
+                counterAnimator.cancel();
+                counterAnimator = null;
             }
-            ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(0.0f, 1.0f);
-            this.counterAnimator = valueAnimatorOfFloat;
-            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.TopicsTabsView$VerticalTabView$$ExternalSyntheticLambda1
-                @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$animateCounterBounce$0(valueAnimator2);
+
+            counterAnimator = ValueAnimator.ofFloat(0, 1);
+            counterAnimator.addUpdateListener(anm -> {
+                countScale = Math.max(1, (float) anm.getAnimatedValue());
+                imageLayoutView.invalidate();
+            });
+            counterAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    countScale = 1;
+                    imageLayoutView.invalidate();
                 }
             });
-            this.counterAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.TopicsTabsView.VerticalTabView.3
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    VerticalTabView.this.countScale = 1.0f;
-                    VerticalTabView.this.imageLayoutView.invalidate();
-                }
-            });
-            this.counterAnimator.setInterpolator(new OvershootInterpolator(2.0f));
-            this.counterAnimator.setDuration(200L);
-            this.counterAnimator.start();
+            counterAnimator.setInterpolator(new OvershootInterpolator(2.0f));
+            counterAnimator.setDuration(200);
+            counterAnimator.start();
         }
 
-        public /* synthetic */ void lambda$animateCounterBounce$0(ValueAnimator valueAnimator) {
-            this.countScale = Math.max(1.0f, ((Float) valueAnimator.getAnimatedValue()).floatValue());
-            this.imageLayoutView.invalidate();
-        }
-
-        public void setAll(boolean z, boolean z2, boolean z3) {
-            setLayout(z2);
-            this.topicId = -1L;
+        public void setAll(boolean bot, boolean mono, boolean selected) {
+            setLayout(mono);
+            this.topicId = -1;
             this.staticImage = true;
             this.isAdd = false;
-            this.textView.setText(LocaleController.getString(z ? R.string.BotForumNewTopic : R.string.AllTopicsSide));
-            this.textView.setVisibility(z ? 8 : 0);
-            this.imageView.clearImage();
-            this.imageView.setAnimatedEmojiDrawable(null);
-            if (z) {
-                BotNewTopicDrawable botNewTopicDrawable = new BotNewTopicDrawable(getContext());
-                botNewTopicDrawable.setColor(Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider));
-                this.imageView.setImageDrawable(botNewTopicDrawable);
+            textView.setText(getString(bot ? R.string.BotForumNewTopic : R.string.AllTopicsSide));
+            textView.setVisibility(bot ? GONE : VISIBLE);
+            imageView.clearImage();
+            imageView.setAnimatedEmojiDrawable(null);
+            if (bot) {
+                BotNewTopicDrawable drawable = new BotNewTopicDrawable(getContext());
+                drawable.setColor(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider));
+                imageView.setImageDrawable(drawable);
             } else {
-                this.imageView.setImageResource(R.drawable.other_chats);
+                imageView.setImageResource(R.drawable.other_chats);
             }
-            this.imageView.setScaleX(1.0f);
-            this.imageView.setScaleY(1.0f);
-            setSelected(z3);
+            imageView.setScaleX(1f);
+            imageView.setScaleY(1f);
+            setSelected(selected);
             updateImageColor();
             updateState();
             setCounter(true, 0, false, false, false);
             setPinned(false, false);
         }
 
-        public void setAdd(boolean z, boolean z2) {
-            setLayout(z);
+        private long topicId = 0;
+        private boolean isAdd = false;
+        private boolean staticImage = false;
+        public void setAdd(boolean mono, boolean selected) {
+            setLayout(mono);
             this.staticImage = true;
             this.isAdd = true;
-            this.textView.setText(LocaleController.getString(R.string.NewTopic));
-            this.textView.setVisibility(0);
-            this.imageView.clearImage();
-            this.imageView.setAnimatedEmojiDrawable(null);
-            this.imageView.setImageResource(R.drawable.emoji_tabs_new3);
-            this.imageView.setScaleX(1.0f);
-            this.imageView.setScaleY(1.0f);
-            setSelected(z2);
+            textView.setText(getString(R.string.NewTopic));
+            textView.setVisibility(VISIBLE);
+            imageView.clearImage();
+            imageView.setAnimatedEmojiDrawable(null);
+            imageView.setImageResource(R.drawable.emoji_tabs_new3);
+            imageView.setScaleX(1f);
+            imageView.setScaleY(1f);
+            setSelected(selected);
             updateImageColor();
             updateState();
             setCounter(true, 0, false, false, false);
             setPinned(false, false);
         }
 
+        private LoadingDrawable loadingDrawable;
         public void setLoading() {
             setLayout(false);
-            this.topicId = -1L;
+            this.topicId = -1;
             this.staticImage = true;
             this.isAdd = false;
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("x");
-            LoadingSpan loadingSpan = new LoadingSpan(this.textView, AndroidUtilities.dp(38.0f));
-            loadingSpan.setScaleY(0.75f);
-            spannableStringBuilder.setSpan(loadingSpan, 0, 1, 33);
-            this.textView.setText(spannableStringBuilder);
-            this.textView.setVisibility(0);
-            this.imageView.clearImage();
-            this.imageView.setAnimatedEmojiDrawable(null);
-            if (this.loadingDrawable == null) {
-                LoadingDrawable loadingDrawable = new LoadingDrawable(this.resourcesProvider);
-                this.loadingDrawable = loadingDrawable;
-                loadingDrawable.setRadiiDp(38.0f);
-                this.loadingDrawable.setCallback(this.imageView);
-                int color = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, this.resourcesProvider);
-                this.loadingDrawable.setColors(Theme.multAlpha(color, 0.15f), Theme.multAlpha(color, 0.5f), Theme.multAlpha(color, 0.6f), Theme.multAlpha(color, 0.15f));
-                this.loadingDrawable.stroke = false;
+            final SpannableStringBuilder sb = new SpannableStringBuilder("x");
+            final LoadingSpan span = new LoadingSpan(textView, dp(38));
+            span.setScaleY(0.75f);
+            sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            textView.setText(sb);
+            textView.setVisibility(VISIBLE);
+            imageView.clearImage();
+            imageView.setAnimatedEmojiDrawable(null);
+            if (loadingDrawable == null) {
+                loadingDrawable = new LoadingDrawable(resourcesProvider);
+                loadingDrawable.setRadiiDp(38);
+                loadingDrawable.setCallback(imageView);
+                final int textColor = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider);
+                loadingDrawable.setColors(
+                    Theme.multAlpha(textColor, .15f),
+                    Theme.multAlpha(textColor, .5f),
+                    Theme.multAlpha(textColor, .6f),
+                    Theme.multAlpha(textColor, .15f)
+                );
+                loadingDrawable.stroke = false;
             }
-            this.imageView.setImageDrawable(this.loadingDrawable);
-            this.imageView.setScaleX(1.0f);
-            this.imageView.setScaleY(1.0f);
+            imageView.setImageDrawable(loadingDrawable);
+            imageView.setScaleX(1f);
+            imageView.setScaleY(1f);
             setSelected(false);
             updateImageColor();
             setCounter(true, 0, false, false, false);
@@ -952,396 +1364,372 @@ public class TopicsTabsView extends FrameLayout implements NotificationCenter.No
             updateState();
         }
 
-        public void set(long j, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
+        public void set(long dialogId, TLRPC.TL_forumTopic topic, boolean selected) {
             setLayout(false);
-            long j2 = this.topicId;
-            int i = tL_forumTopic.id;
-            boolean z2 = j2 == ((long) i);
+            final boolean animated = topicId == topic.id;
             this.staticImage = false;
-            this.topicId = i;
+            this.topicId = topic.id;
             this.isAdd = false;
-            this.textView.setText(tL_forumTopic.title);
-            this.textView.setVisibility(0);
-            if (tL_forumTopic.id == 1) {
+            textView.setText(topic.title);
+            textView.setVisibility(VISIBLE);
+            if (topic.id == 1) {
                 this.staticImage = true;
-                this.imageView.clearImage();
-                this.imageView.setAnimatedEmojiDrawable(null);
-                this.imageView.setImageResource(R.drawable.msg_filled_general);
-                this.imageView.setScaleX(0.66f);
-                this.imageView.setScaleY(0.66f);
+                imageView.clearImage();
+                imageView.setAnimatedEmojiDrawable(null);
+                imageView.setImageResource(R.drawable.msg_filled_general);
+                imageView.setScaleX(0.66f);
+                imageView.setScaleY(0.66f);
+            } else if (topic.icon_emoji_id != 0) {
+                imageView.clearImage();
+                imageView.setAnimatedEmojiDrawable(AnimatedEmojiDrawable.make(UserConfig.selectedAccount, AnimatedEmojiDrawable.CACHE_TYPE_ALERT_PREVIEW, topic.icon_emoji_id));
+                imageView.setScaleX(1f);
+                imageView.setScaleY(1f);
             } else {
-                long j3 = tL_forumTopic.icon_emoji_id;
-                BackupImageView backupImageView = this.imageView;
-                if (j3 != 0) {
-                    backupImageView.clearImage();
-                    this.imageView.setAnimatedEmojiDrawable(AnimatedEmojiDrawable.make(UserConfig.selectedAccount, 3, tL_forumTopic.icon_emoji_id));
-                    this.imageView.setScaleX(1.0f);
-                    this.imageView.setScaleY(1.0f);
-                } else {
-                    backupImageView.setAnimatedEmojiDrawable(null);
-                    this.imageView.setImageDrawable(ForumUtilities.createTopicDrawable(tL_forumTopic, false));
-                    this.imageView.setScaleX(1.0f);
-                    this.imageView.setScaleY(1.0f);
-                }
+                imageView.setAnimatedEmojiDrawable(null);
+                imageView.setImageDrawable(ForumUtilities.createTopicDrawable(topic, false));
+                imageView.setScaleX(1f);
+                imageView.setScaleY(1f);
             }
-            setSelected(z);
+            setSelected(selected);
             updateImageColor();
-            setCounter(MessagesController.getInstance(this.currentAccount).isDialogMuted(j, tL_forumTopic.id), tL_forumTopic.unread_count, tL_forumTopic.unread_mentions_count > 0, tL_forumTopic.unread_reactions_count > 0, z2);
-            setPinned(tL_forumTopic.pinned, z2);
+            setCounter(
+                MessagesController.getInstance(currentAccount).isDialogMuted(dialogId, topic.id),
+                topic.unread_count,
+                topic.unread_mentions_count > 0,
+                topic.unread_reactions_count > 0,
+                animated
+            );
+            setPinned(topic.pinned, animated);
             updateState();
         }
 
-        public void updateImageColor() {
-            int iBlendARGB = ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, this.resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider), this.isAdd ? 1.0f : this.selectT);
-            boolean z = this.staticImage;
-            BackupImageView backupImageView = this.imageView;
-            if (!z) {
-                backupImageView.setColorFilter(null);
+        private void updateImageColor() {
+            final int color = ColorUtils.blendARGB(
+                Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider),
+                Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider),
+                isAdd ? 1.0f : selectT
+            );
+            if (!staticImage) {
+                imageView.setColorFilter(null);
             } else {
-                backupImageView.setColorFilter(new PorterDuffColorFilter(iBlendARGB, PorterDuff.Mode.SRC_IN));
+                imageView.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
             }
-            this.imageView.setEmojiColorFilter(new PorterDuffColorFilter(iBlendARGB, PorterDuff.Mode.SRC_IN));
-            this.imageView.invalidate();
+            imageView.setEmojiColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+            imageView.invalidate();
         }
 
-        public void setMf(TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
+        public void setMf(TLRPC.TL_forumTopic dialog, boolean selected) {
             setLayout(true);
             this.isAdd = false;
             this.staticImage = false;
-            long peerDialogId = DialogObject.getPeerDialogId(tL_forumTopic.from_id);
-            boolean z2 = peerDialogId == this.topicId;
-            this.topicId = peerDialogId;
-            this.textView.setText(DialogObject.getName(peerDialogId));
-            this.textView.setVisibility(0);
-            int i = this.currentAccount;
-            if (peerDialogId >= 0) {
-                TLRPC.User user = MessagesController.getInstance(i).getUser(Long.valueOf(peerDialogId));
-                this.avatarDrawable.setInfo(user);
-                this.imageView.setForUserOrChat(user, this.avatarDrawable);
+            final long dialogId = DialogObject.getPeerDialogId(dialog.from_id);
+            final boolean animated = dialogId == topicId;
+            topicId = dialogId;
+            textView.setText(DialogObject.getName(dialogId));
+            textView.setVisibility(VISIBLE);
+            if (dialogId >= 0) {
+                TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+                avatarDrawable.setInfo(user);
+                imageView.setForUserOrChat(user, avatarDrawable);
             } else {
-                TLRPC.Chat chat = MessagesController.getInstance(i).getChat(Long.valueOf(-peerDialogId));
-                this.avatarDrawable.setInfo(chat);
-                this.imageView.setForUserOrChat(chat, this.avatarDrawable);
+                TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-dialogId);
+                avatarDrawable.setInfo(chat);
+                imageView.setForUserOrChat(chat, avatarDrawable);
             }
-            this.imageView.setScaleX(1.0f);
-            this.imageView.setScaleY(1.0f);
+            imageView.setScaleX(1f);
+            imageView.setScaleY(1f);
             updateState();
-            setSelected(z);
-            setCounter(false, tL_forumTopic.unread_count, false, tL_forumTopic.unread_reactions_count > 0, z2);
-            setPinned(false, z2);
+            setSelected(selected);
+            setCounter(
+                false, // MessagesController.getInstance(currentAccount).isDialogMuted(dialogId, dialog.dialogId),
+                dialog.unread_count,
+                false,
+                dialog.unread_reactions_count > 0,
+                animated
+            );
+            setPinned(false, animated);
         }
 
-        @Override // android.view.View
-        public void setSelected(final boolean z) {
-            if (this.selected == z) {
-                return;
+        private float selectT;
+        private boolean selected;
+        private ValueAnimator selectAnimator;
+        public void setSelected(boolean selected) {
+            if (this.selected == selected) return;
+            this.selected = selected;
+            if (selectAnimator != null) {
+                selectAnimator.cancel();
             }
-            this.selected = z;
-            ValueAnimator valueAnimator = this.selectAnimator;
-            if (valueAnimator != null) {
-                valueAnimator.cancel();
-            }
-            ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(this.selectT, z ? 1.0f : 0.0f);
-            this.selectAnimator = valueAnimatorOfFloat;
-            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.TopicsTabsView$VerticalTabView$$ExternalSyntheticLambda0
-                @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$setSelected$1(valueAnimator2);
+            selectAnimator = ValueAnimator.ofFloat(selectT, selected ? 1f : 0f);
+            selectAnimator.addUpdateListener(anm -> {
+                selectT = (float) anm.getAnimatedValue();
+                updateState();
+                updateImageColor();
+            });
+            selectAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    selectT = selected ? 1f : 0f;
+                    updateState();
+                    updateImageColor();
                 }
             });
-            this.selectAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.TopicsTabsView.VerticalTabView.4
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    VerticalTabView.this.selectT = z ? 1.0f : 0.0f;
-                    VerticalTabView.this.updateState();
-                    VerticalTabView.this.updateImageColor();
-                }
-            });
-            this.selectAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-            this.selectAnimator.setDuration(320L);
-            this.selectAnimator.start();
+            selectAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            selectAnimator.setDuration(320);
+            selectAnimator.start();
         }
 
-        public /* synthetic */ void lambda$setSelected$1(ValueAnimator valueAnimator) {
-            this.selectT = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-            updateState();
-            updateImageColor();
+        private void updateState() {
+            lineView.setTranslationX(-dp(3) * (1.0f - selectT));
+            lineView.setVisibility(selectT <= 0.0f ? View.GONE : View.VISIBLE);
+            textView.setTextColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), isAdd ? 1.0f : selectT));
         }
 
-        public void updateState() {
-            this.lineView.setTranslationX((-AndroidUtilities.dp(3.0f)) * (1.0f - this.selectT));
-            this.lineView.setVisibility(this.selectT <= 0.0f ? 8 : 0);
-            this.textView.setTextColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, this.resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider), this.isAdd ? 1.0f : this.selectT));
-        }
-
-        @Override // android.widget.FrameLayout, android.view.View
-        public void onMeasure(int i, int i2) {
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(64.0f), TLObject.FLAG_30), i2);
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            super.onMeasure(
+                MeasureSpec.makeMeasureSpec(dp(64), MeasureSpec.EXACTLY),
+                heightMeasureSpec
+            );
         }
 
         public static class Factory extends UItem.UItemFactory<VerticalTabView> {
-            static {
-                UItem.UItemFactory.setup(new Factory());
+            static { setup(new Factory()); }
+
+            @Override
+            public VerticalTabView createView(Context context, RecyclerListView listView, int currentAccount, int classGuid, Theme.ResourcesProvider resourcesProvider) {
+                return new VerticalTabView(context, currentAccount, resourcesProvider);
             }
 
-            @Override // org.telegram.ui.Components.UItem.UItemFactory
-            public VerticalTabView createView(Context context, RecyclerListView recyclerListView, int i, int i2, Theme.ResourcesProvider resourcesProvider) {
-                return new VerticalTabView(context, i, resourcesProvider);
-            }
-
-            @Override // org.telegram.ui.Components.UItem.UItemFactory
-            public void bindView(View view, UItem uItem, boolean z, UniversalAdapter universalAdapter, UniversalRecyclerView universalRecyclerView) {
-                VerticalTabView verticalTabView = (VerticalTabView) view;
-                boolean z2 = false;
-                if (uItem.red) {
-                    verticalTabView.setLoading();
-                } else {
-                    Object obj = uItem.object;
-                    if (obj == null) {
-                        if (uItem.longValue == -2) {
-                            verticalTabView.setAdd(uItem.accent, uItem.checked);
-                        } else {
-                            verticalTabView.setAll((uItem.flags & 1) != 0, uItem.accent, uItem.checked);
-                        }
-                    } else if (obj instanceof TLRPC.TL_forumTopic) {
-                        if (!uItem.withUsername) {
-                            verticalTabView.setMf((TLRPC.TL_forumTopic) obj, uItem.checked);
-                        } else {
-                            verticalTabView.set(uItem.dialogId, (TLRPC.TL_forumTopic) obj, uItem.checked);
-                        }
+            @Override
+            public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter, UniversalRecyclerView listView) {
+                final VerticalTabView cell = (VerticalTabView) view;
+                if (item.red) {
+                    cell.setLoading();
+                } else if (item.object == null) {
+                    if (item.longValue == -2) {
+                        cell.setAdd(item.accent, item.checked);
+                    } else {
+                        cell.setAll((item.flags & 1) != 0, item.accent, item.checked);
+                    }
+                } else if (item.object instanceof TLRPC.TL_forumTopic) {
+                    if (!item.withUsername) {
+                        cell.setMf((TLRPC.TL_forumTopic) item.object, item.checked);
+                    } else {
+                        cell.set(item.dialogId, (TLRPC.TL_forumTopic) item.object, item.checked);
                     }
                 }
-                if (universalRecyclerView != null && universalRecyclerView.isReorderAllowed() && verticalTabView.pinned) {
-                    z2 = true;
+                cell.setReorder(listView != null && listView.isReorderAllowed() && cell.pinned);
+            }
+
+            public static UItem asAll(boolean botforum, boolean monoforum) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = 0;
+                item.longValue = 0;
+                item.object = null;
+                item.accent = monoforum;
+                item.flags = botforum ? 1 : 0;
+                return item;
+            }
+
+            public static UItem asAdd(boolean monoforum) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = -2;
+                item.longValue = -2;
+                item.object = null;
+                item.accent = monoforum;
+                return item;
+            }
+
+            public static UItem asTab(long dialogId, TLRPC.TL_forumTopic topic, boolean mono) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.dialogId = dialogId;
+                item.id = topic.id;
+                item.object = topic;
+                if (mono) {
+                    item.longValue = DialogObject.getPeerDialogId(topic.from_id);
+                    item.withUsername = false;
                 }
-                verticalTabView.setReorder(z2);
+                return item;
             }
 
-            public static UItem asAll(boolean z, boolean z2) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = 0;
-                uItemOfFactory.longValue = 0L;
-                uItemOfFactory.object = null;
-                uItemOfFactory.accent = z2;
-                uItemOfFactory.flags = z ? 1 : 0;
-                return uItemOfFactory;
-            }
-
-            public static UItem asAdd(boolean z) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = -2;
-                uItemOfFactory.longValue = -2L;
-                uItemOfFactory.object = null;
-                uItemOfFactory.accent = z;
-                return uItemOfFactory;
-            }
-
-            public static UItem asTab(long j, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.dialogId = j;
-                uItemOfFactory.id = tL_forumTopic.id;
-                uItemOfFactory.object = tL_forumTopic;
-                if (z) {
-                    uItemOfFactory.longValue = DialogObject.getPeerDialogId(tL_forumTopic.from_id);
-                    uItemOfFactory.withUsername = false;
-                }
-                return uItemOfFactory;
-            }
-
-            public static UItem asLoading(int i) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = i;
-                uItemOfFactory.red = true;
-                uItemOfFactory.checked = false;
-                return uItemOfFactory;
+            public static UItem asLoading(int id) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = id;
+                item.red = true;
+                item.checked = false;
+                return item;
             }
         }
     }
 
     public static class HorizontalTabView extends FrameLayout {
-        private int addW;
-        private AvatarSpan avatarSpan;
-        private ValueAnimator counterAnimator;
-        private int counterBackgroundColorKey;
+
+        private final int currentAccount;
+        private final Theme.ResourcesProvider resourcesProvider;
+
+        private Shaker shaker;
+        private final LinkSpanDrawable.LinksTextView textView;
         private final AnimatedTextView.AnimatedTextDrawable counterText;
         private final View counterView;
-        int counterViewX;
-        private final int currentAccount;
         private final ImageView imageView;
-        private boolean isAdd;
-        private boolean lastMention;
-        private boolean lastReactions;
-        private int lastUnread;
-        private CharSequence mentionString;
-        private boolean mono;
-        private boolean pinned;
-        private CharSequence reactionString;
-        private boolean reorder;
-        private final Theme.ResourcesProvider resourcesProvider;
-        private ValueAnimator selectAnimator;
-        private float selectT;
-        private boolean selected;
-        private final AnimatedFloat shakeAlpha;
-        private Shaker shaker;
-        private boolean staticImage;
-        private final LinkSpanDrawable.LinksTextView textView;
-        private long topicId;
 
-        public void setReorder(boolean z) {
-            this.reorder = z;
+        private boolean reorder;
+        public void setReorder(boolean value) {
+            this.reorder = value;
             invalidate();
         }
 
-        @Override // android.view.ViewGroup
-        public boolean drawChild(Canvas canvas, View view, long j) {
-            if (view == this.textView) {
+        private final AnimatedFloat shakeAlpha = new AnimatedFloat(this, 360, CubicBezierInterpolator.EASE_OUT_QUINT);
+        @Override
+        protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+            if (child == textView) {
                 canvas.save();
-                float f = this.shakeAlpha.set(this.reorder);
-                if (f > 0.0f) {
-                    if (this.shaker == null) {
-                        this.shaker = new Shaker(this);
-                    }
-                    canvas.translate(getWidth() / 2.0f, getHeight() / 2.0f);
-                    this.shaker.concat(canvas, f);
-                    canvas.translate((-getWidth()) / 2.0f, (-getHeight()) / 2.0f);
+                final float shakeAlpha = this.shakeAlpha.set(reorder);
+                if (shakeAlpha > 0) {
+                    if (shaker == null) shaker = new Shaker(this);
+                    canvas.translate(getWidth() / 2f, getHeight() / 2f);
+                    shaker.concat(canvas, shakeAlpha);
+                    canvas.translate(-getWidth() / 2f, -getHeight() / 2f);
                 }
-                boolean zDrawChild = super.drawChild(canvas, view, j);
+                boolean r = super.drawChild(canvas, child, drawingTime);
                 canvas.restore();
-                return zDrawChild;
+                return r;
             }
-            return super.drawChild(canvas, view, j);
+            return super.drawChild(canvas, child, drawingTime);
         }
 
-        public HorizontalTabView(Context context, int i, Theme.ResourcesProvider resourcesProvider) {
+        public HorizontalTabView(Context context, int currentAccount, Theme.ResourcesProvider resourcesProvider) {
             super(context);
-            this.shakeAlpha = new AnimatedFloat(this, 360L, CubicBezierInterpolator.EASE_OUT_QUINT);
-            this.pinned = false;
-            this.isAdd = false;
-            this.mono = false;
-            this.staticImage = false;
-            this.counterBackgroundColorKey = Theme.key_chats_unreadCounter;
-            this.addW = 0;
-            this.currentAccount = i;
+            this.currentAccount = currentAccount;
             this.resourcesProvider = resourcesProvider;
             setClipChildren(false);
             setClipToPadding(false);
-            LinkSpanDrawable.LinksTextView linksTextView = new LinkSpanDrawable.LinksTextView(context, resourcesProvider);
-            this.textView = linksTextView;
-            linksTextView.setTextSize(1, 14.0f);
-            linksTextView.setTypeface(AndroidUtilities.bold());
-            addView(linksTextView, LayoutHelper.createFrame(-2, -2.0f, 19, 11.0f, 0.0f, 11.0f, 0.0f));
-            ScaleStateListAnimator.apply(linksTextView);
-            ImageView imageView = new ImageView(context);
-            this.imageView = imageView;
-            addView(imageView, LayoutHelper.createFrame(34, 34, 17));
-            AnimatedTextView.AnimatedTextDrawable animatedTextDrawable = new AnimatedTextView.AnimatedTextDrawable();
-            this.counterText = animatedTextDrawable;
-            animatedTextDrawable.setTextSize(AndroidUtilities.dp(11.0f));
-            animatedTextDrawable.setTypeface(AndroidUtilities.bold());
-            animatedTextDrawable.setOverrideFullWidth(AndroidUtilities.displaySize.x);
-            animatedTextDrawable.setGravity(17);
-            View view = new View(context, resourcesProvider) { // from class: org.telegram.ui.Components.TopicsTabsView.HorizontalTabView.1
-                private final AnimatedPaint backgroundPaint;
-                final /* synthetic */ Theme.ResourcesProvider val$resourcesProvider;
 
+            textView = new LinkSpanDrawable.LinksTextView(context, resourcesProvider);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14f);
+            textView.setTypeface(AndroidUtilities.bold());
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 11, 0, 11, 0));
+            ScaleStateListAnimator.apply(textView);
+
+            imageView = new ImageView(context);
+            addView(imageView, LayoutHelper.createFrame(34, 34, Gravity.CENTER));
+            counterText = new AnimatedTextView.AnimatedTextDrawable();
+            counterText.setTextSize(dp(11));
+            counterText.setTypeface(AndroidUtilities.bold());
+            counterText.setOverrideFullWidth(AndroidUtilities.displaySize.x);
+            counterText.setGravity(Gravity.CENTER);
+            counterView = new View(context) {
+                private final AnimatedPaint backgroundPaint = new AnimatedPaint(this, resourcesProvider);
                 {
-                    this.val$resourcesProvider = resourcesProvider;
-                    this.backgroundPaint = new AnimatedPaint(this, resourcesProvider);
-                    HorizontalTabView.this.counterText.setCallback(this);
+                    counterText.setCallback(this);
+                }
+                @Override
+                protected boolean verifyDrawable(@NonNull Drawable who) {
+                    return counterText == who || super.verifyDrawable(who);
                 }
 
-                @Override // android.view.View
-                public boolean verifyDrawable(Drawable drawable) {
-                    return HorizontalTabView.this.counterText == drawable || super.verifyDrawable(drawable);
-                }
-
-                @Override // android.view.View
-                public void dispatchDraw(Canvas canvas) {
-                    float fIsNotEmpty = HorizontalTabView.this.counterText.isNotEmpty();
-                    if (fIsNotEmpty > 0.0f) {
-                        float fLerp = AndroidUtilities.lerp(0.6f, 1.0f, fIsNotEmpty);
-                        float fMax = Math.max(AndroidUtilities.dp(16.66f), HorizontalTabView.this.counterText.getCurrentWidth() + AndroidUtilities.dp(10.0f));
-                        RectF rectF = AndroidUtilities.rectTmp;
-                        rectF.set(0.0f, 0.0f, fMax, getHeight());
+                @Override
+                protected void dispatchDraw(@NonNull Canvas canvas) {
+                    final float counterAlpha = counterText.isNotEmpty();
+                    if (counterAlpha > 0) {
+                        final float counterScale = lerp(.6f, 1.0f, counterAlpha);
+                        final float width = Math.max(dp(16.66f), counterText.getCurrentWidth() + dp(10));
+                        AndroidUtilities.rectTmp.set(0, 0, width, getHeight());
                         canvas.save();
-                        canvas.scale(fLerp, fLerp, rectF.centerX(), rectF.centerY());
-                        canvas.drawRoundRect(rectF, AndroidUtilities.dp(8.33f), AndroidUtilities.dp(8.33f), this.backgroundPaint.setByKey(HorizontalTabView.this.counterBackgroundColorKey).blendTo(HorizontalTabView.this.getTextColor(), HorizontalTabView.this.selectT).multAlpha(fIsNotEmpty));
-                        HorizontalTabView.this.counterText.setBounds(rectF);
-                        HorizontalTabView.this.counterText.setAlpha((int) (fIsNotEmpty * 255.0f));
-                        HorizontalTabView.this.counterText.setTextColor(Theme.getColor(Theme.key_chats_unreadCounterText, this.val$resourcesProvider));
-                        HorizontalTabView.this.counterText.draw(canvas);
+                        canvas.scale(counterScale, counterScale, AndroidUtilities.rectTmp.centerX(), AndroidUtilities.rectTmp.centerY());
+                        canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(8.33f), dp(8.33f), backgroundPaint.setByKey(counterBackgroundColorKey).blendTo(getTextColor(), selectT).multAlpha(counterAlpha));
+                        // canvas.translate(0, -dp(1));
+                        counterText.setBounds(AndroidUtilities.rectTmp);
+                        counterText.setAlpha((int) (0xFF * counterAlpha));
+                        counterText.setTextColor(Theme.getColor(Theme.key_chats_unreadCounterText, resourcesProvider));
+                        counterText.draw(canvas);
                         canvas.restore();
                     }
                     super.dispatchDraw(canvas);
                 }
 
-                @Override // android.view.View
-                public void onMeasure(int i2, int i3) {
-                    super.onMeasure(View.MeasureSpec.makeMeasureSpec((int) Math.max(AndroidUtilities.dp(16.66f), HorizontalTabView.this.counterText.getAnimateToWidth() + AndroidUtilities.dp(10.0f)), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(16.66f), TLObject.FLAG_30));
+                @Override
+                protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                    final float width = Math.max(dp(16.66f), counterText.getAnimateToWidth() + dp(10));
+                    super.onMeasure(
+                        MeasureSpec.makeMeasureSpec((int) width, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(dp(16.66f), MeasureSpec.EXACTLY)
+                    );
                 }
             };
-            this.counterView = view;
-            addView(view, LayoutHelper.createFrame(-2, -2.0f, 21, 4.66f, 0.0f, 11.0f, 0.0f));
-            ScaleStateListAnimator.apply(view);
+            addView(counterView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 4.66f, 0, 11, 0));
+            ScaleStateListAnimator.apply(counterView);
+
             updateTextColor();
         }
 
-        private void setPinned(boolean z, boolean z2) {
-            if (this.pinned != z) {
-                this.pinned = z;
+        private boolean pinned = false;
+        private void setPinned(boolean pinned, boolean animated) {
+            if (this.pinned != pinned) {
+                this.pinned = pinned;
+//                final int overlay = Theme.getColor(Theme.key_chats_pinnedOverlay, resourcesProvider);
+//                if (Theme.isCurrentThemeDark()) {
+//                    setBackgroundColor(pinned ? overlay : 0);
+//                } else {
+//                    setBackgroundColor(pinned ? Theme.blendOver(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider), overlay) : 0);
+//                }
             }
         }
 
-        @Override // android.widget.FrameLayout, android.view.ViewGroup, android.view.View
-        public void onLayout(boolean z, int i, int i2, int i3, int i4) {
-            int i5 = i3 - i;
-            int i6 = i4 - i2;
-            int measuredWidth = (i5 - this.imageView.getMeasuredWidth()) / 2;
-            int measuredHeight = (i6 - this.imageView.getMeasuredHeight()) / 2;
-            ImageView imageView = this.imageView;
-            imageView.layout(measuredWidth, measuredHeight, imageView.getMeasuredWidth() + measuredWidth, this.imageView.getMeasuredHeight() + measuredHeight);
-            int i7 = i6 / 2;
-            this.textView.layout(AndroidUtilities.dp(11.0f), i7 - (this.textView.getMeasuredHeight() / 2), AndroidUtilities.dp(11.0f) + this.textView.getMeasuredWidth(), (this.textView.getMeasuredHeight() / 2) + i7);
-            float animateToWidth = this.counterText.getAnimateToWidth();
-            View view = this.counterView;
-            if (animateToWidth > 0.0f) {
-                view.layout((i5 - AndroidUtilities.dp(11.0f)) - this.counterView.getMeasuredWidth(), i7 - (this.counterView.getMeasuredHeight() / 2), i5 - AndroidUtilities.dp(11.0f), i7 + (this.counterView.getMeasuredHeight() / 2));
+        int counterViewX;
+        @Override
+        protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+            final int w = right - left;
+            final int h = bottom - top;
+
+            final int ix = (w - imageView.getMeasuredWidth()) / 2;
+            final int iy = (h - imageView.getMeasuredHeight()) / 2;
+            imageView.layout(ix, iy, ix + imageView.getMeasuredWidth(), iy + imageView.getMeasuredHeight());
+            textView.layout(dp(11), h / 2 - textView.getMeasuredHeight() / 2, dp(11) + textView.getMeasuredWidth(), h / 2 + textView.getMeasuredHeight() / 2);
+            if (counterText.getAnimateToWidth() > 0) {
+                counterView.layout(w - dp(11) - counterView.getMeasuredWidth(), h / 2 - counterView.getMeasuredHeight() / 2, w - dp(11), h / 2 + counterView.getMeasuredHeight() / 2);
             } else {
-                view.layout(AndroidUtilities.dp(11.0f) + this.textView.getMeasuredWidth() + AndroidUtilities.dp(4.66f), i7 - (this.counterView.getMeasuredHeight() / 2), AndroidUtilities.dp(11.0f) + this.textView.getMeasuredWidth() + AndroidUtilities.dp(4.66f) + this.counterView.getMeasuredWidth(), i7 + (this.counterView.getMeasuredHeight() / 2));
+                counterView.layout(dp(11) + textView.getMeasuredWidth() + dp(4.66f), h / 2 - counterView.getMeasuredHeight() / 2, dp(11) + textView.getMeasuredWidth() + dp(4.66f) + counterView.getMeasuredWidth(), h / 2 + counterView.getMeasuredHeight() / 2);
             }
-            if (this.counterViewX != 0 && this.counterView.getLeft() != this.counterViewX) {
-                View view2 = this.counterView;
-                view2.setTranslationX((-view2.getLeft()) + this.counterViewX);
-                this.counterView.animate().translationX(0.0f).setDuration(320L).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).start();
+            if (counterViewX != 0 && counterView.getLeft() != counterViewX) {
+                counterView.setTranslationX(-counterView.getLeft() + counterViewX);
+                counterView.animate().translationX(0f).setDuration(320).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).start();
             }
-            this.counterViewX = this.counterView.getLeft();
+            counterViewX = counterView.getLeft();
         }
 
-        private void setLayout(boolean z) {
-            if (this.mono == z) {
-                return;
-            }
-            this.mono = z;
+        private long topicId;
+        private boolean isAdd = false;
+        private boolean mono = false;
+        private void setLayout(boolean mono) {
+            if (this.mono == mono) return;
+            this.mono = mono;
+//            imageView.setRoundRadius(dp(mono ? 36 : 0));
+//            imageViewParams.topMargin = mono ? dp(7) : dp(4);
+//            imageViewParams.width = mono ? dp(28) : dp(36);
+//            imageViewParams.height = mono ? dp(28) : dp(36);
         }
 
         public long getTopicId() {
-            return this.topicId;
+            return topicId;
         }
 
-        public void setAll(boolean z, boolean z2, boolean z3) {
-            setLayout(z2);
-            this.topicId = 0L;
+        private boolean staticImage = false;
+        public void setAll(boolean bot, boolean mono, boolean selected) {
+            setLayout(mono);
+            this.topicId = 0;
             this.isAdd = false;
             this.staticImage = true;
-            this.imageView.setVisibility(z ? 0 : 8);
-            if (z) {
-                BotNewTopicDrawable botNewTopicDrawable = new BotNewTopicDrawable(getContext());
-                botNewTopicDrawable.setColor(Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider));
-                this.imageView.setImageDrawable(botNewTopicDrawable);
+            imageView.setVisibility(bot ? VISIBLE : GONE);
+            if (bot) {
+                BotNewTopicDrawable drawable = new BotNewTopicDrawable(getContext());
+                drawable.setColor(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider));
+                imageView.setImageDrawable(drawable);
             }
-            this.textView.setText(LocaleController.getString(z ? R.string.BotForumNewTopic : R.string.AllTopicsShort));
-            this.textView.setVisibility(z ? 8 : 0);
-            setSelected(z3);
+
+            textView.setText(getString(bot ? R.string.BotForumNewTopic : R.string.AllTopicsShort));
+            textView.setVisibility(bot ? GONE : VISIBLE);
+            setSelected(selected);
             updateTextColor();
             setCounter(true, 0, false, false, false);
             setPinned(false, false);
@@ -1349,501 +1737,460 @@ public class TopicsTabsView extends FrameLayout implements NotificationCenter.No
 
         public void setAdd() {
             setLayout(false);
-            this.topicId = 0L;
+            this.topicId = 0;
             this.isAdd = true;
             this.staticImage = false;
-            this.imageView.setVisibility(8);
-            this.textView.setVisibility(0);
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("e\u200b");
-            spannableStringBuilder.setSpan(new ColoredImageSpan(R.drawable.menu_topic_add), 0, 1, 33);
-            this.textView.setText(spannableStringBuilder);
+            this.imageView.setVisibility(GONE);
+            this.textView.setVisibility(VISIBLE);
+            SpannableStringBuilder sb = new SpannableStringBuilder("e\u200B");
+            sb.setSpan(new ColoredImageSpan(R.drawable.menu_topic_add), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            textView.setText(sb);
             setSelected(false);
             updateTextColor();
             setCounter(true, 0, false, false, false);
             setPinned(false, false);
         }
 
-        /* JADX WARN: Type inference fix 'apply assigned field type' failed
-        java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$UnknownArg
-        	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-        	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-        	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-         */
         public void setLoading() {
             setLayout(false);
-            this.topicId = -1L;
+            this.topicId = -1;
             this.staticImage = true;
-            this.imageView.setVisibility(8);
-            this.textView.setVisibility(0);
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("x");
-            LoadingSpan loadingSpan = new LoadingSpan(this.textView, AndroidUtilities.dp(42.0f));
-            loadingSpan.setScaleY(0.95f);
-            spannableStringBuilder.setSpan(loadingSpan, 0, 1, 33);
-            this.textView.setText(spannableStringBuilder);
+            this.imageView.setVisibility(GONE);
+            this.textView.setVisibility(VISIBLE);
+            final SpannableStringBuilder sb = new SpannableStringBuilder("x");
+            final LoadingSpan span = new LoadingSpan(textView, dp(42));
+            span.setScaleY(.95f);
+            sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            textView.setText(sb);
             setSelected(false);
             updateTextColor();
             setCounter(true, 0, false, false, false);
             setPinned(false, false);
         }
 
-        /* JADX WARN: Type inference fix 'apply assigned field type' failed
-        java.lang.UnsupportedOperationException: ArgType.getObject(), call class: class jadx.core.dex.instructions.args.ArgType$UnknownArg
-        	at jadx.core.dex.instructions.args.ArgType.getObject(ArgType.java:596)
-        	at jadx.core.dex.attributes.nodes.ClassTypeVarsAttr.getTypeVarsMapFor(ClassTypeVarsAttr.java:35)
-        	at jadx.core.dex.nodes.utils.TypeUtils.replaceClassGenerics(TypeUtils.java:177)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.insertExplicitUseCast(FixTypesVisitor.java:397)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.tryFieldTypeWithNewCasts(FixTypesVisitor.java:359)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.applyFieldType(FixTypesVisitor.java:309)
-        	at jadx.core.dex.visitors.typeinference.FixTypesVisitor.visit(FixTypesVisitor.java:94)
-         */
-        public void set(long j, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
+        public void set(long dialogId, TLRPC.TL_forumTopic topic, boolean selected) {
             setLayout(false);
-            long j2 = this.topicId;
-            int i = tL_forumTopic.id;
-            boolean z2 = j2 == ((long) i);
-            this.topicId = i;
+            final boolean animated = this.topicId == topic.id;
+            this.topicId = topic.id;
             this.staticImage = false;
-            this.imageView.setVisibility(8);
-            this.textView.setVisibility(0);
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
-            if (tL_forumTopic.id == 1) {
-                spannableStringBuilder.append((CharSequence) "#");
-                spannableStringBuilder.append((CharSequence) (tL_forumTopic.hidden ? "\u200b" : " "));
-                ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.msg_filled_general);
-                coloredImageSpan.setScale(0.66f, 0.66f);
-                spannableStringBuilder.setSpan(coloredImageSpan, 0, 1, 18);
-            } else if (tL_forumTopic.icon_emoji_id != 0) {
-                spannableStringBuilder.append((CharSequence) "x ");
-                spannableStringBuilder.setSpan(new AnimatedEmojiSpan(tL_forumTopic.icon_emoji_id, this.textView.getPaint().getFontMetricsInt()), 0, 1, 33);
+            this.imageView.setVisibility(GONE);
+            this.textView.setVisibility(VISIBLE);
+            SpannableStringBuilder sb = new SpannableStringBuilder();
+            if (topic.id == 1) {
+                sb.append("#");
+                sb.append(topic.hidden ? "\u200B" : " ");
+                final ColoredImageSpan span = new ColoredImageSpan(R.drawable.msg_filled_general);
+                span.setScale(.66f, .66f);
+                sb.setSpan(span, 0, 1, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            } else if (topic.icon_emoji_id != 0) {
+                sb.append("x ");
+                sb.setSpan(new AnimatedEmojiSpan(topic.icon_emoji_id, textView.getPaint().getFontMetricsInt()), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (!tL_forumTopic.hidden) {
-                spannableStringBuilder.append((CharSequence) tL_forumTopic.title);
+            if (!topic.hidden) {
+                sb.append(topic.title);
             }
-            this.textView.setText(spannableStringBuilder);
-            setSelected(z);
+            textView.setText(sb);
+            setSelected(selected);
             updateTextColor();
-            setCounter(MessagesController.getInstance(this.currentAccount).isDialogMuted(j, this.topicId), tL_forumTopic.unread_count, false, false, z2);
-            setPinned(tL_forumTopic.pinned, z2);
+            setCounter(
+                MessagesController.getInstance(currentAccount).isDialogMuted(dialogId, topicId),
+                topic.unread_count,
+                false, false,
+                animated
+            );
+            setPinned(topic.pinned, animated);
         }
 
-        public void updateTextColor() {
-            int textColor = getTextColor();
-            this.textView.setTextColor(textColor);
-            this.textView.setEmojiColor(textColor);
-            this.counterView.invalidate();
+        private void updateTextColor() {
+            final int color = getTextColor();
+            textView.setTextColor(color);
+            textView.setEmojiColor(color);
+            counterView.invalidate();
         }
 
-        public int getTextColor() {
-            return ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, this.resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider), this.isAdd ? 1.0f : this.selectT);
+        private int getTextColor() {
+            return ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), isAdd ? 1.0f : selectT);
         }
 
-        public void setMf(long j, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
+        private AvatarSpan avatarSpan;
+        public void setMf(long chatDialogId, TLRPC.TL_forumTopic dialog, boolean selected) {
             setLayout(true);
-            long peerDialogId = DialogObject.getPeerDialogId(tL_forumTopic.from_id);
-            boolean z2 = this.topicId == peerDialogId;
-            this.topicId = peerDialogId;
+            final long dialogId = DialogObject.getPeerDialogId(dialog.from_id);
+            final boolean animated = this.topicId == dialogId;
+            this.topicId = dialogId;
             this.staticImage = false;
-            this.imageView.setVisibility(8);
-            this.textView.setVisibility(0);
-            if (this.avatarSpan == null) {
-                AvatarSpan avatarSpan = new AvatarSpan(this.textView, this.currentAccount, 18.0f);
-                this.avatarSpan = avatarSpan;
+            this.imageView.setVisibility(GONE);
+            this.textView.setVisibility(VISIBLE);
+            if (avatarSpan == null) {
+                avatarSpan = new AvatarSpan(textView, currentAccount, 18);
                 avatarSpan.usePaintAlpha = false;
             }
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
-            TLObject userOrChat = MessagesController.getInstance(this.currentAccount).getUserOrChat(peerDialogId);
-            if (userOrChat != null) {
-                spannableStringBuilder.append((CharSequence) "x  ");
-                this.avatarSpan.setObject(userOrChat);
-                spannableStringBuilder.setSpan(this.avatarSpan, 0, 1, 33);
+            SpannableStringBuilder sb = new SpannableStringBuilder();
+            TLObject object = MessagesController.getInstance(currentAccount).getUserOrChat(dialogId);
+            if (object != null) {
+                sb.append("x  ");
+                avatarSpan.setObject(object);
+                sb.setSpan(avatarSpan, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            spannableStringBuilder.append((CharSequence) DialogObject.getName(peerDialogId));
-            LinkSpanDrawable.LinksTextView linksTextView = this.textView;
-            linksTextView.setText(TextUtils.ellipsize(spannableStringBuilder, linksTextView.getPaint(), AndroidUtilities.dp(150.0f), TextUtils.TruncateAt.END));
-            setSelected(z);
-            setCounter(MessagesController.getInstance(this.currentAccount).isDialogMuted(j, peerDialogId), tL_forumTopic.unread_count, false, false, z2);
-            setPinned(false, z2);
+            sb.append(DialogObject.getName(dialogId));
+            textView.setText(TextUtils.ellipsize(sb, textView.getPaint(), dp(150), TextUtils.TruncateAt.END));
+            setSelected(selected);
+            setCounter(
+                MessagesController.getInstance(currentAccount).isDialogMuted(chatDialogId, dialogId),
+                dialog.unread_count,
+                false,
+                false, // dialog.unread_reactions_count > 0,
+                animated
+            );
+            setPinned(false, animated);
         }
 
-        @Override // android.view.View
-        public void setSelected(final boolean z) {
-            if (this.selected == z) {
-                return;
+        private float selectT;
+        private boolean selected;
+        private ValueAnimator selectAnimator;
+        public void setSelected(boolean selected) {
+            if (this.selected == selected) return;
+            this.selected = selected;
+            if (selectAnimator != null) {
+                selectAnimator.cancel();
             }
-            this.selected = z;
-            ValueAnimator valueAnimator = this.selectAnimator;
-            if (valueAnimator != null) {
-                valueAnimator.cancel();
-            }
-            ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(this.selectT, z ? 1.0f : 0.0f);
-            this.selectAnimator = valueAnimatorOfFloat;
-            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.TopicsTabsView$HorizontalTabView$$ExternalSyntheticLambda0
-                @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$setSelected$0(valueAnimator2);
+            selectAnimator = ValueAnimator.ofFloat(selectT, selected ? 1f : 0f);
+            selectAnimator.addUpdateListener(anm -> {
+                selectT = (float) anm.getAnimatedValue();
+                updateTextColor();
+            });
+            selectAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    selectT = selected ? 1f : 0f;
+                    updateTextColor();
                 }
             });
-            this.selectAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.TopicsTabsView.HorizontalTabView.2
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    HorizontalTabView.this.selectT = z ? 1.0f : 0.0f;
-                    HorizontalTabView.this.updateTextColor();
-                }
-            });
-            this.selectAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-            this.selectAnimator.setDuration(320L);
-            this.selectAnimator.start();
+            selectAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            selectAnimator.setDuration(320);
+            selectAnimator.start();
         }
 
-        public /* synthetic */ void lambda$setSelected$0(ValueAnimator valueAnimator) {
-            this.selectT = ((Float) valueAnimator.getAnimatedValue()).floatValue();
-            updateTextColor();
-        }
 
-        private void setCounter(boolean z, int i, boolean z2, boolean z3, boolean z4) {
-            if (z3) {
-                this.counterBackgroundColorKey = Theme.key_dialogReactionMentionBackground;
-                if (this.reactionString == null) {
-                    SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("❤️");
-                    ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.mini_like_filled);
-                    coloredImageSpan.setScale(0.8f, 0.8f);
-                    coloredImageSpan.spaceScaleX = 0.5f;
-                    coloredImageSpan.translate(-AndroidUtilities.dp(3.0f), 0.0f);
-                    spannableStringBuilder.setSpan(coloredImageSpan, 0, spannableStringBuilder.length(), 33);
-                    this.reactionString = spannableStringBuilder;
+        private int counterBackgroundColorKey = Theme.key_chats_unreadCounter;
+        private CharSequence mentionString;
+        private CharSequence reactionString;
+        private int lastUnread;
+        private boolean lastMuted, lastMention, lastReactions;
+        private void setCounter(boolean muted, int unread, boolean mention, boolean reactions, boolean animated) {
+            if (reactions) {
+                counterBackgroundColorKey = Theme.key_dialogReactionMentionBackground;
+                if (reactionString == null) {
+                    final SpannableStringBuilder sb = new SpannableStringBuilder("❤️");
+                    final ColoredImageSpan span = new ColoredImageSpan(R.drawable.mini_like_filled);
+                    span.setScale(0.8f, 0.8f);
+                    span.spaceScaleX = 0.5f;
+                    span.translate(-dp(3), 0);
+                    sb.setSpan(span, 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    reactionString = sb;
                 }
-                this.counterText.setText(this.reactionString, z4);
-            } else if (z2) {
-                this.counterBackgroundColorKey = z ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
-                if (this.mentionString == null) {
-                    SpannableStringBuilder spannableStringBuilder2 = new SpannableStringBuilder("@");
-                    ColoredImageSpan coloredImageSpan2 = new ColoredImageSpan(R.drawable.mini_mention_filled_16);
-                    coloredImageSpan2.setScale(0.8f, 0.8f);
-                    coloredImageSpan2.spaceScaleX = 0.5f;
-                    coloredImageSpan2.translate(-AndroidUtilities.dp(3.0f), 0.0f);
-                    spannableStringBuilder2.setSpan(coloredImageSpan2, 0, 1, 33);
-                    this.mentionString = spannableStringBuilder2;
+                counterText.setText(reactionString, animated);
+            } else if (mention) {
+                counterBackgroundColorKey = muted ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
+                if (mentionString == null) {
+                    final SpannableStringBuilder sb = new SpannableStringBuilder("@");
+                    final ColoredImageSpan span = new ColoredImageSpan(R.drawable.mini_mention_filled_16);
+                    span.setScale(0.8f, 0.8f);
+                    span.spaceScaleX = 0.5f;
+                    span.translate(-dp(3), 0);
+                    sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    mentionString = sb;
                 }
-                this.counterText.setText(this.mentionString, z4);
-            } else if (i > 0) {
-                this.counterBackgroundColorKey = z ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
-                this.counterText.setText(LocaleController.formatNumber(i, ','), z4);
+                counterText.setText(mentionString, animated);
+            } else if (unread > 0) {
+                counterBackgroundColorKey = muted ? Theme.key_chats_unreadCounterMuted : Theme.key_chats_unreadCounter;
+                counterText.setText(LocaleController.formatNumber(unread, ','), animated);
             } else {
-                this.counterBackgroundColorKey = Theme.key_chats_unreadCounterMuted;
-                this.counterText.setText(_UrlKt.FRAGMENT_ENCODE_SET, z4);
+                counterBackgroundColorKey = Theme.key_chats_unreadCounterMuted;
+                counterText.setText("", animated);
             }
-            if (z4 && (this.lastUnread < i || ((!this.lastMention && z2) || (!this.lastReactions && z3)))) {
+            if (animated && (lastUnread < unread || !lastMention && mention || !lastReactions && reactions)) {
                 animateCounterBounce();
             }
-            this.lastUnread = i;
-            this.lastMention = z2;
-            this.lastReactions = z3;
-            this.counterView.invalidate();
+            lastUnread = unread;
+            lastMention = mention;
+            lastReactions = reactions;
+            counterView.invalidate();
             if (getMeasuringWidth() != getMeasuredWidth()) {
                 requestLayout();
             }
         }
 
+        private ValueAnimator counterAnimator;
         private void animateCounterBounce() {
-            ValueAnimator valueAnimator = this.counterAnimator;
-            if (valueAnimator != null) {
-                valueAnimator.cancel();
-                this.counterAnimator = null;
+            if (counterAnimator != null) {
+                counterAnimator.cancel();
+                counterAnimator = null;
             }
-            ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(0.0f, 1.0f);
-            this.counterAnimator = valueAnimatorOfFloat;
-            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: org.telegram.ui.Components.TopicsTabsView$HorizontalTabView$$ExternalSyntheticLambda1
-                @Override // android.animation.ValueAnimator.AnimatorUpdateListener
-                public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$animateCounterBounce$1(valueAnimator2);
+
+            counterAnimator = ValueAnimator.ofFloat(0, 1);
+            counterAnimator.addUpdateListener(anm -> {
+                counterView.setScaleX(Math.max(1, (float) anm.getAnimatedValue()));
+                counterView.setScaleY(Math.max(1, (float) anm.getAnimatedValue()));
+                counterView.invalidate();
+            });
+            counterAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    counterView.setScaleX(1f);
+                    counterView.setScaleY(1f);
+                    counterView.invalidate();
                 }
             });
-            this.counterAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.TopicsTabsView.HorizontalTabView.3
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    HorizontalTabView.this.counterView.setScaleX(1.0f);
-                    HorizontalTabView.this.counterView.setScaleY(1.0f);
-                    HorizontalTabView.this.counterView.invalidate();
-                }
-            });
-            this.counterAnimator.setInterpolator(new OvershootInterpolator(2.0f));
-            this.counterAnimator.setDuration(200L);
-            this.counterAnimator.start();
+            counterAnimator.setInterpolator(new OvershootInterpolator(2.0f));
+            counterAnimator.setDuration(200);
+            counterAnimator.start();
         }
 
-        public /* synthetic */ void lambda$animateCounterBounce$1(ValueAnimator valueAnimator) {
-            this.counterView.setScaleX(Math.max(1.0f, ((Float) valueAnimator.getAnimatedValue()).floatValue()));
-            this.counterView.setScaleY(Math.max(1.0f, ((Float) valueAnimator.getAnimatedValue()).floatValue()));
-            this.counterView.invalidate();
-        }
+        private int addW = 0;
 
         private int getMeasuringWidth() {
-            return AndroidUtilities.dp(11.0f) + this.textView.getMeasuredWidth() + (this.counterText.getAnimateToWidth() > 0.0f ? AndroidUtilities.dp(4.66f) + ((int) Math.max(AndroidUtilities.dp(16.66f), this.counterText.getAnimateToWidth() + AndroidUtilities.dp(10.0f))) : 0) + AndroidUtilities.dp(11.0f) + this.addW;
+            final int counterWidth = (int) Math.max(dp(16.66f), counterText.getAnimateToWidth() + dp(10));
+            return (int) (dp(11) + textView.getMeasuredWidth() + (counterText.getAnimateToWidth() > 0 ? dp(4.66f) + counterWidth : 0) + dp(11)) + addW;
         }
 
-        @Override // android.widget.FrameLayout, android.view.View
-        public void onMeasure(int i, int i2) {
-            this.textView.measure(i, i2);
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(getMeasuringWidth(), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(36.0f), TLObject.FLAG_30));
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            textView.measure(widthMeasureSpec, heightMeasureSpec);
+            super.onMeasure(
+                MeasureSpec.makeMeasureSpec(getMeasuringWidth(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(dp(TOP_TABS_HEIGHT), MeasureSpec.EXACTLY)
+            );
         }
 
         public static class Factory extends UItem.UItemFactory<HorizontalTabView> {
-            static {
-                UItem.UItemFactory.setup(new Factory());
+            static { setup(new Factory()); }
+
+            @Override
+            public HorizontalTabView createView(Context context, RecyclerListView listView, int currentAccount, int classGuid, Theme.ResourcesProvider resourcesProvider) {
+                return new HorizontalTabView(context, currentAccount, resourcesProvider);
             }
 
-            @Override // org.telegram.ui.Components.UItem.UItemFactory
-            public HorizontalTabView createView(Context context, RecyclerListView recyclerListView, int i, int i2, Theme.ResourcesProvider resourcesProvider) {
-                return new HorizontalTabView(context, i, resourcesProvider);
-            }
-
-            @Override // org.telegram.ui.Components.UItem.UItemFactory
-            public void bindView(View view, UItem uItem, boolean z, UniversalAdapter universalAdapter, UniversalRecyclerView universalRecyclerView) {
-                HorizontalTabView horizontalTabView = (HorizontalTabView) view;
-                boolean z2 = false;
-                if (uItem.red) {
-                    horizontalTabView.setLoading();
-                } else {
-                    Object obj = uItem.object;
-                    if (obj == null) {
-                        if (uItem.id == -2) {
-                            horizontalTabView.setAdd();
-                        } else {
-                            horizontalTabView.setAll((uItem.flags & 1) != 0, uItem.accent, uItem.checked);
-                        }
-                    } else if (obj instanceof TLRPC.TL_forumTopic) {
-                        boolean z3 = uItem.withUsername;
-                        long j = uItem.dialogId;
-                        if (!z3) {
-                            horizontalTabView.setMf(j, (TLRPC.TL_forumTopic) obj, uItem.checked);
-                        } else {
-                            horizontalTabView.set(j, (TLRPC.TL_forumTopic) obj, uItem.checked);
-                        }
+            @Override
+            public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter, UniversalRecyclerView listView) {
+                HorizontalTabView cell = (HorizontalTabView) view;
+                if (item.red) {
+                    cell.setLoading();
+                } else if (item.object == null) {
+                    if (item.id == -2) {
+                        cell.setAdd();
+                    } else {
+                        cell.setAll((item.flags & 1) != 0, item.accent, item.checked);
+                    }
+                } else if (item.object instanceof TLRPC.TL_forumTopic) {
+                    if (!item.withUsername) {
+                        cell.setMf(item.dialogId, (TLRPC.TL_forumTopic) item.object, item.checked);
+                    } else {
+                        cell.set(item.dialogId, (TLRPC.TL_forumTopic) item.object, item.checked);
                     }
                 }
-                horizontalTabView.addW = BitwiseUtils.hasFlag(uItem.flags, 8) ? AndroidUtilities.dp(10.0f) : 0;
-                if (universalRecyclerView != null && universalRecyclerView.isReorderAllowed() && horizontalTabView.pinned) {
-                    z2 = true;
+                cell.addW = BitwiseUtils.hasFlag(item.flags, 8) ? dp(10) : 0;
+                cell.setReorder(listView != null && listView.isReorderAllowed() && cell.pinned);
+            }
+
+            public static UItem asAll(boolean botforum, boolean monoforum) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = 0;
+                item.longValue = 0;
+                item.object = null;
+                item.accent = monoforum;
+                // item.flags = botforum ? 1 : 0;
+                return item;
+            }
+
+            public static UItem asTab(long dialogId, TLRPC.TL_forumTopic topic, boolean mono) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.dialogId = dialogId;
+                item.id = topic.id;
+                item.object = topic;
+                if (mono) {
+                    item.longValue = DialogObject.getPeerDialogId(topic.from_id);
+                    item.withUsername = false;
                 }
-                horizontalTabView.setReorder(z2);
+                return item;
             }
 
-            public static UItem asAll(boolean z, boolean z2) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = 0;
-                uItemOfFactory.longValue = 0L;
-                uItemOfFactory.object = null;
-                uItemOfFactory.accent = z2;
-                return uItemOfFactory;
-            }
-
-            public static UItem asTab(long j, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.dialogId = j;
-                uItemOfFactory.id = tL_forumTopic.id;
-                uItemOfFactory.object = tL_forumTopic;
-                if (z) {
-                    uItemOfFactory.longValue = DialogObject.getPeerDialogId(tL_forumTopic.from_id);
-                    uItemOfFactory.withUsername = false;
-                }
-                return uItemOfFactory;
-            }
-
-            public static UItem asLoading(int i) {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = i;
-                uItemOfFactory.red = true;
-                return uItemOfFactory;
+            public static UItem asLoading(int id) {
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = id;
+                item.red = true;
+                return item;
             }
 
             public static UItem asAdd() {
-                UItem uItemOfFactory = UItem.ofFactory(Factory.class);
-                uItemOfFactory.id = -2;
-                uItemOfFactory.longValue = -2L;
-                uItemOfFactory.object = null;
-                return uItemOfFactory;
+                UItem item = UItem.ofFactory(Factory.class);
+                item.id = -2;
+                item.longValue = -2;
+                item.object = null;
+                return item;
             }
         }
     }
 
-    @Override // android.view.View
-    public void onSizeChanged(int i, int i2, int i3, int i4) {
-        super.onSizeChanged(i, i2, i3, i4);
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
         checkUi_topicsVerticalPosition();
     }
 
-    public void setAllTopicsHidden(boolean z) {
-        if (this.allTopicsHidden != z) {
-            this.allTopicsHidden = z;
+    private boolean allTopicsHidden;
+
+    public void setAllTopicsHidden(boolean allTopicsHidden) {
+        if (this.allTopicsHidden != allTopicsHidden) {
+            this.allTopicsHidden = allTopicsHidden;
             checkTopicsVisibility(true);
         }
     }
 
-    private void deleteTopics(final HashSet<Integer> hashSet, final Runnable runnable) {
+
+    private final HashSet<Integer> excludeTopics = new HashSet<>();
+    private void deleteTopics(HashSet<Integer> selectedTopics, Runnable runnable) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle(LocaleController.getPluralString("DeleteTopics", hashSet.size()));
-        final ArrayList arrayList = new ArrayList(hashSet);
-        final long j = this.currentTopicId;
-        if (hashSet.size() == 1) {
-            builder.setMessage(LocaleController.formatString(R.string.DeleteSelectedTopic, MessagesController.getInstance(this.currentAccount).getTopicsController().findTopic(-this.dialogId, ((Integer) arrayList.get(0)).intValue()).title));
+        builder.setTitle(LocaleController.getPluralString("DeleteTopics", selectedTopics.size()));
+        ArrayList<Integer> topicsToRemove = new ArrayList<>(selectedTopics);
+        final long currentTopic = currentTopicId;
+        if (selectedTopics.size() == 1) {
+            TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(-dialogId, topicsToRemove.get(0));
+            builder.setMessage(formatString(R.string.DeleteSelectedTopic, topic.title));
         } else {
-            builder.setMessage(LocaleController.getString(R.string.DeleteSelectedTopics));
+            builder.setMessage(getString(R.string.DeleteSelectedTopics));
         }
-        builder.setPositiveButton(LocaleController.getString(R.string.Delete), new AlertDialog.OnButtonClickListener() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda22
-            @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
-            public final void onClick(AlertDialog alertDialog, int i) {
-                this.f$0.lambda$deleteTopics$20(arrayList, j, hashSet, runnable, alertDialog, i);
+        builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog, which) -> {
+            for (int topicId : topicsToRemove) {
+                if (currentTopic == topicId) {
+                    selectTopic(0, false);
+                }
             }
+
+            excludeTopics.addAll(selectedTopics);
+            updateTabs();
+            BulletinFactory.of(fragment).createUndoBulletin(LocaleController.getPluralString("TopicsDeleted", selectedTopics.size()), () -> {
+                excludeTopics.removeAll(selectedTopics);
+                updateTabs();
+                for (int topicId : topicsToRemove) {
+                    if (currentTopic == topicId) {
+                        selectTopic(topicId, false);
+                        break;
+                    }
+                }
+            }, () -> {
+                MessagesController.getInstance(currentAccount).getTopicsController().deleteTopics(-dialogId, topicsToRemove);
+                runnable.run();
+            }).show();
+            dialog.dismiss();
         });
-        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), new AlertDialog.OnButtonClickListener() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda23
-            @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
-            public final void onClick(AlertDialog alertDialog, int i) {
-                alertDialog.dismiss();
-            }
+        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), (dialog, which) -> {
+            dialog.dismiss();
         });
-        AlertDialog alertDialogCreate = builder.create();
-        alertDialogCreate.show();
-        TextView textView = (TextView) alertDialogCreate.getButton(-1);
-        if (textView != null) {
-            textView.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        if (button != null) {
+            button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
         }
     }
 
-    public /* synthetic */ void lambda$deleteTopics$20(final ArrayList arrayList, final long j, final HashSet hashSet, final Runnable runnable, AlertDialog alertDialog, int i) {
-        int size = arrayList.size();
-        int i2 = 0;
-        while (i2 < size) {
-            Object obj = arrayList.get(i2);
-            i2++;
-            if (j == ((Integer) obj).intValue()) {
-                selectTopic(0L, false);
-            }
-        }
-        this.excludeTopics.addAll(hashSet);
-        updateTabs();
-        BulletinFactory.of(this.fragment).createUndoBulletin(LocaleController.getPluralString("TopicsDeleted", hashSet.size()), new Runnable() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda26
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$deleteTopics$18(hashSet, arrayList, j);
-            }
-        }, new Runnable() { // from class: org.telegram.ui.Components.TopicsTabsView$$ExternalSyntheticLambda27
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$deleteTopics$19(arrayList, runnable);
-            }
-        }).show();
-        alertDialog.dismiss();
+    private long getTopicId(TLRPC.TL_forumTopic topic) {
+        return mono ? DialogObject.getPeerDialogId(topic.from_id) : topic.id;
     }
 
-    public /* synthetic */ void lambda$deleteTopics$18(HashSet hashSet, ArrayList arrayList, long j) {
-        this.excludeTopics.removeAll(hashSet);
-        updateTabs();
-        int size = arrayList.size();
-        int i = 0;
-        while (i < size) {
-            Object obj = arrayList.get(i);
-            i++;
-            long jIntValue = ((Integer) obj).intValue();
-            if (j == jIntValue) {
-                selectTopic(jIntValue, false);
-                return;
-            }
-        }
-    }
-
-    public /* synthetic */ void lambda$deleteTopics$19(ArrayList arrayList, Runnable runnable) {
-        MessagesController.getInstance(this.currentAccount).getTopicsController().deleteTopics(-this.dialogId, arrayList);
-        runnable.run();
-    }
-
-    private long getTopicId(TLRPC.TL_forumTopic tL_forumTopic) {
-        return this.mono ? DialogObject.getPeerDialogId(tL_forumTopic.from_id) : tL_forumTopic.id;
-    }
-
-    public static class BotNewTopicDrawable extends Drawable {
+    private static class BotNewTopicDrawable extends Drawable {
         private final Drawable drawable;
-        private final Paint paint = new Paint(1);
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rectF = new RectF();
 
-        @Override // android.graphics.drawable.Drawable
-        public int getOpacity() {
-            return 0;
-        }
-
-        @Override // android.graphics.drawable.Drawable
-        public void setColorFilter(ColorFilter colorFilter) {
-        }
-
         public BotNewTopicDrawable(Context context) {
-            this.drawable = context.getResources().getDrawable(R.drawable.menu_topic_add).mutate();
+            drawable = context.getResources().getDrawable(R.drawable.menu_topic_add).mutate();
         }
 
-        public void setColor(int i) {
-            this.paint.setColor(i);
+        public void setColor(int color) {
+            paint.setColor(color);
         }
 
-        @Override // android.graphics.drawable.Drawable
-        public void draw(Canvas canvas) {
-            canvas.drawRoundRect(this.rectF, AndroidUtilities.dp(10.0f), AndroidUtilities.dp(10.0f), this.paint);
-            this.drawable.draw(canvas);
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            canvas.drawRoundRect(rectF, dp(10), dp(10), paint);
+            drawable.draw(canvas);
         }
 
-        @Override // android.graphics.drawable.Drawable
-        public void onBoundsChange(Rect rect) {
-            super.onBoundsChange(rect);
-            this.rectF.set(rect);
-            int iCenterX = rect.centerX() - AndroidUtilities.dp(12.0f);
-            int iCenterY = rect.centerY() - AndroidUtilities.dp(12.0f);
-            this.drawable.setBounds(iCenterX, iCenterY, AndroidUtilities.dp(24.0f) + iCenterX, AndroidUtilities.dp(24.0f) + iCenterY);
+        @Override
+        protected void onBoundsChange(@NonNull Rect bounds) {
+            super.onBoundsChange(bounds);
+            rectF.set(bounds);
+
+            final int x = bounds.centerX() - dp(12);
+            final int y = bounds.centerY() - dp(12);
+
+            drawable.setBounds(x, y, x + dp(24), y + dp(24));
         }
 
-        @Override // android.graphics.drawable.Drawable
-        public void setAlpha(int i) {
-            this.paint.setAlpha(i);
-            this.drawable.setAlpha(i);
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+            drawable.setAlpha(alpha);
         }
+
+        @Override
+        public void setColorFilter(@Nullable ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.UNKNOWN;
+        }
+    }
+
+
+
+
+    public enum Position {
+        TOP, LEFT, BOTTOM
     }
 
     private static int getTabsSize(Position position) {
-        return AndroidUtilities.dp(position == Position.LEFT ? 64.0f : 36.0f);
+        return dp(position == Position.LEFT ? SIDE_TABS_WIDTH : TOP_TABS_HEIGHT);
     }
 
     public float getSideMenuT() {
-        return this.sidemenuT * this.animatorTopicsVisibility.getFloatValue();
+        return sidemenuT * animatorTopicsVisibility.getFloatValue();
     }
 
     public boolean isSideMenuEnabled() {
-        return this.sidemenuEnabled && this.animatorTopicsVisibility.getValue();
+        return sidemenuEnabled && animatorTopicsVisibility.getValue();
     }
 
+
     private float getTabsVisibility(Position position) {
-        float floatValue = this.animatorTopicsVisibility.getFloatValue();
+        final float visibility = animatorTopicsVisibility.getFloatValue();
+
         if (position == Position.LEFT) {
-            return this.sidemenuT * floatValue;
+            return sidemenuT * visibility;
         }
-        if ((position != Position.TOP || this.topicBottom) && !(position == Position.BOTTOM && this.topicBottom)) {
-            return 0.0f;
+        if (position == Position.TOP && !topicBottom || position == Position.BOTTOM && topicBottom) {
+            return (1.0f - sidemenuT) * visibility;
         }
-        return (1.0f - this.sidemenuT) * floatValue;
+        return 0;
     }
 
     public Position getCurrentTabsPosition() {
-        if (this.sidemenuEnabled) {
-            return Position.LEFT;
-        }
-        return this.topicBottom ? Position.BOTTOM : Position.TOP;
+        return sidemenuEnabled ? Position.LEFT : (topicBottom ? Position.BOTTOM : Position.TOP);
     }
 
-    public float getTabsVisibleSpaceWithPadding(Position position, float f) {
-        return (getTabsSize(position) + f) * getTabsVisibility(position);
+    public float getTabsVisibleSpaceWithPadding(Position position, float padding) {
+        final float visibility = getTabsVisibility(position);
+        final int size = getTabsSize(position);
+        return (size + padding) * visibility;
     }
 
-    @Override // me.vkryl.android.animator.FactorAnimator.Target
-    public void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
+
+    @Override
+    public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
         updateSidemenuPosition();
     }
 }

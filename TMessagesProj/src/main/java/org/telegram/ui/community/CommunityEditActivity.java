@@ -1,34 +1,37 @@
 package org.telegram.ui.community;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.lerp;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
-import android.util.Property;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
-import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import com.exteragram.messenger.AvatarCornerType;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
-import okhttp3.internal.url._UrlKt;
-import org.scilab.forge.jlatexmath.TeXSymbolParser;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.DialogObject;
@@ -36,15 +39,12 @@ import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserObject;
-import org.telegram.messenger.Utilities;
 import org.telegram.messenger.utils.DrawableUtils;
 import org.telegram.messenger.utils.GradientProtectionDrawable;
 import org.telegram.messenger.utils.TextWatcherImpl;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_communities;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -74,490 +74,738 @@ import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundPro
 import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
 import org.telegram.ui.PhotoViewer;
 
-public class CommunityEditActivity extends BaseFragment implements ImageUpdater.ImageUpdaterDelegate, NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
-    private final BoolAnimator animatorDoneVisible;
-    private TLRPC.FileLocation avatar;
-    private AnimatorSet avatarAnimation;
-    private AvatarDrawable avatarDrawable;
-    private BackupImageView avatarImage;
-    private View avatarOverlay;
-    private RadialProgressView avatarProgressView;
-    private boolean canAllManageLinkedPeers;
-    private boolean canAllManageLinkedPeersOriginal;
-    private CommunityHeaderView communityHeaderView;
+import java.util.ArrayList;
+
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+
+public class CommunityEditActivity extends BaseFragment implements ImageUpdater.ImageUpdaterDelegate,
+        NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
+    private static final int ROW_ID_HEADER = 140;
+    private static final int ROW_ID_SET_PHOTO = 141;
+    private static final int ROW_ID_ADMINS = 142;
+    private static final int ROW_ID_PENDING_REQUESTS = 143;
+    private static final int ROW_ID_REMOVED_USERS = 144;
+    private static final int ROW_ID_DELETE_COMMUNITY = 145;
+    private static final int ROW_ID_ADD_CHAT = 146;
+
+    private static final int ROW_ID_ADD_ALL_MEMBERS = 150;
+    private static final int ROW_ID_ADD_ONLY_ADMINS = 151;
+
+    private final BoolAnimator animatorDoneVisible = new BoolAnimator(0, this, CubicBezierInterpolator.EASE_OUT_QUINT, 320L);
     private long communityId;
-    private String communityNameOriginal;
+
     private FrameLayout containerView;
-    private TLRPC.Chat currentChat;
-    private TextView doneItem;
-    private EditTextCell editTextCell;
-    private ImageUpdater imageUpdater;
-    private TLRPC.ChatFull info;
     private UniversalRecyclerView listView;
-    private final AlertDialog[] progressDialog;
-    private PhotoViewer.PhotoViewerProvider provider;
+    private String communityNameOriginal;
+    private boolean canAllManageLinkedPeersOriginal;
+    private boolean canAllManageLinkedPeers;
+    private EditTextCell editTextCell;
+    private CommunityHeaderView communityHeaderView;
 
-    public static void lambda$createView$0(View view) {
-        processDone();
-        finishFragment();
+    private View avatarOverlay;
+    private BackupImageView avatarImage;
+    private AnimatorSet avatarAnimation;
+    private RadialProgressView avatarProgressView;
+    private AvatarDrawable avatarDrawable;
+    private ImageUpdater imageUpdater;
+    private TLRPC.FileLocation avatar;
+    private TextView doneItem;
+    private View fadeView;
+
+    private TLRPC.Chat currentChat;
+    private TLRPC.ChatFull info;
+
+    public CommunityEditActivity(Bundle args) {
+        super(args);
     }
 
-    public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
-        ArrayList<TL_communities.CommunityPeer> arrayList2;
-        int i;
-        arrayList.add(UItem.asCustomShadow(140, this.communityHeaderView));
-        int i2 = 0;
-        if (ChatObject.canUserDoAdminAction(this.currentChat, 1)) {
-            int i3 = R.drawable.outline_profile_photo;
-            if (ChatObject.hasPhoto(this.currentChat)) {
-                i = R.string.CommunitySettingsChangePhoto;
-            } else {
-                i = R.string.CommunitySettingsSetPhoto;
+    @Override
+    public boolean onFragmentCreate() {
+        communityId = arguments.getLong("community_id", 0);
+        currentChat = getMessagesController().getChat(communityId);
+        canAllManageLinkedPeers = canAllManageLinkedPeersOriginal = currentChat != null
+            && (currentChat.default_banned_rights == null
+            || !currentChat.default_banned_rights.manage_linked_peers);
+
+        info = getMessagesController().getChatFull(communityId);
+
+        imageUpdater = new ImageUpdater(true, ImageUpdater.FOR_TYPE_COMMUNITY, true);
+        imageUpdater.parentFragment = this;
+        imageUpdater.setDelegate(this);
+
+        getNotificationCenter().addObserver(this, NotificationCenter.chatInfoDidLoad);
+
+        return super.onFragmentCreate();
+    }
+
+    @Override
+    public View createView(Context context) {
+        setHasOwnBackground(true);
+
+        actionBar.setBackButtonDrawable(new BackDrawable(false));
+        actionBar.setAllowOverlayTitle(false);
+        actionBar.setAddToContainer(false);
+        actionBar.setAllowOverlayTitle(true);
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    finishFragment();
+                }
             }
-            arrayList.add(UItem.asButton(141, i3, LocaleController.getString(i)).accent());
-            arrayList.add(UItem.asSpace(2, AndroidUtilities.dp(14.0f)));
-            arrayList.add(UItem.asHeader(0, LocaleController.getString(R.string.CommunitySectionCommunityName)));
-            arrayList.add(UItem.asCustom(7, this.editTextCell));
-            arrayList.add(UItem.asSpace(1, AndroidUtilities.dp(14.0f)));
-        }
-        if (ChatObject.canBlockUsers(this.currentChat)) {
-            arrayList.add(UItem.asHeader(3, LocaleController.getString(R.string.CommunitySectionWhoCanAddChats)));
-            arrayList.add(UItem.asRadio2(150, LocaleController.getString(R.string.CommunityWhoCanAddChatsAllMembers), LocaleController.getString(R.string.CommunityWhoCanAddChatsAllMembersInfo)).setChecked(this.canAllManageLinkedPeers));
-            arrayList.add(UItem.asRadio2(151, LocaleController.getString(R.string.CommunityWhoCanAddChatsOnlyAdmins), LocaleController.getString(R.string.CommunityWhoCanAddChatsOnlyAdminsInfo)).setChecked(true ^ this.canAllManageLinkedPeers));
-            arrayList.add(UItem.asSpace(4, AndroidUtilities.dp(14.0f)));
-        }
-        if (ChatObject.hasAdminRights(this.currentChat)) {
-            int i4 = R.drawable.msg_admins;
-            String string = LocaleController.getString(R.string.CommunityAdministrators);
-            TLRPC.ChatFull chatFull = this.info;
-            String string2 = _UrlKt.FRAGMENT_ENCODE_SET;
-            arrayList.add(UItem.asButton(142, i4, string, chatFull != null ? Integer.toString(chatFull.admins_count) : _UrlKt.FRAGMENT_ENCODE_SET));
-            int i5 = R.drawable.community_requests_outline_24;
-            String string3 = LocaleController.getString(R.string.CommunityPendingRequests);
-            TLRPC.ChatFull chatFull2 = this.info;
-            arrayList.add(UItem.asButton(143, i5, string3, chatFull2 != null ? Integer.toString(chatFull2.requests_pending) : _UrlKt.FRAGMENT_ENCODE_SET));
-            int i6 = R.drawable.msg_user_remove;
-            String string4 = LocaleController.getString(R.string.CommunityRemovedUsers);
-            TLRPC.ChatFull chatFull3 = this.info;
-            if (chatFull3 != null) {
-                string2 = Integer.toString(chatFull3.kicked_count);
+        });
+
+        BlurredBackgroundSourceColor sourceColor = new BlurredBackgroundSourceColor();
+        sourceColor.setColor(getThemedColor(Theme.key_windowBackgroundWhite));
+        BlurredBackgroundDrawableViewFactory factory = new BlurredBackgroundDrawableViewFactory(sourceColor);
+        actionBar.setupGlass(factory, BlurredBackgroundProviderImpl.topPanelChatActivity(resourceProvider));
+        actionBar.setGlassOnlyBack();
+
+        containerView = new FrameLayout(context) {
+            final GradientProtectionDrawable gradientProtectionDrawable = new GradientProtectionDrawable(WindowInsetsCompat.Side.TOP);
+            final GradientProtectionDrawable gradientProtectionDrawableBottom = new GradientProtectionDrawable(WindowInsetsCompat.Side.BOTTOM);
+
+            @Override
+            protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+                final boolean result =  super.drawChild(canvas, child, drawingTime);
+                if (child == listView) {
+                    gradientProtectionDrawable.setColor(getThemedColor(Theme.key_windowBackgroundGray));
+                    gradientProtectionDrawable.setBounds(0, 0, getWidth(), AndroidUtilities.statusBarHeight);
+                    gradientProtectionDrawable.draw(canvas);
+
+                    float navbarAlpha = AndroidUtilities.getNavigationBarThirdButtonsFactor(AndroidUtilities.navigationBarHeight);
+                    if (navbarAlpha > 0) {
+                        gradientProtectionDrawableBottom.setAlpha((int) (navbarAlpha * 255));
+                        gradientProtectionDrawableBottom.setColor(getThemedColor(Theme.key_windowBackgroundGray));
+                        gradientProtectionDrawableBottom.setBounds(0, getHeight() - AndroidUtilities.navigationBarHeight, getWidth(), getHeight());
+                        gradientProtectionDrawableBottom.draw(canvas);
+                    }
+                }
+                return result;
             }
-            arrayList.add(UItem.asButton(144, i6, string4, string2));
+        };
+        containerView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+
+        avatarDrawable = new AvatarDrawable(currentChat);
+        communityHeaderView = new CommunityHeaderView(context, resourceProvider);
+        communityHeaderView.avatarView.setForUserOrChat(currentChat, avatarDrawable);
+        avatarImage = communityHeaderView.avatarView;
+
+        final String name = DialogObject.getName(currentChat);
+        communityNameOriginal = name;
+
+        editTextCell = new EditTextCell(context, resourceProvider);
+        editTextCell.textView.setText(name);
+        editTextCell.textView.setSelection(name.length());
+        editTextCell.textView.addTextChangedListener(new TextWatcherImpl() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                checkSaveButtonVisible();
+            }
+        });
+
+        doneItem = new TextView(context) {
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override
+            protected void onDraw(Canvas canvas) {
+                p.setColor(getThemedColor(Theme.key_featuredStickers_addButton));
+                canvas.drawRoundRect(0, getHeight() / 2f - dp(14),
+                        getWidth(), getHeight() / 2f + dp(14), dp(14), dp(14), p);
+                super.onDraw(canvas);
+            }
+        };
+        doneItem.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
+        doneItem.setText(getString(R.string.Save));
+        doneItem.setTypeface(AndroidUtilities.bold());
+        doneItem.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        doneItem.setGravity(Gravity.CENTER);
+        doneItem.setVisibility(View.GONE);
+        doneItem.setPadding(dp(12), 0, dp(12), 0);
+        doneItem.setOnClickListener(v -> {
+            processDone();
+            finishFragment();
+        });
+        ScaleStateListAnimator.apply(doneItem);
+        actionBar.addView(doneItem, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 56, Gravity.BOTTOM | Gravity.RIGHT, 0, 0, 12, 0));
+
+        avatarOverlay = new View(context) {
+            final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+            @Override
+            protected void onDraw(@NonNull Canvas canvas) {
+                if (avatarImage != null && avatarImage.getImageReceiver().hasNotThumb()) {
+                    paint.setColor(0x55000000);
+                    paint.setAlpha((int) (0x55 * avatarImage.getImageReceiver().getCurrentAlpha()));
+                    canvas.drawRoundRect(0, 0, getWidth(), getHeight(), dp(20), dp(20), paint);
+                }
+            }
+        };
+
+        communityHeaderView.addView(avatarOverlay, LayoutHelper.createFrame(72, 72, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, 28));
+
+        avatarProgressView = new RadialProgressView(context);
+        avatarProgressView.setSize(dp(30));
+        avatarProgressView.setProgressColor(0xffffffff);
+        avatarProgressView.setNoProgress(false);
+        communityHeaderView.addView(avatarProgressView, LayoutHelper.createFrame(64, 64, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, 32));
+
+
+        showAvatarProgress(false, false);
+
+        listView = new UniversalRecyclerView(this, this::fillItems, this::onClick, this::onLongClick);
+        listView.setClipToPadding(false);
+        listView.adapter.setApplyBackground(false);
+        listView.setSections();
+        actionBar.setBackground(null);
+        containerView.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        containerView.addView(actionBar, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP));
+
+        ViewCompat.setOnApplyWindowInsetsListener(containerView, this::onApplyWindowInsets);
+
+        return fragmentView = containerView;
+    }
+
+    private void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
+        items.add(UItem.asCustomShadow(ROW_ID_HEADER, communityHeaderView));
+
+        if (ChatObject.canUserDoAdminAction(currentChat, ChatObject.ACTION_CHANGE_INFO)) {
+            items.add(UItem.asButton(ROW_ID_SET_PHOTO, R.drawable.outline_profile_photo, getString(ChatObject.hasPhoto(currentChat) ?
+                    R.string.CommunitySettingsChangePhoto :
+                    R.string.CommunitySettingsSetPhoto
+            )).accent());
+            items.add(UItem.asSpace(2, dp(14)));
+            items.add(UItem.asHeader(0, getString(R.string.CommunitySectionCommunityName)));
+            items.add(UItem.asCustom(7, editTextCell));
+            items.add(UItem.asSpace(1, dp(14)));
         }
-        arrayList.add(UItem.asSpace(5, AndroidUtilities.dp(14.0f)));
-        arrayList.add(UItem.asButton(146, R.drawable.msg_groups_create, LocaleController.getString(R.string.CommunityMenuAddChat)).accent());
-        TLRPC.ChatFull chatFull4 = this.info;
-        if (chatFull4 == null || (arrayList2 = chatFull4.linked_peers) == null) {
+
+        if (ChatObject.canBlockUsers(currentChat)) {
+            items.add(UItem.asHeader(3, getString(R.string.CommunitySectionWhoCanAddChats)));
+            items.add(UItem.asRadio2(ROW_ID_ADD_ALL_MEMBERS,
+                    getString(R.string.CommunityWhoCanAddChatsAllMembers),
+                    getString(R.string.CommunityWhoCanAddChatsAllMembersInfo)
+            ).setChecked(canAllManageLinkedPeers));
+            items.add(UItem.asRadio2(ROW_ID_ADD_ONLY_ADMINS,
+                    getString(R.string.CommunityWhoCanAddChatsOnlyAdmins),
+                    getString(R.string.CommunityWhoCanAddChatsOnlyAdminsInfo)
+            ).setChecked(!canAllManageLinkedPeers));
+            items.add(UItem.asSpace(4, dp(14)));
+        }
+
+        if (ChatObject.hasAdminRights(currentChat)) {
+            items.add(UItem.asButton(ROW_ID_ADMINS, R.drawable.msg_admins, getString(R.string.CommunityAdministrators), info != null ? Integer.toString(info.admins_count) : ""));
+            items.add(UItem.asButton(ROW_ID_PENDING_REQUESTS, R.drawable.community_requests_outline_24, getString(R.string.CommunityPendingRequests), info != null ? Integer.toString(info.requests_pending) : ""));
+            items.add(UItem.asButton(ROW_ID_REMOVED_USERS, R.drawable.msg_user_remove, getString(R.string.CommunityRemovedUsers), info != null ? Integer.toString(info.kicked_count) : ""));
+        }
+
+        items.add(UItem.asSpace(5, dp(14)));
+        items.add(UItem.asButton(ROW_ID_ADD_CHAT, R.drawable.msg_groups_create, getString(R.string.CommunityMenuAddChat)).accent());
+        if (info != null && info.linked_peers != null) {
+            for (TL_communities.CommunityPeer communityPeer : info.linked_peers) {
+                final long peerId = DialogObject.getPeerDialogId(communityPeer.peer);
+                items.add(UItem.asProfileCell(getMessagesController().getUserOrChat(peerId)));
+            }
+        }
+
+        //items.add(UItem.asButton(ROW_ID_DELETE_COMMUNITY, getString(R.string.CommunityDelete)).red());
+    }
+
+    private void onClick(UItem item, View view, int position, float x, float y) {
+        final int id = item.id;
+        if (id == ROW_ID_HEADER) {
+            if (imageUpdater.isUploadingImage()) {
+                return;
+            }
+
+            TLRPC.Chat chat = getMessagesController().getChat(communityId);
+            if (chat.photo != null && chat.photo.photo_big != null) {
+                PhotoViewer.getInstance().setParentActivity(CommunityEditActivity.this);
+                if (chat.photo.dc_id != 0) {
+                    chat.photo.photo_big.dc_id = chat.photo.dc_id;
+                }
+                ImageLocation videoLocation;
+                if (info != null && (info.chat_photo instanceof TLRPC.TL_photo) && !info.chat_photo.video_sizes.isEmpty()) {
+                    videoLocation = ImageLocation.getForPhoto(info.chat_photo.video_sizes.get(0), info.chat_photo);
+                } else {
+                    videoLocation = null;
+                }
+                PhotoViewer.getInstance().openPhotoWithVideo(chat.photo.photo_big, videoLocation, provider);
+            }
+        } else if (id == ROW_ID_SET_PHOTO) {
+            openSetPhotoAlert();
+        } else if (id == ROW_ID_ADMINS) {
+            Bundle args = new Bundle();
+            args.putLong("chat_id", communityId);
+            args.putInt("type", ChatUsersActivity.TYPE_ADMIN);
+            ChatUsersActivity fragment = new ChatUsersActivity(args);
+            fragment.setInfo(info);
+            presentFragment(fragment);
+        } else if (id == ROW_ID_REMOVED_USERS) {
+            Bundle args = new Bundle();
+            args.putLong("chat_id", communityId);
+            args.putInt("type", ChatUsersActivity.TYPE_BANNED);
+            ChatUsersActivity fragment = new ChatUsersActivity(args);
+            fragment.setInfo(info);
+            presentFragment(fragment);
+        } else if (id == ROW_ID_PENDING_REQUESTS) {
+            Bundle args = new Bundle();
+            args.putLong("community_id", communityId);
+            presentFragment(new CommunityPendingRequestsActivity(args));
+        } else if (id == ROW_ID_ADD_ALL_MEMBERS) {
+            setAllowedManageLinkedPeers(true);
+        } else if (id == ROW_ID_ADD_ONLY_ADMINS) {
+            setAllowedManageLinkedPeers(false);
+        } else if (id == ROW_ID_DELETE_COMMUNITY) {
+            AlertsCreator.createClearOrDeleteDialogAlert(this, false, currentChat, null, false, true, true, false, (param) -> {
+                finishFragment();
+                getNotificationCenter().postNotificationName(NotificationCenter.needDeleteDialog, -communityId, null, currentChat, param);
+            });
+        } else if (id == ROW_ID_ADD_CHAT) {
+            CommunityUtils.showChatsToAddToCommunity(progressDialog, this, currentAccount, currentChat);
+        } else if (item.object instanceof TLRPC.Chat) {
+            final TLRPC.Chat chat = (TLRPC.Chat) item.object;
+            final long dialogId = -chat.id;
+            presentFragment(ChatActivity.of(dialogId));
+        } else if (item.object instanceof TLRPC.User) {
+            final TLRPC.User user = (TLRPC.User) item.object;
+            final long dialogId = user.id;
+            presentFragment(ChatActivity.of(dialogId));
+        }
+    }
+
+    private final AlertDialog[] progressDialog = new AlertDialog[1];
+
+    private void setAllowedManageLinkedPeers(boolean allowed) {
+        if (canAllManageLinkedPeers == allowed) {
             return;
         }
-        int size = arrayList2.size();
-        while (i2 < size) {
-            TL_communities.CommunityPeer communityPeer = arrayList2.get(i2);
-            i2++;
-            arrayList.add(UItem.asProfileCell(getMessagesController().getUserOrChat(DialogObject.getPeerDialogId(communityPeer.peer))));
-        }
-    }
 
-    void lambda$onClick$1(boolean z) {
-        finishFragment();
-        getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.needDeleteDialog, Long.valueOf(-this.communityId), null, this.currentChat, Boolean.valueOf(z));
-    }
+        final RadioButtonCell cell = (RadioButtonCell) listView.findViewByItemId(ROW_ID_ADD_ONLY_ADMINS);
+        if (cell != null) {
+            cell.setChecked(!allowed, true);
+        }
+        final RadioButtonCell cell2 = (RadioButtonCell) listView.findViewByItemId(ROW_ID_ADD_ALL_MEMBERS);
+        if (cell2 != null) {
+            cell2.setChecked(allowed, true);
+        }
 
-    private void setAllowedManageLinkedPeers(boolean z) {
-        if (this.canAllManageLinkedPeers == z) {
-            return;
-        }
-        RadioButtonCell radioButtonCell = (RadioButtonCell) this.listView.findViewByItemId(151);
-        if (radioButtonCell != null) {
-            radioButtonCell.setChecked(!z, true);
-        }
-        RadioButtonCell radioButtonCell2 = (RadioButtonCell) this.listView.findViewByItemId(150);
-        if (radioButtonCell2 != null) {
-            radioButtonCell2.setChecked(z, true);
-        }
-        this.canAllManageLinkedPeers = z;
+        canAllManageLinkedPeers = allowed;
         checkSaveButtonVisible();
     }
 
-    public boolean onLongClick(UItem uItem, View view, int i, float f, float f2) {
-        long j;
-        boolean zCanRemoveBotFromCommunity;
-        final boolean z;
-        final boolean z2;
-        int i2;
-        Object obj = uItem.object;
-        if (obj instanceof TLRPC.Chat) {
-            TLRPC.Chat chat = (TLRPC.Chat) obj;
-            j = -chat.id;
-            boolean zIsChannelAndNotMegaGroup = ChatObject.isChannelAndNotMegaGroup(chat);
-            zCanRemoveBotFromCommunity = ChatObject.canRemoveChatFromCommunity(chat, this.currentChat);
-            z2 = zIsChannelAndNotMegaGroup;
-            z = false;
+    private boolean onLongClick(UItem item, View view, int position, float x, float y) {
+        final long dialogId;
+        final boolean isChannel;
+        final boolean isBot;
+        final boolean canRemoveChatFromCommunity;
+
+        if (item.object instanceof TLRPC.Chat) {
+            final TLRPC.Chat chat = (TLRPC.Chat) item.object;
+            dialogId = -chat.id;
+            isChannel = ChatObject.isChannelAndNotMegaGroup(chat);
+            isBot = false;
+            canRemoveChatFromCommunity = ChatObject.canRemoveChatFromCommunity(chat, currentChat);
+        } else if (item.object instanceof TLRPC.User) {
+            final TLRPC.User user = (TLRPC.User) item.object;
+            dialogId = user.id;
+            isChannel = false;
+            isBot = UserObject.isBot(user);
+            canRemoveChatFromCommunity = ChatObject.canRemoveBotFromCommunity(user, currentChat);
         } else {
-            if (!(obj instanceof TLRPC.User)) {
-                return false;
-            }
-            TLRPC.User user = (TLRPC.User) obj;
-            j = user.id;
-            boolean zIsBot = UserObject.isBot(user);
-            zCanRemoveBotFromCommunity = ChatObject.canRemoveBotFromCommunity(user, this.currentChat);
-            z = zIsBot;
-            z2 = false;
-        }
-        boolean z3 = zCanRemoveBotFromCommunity;
-        final long j2 = j;
-        CommunityChatType communityChatType = CommunityUtils.getCommunityChatType(this.currentAccount, j2);
-        boolean z4 = communityChatType == CommunityChatType.YouAreIn || communityChatType == CommunityChatType.YouCanView;
-        if (!z3 && !z4) {
             return false;
         }
-        ItemOptions itemOptionsMakeOptions = ItemOptions.makeOptions(this.containerView, view);
-        int i3 = R.drawable.msg_viewintopic;
-        if (z) {
-            i2 = R.string.CommunityMenuViewBot;
-        } else if (z2) {
-            i2 = R.string.CommunityMenuViewChannel;
-        } else {
-            i2 = R.string.CommunityMenuViewGroup;
+
+        final CommunityChatType communityChatType = CommunityUtils.getCommunityChatType(currentAccount, dialogId);
+        final boolean canViewChat = communityChatType == CommunityChatType.YouAreIn || communityChatType == CommunityChatType.YouCanView;
+        if (!canRemoveChatFromCommunity && !canViewChat) {
+            return false;
         }
-        itemOptionsMakeOptions.addIf(z4, i3, LocaleController.getString(i2), new Runnable() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda8
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$onLongClick$2(j2);
-            }
+
+        final ItemOptions io = ItemOptions.makeOptions(containerView, view);
+        io.addIf(canViewChat, R.drawable.msg_viewintopic, getString(isBot ?
+            R.string.CommunityMenuViewBot : isChannel ?
+            R.string.CommunityMenuViewChannel :
+            R.string.CommunityMenuViewGroup
+        ), () -> presentFragment(ChatActivity.of(dialogId)));
+        io.addIf(canRemoveChatFromCommunity, R.drawable.msg_cancel, getString(R.string.CommunityMenuRemoveFromCommunity), true, () -> {
+            AlertsCreator.showSimpleConfirmAlert(this,
+                getString(R.string.CommunityMenuRemoveFromCommunity),
+                getString(isBot ?
+                    R.string.CommunityMenuRemoveBotFromCommunityConfirm : isChannel ?
+                    R.string.CommunityMenuRemoveChannelFromCommunityConfirm :
+                    R.string.CommunityMenuRemoveGroupFromCommunityConfirm
+                ), getString(R.string.Remove), true, () -> {
+                    MessagesController.getInstance(currentAccount).unlinkCommunity(dialogId, communityId, (res, err) -> {
+                        if (err != null) {
+                            BulletinFactory.of(this).showForError(err);
+                        }
+                    });
+                });
         });
-        itemOptionsMakeOptions.addIf(z3, R.drawable.msg_cancel, (CharSequence) LocaleController.getString(R.string.CommunityMenuRemoveFromCommunity), true, new Runnable() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda9
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$onLongClick$5(z, z2, j2);
-            }
-        });
-        itemOptionsMakeOptions.setScrimViewBackground(this.listView.getClipBackground(view, true));
-        itemOptionsMakeOptions.show();
+
+        io.setScrimViewBackground(listView.getClipBackground(view, true));
+        io.show();
+
         return true;
+
     }
 
-    public void lambda$onLongClick$3(TLRPC.Bool bool, TLRPC.TL_error tL_error) {
-        if (tL_error != null) {
-            BulletinFactory.of(this).showForError(tL_error);
-        }
+    @Override
+    public boolean drawEdgeNavigationBar() {
+        return false;
     }
 
-    public WindowInsetsCompat onApplyWindowInsets(View view, WindowInsetsCompat windowInsetsCompat) {
-        Insets insets = windowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars());
-        this.listView.setPadding(0, insets.top, 0, insets.bottom);
+    @NonNull
+    private WindowInsetsCompat onApplyWindowInsets(@NonNull View ignoredV, @NonNull WindowInsetsCompat insets) {
+        Insets systemInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        listView.setPadding(0, systemInsets.top, 0, systemInsets.bottom);
         return WindowInsetsCompat.CONSUMED;
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
+    public boolean isSupportEdgeToEdge() {
+        return true;
+    }
+
+
+    @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
         getNotificationCenter().removeObserver(this, NotificationCenter.chatInfoDidLoad);
-        ImageUpdater imageUpdater = this.imageUpdater;
         if (imageUpdater != null) {
             imageUpdater.clear();
         }
     }
 
     private void processDone() {
-        TLRPC.Chat chat = this.currentChat;
-        if (chat != null && !chat.title.equals(this.editTextCell.getText())) {
-            getMessagesController().changeChatTitle(this.currentChat.id, this.editTextCell.getText(), new Runnable() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda7
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$processDone$6();
-                }
-            });
+        if (currentChat != null && !currentChat.title.equals(editTextCell.getText())) {
+            getMessagesController().changeChatTitle(currentChat.id, editTextCell.getText(), () ->
+                getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_CHAT));
         }
-        TLRPC.Chat chat2 = this.currentChat;
-        if (chat2 == null || this.canAllManageLinkedPeers == this.canAllManageLinkedPeersOriginal) {
-            return;
+
+        if (currentChat != null && canAllManageLinkedPeers != canAllManageLinkedPeersOriginal) {
+            if (currentChat.default_banned_rights == null) {
+                currentChat.default_banned_rights = new TLRPC.TL_chatBannedRights();
+            }
+            currentChat.default_banned_rights.manage_linked_peers = !canAllManageLinkedPeers;
+            getMessagesController().setDefaultBannedRole(communityId,
+                    currentChat.default_banned_rights, false, this);
         }
-        if (chat2.default_banned_rights == null) {
-            chat2.default_banned_rights = new TLRPC.TL_chatBannedRights();
-        }
-        this.currentChat.default_banned_rights.manage_linked_peers = !this.canAllManageLinkedPeers;
-        getMessagesController().setDefaultBannedRole(this.communityId, this.currentChat.default_banned_rights, false, this);
     }
 
-    public /* synthetic */ void lambda$processDone$6() {
-        getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.updateInterfaces, Integer.valueOf(MessagesController.UPDATE_MASK_CHAT));
-    }
-
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
     public void onResume() {
         super.onResume();
-        this.imageUpdater.onResume();
+        imageUpdater.onResume();
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
     public void onPause() {
         super.onPause();
-        this.imageUpdater.onPause();
+        imageUpdater.onPause();
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
     public void dismissCurrentDialog() {
-        if (this.imageUpdater.dismissCurrentDialog(this.visibleDialog)) {
+        if (imageUpdater.dismissCurrentDialog(visibleDialog)) {
             return;
         }
         super.dismissCurrentDialog();
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
+    @Override
     public boolean dismissDialogOnPause(Dialog dialog) {
-        return this.imageUpdater.dismissDialogOnPause(dialog) && super.dismissDialogOnPause(dialog);
+        return imageUpdater.dismissDialogOnPause(dialog) && super.dismissDialogOnPause(dialog);
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public void onRequestPermissionsResultFragment(int i, String[] strArr, int[] iArr) {
-        this.imageUpdater.onRequestPermissionsResultFragment(i, strArr, iArr);
+    @Override
+    public void onRequestPermissionsResultFragment(int requestCode, String[] permissions, int[] grantResults) {
+        imageUpdater.onRequestPermissionsResultFragment(requestCode, permissions, grantResults);
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public void onActivityResultFragment(int i, int i2, Intent intent) {
-        this.imageUpdater.onActivityResult(i, i2, intent);
+    @Override
+    public void onActivityResultFragment(int requestCode, int resultCode, Intent data) {
+        imageUpdater.onActivityResult(requestCode, resultCode, data);
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public void saveSelfArgs(Bundle bundle) {
-        String str;
-        ImageUpdater imageUpdater = this.imageUpdater;
-        if (imageUpdater != null && (str = imageUpdater.currentPicturePath) != null) {
-            bundle.putString("path", str);
+    @Override
+    public void saveSelfArgs(Bundle args) {
+        if (imageUpdater != null && imageUpdater.currentPicturePath != null) {
+            args.putString("path", imageUpdater.currentPicturePath);
         }
-        EditTextCell editTextCell = this.editTextCell;
         if (editTextCell != null) {
             String text = editTextCell.getText();
-            if (text.isEmpty()) {
-                return;
+            if (!text.isEmpty()) {
+                args.putString("nameTextView", text);
             }
-            bundle.putString("nameTextView", text);
         }
     }
 
-    @Override // org.telegram.ui.ActionBar.BaseFragment
-    public void restoreSelfArgs(Bundle bundle) {
-        ImageUpdater imageUpdater = this.imageUpdater;
+    @Override
+    public void restoreSelfArgs(Bundle args) {
         if (imageUpdater != null) {
-            imageUpdater.currentPicturePath = bundle.getString("path");
+            imageUpdater.currentPicturePath = args.getString("path");
         }
     }
 
     public void openSetPhotoAlert() {
-        this.imageUpdater.openMenu(this.avatar != null, new Runnable() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda11
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$openSetPhotoAlert$7();
-            }
-        }, new DialogInterface.OnDismissListener() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda12
-            @Override // android.content.DialogInterface.OnDismissListener
-            public final void onDismiss(DialogInterface dialogInterface) {
-                CommunityEditActivity.m21523$r8$lambda$SYeLWGXfsCkP6IaLtIuBS31nXk(dialogInterface);
-            }
-        }, 0);
+        imageUpdater.openMenu(avatar != null, () -> {
+            avatar = null;
+            MessagesController.getInstance(currentAccount).changeChatAvatar(communityId, null, null, null, null, 0, null, null, null, null);
+            showAvatarProgress(false, true);
+            avatarImage.setImage(null, null, avatarDrawable, currentChat);
+        }, dialogInterface -> {}, 0);
     }
 
-    public /* synthetic */ void lambda$openSetPhotoAlert$7() {
-        this.avatar = null;
-        MessagesController.getInstance(this.currentAccount).changeChatAvatar(this.communityId, null, null, null, null, 0.0d, null, null, null, null);
-        showAvatarProgress(false, true);
-        this.avatarImage.setImage((ImageLocation) null, (String) null, this.avatarDrawable, this.currentChat);
-    }
 
-    @Override // org.telegram.ui.Components.ImageUpdater.ImageUpdaterDelegate
-    public void onUploadProgressChanged(float f) {
-        RadialProgressView radialProgressView = this.avatarProgressView;
-        if (radialProgressView == null) {
+
+
+
+
+
+    @Override
+    public void onUploadProgressChanged(float progress) {
+        if (avatarProgressView == null) {
             return;
         }
-        radialProgressView.setProgress(f);
+        avatarProgressView.setProgress(progress);
     }
 
-    @Override // org.telegram.ui.Components.ImageUpdater.ImageUpdaterDelegate
-    public void didStartUpload(boolean z, boolean z2) {
-        RadialProgressView radialProgressView = this.avatarProgressView;
-        if (radialProgressView == null) {
+    @Override
+    public void didStartUpload(boolean fromAvatarConstructor, boolean isVideo) {
+        if (avatarProgressView == null) {
             return;
         }
-        radialProgressView.setProgress(0.0f);
+        avatarProgressView.setProgress(0.0f);
     }
 
-    @Override // org.telegram.ui.Components.ImageUpdater.ImageUpdaterDelegate
-    public void didUploadPhoto(final TLRPC.InputFile inputFile, final TLRPC.InputFile inputFile2, final double d, final String str, final TLRPC.PhotoSize photoSize, final TLRPC.PhotoSize photoSize2, boolean z, final TLRPC.VideoSize videoSize) {
-        AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.community.CommunityEditActivity$$ExternalSyntheticLambda5
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$didUploadPhoto$9(photoSize2, inputFile, inputFile2, videoSize, d, str, photoSize);
+    @Override
+    public void didUploadPhoto(final TLRPC.InputFile photo, final TLRPC.InputFile video, double videoStartTimestamp, String videoPath, final TLRPC.PhotoSize bigSize, final TLRPC.PhotoSize smallSize, boolean isVideo, TLRPC.VideoSize emojiMarkup) {
+        AndroidUtilities.runOnUIThread(() -> {
+            avatar = smallSize.location;
+            if (photo != null || video != null || emojiMarkup != null) {
+                getMessagesController().changeChatAvatar(communityId, null, photo, video, emojiMarkup, videoStartTimestamp, videoPath, smallSize.location, bigSize.location, null);
+                showAvatarProgress(false, true);
+            } else {
+                avatarImage.setImage(ImageLocation.getForLocal(avatar), "50_50", avatarDrawable, currentChat);
+                showAvatarProgress(true, false);
             }
+            listView.adapter.update(true);
         });
     }
 
-    public /* synthetic */ void lambda$didUploadPhoto$9(TLRPC.PhotoSize photoSize, TLRPC.InputFile inputFile, TLRPC.InputFile inputFile2, TLRPC.VideoSize videoSize, double d, String str, TLRPC.PhotoSize photoSize2) {
-        TLRPC.FileLocation fileLocation = photoSize.location;
-        this.avatar = fileLocation;
-        if (inputFile != null || inputFile2 != null || videoSize != null) {
-            getMessagesController().changeChatAvatar(this.communityId, null, inputFile, inputFile2, videoSize, d, str, photoSize.location, photoSize2.location, null);
-            showAvatarProgress(false, true);
-        } else {
-            this.avatarImage.setImage(ImageLocation.getForLocal(fileLocation), "50_50", this.avatarDrawable, this.currentChat);
-            showAvatarProgress(true, false);
-        }
-        this.listView.adapter.update(true);
-    }
-
-    @Override // org.telegram.ui.Components.ImageUpdater.ImageUpdaterDelegate
+    @Override
     public String getInitialSearchString() {
-        return this.editTextCell.getText();
+        return editTextCell.getText();
     }
 
-    @Override 
-    public void didReceivedNotification(int i, int i2, Object... objArr) {
-        if (i == NotificationCenter.chatInfoDidLoad) {
-            TLRPC.ChatFull chatFull = (TLRPC.ChatFull) objArr[0];
-            if (chatFull.id == this.communityId) {
-                this.info = chatFull;
-                this.listView.adapter.update(true);
+
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.chatInfoDidLoad) {
+            TLRPC.ChatFull chatFull = (TLRPC.ChatFull) args[0];
+            if (chatFull.id == communityId) {
+                info = chatFull;
+                listView.adapter.update(true);
             }
         }
     }
 
-    @Override // me.vkryl.android.animator.FactorAnimator.Target
-    public void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
-        this.doneItem.setAlpha(f);
-        this.doneItem.setScaleX(AndroidUtilities.lerp(0.75f, 1.0f, f));
-        this.doneItem.setScaleY(AndroidUtilities.lerp(0.75f, 1.0f, f));
-        this.doneItem.setVisibility(f > 0.0f ? 0 : 8);
+    @Override
+    public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
+        doneItem.setAlpha(factor);
+        doneItem.setScaleX(lerp(0.75f, 1f, factor));
+        doneItem.setScaleY(lerp(0.75f, 1f, factor));
+        doneItem.setVisibility(factor > 0 ? View.VISIBLE : View.GONE);
     }
 
-    public static class EditTextCell extends FrameLayout {
+    private static class EditTextCell extends FrameLayout {
         private final Theme.ResourcesProvider resourcesProvider;
         public EditTextBoldCursor textView;
 
         public EditTextCell(Context context, Theme.ResourcesProvider resourcesProvider) {
             super(context);
             this.resourcesProvider = resourcesProvider;
-            EditTextBoldCursor editTextBoldCursor = new EditTextBoldCursor(context) { // from class: org.telegram.ui.community.CommunityEditActivity.EditTextCell.1
-                @Override // org.telegram.ui.Components.EditTextBoldCursor, android.widget.TextView, android.view.View
-                public boolean onTouchEvent(MotionEvent motionEvent) {
-                    if (isEnabled()) {
-                        return super.onTouchEvent(motionEvent);
+            textView = new EditTextBoldCursor(context) {
+                @Override
+                public boolean onTouchEvent(MotionEvent event) {
+                    if (!isEnabled()) {
+                        return false;
                     }
-                    return false;
+                    return super.onTouchEvent(event);
                 }
             };
-            this.textView = editTextBoldCursor;
-            editTextBoldCursor.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-            this.textView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
-            this.textView.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
-            this.textView.setTextSize(1, 16.0f);
-            this.textView.setMaxLines(Integer.MAX_VALUE);
-            this.textView.setBackground(null);
-            EditTextBoldCursor editTextBoldCursor2 = this.textView;
-            editTextBoldCursor2.setImeOptions(editTextBoldCursor2.getImeOptions() | 268435456);
-            EditTextBoldCursor editTextBoldCursor3 = this.textView;
-            editTextBoldCursor3.setInputType(editTextBoldCursor3.getInputType() | 16384);
-            this.textView.setPadding(AndroidUtilities.dp(4.0f), AndroidUtilities.dp(10.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(11.0f));
-            this.textView.setMinHeight(AndroidUtilities.dp(50.0f));
-            addView(this.textView, LayoutHelper.createFrame(-1, -2.0f, (LocaleController.isRTL ? 5 : 3) | 16, 13.0f, 0.0f, 13.0f, 0.0f));
+            textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+            textView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
+            textView.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            textView.setMaxLines(Integer.MAX_VALUE);
+            textView.setBackground(null);
+            textView.setImeOptions(textView.getImeOptions() | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+            textView.setInputType(textView.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
+            textView.setPadding(dp(4), dp(10), dp(4), dp(11));
+            textView.setMinHeight(dp(50));
+
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL,  13, 0, 13, 0));
         }
 
         public String getText() {
-            return this.textView.getText().toString();
+            return textView.getText().toString();
         }
     }
 
-    public static class CommunityHeaderView extends FrameLayout implements Theme.Colorable {
+    private static class CommunityHeaderView extends FrameLayout implements Theme.Colorable {
         public final BackupImageView avatarView;
         private final Theme.ResourcesProvider resourcesProvider;
-
-        @Override // org.telegram.ui.ActionBar.Theme.Colorable
-        public void updateColors() {
-        }
+        private static final int AVATAR_SIZE = 72;
 
         public CommunityHeaderView(Context context, Theme.ResourcesProvider resourcesProvider) {
             super(context);
             this.resourcesProvider = resourcesProvider;
-            BackupImageView backupImageView = new BackupImageView(context);
-            this.avatarView = backupImageView;
-            backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(72.0f, false, AvatarCornerType.COMMUNITY));
-            addView(backupImageView, LayoutHelper.createFrame(72, 72.0f, 81, 0.0f, 0.0f, 0.0f, 28.0f));
+            avatarView = new BackupImageView(context);
+            avatarView.setRoundRadius(dp(20));
+            addView(avatarView, LayoutHelper.createFrame(AVATAR_SIZE, AVATAR_SIZE,
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL,
+                0, 0, 0, 28));
+
             updateColors();
         }
 
-        @Override // android.view.ViewGroup, android.view.View
-        public void dispatchDraw(Canvas canvas) {
+        @Override
+        protected void dispatchDraw(@NonNull Canvas canvas) {
             super.dispatchDraw(canvas);
-            DrawableUtils.drawCommunityCardDrawable(canvas, Theme.dialogs_communityCardsDrawable, this.avatarView.getLeft() + (this.avatarView.getWidth() / 2.0f), this.avatarView.getTop() + (this.avatarView.getHeight() / 2.0f), this.avatarView.getHeight());
+            DrawableUtils.drawCommunityCardDrawable(canvas, Theme.dialogs_communityCardsDrawable, avatarView.getLeft() + avatarView.getWidth() / 2f, avatarView.getTop() + avatarView.getHeight() / 2f, avatarView.getHeight());
         }
 
-        @Override // android.widget.FrameLayout, android.view.View
-        public void onMeasure(int i, int i2) {
-            super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(136.0f), TLObject.FLAG_30));
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(136), MeasureSpec.EXACTLY));
+        }
+
+        @Override
+        public void updateColors() {
+
         }
     }
 
-    private void showAvatarProgress(final boolean z, boolean z2) {
-        if (this.avatarProgressView == null) {
+    private PhotoViewer.PhotoViewerProvider provider = new PhotoViewer.EmptyPhotoViewerProvider() {
+
+        @Override
+        public PhotoViewer.PlaceProviderObject getPlaceForPhoto(MessageObject messageObject, TLRPC.FileLocation fileLocation, int index, boolean needPreview, boolean closing) {
+            if (fileLocation == null) {
+                return null;
+            }
+
+            TLRPC.FileLocation photoBig = null;
+            TLRPC.Chat chat = getMessagesController().getChat(communityId);
+            if (chat != null && chat.photo != null && chat.photo.photo_big != null) {
+                photoBig = chat.photo.photo_big;
+            }
+
+            if (photoBig != null && photoBig.local_id == fileLocation.local_id && photoBig.volume_id == fileLocation.volume_id && photoBig.dc_id == fileLocation.dc_id) {
+                int[] coords = new int[2];
+                avatarImage.getLocationInWindow(coords);
+                PhotoViewer.PlaceProviderObject object = new PhotoViewer.PlaceProviderObject();
+                object.viewX = coords[0];
+                object.viewY = coords[1];
+                object.parentView = avatarImage;
+                object.imageReceiver = avatarImage.getImageReceiver();
+                object.dialogId = -communityId;
+                object.thumb = object.imageReceiver.getBitmapSafe();
+                object.size = -1;
+                object.radius = avatarImage.getImageReceiver().getRoundRadius(true);
+                object.scale = 1;
+                object.canEdit = true;
+                return object;
+            }
+            return null;
+        }
+
+        @Override
+        public void willHidePhotoViewer() {
+            avatarImage.getImageReceiver().setVisible(true, true);
+        }
+
+        @Override
+        public void openPhotoForEdit(String file, String thumb, boolean isVideo) {
+            imageUpdater.openPhotoForEdit(file, thumb, 0, isVideo);
+        }
+
+        @Override
+        public boolean onDeletePhoto(int index) {
+            return true;
+        }
+
+        @Override
+        public int getTotalImageCount() {
+            return 1;
+        }
+
+        @Override
+        public boolean canLoadMoreAvatars() {
+            return false;
+        }
+    };
+
+    private void showAvatarProgress(boolean show, boolean animated) {
+        if (avatarProgressView == null) {
             return;
         }
-        AnimatorSet animatorSet = this.avatarAnimation;
-        if (animatorSet != null) {
-            animatorSet.cancel();
-            this.avatarAnimation = null;
+        if (avatarAnimation != null) {
+            avatarAnimation.cancel();
+            avatarAnimation = null;
         }
-        if (z2) {
-            AnimatorSet animatorSet2 = new AnimatorSet();
-            this.avatarAnimation = animatorSet2;
-            RadialProgressView radialProgressView = this.avatarProgressView;
-            if (z) {
-                radialProgressView.setVisibility(0);
-                this.avatarOverlay.setVisibility(0);
-                AnimatorSet animatorSet3 = this.avatarAnimation;
-                RadialProgressView radialProgressView2 = this.avatarProgressView;
-                Property property = View.ALPHA;
-                animatorSet3.playTogether(ObjectAnimator.ofFloat(radialProgressView2, (Property<RadialProgressView, Float>) property, 1.0f), ObjectAnimator.ofFloat(this.avatarOverlay, (Property<View, Float>) property, 1.0f));
+        if (animated) {
+            avatarAnimation = new AnimatorSet();
+            if (show) {
+                avatarProgressView.setVisibility(View.VISIBLE);
+                avatarOverlay.setVisibility(View.VISIBLE);
+                avatarAnimation.playTogether(ObjectAnimator.ofFloat(avatarProgressView, View.ALPHA, 1.0f),
+                        ObjectAnimator.ofFloat(avatarOverlay, View.ALPHA, 1.0f));
             } else {
-                Property property2 = View.ALPHA;
-                animatorSet2.playTogether(ObjectAnimator.ofFloat(radialProgressView, (Property<RadialProgressView, Float>) property2, 0.0f), ObjectAnimator.ofFloat(this.avatarOverlay, (Property<View, Float>) property2, 0.0f));
+                avatarAnimation.playTogether(ObjectAnimator.ofFloat(avatarProgressView, View.ALPHA, 0.0f),
+                        ObjectAnimator.ofFloat(avatarOverlay, View.ALPHA, 0.0f));
             }
-            this.avatarAnimation.setDuration(180L);
-            this.avatarAnimation.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.community.CommunityEditActivity.7
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationEnd(Animator animator) {
-                    if (CommunityEditActivity.this.avatarAnimation == null || CommunityEditActivity.this.avatarProgressView == null) {
+            avatarAnimation.setDuration(180);
+            avatarAnimation.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (avatarAnimation == null || avatarProgressView == null) {
                         return;
                     }
-                    if (!z) {
-                        CommunityEditActivity.this.avatarProgressView.setVisibility(4);
-                        CommunityEditActivity.this.avatarOverlay.setVisibility(4);
+                    if (!show) {
+                        avatarProgressView.setVisibility(View.INVISIBLE);
+                        avatarOverlay.setVisibility(View.INVISIBLE);
                     }
-                    CommunityEditActivity.this.avatarAnimation = null;
+                    avatarAnimation = null;
                 }
 
-                @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-                public void onAnimationCancel(Animator animator) {
-                    CommunityEditActivity.this.avatarAnimation = null;
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    avatarAnimation = null;
                 }
             });
-            this.avatarAnimation.start();
-            return;
+            avatarAnimation.start();
+        } else {
+            if (show) {
+                avatarProgressView.setAlpha(1.0f);
+                avatarProgressView.setVisibility(View.VISIBLE);
+                avatarOverlay.setAlpha(1.0f);
+                avatarOverlay.setVisibility(View.VISIBLE);
+            } else {
+                avatarProgressView.setAlpha(0.0f);
+                avatarProgressView.setVisibility(View.INVISIBLE);
+                avatarOverlay.setAlpha(0.0f);
+                avatarOverlay.setVisibility(View.INVISIBLE);
+            }
         }
-        RadialProgressView radialProgressView3 = this.avatarProgressView;
-        if (z) {
-            radialProgressView3.setAlpha(1.0f);
-            this.avatarProgressView.setVisibility(0);
-            this.avatarOverlay.setAlpha(1.0f);
-            this.avatarOverlay.setVisibility(0);
-            return;
-        }
-        radialProgressView3.setAlpha(0.0f);
-        this.avatarProgressView.setVisibility(4);
-        this.avatarOverlay.setAlpha(0.0f);
-        this.avatarOverlay.setVisibility(4);
     }
 
-    public void checkSaveButtonVisible() {
-        this.animatorDoneVisible.setValue((this.canAllManageLinkedPeersOriginal == this.canAllManageLinkedPeers && TextUtils.equals(this.editTextCell.getText(), this.communityNameOriginal)) ? false : true, true);
+    private void checkSaveButtonVisible() {
+        final boolean visible = (canAllManageLinkedPeersOriginal != canAllManageLinkedPeers)
+            || !TextUtils.equals(editTextCell.getText(), communityNameOriginal);
+
+        animatorDoneVisible.setValue(visible, true);
     }
 }

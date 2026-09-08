@@ -1,11 +1,24 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
+
+import static org.telegram.messenger.LocaleController.getString;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.view.View;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import com.exteragram.messenger.ExteraConfig;
+
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.LocaleController;
@@ -18,127 +31,116 @@ import org.telegram.ui.Components.CheckBox2;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.ProgressButton;
 
-@SuppressLint({"ViewConstructor"})
+@SuppressLint("ViewConstructor")
 public class InviteUserCell extends FrameLayout {
-    private final AvatarDrawable avatarDrawable;
+
     private final BackupImageView avatarImageView;
-    private final ProgressButton button;
-    private final CheckBox2 checkBox;
-    private ContactsController.Contact currentContact;
-    private CharSequence currentName;
     private final SimpleTextView nameTextView;
     private final SimpleTextView statusTextView;
+    private final AvatarDrawable avatarDrawable;
+    private @Nullable final ProgressButton button;
+    private @Nullable final CheckBox2 checkBox;
+    private ContactsController.Contact currentContact;
+    private CharSequence currentName;
 
-    @Override // android.view.View
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
-
-    public InviteUserCell(Context context, boolean z) {
+    public InviteUserCell(Context context, boolean needCheck) {
         super(context);
-        this.avatarDrawable = new AvatarDrawable();
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.avatarImageView = backupImageView;
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(46.0f));
-        addView(backupImageView, LayoutHelper.createFrame(46, 46.0f, (LocaleController.isRTL ? 5 : 3) | 48, 13.0f, 6.0f, 13.0f, 6.0f));
-        LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setOrientation(0);
-        boolean z2 = LocaleController.isRTL;
-        addView(linearLayout, LayoutHelper.createFrame(-1, -1.0f, 119, z2 ? 0 : 72, 0.0f, z2 ? 72 : 0, 0.0f));
-        FrameLayout frameLayout = new FrameLayout(context);
-        linearLayout.addView(frameLayout, LayoutHelper.createLinear(0, 58, 1.0f));
-        SimpleTextView simpleTextView = new SimpleTextView(context);
-        this.nameTextView = simpleTextView;
-        simpleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        simpleTextView.setTypeface(AndroidUtilities.bold());
-        simpleTextView.setTextSize(15);
-        simpleTextView.setGravity((LocaleController.isRTL ? 5 : 3) | 48);
-        frameLayout.addView(simpleTextView, LayoutHelper.createFrame(-1, 20.0f, (LocaleController.isRTL ? 5 : 3) | 48, 0.0f, 9.0f, 0.0f, 0.0f));
-        SimpleTextView simpleTextView2 = new SimpleTextView(context);
-        this.statusTextView = simpleTextView2;
-        simpleTextView2.setTextSize(13);
-        simpleTextView2.setGravity((LocaleController.isRTL ? 5 : 3) | 48);
-        frameLayout.addView(simpleTextView2, LayoutHelper.createFrame(-1, 20.0f, (LocaleController.isRTL ? 5 : 3) | 48, 0.0f, 33.0f, 0.0f, 0.0f));
-        if (z) {
-            this.button = null;
-            CheckBox2 checkBox2 = new CheckBox2(context, 21);
-            this.checkBox = checkBox2;
-            checkBox2.setColor(-1, Theme.key_windowBackgroundWhite, Theme.key_checkboxCheck);
-            checkBox2.setDrawUnchecked(false);
-            checkBox2.setDrawBackgroundAsArc(3);
-            boolean z3 = LocaleController.isRTL;
-            addView(checkBox2, LayoutHelper.createFrame(24, 24.0f, (z3 ? 5 : 3) | 48, z3 ? 0.0f : 40.0f, 32.0f, z3 ? 39.0f : 0.0f, 0.0f));
-            return;
+        avatarDrawable = new AvatarDrawable();
+
+        avatarImageView = new BackupImageView(context);
+        avatarImageView.setRoundRadius(AndroidUtilities.dp(23));
+        addView(avatarImageView, LayoutHelper.createFrame(46, 46, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 13, 6, 13, 6));
+
+        LinearLayout nameAndButton = new LinearLayout(context);
+        nameAndButton.setOrientation(LinearLayout.HORIZONTAL);
+        addView(nameAndButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL,
+                (LocaleController.isRTL ? 0 : 72), 0, (LocaleController.isRTL ? 72 : 0), 0));
+
+        FrameLayout namesLayout = new FrameLayout(context);
+        nameAndButton.addView(namesLayout, LayoutHelper.createLinear(0, 58, 1f));
+
+        nameTextView = new SimpleTextView(context);
+        nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        nameTextView.setTypeface(AndroidUtilities.bold());
+        nameTextView.setTextSize(15);
+        nameTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
+        namesLayout.addView(nameTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 0, 9, 0, 0));
+
+        statusTextView = new SimpleTextView(context);
+        statusTextView.setTextSize(13);
+        statusTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
+        namesLayout.addView(statusTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 0, 33, 0, 0));
+
+        if (needCheck) {
+            button = null;
+            checkBox = new CheckBox2(context, 21);
+            checkBox.setColor(-1, Theme.key_windowBackgroundWhite, Theme.key_checkboxCheck);
+            checkBox.setDrawUnchecked(false);
+            checkBox.setDrawBackgroundAsArc(3);
+            addView(checkBox, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : 40, 32, LocaleController.isRTL ? 39 : 0, 0));
+        } else {
+            checkBox = null;
+
+            button = new ProgressButton(context);
+            button.setText(getString(R.string.Invite));
+            button.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            button.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
+            button.setProgressColor(Theme.getColor(Theme.key_featuredStickers_buttonProgress));
+            button.setBackgroundRoundRect(Theme.getColor(Theme.key_telegram_color), Theme.getColor(Theme.key_featuredStickers_addButtonPressed), 16);
+            button.setPadding(AndroidUtilities.dp(14), 0, AndroidUtilities.dp(14), 0);
+            nameAndButton.addView(button, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 28, 0f, Gravity.CENTER_VERTICAL, 18, 0, 18, 0));
+            button.setOnClickListener(v -> InviteUserCell.this.performClick());
         }
-        this.checkBox = null;
-        ProgressButton progressButton = new ProgressButton(context);
-        this.button = progressButton;
-        progressButton.setText(LocaleController.getString(R.string.Invite));
-        progressButton.setTextSize(1, 14.0f);
-        progressButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
-        progressButton.setProgressColor(Theme.getColor(Theme.key_featuredStickers_buttonProgress));
-        progressButton.setBackgroundRoundRect(Theme.getColor(Theme.key_telegram_color), Theme.getColor(Theme.key_featuredStickers_addButtonPressed), 16.0f);
-        progressButton.setPadding(AndroidUtilities.dp(14.0f), 0, AndroidUtilities.dp(14.0f), 0);
-        linearLayout.addView(progressButton, LayoutHelper.createLinear(-2, 28, 0.0f, 16, 18, 0, 18, 0));
-        progressButton.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Cells.InviteUserCell$$ExternalSyntheticLambda0
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
-            }
-        });
     }
 
-    public /* synthetic */ void lambda$new$0(View view) {
-        performClick();
-    }
-
-    public void setUser(ContactsController.Contact contact, CharSequence charSequence) {
-        this.currentContact = contact;
-        this.currentName = charSequence;
+    public void setUser(ContactsController.Contact contact, CharSequence name) {
+        currentContact = contact;
+        currentName = name;
         update(0);
     }
 
-    public void setChecked(boolean z, boolean z2) {
-        CheckBox2 checkBox2 = this.checkBox;
-        if (checkBox2 != null) {
-            checkBox2.setChecked(z, z2);
+    public void setChecked(boolean checked, boolean animated) {
+        if (checkBox != null) {
+            checkBox.setChecked(checked, animated);
         }
     }
 
     public ContactsController.Contact getContact() {
-        return this.currentContact;
+        return currentContact;
     }
 
     public void recycle() {
-        this.avatarImageView.getImageReceiver().cancelLoadImage();
+        avatarImageView.getImageReceiver().cancelLoadImage();
     }
 
-    public void update(int i) {
-        ContactsController.Contact contact = this.currentContact;
-        if (contact == null) {
+    public void update(int mask) {
+        if (currentContact == null) {
             return;
         }
-        this.avatarDrawable.setInfo(contact.contact_id, contact.first_name, contact.last_name, null, null, null, false);
-        CharSequence charSequence = this.currentName;
-        SimpleTextView simpleTextView = this.nameTextView;
-        if (charSequence != null) {
-            simpleTextView.setText(charSequence, true);
+        String newName = null;
+
+        avatarDrawable.setInfo(currentContact.contact_id, currentContact.first_name, currentContact.last_name, null, null, null, false);
+
+
+        if (currentName != null) {
+            nameTextView.setText(currentName, true);
         } else {
-            ContactsController.Contact contact2 = this.currentContact;
-            simpleTextView.setText(ContactsController.formatName(contact2.first_name, contact2.last_name));
+            nameTextView.setText(ContactsController.formatName(currentContact.first_name, currentContact.last_name));
         }
-        SimpleTextView simpleTextView2 = this.statusTextView;
-        int i2 = Theme.key_windowBackgroundWhiteGrayText;
-        simpleTextView2.setTag(Integer.valueOf(i2));
-        this.statusTextView.setTextColor(Theme.getColor(i2));
-        ContactsController.Contact contact3 = this.currentContact;
-        int i3 = contact3.imported;
-        SimpleTextView simpleTextView3 = this.statusTextView;
-        if (i3 > 0) {
-            simpleTextView3.setText(LocaleController.formatPluralString("TelegramContacts", i3, new Object[0]));
+
+        statusTextView.setTag(Theme.key_windowBackgroundWhiteGrayText);
+        statusTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        if (currentContact.imported > 0) {
+            statusTextView.setText(LocaleController.formatPluralString("TelegramContacts", currentContact.imported));
         } else {
-            simpleTextView3.setText(contact3.phones.get(0));
+            statusTextView.setText(currentContact.phones.get(0));
         }
-        this.avatarImageView.setImageDrawable(this.avatarDrawable);
+
+        avatarImageView.setImageDrawable(avatarDrawable);
+    }
+
+    @Override
+    public boolean hasOverlappingRendering() {
+        return false;
     }
 }

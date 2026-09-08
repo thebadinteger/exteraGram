@@ -1,31 +1,41 @@
 package org.telegram.ui.Components.poll;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.os.SystemClock;
 import android.text.Editable;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.FrameLayout;
+
+import androidx.annotation.ChecksSdkIntAtLeast;
+import androidx.annotation.NonNull;
 import androidx.core.graphics.ColorUtils;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
+
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.Utilities;
 import org.telegram.messenger.utils.DrawableUtils;
 import org.telegram.messenger.utils.TextWatcherImpl;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.ChatAttachAlertPollLayout;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.EditTextBoldCursor;
@@ -34,315 +44,370 @@ import org.telegram.ui.Components.FragmentFloatingButton;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.ScaleStateListAnimator;
 
-@SuppressLint({"ViewConstructor"})
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+
+@SuppressLint("ViewConstructor")
 public class PollAddOptionFieldLayout extends FrameLayout implements ViewTreeObserver.OnPreDrawListener {
-    private final BoolAnimator animatorTextErrorVisibility;
-    private final BoolAnimator animatorTextWarnVisibility;
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
+    private static final boolean ALLOW_DRAW_IN_CELL = false; // Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+
+    public final EditTextBoldCursor textView;
+    private final EmojiButton emojiButton;
     private final PollAttachButton attachButton;
+    private final BaseFragment fragment;
+    private final FrameLayout.LayoutParams lp = new LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT);
+    private final SimpleTextView limitTextView;
+
     private PollAttachedMedia attachedMedia;
     public ChatMessageCell cellToWatch;
-    private final int[] cords;
-    private final EmojiButton emojiButton;
-    private final BaseFragment fragment;
-    private int lastColor;
-    private final SimpleTextView limitTextView;
-    private final FrameLayout.LayoutParams lp;
-    private final int maxLength;
     private int messageIdToWatch;
-    private ViewTreeObserver observer;
     private Runnable onCancel;
-    private final Rect rect;
-    public final EditTextBoldCursor textView;
+
     private FrameLayout viewsContainer;
     private ViewWrapper viewsContainerWrapper;
+    private final int maxLength;
 
-    public PollAddOptionFieldLayout(final BaseFragment baseFragment, Context context, Theme.ResourcesProvider resourcesProvider) {
+    public PollAddOptionFieldLayout(BaseFragment fragment, @NonNull Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, -2);
-        this.lp = layoutParams;
-        this.cords = new int[2];
-        this.rect = new Rect();
-        FactorAnimator.Target target = new FactorAnimator.Target() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda1
-            @Override // me.vkryl.android.animator.FactorAnimator.Target
-            public final void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
-                this.f$0.checkLimitText(i, f, f2, factorAnimator);
+        this.fragment = fragment;
+        this.maxLength = fragment.getMessagesController().config.pollAnswerLengthMax.get();
+
+
+        textView = new EditTextCaption(context, resourcesProvider) {
+            private int lastHeight;
+
+            @Override
+            protected int emojiCacheType() {
+                return AnimatedEmojiDrawable.CACHE_TYPE_ALERT_PREVIEW;
             }
+
+            @Override
+            protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+                super.onSizeChanged(w, h, oldw, oldh);
+                postOnAnimation(() -> updateCell());
+            }
+
+            @Override
+            public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                InputConnection conn = super.onCreateInputConnection(outAttrs);
+                outAttrs.imeOptions &= ~EditorInfo.IME_FLAG_NO_ENTER_ACTION;
+                return conn;
+            }
+
+            /*
+            @Override
+            protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                onEditTextDraw(this, canvas);
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                if (!isEnabled()) {
+                    return false;
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    onFieldTouchUp(this);
+                }
+                return super.onTouchEvent(event);
+            }
+
+            @Override
+            protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
+                super.onFocusChanged(focused, direction, previouslyFocusedRect);
+                onEditTextFocusChanged(focused);
+            }
+
+            @Override
+            public ActionMode startActionMode(ActionMode.Callback callback, int type) {
+                ActionMode actionMode = super.startActionMode(callback, type);
+                onActionModeStart(this, actionMode);
+                return actionMode;
+            }
+
+            @Override
+            public ActionMode startActionMode(ActionMode.Callback callback) {
+                ActionMode actionMode = super.startActionMode(callback);
+                onActionModeStart(this, actionMode);
+                return actionMode;
+            }
+
+            @Override
+            public boolean onTextContextMenuItem(int id) {
+                if (id == android.R.id.paste) {
+                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clipData = clipboard.getPrimaryClip();
+                    if (clipData != null && clipData.getItemCount() == 1 && AndroidUtilities.charSequenceIndexOf(clipData.getItemAt(0).getText(), "\n") > 0) {
+                        CharSequence text = clipData.getItemAt(0).getText();
+                        ArrayList<CharSequence> parts = new ArrayList<>();
+                        StringBuilder current = new StringBuilder();
+                        for (int i = 0; i < text.length(); i++) {
+                            char c = text.charAt(i);
+                            if (c == '\n') {
+                                parts.add(current.toString());
+                                current.setLength(0);
+                            } else {
+                                current.append(c);
+                            }
+                        }
+                        if (!TextUtils.isEmpty(current)) {
+                            parts.add(current);
+                        }
+                        if (onPastedMultipleLines(parts)) {
+                            return true;
+                        }
+                    }
+                }
+                return super.onTextContextMenuItem(id);
+            }
+            */
         };
-        CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
-        this.animatorTextWarnVisibility = new BoolAnimator(0, target, cubicBezierInterpolator, 380L);
-        this.animatorTextErrorVisibility = new BoolAnimator(0, new FactorAnimator.Target() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda1
-            @Override // me.vkryl.android.animator.FactorAnimator.Target
-            public final void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
-                this.f$0.checkLimitText(i, f, f2, factorAnimator);
-            }
-        }, cubicBezierInterpolator, 380L);
-        this.fragment = baseFragment;
-        this.maxLength = baseFragment.getMessagesController().config.pollAnswerLengthMax.get();
-        AnonymousClass1 anonymousClass1 = new AnonymousClass1(context, resourcesProvider);
-        this.textView = anonymousClass1;
-        anonymousClass1.setAllowTextEntitiesIntersection(true);
-        anonymousClass1.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-        anonymousClass1.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
-        anonymousClass1.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
-        anonymousClass1.setHint(LocaleController.getString(R.string.PollAddAnOptionHint));
-        anonymousClass1.setTextSize(1, 15.0f);
-        anonymousClass1.setMaxLines(Integer.MAX_VALUE);
-        anonymousClass1.setBackground(null);
-        anonymousClass1.setImeOptions(268435462);
-        anonymousClass1.setInputType(anonymousClass1.getInputType() | 16384);
-        anonymousClass1.addTextChangedListener(new TextWatcherImpl() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout.2
-            @Override // android.text.TextWatcher
-            public void afterTextChanged(Editable editable) {
-                PollAddOptionFieldLayout.this.checkTextLengthLimit();
+        ((EditTextCaption) textView).setAllowTextEntitiesIntersection(true);
+        textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+        textView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, resourcesProvider));
+        textView.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourcesProvider));
+        textView.setHint(getString(R.string.PollAddAnOptionHint));
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setBackground(null);
+        textView.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_ACTION_DONE);
+        textView.setInputType(textView.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        textView.addTextChangedListener(new TextWatcherImpl() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                checkTextLengthLimit();
             }
         });
-        EmojiButton emojiButton = new EmojiButton(context);
-        this.emojiButton = emojiButton;
-        int i = Theme.key_stickers_menuSelector;
-        emojiButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(i, resourcesProvider)));
+
+        emojiButton = new EmojiButton(context);
+        emojiButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
         ScaleStateListAnimator.apply(emojiButton);
-        PollAttachButton pollAttachButton = new PollAttachButton(getContext(), resourcesProvider, 36);
-        this.attachButton = pollAttachButton;
-        pollAttachButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(i, resourcesProvider)));
-        pollAttachButton.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda2
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$new$2(baseFragment, view);
-            }
-        });
-        ScaleStateListAnimator.apply(pollAttachButton);
-        SimpleTextView simpleTextView = new SimpleTextView(getContext());
-        this.limitTextView = simpleTextView;
-        simpleTextView.setTextSize(13);
-        simpleTextView.setGravity(17);
-        simpleTextView.setTranslationY(AndroidUtilities.dp(44.0f));
-        simpleTextView.setVisibility(8);
-        ViewWrapper viewWrapper = new ViewWrapper(context);
-        this.viewsContainerWrapper = viewWrapper;
-        addView(viewWrapper, layoutParams);
-        FrameLayout frameLayout = new FrameLayout(context) { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout.3
-            @Override // android.view.View
+
+        attachButton = new PollAttachButton(getContext(), resourcesProvider, 36);
+        attachButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector, resourcesProvider)));
+        attachButton.setOnClickListener(v -> ChatAttachAlertPollLayout.openPollAttachMenu(fragment,
+            ChatAttachAlertPollLayout.getStartLayoutForMedia(attachedMedia),
+            ChatAttachAlertPollLayout.getAllowedLayoutsForIndex(0), media -> {
+                attachedMedia = media;
+                attachButton.setAttachedMedia(media, true);
+                AndroidUtilities.runOnUIThread(() -> {
+                    AndroidUtilities.showKeyboard(textView);
+                }, 200);
+            }, null));
+        ScaleStateListAnimator.apply(attachButton);
+
+        limitTextView = new SimpleTextView(getContext());
+        limitTextView.setTextSize(13);
+        limitTextView.setGravity(Gravity.CENTER);
+        limitTextView.setTranslationY(dp(44));
+        limitTextView.setVisibility(View.GONE);
+
+        viewsContainerWrapper = new ViewWrapper(context);
+        addView(viewsContainerWrapper, lp);
+
+        viewsContainer = new FrameLayout(context) {
+            @Override
             public boolean hasOverlappingRendering() {
                 return false;
             }
         };
-        this.viewsContainer = frameLayout;
-        this.viewsContainerWrapper.addView(frameLayout, LayoutHelper.createFrame(-1, -2.0f));
-        this.viewsContainer.addView(simpleTextView, LayoutHelper.createFrame(54, 24, 53));
-        this.viewsContainer.addView(emojiButton, LayoutHelper.createFrame(44, 44, 51));
-        this.viewsContainer.addView(pollAttachButton, LayoutHelper.createFrame(44, 44.0f, 53, 0.0f, 0.0f, 5.0f, 0.0f));
-        this.viewsContainer.addView(anonymousClass1, LayoutHelper.createFrame(-1, -2.0f, 119, 39.0f, 0.0f, 47.0f, 0.0f));
-        anonymousClass1.setPadding(AndroidUtilities.dp(5.0f), AndroidUtilities.dp(11.0f), AndroidUtilities.dp(5.0f), AndroidUtilities.dp(11.0f));
-    }
+        viewsContainerWrapper.addView(viewsContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
-    public class AnonymousClass1 extends EditTextCaption {
-        @Override // org.telegram.ui.Components.EditTextEffects
-        public int emojiCacheType() {
-            return 3;
-        }
-
-        public AnonymousClass1(Context context, Theme.ResourcesProvider resourcesProvider) {
-            super(context, resourcesProvider);
-        }
-
-        @Override // org.telegram.ui.Components.EditTextEffects, android.view.View
-        public void onSizeChanged(int i, int i2, int i3, int i4) {
-            super.onSizeChanged(i, i2, i3, i4);
-            postOnAnimation(new Runnable() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$1$$ExternalSyntheticLambda0
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$onSizeChanged$0();
-                }
-            });
-        }
-
-        public void lambda$new$2(BaseFragment baseFragment, View view) {
-        ChatAttachAlertPollLayout.openPollAttachMenu(baseFragment, ChatAttachAlertPollLayout.getStartLayoutForMedia(this.attachedMedia), ChatAttachAlertPollLayout.getAllowedLayoutsForIndex(0), new Utilities.Callback() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda3
-            @Override 
-            public final void run(Object obj) {
-                this.f$0.lambda$new$1((PollAttachedMedia) obj);
-            }
-        }, null);
-    }
-
-    public /* synthetic */ void lambda$new$1(PollAttachedMedia pollAttachedMedia) {
-        this.attachedMedia = pollAttachedMedia;
-        this.attachButton.setAttachedMedia(pollAttachedMedia, true);
-        AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda4
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$new$0();
-            }
-        }, 200L);
-    }
-
-    public /* synthetic */ void lambda$new$0() {
-        AndroidUtilities.showKeyboard(this.textView);
+        viewsContainer.addView(limitTextView, LayoutHelper.createFrame(54, 24, Gravity.RIGHT | Gravity.TOP));
+        viewsContainer.addView(emojiButton, LayoutHelper.createFrame(44, 44, Gravity.TOP | Gravity.LEFT));
+        viewsContainer.addView(attachButton, LayoutHelper.createFrame(44, 44, Gravity.TOP | Gravity.RIGHT, 0, 0, 5, 0));
+        viewsContainer.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.FILL, 44 - 5, 0, 52 - 5, 0));
+        textView.setPadding(dp(5), dp(11), dp(5), dp(11));
     }
 
     public void drawInCell(Canvas canvas) {
-        this.viewsContainerWrapper.drawInCell(canvas);
+        viewsContainerWrapper.drawInCell(canvas);
     }
 
-    public void doOnCancel(Runnable runnable) {
-        this.onCancel = runnable;
+    public void doOnCancel(Runnable onCancel) {
+        this.onCancel = onCancel;
     }
 
     public PollAttachedMedia getAttachedMedia() {
-        return this.attachedMedia;
+        return attachedMedia;
     }
 
-    public void doOnEmojiClick(final Runnable runnable) {
-        this.emojiButton.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.poll.PollAddOptionFieldLayout$$ExternalSyntheticLambda0
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                runnable.run();
-            }
-        });
+    public void doOnEmojiClick(Runnable runnable) {
+        emojiButton.setOnClickListener(v -> runnable.run());
     }
 
-    public void setAnimatedVisibility(float f) {
-        this.viewsContainer.setAlpha(f);
+    public void setAnimatedVisibility(float factor) {
+        viewsContainer.setAlpha(factor);
     }
 
-    public void setCellToWatch(ChatMessageCell chatMessageCell) {
-        this.cellToWatch = chatMessageCell;
-        this.messageIdToWatch = chatMessageCell.getMessageObject().getId();
+
+    public void setCellToWatch(ChatMessageCell cellToWatch) {
+        this.cellToWatch = cellToWatch;
+        this.messageIdToWatch = cellToWatch.getMessageObject().getId();
     }
 
     public void updateCell() {
-        ChatMessageCell chatMessageCell = this.cellToWatch;
-        if (chatMessageCell == null || chatMessageCell.getDelegate() == null) {
-            return;
+        if (cellToWatch != null && cellToWatch.getDelegate() != null) {
+            cellToWatch.getDelegate().forceUpdate(cellToWatch, false);
         }
-        this.cellToWatch.getDelegate().forceUpdate(this.cellToWatch, false);
     }
 
     private void cancel() {
-        Runnable runnable = this.onCancel;
-        if (runnable != null) {
-            runnable.run();
-            this.onCancel = null;
+        if (onCancel != null) {
+            onCancel.run();
+            onCancel = null;
         }
     }
 
-    @Override // android.view.ViewTreeObserver.OnPreDrawListener
+    private final int[] cords = new int[2];
+    private final Rect rect = new Rect();
+
+    @Override
     public boolean onPreDraw() {
-        ChatMessageCell chatMessageCell = this.cellToWatch;
-        if (chatMessageCell == null) {
+        if (cellToWatch == null) {
             return true;
         }
-        int id = chatMessageCell.getMessageObject().getId();
-        if (!this.cellToWatch.isAttachedToWindow() || this.messageIdToWatch != id || !this.cellToWatch.getPollAddButtonBounds(this.rect)) {
+
+        final int messageId = cellToWatch.getMessageObject().getId();
+        if (!cellToWatch.isAttachedToWindow() || messageIdToWatch != messageId || !cellToWatch.getPollAddButtonBounds(rect)) {
             cancel();
             return true;
         }
-        this.cellToWatch.getLocationInWindow(this.cords);
-        int[] iArr = this.cords;
-        int i = iArr[0];
-        int i2 = iArr[1];
-        getLocationInWindow(iArr);
-        int[] iArr2 = this.cords;
-        this.rect.offset(i - iArr2[0], i2 - iArr2[1]);
-        int iWidth = this.rect.width();
-        FrameLayout.LayoutParams layoutParams = this.lp;
-        if (layoutParams.width != iWidth) {
-            layoutParams.width = iWidth;
-            this.viewsContainerWrapper.setLayoutParams(layoutParams);
+
+        final int cx, cy;
+        cellToWatch.getLocationInWindow(cords);
+        cx = cords[0];
+        cy = cords[1];
+
+        final int sx, sy;
+        getLocationInWindow(cords);
+        sx = cords[0];
+        sy = cords[1];
+
+        rect.offset(cx - sx, cy - sy);
+        final int width = rect.width();
+        if (lp.width != width) {
+            lp.width = width;
+            viewsContainerWrapper.setLayoutParams(lp);
         }
-        this.viewsContainerWrapper.setTranslationX(this.rect.left);
-        this.viewsContainerWrapper.setTranslationY(this.rect.top + AndroidUtilities.dp(0.66f));
+
+        viewsContainerWrapper.setTranslationX(rect.left);
+        viewsContainerWrapper.setTranslationY(rect.top + dp(0.66f));
+
         return true;
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    private ViewTreeObserver observer;
+
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ViewTreeObserver viewTreeObserver = getViewTreeObserver();
-        this.observer = viewTreeObserver;
-        viewTreeObserver.addOnPreDrawListener(this);
+        observer = getViewTreeObserver();
+        observer.addOnPreDrawListener(this);
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onDetachedFromWindow() {
-        ViewTreeObserver viewTreeObserver = this.observer;
-        if (viewTreeObserver != null && viewTreeObserver.isAlive()) {
-            this.observer.removeOnPreDrawListener(this);
+    @Override
+    protected void onDetachedFromWindow() {
+        if (observer != null && observer.isAlive()) {
+            observer.removeOnPreDrawListener(this);
         }
-        this.observer = null;
+        observer = null;
         super.onDetachedFromWindow();
     }
 
-    public void setEmojiKeyboardVisible(boolean z, boolean z2) {
-        this.emojiButton.animatorIsEmojiVisible.setValue(z, z2);
+
+    public void setEmojiKeyboardVisible(boolean isEmojiKeyboardVisible, boolean animated) {
+        emojiButton.animatorIsEmojiVisible.setValue(isEmojiKeyboardVisible, animated);
     }
 
-    public void setColor(int i) {
-        if (this.lastColor != i) {
-            this.lastColor = i;
-            PorterDuffColorFilter porterDuffColorFilter = new PorterDuffColorFilter(i, PorterDuff.Mode.SRC_IN);
-            this.emojiButton.emojiDrawable.setColorFilter(porterDuffColorFilter);
-            this.emojiButton.keyboardDrawable.setColorFilter(porterDuffColorFilter);
-            this.attachButton.attachDrawable.setColorFilter(porterDuffColorFilter);
-            this.textView.setCursorColor(i);
-            this.textView.setHandlesColor(i);
-            this.textView.setHintTextColor(i);
+    private int lastColor;
+
+    public void setColor(int color) {
+        if (lastColor != color) {
+            lastColor = color;
+
+            ColorFilter colorFilter = new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN);
+            emojiButton.emojiDrawable.setColorFilter(colorFilter);
+            emojiButton.keyboardDrawable.setColorFilter(colorFilter);
+            attachButton.attachDrawable.setColorFilter(colorFilter);
+            textView.setCursorColor(color);
+            textView.setHandlesColor(color);
+            textView.setHintTextColor(color);
         }
     }
 
-    public static final class EmojiButton extends View {
-        private final BoolAnimator animatorIsEmojiVisible;
+    private static final class EmojiButton extends View {
+        private final BoolAnimator animatorIsEmojiVisible = new BoolAnimator(this, CubicBezierInterpolator.EASE_OUT_QUINT, 320);
+
         private final Drawable emojiDrawable;
         private final Drawable keyboardDrawable;
 
         public EmojiButton(Context context) {
             super(context);
-            this.animatorIsEmojiVisible = new BoolAnimator(this, CubicBezierInterpolator.EASE_OUT_QUINT, 320L);
             this.emojiDrawable = context.getResources().getDrawable(R.drawable.outline_poll_emoji_24).mutate();
             this.keyboardDrawable = context.getResources().getDrawable(R.drawable.input_keyboard).mutate();
         }
 
-        @Override // android.view.View
-        public void onSizeChanged(int i, int i2, int i3, int i4) {
-            super.onSizeChanged(i, i2, i3, i4);
-            float f = i / 2.0f;
-            float f2 = i2 / 2.0f;
-            DrawableUtils.setBounds(this.emojiDrawable, f, f2, 17);
-            DrawableUtils.setBounds(this.keyboardDrawable, f, f2, 17);
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+
+            DrawableUtils.setBounds(emojiDrawable, w / 2f, h / 2f, Gravity.CENTER);
+            DrawableUtils.setBounds(keyboardDrawable, w / 2f, h / 2f, Gravity.CENTER);
         }
 
-        @Override // android.view.View
-        public void onDraw(Canvas canvas) {
+        @Override
+        protected void onDraw(@NonNull Canvas canvas) {
             super.onDraw(canvas);
-            float floatValue = this.animatorIsEmojiVisible.getFloatValue();
-            DrawableUtils.drawWithScale(canvas, this.emojiDrawable, 1.0f - floatValue);
-            DrawableUtils.drawWithScale(canvas, this.keyboardDrawable, floatValue);
+
+            final float isEmojiVisible = animatorIsEmojiVisible.getFloatValue();
+            DrawableUtils.drawWithScale(canvas, emojiDrawable, (1f - isEmojiVisible));
+            DrawableUtils.drawWithScale(canvas, keyboardDrawable, isEmojiVisible);
         }
     }
 
-    public void checkTextLengthLimit() {
-        int length = this.textView.getText().length();
-        this.animatorTextWarnVisibility.setValue(length > (this.maxLength * 7) / 10, true);
-        this.animatorTextErrorVisibility.setValue(length > this.maxLength, true);
-        this.limitTextView.setText(Integer.toString(this.maxLength - length));
+    private void checkTextLengthLimit() {
+        final int length = textView.getText().length();
+        animatorTextWarnVisibility.setValue(length > (maxLength * 7 / 10), true);
+        animatorTextErrorVisibility.setValue(length > maxLength, true);
+        limitTextView.setText(Integer.toString(maxLength - length));
     }
 
-    public void checkLimitText(int i, float f, float f2, FactorAnimator factorAnimator) {
-        FragmentFloatingButton.setAnimatedVisibility(this.limitTextView, this.animatorTextWarnVisibility.getFloatValue());
-        this.limitTextView.setTextColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3, this.fragment.getResourceProvider()), Theme.getColor(Theme.key_text_RedRegular, this.fragment.getResourceProvider()), this.animatorTextErrorVisibility.getFloatValue()));
+    private final BoolAnimator animatorTextWarnVisibility = new BoolAnimator(0, this::checkLimitText, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+    private final BoolAnimator animatorTextErrorVisibility = new BoolAnimator(0, this::checkLimitText, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+
+    private void checkLimitText(int id, float factor, float fraction, FactorAnimator callee) {
+        FragmentFloatingButton.setAnimatedVisibility(limitTextView, animatorTextWarnVisibility.getFloatValue());
+        final int color = ColorUtils.blendARGB(
+            Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3, fragment.getResourceProvider()),
+            Theme.getColor(Theme.key_text_RedRegular, fragment.getResourceProvider()),
+            animatorTextErrorVisibility.getFloatValue()
+        );
+        limitTextView.setTextColor(color);
     }
 
-    public static class ViewWrapper extends FrameLayout {
-        public void drawInCell(Canvas canvas) {
-        }
+    private static class ViewWrapper extends FrameLayout {
 
-        public ViewWrapper(Context context) {
+        public ViewWrapper(@NonNull Context context) {
             super(context);
         }
 
-        @Override // android.view.ViewGroup
-        public boolean drawChild(Canvas canvas, View view, long j) {
-            return super.drawChild(canvas, view, j);
+        @Override
+        protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+            if (!ALLOW_DRAW_IN_CELL || forceDrawChild) {
+                return super.drawChild(canvas, child, drawingTime);
+            }
+            return false;
+        }
+
+        private boolean forceDrawChild;
+        public void drawInCell(Canvas canvas) {
+            if (ALLOW_DRAW_IN_CELL) {
+                forceDrawChild = true;
+                super.drawChild(canvas, getChildAt(0), SystemClock.uptimeMillis());
+                forceDrawChild = false;
+            }
         }
     }
 }

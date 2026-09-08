@@ -1,31 +1,40 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Components;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.formatString;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.core.widget.NestedScrollView;
-import androidx.mediarouter.media.PlatformMediaRouter1RouteProvider;
-import com.exteragram.messenger.ExteraConfig;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BotGuardHelper;
 import org.telegram.messenger.ChatObject;
+import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
-import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
-import org.telegram.tgnet.RequestDelegate;
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -34,83 +43,345 @@ import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
 
+import androidx.core.widget.NestedScrollView;
+
 public class JoinGroupAlert extends BottomSheet {
-    private BulletinFactory bulletinFactory;
+
+    public static final int ORIGINATION_OTHER = -1;
+    public static final int ORIGINATION_SPONSORED_CHAT = 0;
+
+    private final String hash;
+    private final BaseFragment fragment;
     private TLRPC.ChatInvite chatInvite;
     private TLRPC.Chat currentChat;
-    private final BaseFragment fragment;
-    private final String hash;
-    private RadialProgressView requestProgressView;
     private TextView requestTextView;
+    private RadialProgressView requestProgressView;
 
-    public JoinGroupAlert(Context context, TLObject tLObject, String str, BaseFragment baseFragment, Theme.ResourcesProvider resourcesProvider) {
-        this(context, tLObject, str, baseFragment, resourcesProvider, -1);
+    public JoinGroupAlert(final Context context, TLObject obj, String group, BaseFragment parentFragment, Theme.ResourcesProvider resourcesProvider) {
+        this(context, obj, group, parentFragment, resourcesProvider, ORIGINATION_OTHER);
     }
 
-    void lambda$new$1() {
-        if (isDismissed()) {
-            return;
-        }
-        this.requestTextView.setVisibility(4);
-        this.requestProgressView.setVisibility(0);
-    }
+    public JoinGroupAlert(final Context context, TLObject obj, String group, BaseFragment parentFragment, Theme.ResourcesProvider resourcesProvider, int origination) {
+        super(context, false, resourcesProvider);
+        setApplyBottomPadding(false);
+        setApplyTopPadding(false);
+        fixNavigationBar(getThemedColor(Theme.key_windowBackgroundWhite));
 
-    public void lambda$new$11(final long j, final int i, final TLRPC.TL_messages_importChatInvite tL_messages_importChatInvite, TLRPC.ChatInviteJoinResult chatInviteJoinResult, final TLRPC.TL_error tL_error) {
-        final TLRPC.Updates updates;
-        if (chatInviteJoinResult instanceof TLRPC.TL_chatInviteJoinResultOk) {
-            TLRPC.Updates updates2 = ((TLRPC.TL_chatInviteJoinResultOk) chatInviteJoinResult).updates;
-            MessagesController.getInstance(this.currentAccount).processUpdates(updates2, false);
-            updates = updates2;
+        final long dialogId;
+        fragment = parentFragment;
+        if (obj instanceof TLRPC.ChatInvite) {
+            chatInvite = (TLRPC.ChatInvite) obj;
+            dialogId = chatInvite.chat != null ? -chatInvite.chat.id : 0;
+        } else if (obj instanceof TLRPC.Chat) {
+            currentChat = (TLRPC.Chat) obj;
+            dialogId = currentChat.id;
         } else {
-            if (chatInviteJoinResult instanceof TLRPC.TL_chatInviteJoinResultWebView) {
-                final TLRPC.TL_chatInviteJoinResultWebView tL_chatInviteJoinResultWebView = (TLRPC.TL_chatInviteJoinResultWebView) chatInviteJoinResult;
-                AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Components.JoinGroupAlert$$ExternalSyntheticLambda8
-                    @Override // java.lang.Runnable
-                    public final void run() {
-                        this.f$0.lambda$new$9(tL_chatInviteJoinResultWebView, j);
+            dialogId = 0;
+        }
+        hash = group;
+
+        LinearLayout linearLayout = new LinearLayout(context);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setClickable(true);
+
+        FrameLayout frameLayout = new FrameLayout(context);
+        frameLayout.addView(linearLayout);
+
+        NestedScrollView scrollView = new NestedScrollView(context);
+        scrollView.addView(frameLayout);
+        setCustomView(scrollView);
+
+        ImageView closeView = new ImageView(context);
+        closeView.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
+        closeView.setColorFilter(getThemedColor(Theme.key_sheet_other));
+        closeView.setImageResource(R.drawable.ic_layer_close);
+        closeView.setOnClickListener((view) -> dismiss());
+        int closeViewPadding = dp(8);
+        closeView.setPadding(closeViewPadding, closeViewPadding, closeViewPadding, closeViewPadding);
+        frameLayout.addView(closeView, LayoutHelper.createFrame(36, 36, Gravity.TOP | Gravity.END, 6, 8, 8, 0));
+
+        String title = null, about = null;
+        AvatarDrawable avatarDrawable;
+        boolean verified = false;
+        boolean scam = false;
+        boolean fake = false;
+        int participants_count = 0;
+
+        BackupImageView avatarImageView = new BackupImageView(context);
+        avatarImageView.setRoundRadius(dp(45));
+        linearLayout.addView(avatarImageView, LayoutHelper.createLinear(90, 90, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 27, 0, 0));
+
+        if (chatInvite != null) {
+            if (chatInvite.chat != null) {
+                avatarDrawable = new AvatarDrawable(chatInvite.chat);
+                title = chatInvite.chat.title;
+                participants_count = chatInvite.chat.participants_count;
+                avatarImageView.setForUserOrChat(chatInvite.chat, avatarDrawable, chatInvite);
+            } else {
+                avatarDrawable = new AvatarDrawable();
+                avatarDrawable.setInfo(0, chatInvite.title, null);
+                title = chatInvite.title;
+                participants_count = chatInvite.participants_count;
+                TLRPC.PhotoSize size = FileLoader.getClosestPhotoSizeWithSize(chatInvite.photo.sizes, 50);
+                avatarImageView.setImage(ImageLocation.getForPhoto(size, chatInvite.photo), "50_50", avatarDrawable, chatInvite);
+            }
+            about = chatInvite.about;
+            verified = chatInvite.verified;
+            fake = chatInvite.fake;
+            scam = chatInvite.scam;
+        } else if (currentChat != null) {
+            avatarDrawable = new AvatarDrawable(currentChat);
+            title = currentChat.title;
+            TLRPC.ChatFull chatFull = MessagesController.getInstance(currentAccount).getChatFull(currentChat.id);
+            about = chatFull != null ? chatFull.about : null;
+            participants_count = Math.max(currentChat.participants_count, chatFull != null ? chatFull.participants_count : 0);
+            avatarImageView.setForUserOrChat(currentChat, avatarDrawable, currentChat);
+            verified = currentChat.verified;
+            fake = currentChat.fake;
+            scam = currentChat.scam;
+        }
+
+        SimpleTextView simpleTextView = new SimpleTextView(context);
+        simpleTextView.setTypeface(AndroidUtilities.bold());
+        simpleTextView.setTextSize(20);
+        simpleTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+        simpleTextView.setText(title);
+        simpleTextView.setGravity(Gravity.CENTER);
+        linearLayout.addView(simpleTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 10, 10, 10, participants_count > 0 ? 0 : 20));
+
+        if (scam || fake) {
+            simpleTextView.setRightDrawable(getScamDrawable(scam ? 0 : 1));
+        } else if (verified) {
+            simpleTextView.setRightDrawable(getVerifiedCrossfadeDrawable());
+        }
+
+        final boolean isChannel = chatInvite != null && (chatInvite.channel && !chatInvite.megagroup || ChatObject.isChannelAndNotMegaGroup(chatInvite.chat)) || ChatObject.isChannel(currentChat) && !currentChat.megagroup;
+        boolean hasAbout = !TextUtils.isEmpty(about);
+
+        TextView textView = new TextView(context);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+        textView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
+        textView.setSingleLine(true);
+        textView.setEllipsize(TextUtils.TruncateAt.END);
+
+        if (chatInvite != null && origination == ORIGINATION_SPONSORED_CHAT) {
+            textView.setText(getString(R.string.ChannelPublic).toLowerCase());
+        } else {
+            textView.setText(isChannel
+                    ? getString(R.string.ChannelPrivate).toLowerCase()
+                    : getString(R.string.MegaPrivate).toLowerCase()
+            );
+        }
+        linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 10, 0, 10, hasAbout ? 0 : 20));
+
+        if (hasAbout) {
+            TextView aboutTextView = new TextView(context);
+            aboutTextView.setGravity(Gravity.CENTER);
+            aboutTextView.setText(about);
+            aboutTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+            aboutTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+            linearLayout.addView(aboutTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, 24, 10, 24, 20));
+        }
+
+        if (chatInvite == null || chatInvite.request_needed) {
+            FrameLayout requestFrameLayout = new FrameLayout(getContext());
+            linearLayout.addView(requestFrameLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+            requestProgressView = new RadialProgressView(getContext(), resourcesProvider);
+            requestProgressView.setProgressColor(getThemedColor(Theme.key_featuredStickers_addButton));
+            requestProgressView.setSize(dp(32));
+            requestProgressView.setVisibility(View.INVISIBLE);
+            requestFrameLayout.addView(requestProgressView, LayoutHelper.createFrame(48, 48, Gravity.CENTER));
+
+            requestTextView = new TextView(getContext());
+            requestTextView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(24), getThemedColor(Theme.key_featuredStickers_addButton), getThemedColor(Theme.key_featuredStickers_addButtonPressed)));
+            requestTextView.setEllipsize(TextUtils.TruncateAt.END);
+            requestTextView.setGravity(Gravity.CENTER);
+            requestTextView.setSingleLine(true);
+            requestTextView.setText(getString(isChannel ? R.string.RequestToJoinChannel : R.string.RequestToJoinGroup));
+            requestTextView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
+            requestTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            requestTextView.setTypeface(AndroidUtilities.bold());
+            requestTextView.setOnClickListener((view) -> {
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (!isDismissed()) {
+                        requestTextView.setVisibility(View.INVISIBLE);
+                        requestProgressView.setVisibility(View.VISIBLE);
                     }
-                });
+                }, 400);
+                if (chatInvite == null && currentChat != null) {
+                    MessagesController.getInstance(currentAccount).addUserToChat(
+                            currentChat.id,
+                            UserConfig.getInstance(currentAccount).getCurrentUser(),
+                            0,
+                            null,
+                            null,
+                            true,
+                            this::dismiss,
+                            err -> {
+                                if (err != null && "INVITE_REQUEST_SENT".equals(err.text)) {
+                                    setOnDismissListener(di -> showBulletin(getContext(), fragment, bulletinFactory, isChannel));
+                                }
+                                dismiss();
+                                return false;
+                            }
+                    );
+                } else {
+                    final TLRPC.TL_messages_importChatInvite request = new TLRPC.TL_messages_importChatInvite();
+                    request.hash = hash;
+                    ConnectionsManager.getInstance(currentAccount).sendRequest(request, (response, error) -> {
+                        final TLRPC.Updates updates;
+                        if (response instanceof TLRPC.TL_chatInviteJoinResultOk) {
+                            updates = ((TLRPC.TL_chatInviteJoinResultOk) response).updates;
+                            MessagesController.getInstance(currentAccount).processUpdates(updates, false);
+                        } else if (response instanceof TLRPC.TL_chatInviteJoinResultWebView) {
+                            TLRPC.TL_chatInviteJoinResultWebView resultWebView = (TLRPC.TL_chatInviteJoinResultWebView) response;
+                            AndroidUtilities.runOnUIThread(() -> {
+                                MessagesController.getInstance(currentAccount).putUsers(resultWebView.users, false);
+                                BotGuardHelper.getInstance(currentAccount).openGuardBotWebApp(dialogId,
+                                        resultWebView.bot_id, resultWebView.query_id);
+                            });
+                            updates = null;
+                        } else {
+                            updates = null;
+                        }
+
+                        AndroidUtilities.runOnUIThread(() -> {
+                            if (fragment == null || fragment.getParentActivity() == null) {
+                                return;
+                            }
+                            if (error != null) {
+                                if ("INVITE_REQUEST_SENT".equals(error.text)) {
+                                    setOnDismissListener(di -> showBulletin(getContext(), fragment, bulletinFactory, isChannel));
+                                } else {
+                                    AlertsCreator.processError(currentAccount, error, fragment, request);
+                                }
+                            }
+                            dismiss();
+                        });
+                    }, ConnectionsManager.RequestFlagFailOnServerErrors);
+                }
+            });
+            requestFrameLayout.addView(requestTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, Gravity.START, 14, 0, 14, 0));
+
+            TextView descriptionTextView = new TextView(getContext());
+            descriptionTextView.setGravity(Gravity.CENTER);
+            descriptionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            descriptionTextView.setText(getString(isChannel ? R.string.RequestToJoinChannelDescription : R.string.RequestToJoinGroupDescription));
+            descriptionTextView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
+            linearLayout.addView(descriptionTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, 24, 17, 24, 15));
+        } else if (chatInvite != null) {
+            if (!chatInvite.participants.isEmpty()) {
+                int participantsCount = chatInvite.participants.size();
+                int visibleAvatarsCount = Math.min(participantsCount, 3);
+                float factor = 0.65f;
+                int avatarSize = 38;
+                AvatarsImageView avatarsImageView = new AvatarsImageView(context, false);
+                avatarsImageView.setAvatarsTextSize(dp(20));
+                avatarsImageView.setSize(dp(avatarSize));
+                avatarsImageView.setCount(visibleAvatarsCount);
+                avatarsImageView.setStepFactor(factor);
+                for (int i = 0; i < visibleAvatarsCount; i++) {
+                    avatarsImageView.setObject(i, UserConfig.selectedAccount, chatInvite.participants.get(i));
+                }
+                avatarsImageView.commitTransition(false);
+                int avatarContainerWidth = (int) (avatarSize + (visibleAvatarsCount - 1) * (avatarSize * factor + 1));
+                linearLayout.addView(avatarsImageView, LayoutHelper.createLinear(avatarContainerWidth, 44, Gravity.CENTER, 0, 2, 0, 4));
+
+                textView = new TextView(context);
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+                textView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
+                textView.setGravity(Gravity.CENTER);
+
+                String txt;
+                if (visibleAvatarsCount == 1) {
+                    txt = ellipsize(textView, chatInvite, 0).toString();
+                } else if (visibleAvatarsCount == 2) {
+                    txt = LocaleController.formatString(
+                            "RequestToJoinMembersTwo", R.string.RequestToJoinMembersTwo,
+                            ellipsize(textView, chatInvite, 0),
+                            ellipsize(textView, chatInvite, 1)
+                    );
+                } else if (participants_count == 3) {
+                    txt = LocaleController.formatString(
+                            "RequestToJoinMembersThree", R.string.RequestToJoinMembersThree,
+                            ellipsize(textView, chatInvite, 0),
+                            ellipsize(textView, chatInvite, 1),
+                            ellipsize(textView, chatInvite, 2)
+                    );
+                } else {
+                    int count = Math.max(participants_count - visibleAvatarsCount, 2);
+                    txt = String.format(
+                            LocaleController.getPluralString("RequestToJoinMembersAll", count),
+                            ellipsize(textView, chatInvite, 0),
+                            ellipsize(textView, chatInvite, 1),
+                            count
+                    );
+                }
+
+                textView.setText(txt);
+                linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 10, 0, 10, 24));
             }
-            updates = null;
+
+            boolean isJoinToChannel = chatInvite.channel && !chatInvite.megagroup || ChatObject.isChannel(chatInvite.chat) && !chatInvite.chat.megagroup;
+            final TextView joinTextView = new TextView(getContext());
+            joinTextView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(24), getThemedColor(Theme.key_featuredStickers_addButton), getThemedColor(Theme.key_featuredStickers_addButtonPressed)));
+            ScaleStateListAnimator.apply(joinTextView, .02f, 1.2f);
+            joinTextView.setEllipsize(TextUtils.TruncateAt.END);
+            joinTextView.setGravity(Gravity.CENTER);
+            joinTextView.setSingleLine(true);
+            joinTextView.setText(getString(isJoinToChannel ? R.string.ProfileJoinChannel : R.string.ProfileJoinGroup));
+            joinTextView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
+            joinTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            joinTextView.setTypeface(AndroidUtilities.bold());
+            linearLayout.addView(joinTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, Gravity.START, 14, 0, 14, 14));
+            joinTextView.setOnClickListener(v -> {
+                dismiss();
+                final TLRPC.TL_messages_importChatInvite req = new TLRPC.TL_messages_importChatInvite();
+                req.hash = hash;
+                ConnectionsManager.getInstance(currentAccount).sendRequestTyped(req, null, (response, error) -> {
+                    final TLRPC.Updates updates;
+                    if (response instanceof TLRPC.TL_chatInviteJoinResultOk) {
+                        updates = ((TLRPC.TL_chatInviteJoinResultOk) response).updates;
+                        MessagesController.getInstance(currentAccount).processUpdates(updates, false);
+                    } else if (response instanceof TLRPC.TL_chatInviteJoinResultWebView) {
+                        TLRPC.TL_chatInviteJoinResultWebView resultWebView = (TLRPC.TL_chatInviteJoinResultWebView) response;
+                        AndroidUtilities.runOnUIThread(() -> {
+                            MessagesController.getInstance(currentAccount).putUsers(resultWebView.users, false);
+                            BotGuardHelper.getInstance(currentAccount).openGuardBotWebApp(dialogId,
+                                    resultWebView.bot_id, resultWebView.query_id);
+                        });
+                        updates = null;
+                    } else {
+                        updates = null;
+                    }
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (fragment == null || fragment.getParentActivity() == null) {
+                            return;
+                        }
+                        if (error == null) {
+                            if (updates != null && !updates.chats.isEmpty()) {
+                                final TLRPC.Chat chat = updates.chats.get(0);
+                                chat.left = false;
+                                chat.kicked = false;
+                                MessagesController.getInstance(currentAccount).putUsers(updates.users, false);
+                                MessagesController.getInstance(currentAccount).putChats(updates.chats, false);
+                                openChat(chat.id, !ChatObject.isChannelAndNotMegaGroup(chat));
+                            }
+                        } else {
+                            if ("USER_ALREADY_PARTICIPANT".equals(error.text) && origination == ORIGINATION_SPONSORED_CHAT && chatInvite != null && chatInvite.chat != null) {
+                                openChat(chatInvite.chat.id, false);
+                            } else {
+                                AlertsCreator.processError(currentAccount, error, fragment, req);
+                            }
+                        }
+                    });
+                }, ConnectionsManager.RequestFlagFailOnServerErrors);
+            });
         }
-        AndroidUtilities.runOnUIThread(new Runnable() { // from class: org.telegram.ui.Components.JoinGroupAlert$$ExternalSyntheticLambda9
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$new$10(tL_error, updates, i, tL_messages_importChatInvite);
-            }
-        });
     }
 
-    public /* synthetic */ void lambda$new$9(TLRPC.TL_chatInviteJoinResultWebView tL_chatInviteJoinResultWebView, long j) {
-        MessagesController.getInstance(this.currentAccount).putUsers(tL_chatInviteJoinResultWebView.users, false);
-        BotGuardHelper.getInstance(this.currentAccount).openGuardBotWebApp(j, tL_chatInviteJoinResultWebView.bot_id, tL_chatInviteJoinResultWebView.query_id);
-    }
-
-    public /* synthetic */ void lambda$new$10(TLRPC.TL_error tL_error, TLRPC.Updates updates, int i, TLRPC.TL_messages_importChatInvite tL_messages_importChatInvite) {
-        TLRPC.ChatInvite chatInvite;
-        TLRPC.Chat chat;
-        BaseFragment baseFragment = this.fragment;
-        if (baseFragment == null || baseFragment.getParentActivity() == null) {
-            return;
-        }
-        if (tL_error == null) {
-            if (updates == null || updates.chats.isEmpty()) {
-                return;
-            }
-            TLRPC.Chat chat2 = updates.chats.get(0);
-            chat2.left = false;
-            chat2.kicked = false;
-            MessagesController.getInstance(this.currentAccount).putUsers(updates.users, false);
-            MessagesController.getInstance(this.currentAccount).putChats(updates.chats, false);
-            openChat(chat2.id, !ChatObject.isChannelAndNotMegaGroup(chat2));
-            return;
-        }
-        if ("USER_ALREADY_PARTICIPANT".equals(tL_error.text) && i == 0 && (chatInvite = this.chatInvite) != null && (chat = chatInvite.chat) != null) {
-            openChat(chat.id, false);
-        } else {
-            AlertsCreator.processError(this.currentAccount, tL_error, this.fragment, tL_messages_importChatInvite, new Object[0]);
-        }
-    }
+    private BulletinFactory bulletinFactory;
 
     public JoinGroupAlert setBulletinFactory(BulletinFactory bulletinFactory) {
         this.bulletinFactory = bulletinFactory;
@@ -118,101 +389,81 @@ public class JoinGroupAlert extends BottomSheet {
     }
 
     private Drawable getVerifiedCrossfadeDrawable() {
-        return new CombinedDrawable(Theme.dialogs_verifiedDrawable, Theme.dialogs_verifiedCheckDrawable);
+        Drawable verifiedDrawable = Theme.dialogs_verifiedDrawable;
+        Drawable verifiedCheckDrawable = Theme.dialogs_verifiedCheckDrawable;
+        return new CombinedDrawable(verifiedDrawable, verifiedCheckDrawable);
     }
 
-    public static void showBulletin(Context context, BaseFragment baseFragment, boolean z) {
-        showBulletin(context, baseFragment, BulletinFactory.of(baseFragment), z);
+    public static void showBulletin(Context context, BaseFragment fragment, boolean isChannel) {
+        showBulletin(context, fragment, BulletinFactory.of(fragment), isChannel);
     }
 
-    public static void showBulletin(Context context, BaseFragment baseFragment, BulletinFactory bulletinFactory, boolean z) {
-        String string;
+    public static void showBulletin(Context context, BaseFragment fragment, BulletinFactory bulletinFactory, boolean isChannel) {
         if (context == null) {
-            if (baseFragment != null) {
-                baseFragment.getContext();
+            if (fragment != null) {
+                context = fragment.getContext();
+            }
+            if (context == null) {
                 return;
             }
             return;
         }
         if (bulletinFactory == null) {
-            bulletinFactory = BulletinFactory.of(baseFragment);
+            bulletinFactory = BulletinFactory.of(fragment);
         }
-        Bulletin.TwoLineLottieLayout twoLineLottieLayout = new Bulletin.TwoLineLottieLayout(context, baseFragment.getResourceProvider());
-        twoLineLottieLayout.imageView.setAnimation(R.raw.timer_3, 28, 28);
-        twoLineLottieLayout.titleTextView.setText(LocaleController.getString(R.string.RequestToJoinSent));
-        if (z) {
-            string = LocaleController.getString(R.string.RequestToJoinChannelSentDescription);
-        } else {
-            string = LocaleController.getString(R.string.RequestToJoinGroupSentDescription);
-        }
-        twoLineLottieLayout.subtitleTextView.setText(string);
-        bulletinFactory.create(twoLineLottieLayout, 2750).show();
+
+        Bulletin.TwoLineLottieLayout layout = new Bulletin.TwoLineLottieLayout(context, fragment.getResourceProvider());
+        layout.imageView.setAnimation(R.raw.timer_3, 28, 28);
+        layout.titleTextView.setText(getString(R.string.RequestToJoinSent));
+        String subTitle = isChannel
+                ? getString(R.string.RequestToJoinChannelSentDescription)
+                : getString(R.string.RequestToJoinGroupSentDescription);
+        layout.subtitleTextView.setText(subTitle);
+        bulletinFactory.create(layout, Bulletin.DURATION_LONG).show();
     }
 
-    private CharSequence ellipsize(TextView textView, TLRPC.ChatInvite chatInvite, int i) {
-        String str = chatInvite.participants.get(i).first_name;
-        if (str == null) {
-            str = _UrlKt.FRAGMENT_ENCODE_SET;
+    private CharSequence ellipsize(TextView textView, TLRPC.ChatInvite chatInvite, int pos) {
+        String firstName = chatInvite.participants.get(pos).first_name;
+        if (firstName == null) {
+            firstName = "";
         }
-        return TextUtils.ellipsize(str.trim(), textView.getPaint(), AndroidUtilities.dp(120.0f), TextUtils.TruncateAt.END);
+        return TextUtils.ellipsize(firstName.trim(), textView.getPaint(), dp(120), TextUtils.TruncateAt.END);
     }
 
-    private Drawable getScamDrawable(int i) {
-        return i == 0 ? Theme.dialogs_scamDrawable : Theme.dialogs_fakeDrawable;
+    private Drawable getScamDrawable(int type) {
+        return type == 0 ? Theme.dialogs_scamDrawable : Theme.dialogs_fakeDrawable;
     }
 
-    private void openChat(long j, boolean z) {
-        Bundle bundle = new Bundle();
-        bundle.putLong("chat_id", j);
-        if (MessagesController.getInstance(this.currentAccount).checkCanOpenChat(bundle, this.fragment)) {
-            AnonymousClass1 anonymousClass1 = new AnonymousClass1(bundle, z, j);
-            BaseFragment baseFragment = this.fragment;
-            baseFragment.presentFragment(anonymousClass1, baseFragment instanceof ChatActivity);
-        }
-    }
-
-    public class AnonymousClass1 extends ChatActivity {
-        private boolean shownToast;
-        final /* synthetic */ long val$chatId;
-        final /* synthetic */ boolean val$showJoined;
-
-        /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
-        public AnonymousClass1(Bundle bundle, boolean z, long j) {
-            super(bundle);
-            this.val$showJoined = z;
-            this.val$chatId = j;
-            this.shownToast = false;
-        }
-
-        @Override // org.telegram.ui.ChatActivity, org.telegram.ui.ActionBar.BaseFragment
-        public void onBecomeFullyVisible() {
-            super.onBecomeFullyVisible();
-            if (this.shownToast || !this.val$showJoined) {
-                return;
-            }
-            this.shownToast = true;
-            final TLRPC.Chat chat = getMessagesController().getChat(Long.valueOf(this.val$chatId));
-            if (ChatObject.canManageMyTag(chat)) {
-                BulletinFactory bulletinFactoryOf = BulletinFactory.of(this);
-                int i = R.raw.contact_check;
-                String string = LocaleController.getString(R.string.JoinedGroup);
-                String string2 = LocaleController.getString(R.string.JoinedGroupAddTag);
-                final long j = this.val$chatId;
-                bulletinFactoryOf.createSimpleBulletin(i, string, string2, new Runnable() { // from class: org.telegram.ui.Components.JoinGroupAlert$1$$ExternalSyntheticLambda0
-                    @Override // java.lang.Runnable
-                    public final void run() {
-                        this.f$0.lambda$onBecomeFullyVisible$0(j, chat);
+    private void openChat(long chatId, boolean showJoined) {
+        Bundle args = new Bundle();
+        args.putLong("chat_id", chatId);
+        if (MessagesController.getInstance(currentAccount).checkCanOpenChat(args, fragment)) {
+            ChatActivity chatActivity = new ChatActivity(args) {
+                private boolean shownToast = false;
+                @Override
+                public void onBecomeFullyVisible() {
+                    super.onBecomeFullyVisible();
+                    if (!shownToast && showJoined) {
+                        shownToast = true;
+                        final TLRPC.Chat chat = getMessagesController().getChat(chatId);
+                        if (ChatObject.canManageMyTag(chat)) {
+                            BulletinFactory.of(this)
+                                .createSimpleBulletin(R.raw.contact_check, getString(R.string.JoinedGroup), getString(R.string.JoinedGroupAddTag), () -> {
+                                    if (!AndroidUtilities.isContextSafe(getContext())) return;
+                                    TagEditCell.showSheet(getContext(), currentAccount, -chatId, getUserConfig().getCurrentUser(), null, chat.admin_rights != null, chat.creator, resourcesProvider);
+                                })
+                                .hideAfterBottomSheet(false)
+                                .show(true);
+                        } else {
+                            BulletinFactory.of(this)
+                                .createSimpleBulletin(R.raw.contact_check, getString(R.string.JoinedGroup))
+                                .hideAfterBottomSheet(false)
+                                .show(true);
+                        }
                     }
-                }).hideAfterBottomSheet(false).show(true);
-                return;
-            }
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.contact_check, LocaleController.getString(R.string.JoinedGroup)).hideAfterBottomSheet(false).show(true);
-        }
-
-        public /* synthetic */ void lambda$onBecomeFullyVisible$0(long j, TLRPC.Chat chat) {
-            if (AndroidUtilities.isContextSafe(getContext())) {
-                TagEditCell.showSheet(getContext(), this.currentAccount, -j, getUserConfig().getCurrentUser(), null, chat.admin_rights != null, chat.creator, ((BottomSheet) JoinGroupAlert.this).resourcesProvider);
-            }
+                }
+            };
+            fragment.presentFragment(chatActivity, fragment instanceof ChatActivity);
         }
     }
 }

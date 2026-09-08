@@ -1,13 +1,16 @@
 package org.telegram.ui.Business;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.view.View;
+import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -29,177 +32,159 @@ import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class BusinessBotButton extends FrameLayout {
+
+    private final int currentAccount;
+
     private final AvatarDrawable avatarDrawable;
     private final BackupImageView avatarView;
-    private long botId;
-    private final int currentAccount;
-    private long dialogId;
-    private int flags;
-    private float leftMargin;
-    private String manageUrl;
-    private final ImageView menuView;
-    private final ClickableAnimatedTextView pauseButton;
-    private boolean paused;
-    private final AnimatedTextView subtitleView;
     private final LinearLayout textLayout;
     private final AnimatedTextView titleView;
+    private final AnimatedTextView subtitleView;
+    private final ClickableAnimatedTextView pauseButton;
+    private final ImageView menuView;
+    private boolean paused;
 
-    public BusinessBotButton(Context context, final ChatActivity chatActivity, final Theme.ResourcesProvider resourcesProvider) {
+    private long dialogId;
+    private long botId;
+    private int flags;
+    private String manageUrl;
+
+    public BusinessBotButton(Context context, ChatActivity chatActivity, Theme.ResourcesProvider resourcesProvider) {
         super(context);
+
         this.currentAccount = chatActivity.getCurrentAccount();
-        this.paused = false;
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.avatarView = backupImageView;
-        TLRPC.User user = chatActivity.getMessagesController().getUser(Long.valueOf(this.botId));
-        AvatarDrawable avatarDrawable = new AvatarDrawable();
-        this.avatarDrawable = avatarDrawable;
+        paused = false;
+
+        avatarView = new BackupImageView(context);
+        TLRPC.User user = chatActivity.getMessagesController().getUser(botId);
+        avatarDrawable = new AvatarDrawable();
         avatarDrawable.setInfo(user);
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(32.0f));
-        backupImageView.setForUserOrChat(user, avatarDrawable);
-        addView(backupImageView, LayoutHelper.createFrame(32, 32.0f, 19, 10.0f, 0.0f, 10.0f, 0.0f));
-        LinearLayout linearLayout = new LinearLayout(context);
-        this.textLayout = linearLayout;
-        linearLayout.setOrientation(1);
-        AnimatedTextView animatedTextView = new AnimatedTextView(context);
-        this.titleView = animatedTextView;
-        animatedTextView.adaptWidth = false;
-        animatedTextView.getDrawable().setHacks(true, true, false);
-        animatedTextView.setTypeface(AndroidUtilities.bold());
-        animatedTextView.setTextSize(AndroidUtilities.dp(14.0f));
-        animatedTextView.setText(UserObject.getUserName(user));
-        animatedTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
-        animatedTextView.setEllipsizeByGradient(true);
-        linearLayout.addView(animatedTextView, LayoutHelper.createLinear(-1, 17, 0.0f, 0.0f, 0.0f, 1.0f));
-        AnimatedTextView animatedTextView2 = new AnimatedTextView(context);
-        this.subtitleView = animatedTextView2;
-        animatedTextView2.adaptWidth = false;
-        animatedTextView2.getDrawable().setHacks(true, true, false);
-        animatedTextView2.setTextSize(AndroidUtilities.dp(13.0f));
-        animatedTextView2.setText(LocaleController.getString(R.string.BizBotStatusManages));
-        animatedTextView2.setTextColor(Theme.getColor(Theme.key_chat_topPanelMessage, resourcesProvider));
-        animatedTextView2.setEllipsizeByGradient(true);
-        linearLayout.addView(animatedTextView2, LayoutHelper.createLinear(-1, 17));
-        addView(linearLayout, LayoutHelper.createFrame(-2, -2.0f, 16, 52.0f, 0.0f, 49.0f, 0.0f));
-        ClickableAnimatedTextView clickableAnimatedTextView = new ClickableAnimatedTextView(context);
-        this.pauseButton = clickableAnimatedTextView;
-        clickableAnimatedTextView.getDrawable().setHacks(true, true, true);
-        clickableAnimatedTextView.setAnimationProperties(0.75f, 0L, 350L, CubicBezierInterpolator.EASE_OUT_QUINT);
-        clickableAnimatedTextView.setScaleProperty(0.6f);
-        clickableAnimatedTextView.setTypeface(AndroidUtilities.bold());
-        int iDp = AndroidUtilities.dp(14.0f);
-        int i = Theme.key_featuredStickers_addButton;
-        clickableAnimatedTextView.setBackgroundDrawable(Theme.createSimpleSelectorRoundRectDrawable(iDp, Theme.getColor(i, resourcesProvider), Theme.blendOver(Theme.getColor(i, resourcesProvider), Theme.multAlpha(-1, 0.12f))));
-        clickableAnimatedTextView.setTextSize(AndroidUtilities.dp(14.0f));
-        clickableAnimatedTextView.setGravity(5);
-        clickableAnimatedTextView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText, resourcesProvider));
-        clickableAnimatedTextView.setPadding(AndroidUtilities.dp(13.0f), 0, AndroidUtilities.dp(13.0f), 0);
-        clickableAnimatedTextView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Business.BusinessBotButton$$ExternalSyntheticLambda0
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
+        avatarView.setRoundRadius(dp(16));
+        avatarView.setForUserOrChat(user, avatarDrawable);
+        addView(avatarView, LayoutHelper.createFrame(32, 32, Gravity.CENTER_VERTICAL | Gravity.LEFT, 10, 0, 10, 0));
+
+        textLayout = new LinearLayout(context);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+
+        titleView = new AnimatedTextView(context);
+        titleView.adaptWidth = false;
+        titleView.getDrawable().setHacks(true, true, false);
+        titleView.setTypeface(AndroidUtilities.bold());
+        titleView.setTextSize(dp(14));
+        titleView.setText(UserObject.getUserName(user));
+        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+        titleView.setEllipsizeByGradient(true);
+        textLayout.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 17, 0, 0, 0, 1));
+
+        subtitleView = new AnimatedTextView(context);
+        subtitleView.adaptWidth = false;
+        subtitleView.getDrawable().setHacks(true, true, false);
+        subtitleView.setTextSize(dp(13));
+        subtitleView.setText(LocaleController.getString(R.string.BizBotStatusManages));
+        subtitleView.setTextColor(Theme.getColor(Theme.key_chat_topPanelMessage, resourcesProvider));
+        subtitleView.setEllipsizeByGradient(true);
+        textLayout.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 17));
+
+        addView(textLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL, 52, 0, 49, 0));
+
+        pauseButton = new ClickableAnimatedTextView(context);
+        pauseButton.getDrawable().setHacks(true, true, true);
+        pauseButton.setAnimationProperties(.75f, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+        pauseButton.setScaleProperty(.6f);
+        pauseButton.setTypeface(AndroidUtilities.bold());
+        pauseButton.setBackgroundDrawable(Theme.createSimpleSelectorRoundRectDrawable(dp(14), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), Theme.blendOver(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), Theme.multAlpha(Color.WHITE, .12f))));
+        pauseButton.setTextSize(dp(14));
+        pauseButton.setGravity(Gravity.RIGHT);
+        pauseButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText, resourcesProvider));
+        pauseButton.setPadding(dp(13), 0, dp(13), 0);
+        pauseButton.setOnClickListener(v -> {
+            paused = !paused;
+            pauseButton.setText(LocaleController.getString(paused ? R.string.BizBotStart : R.string.BizBotStop), true);
+            subtitleView.cancelAnimation();
+            subtitleView.setText(LocaleController.getString(paused ? R.string.BizBotStatusStopped : R.string.BizBotStatusManages), true);
+
+            if (paused) {
+                flags |= 1;
+            } else {
+                flags &=~ 1;
             }
+            MessagesController.getNotificationsSettings(currentAccount).edit()
+                .putInt("dialog_botflags" + dialogId, flags)
+                .apply();
+
+            TL_account.toggleConnectedBotPaused req = new TL_account.toggleConnectedBotPaused();
+            req.peer = MessagesController.getInstance(currentAccount).getInputPeer(dialogId);
+            req.paused = paused;
+            ConnectionsManager.getInstance(currentAccount).sendRequest(req, null);
         });
-        clickableAnimatedTextView.setOnWidthUpdatedListener(new Runnable() { // from class: org.telegram.ui.Business.BusinessBotButton$$ExternalSyntheticLambda1
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.updateTextRightPadding();
+        pauseButton.setOnWidthUpdatedListener(this::updateTextRightPadding);
+        pauseButton.setText(LocaleController.getString(paused ? R.string.BizBotStart : R.string.BizBotStop));
+        addView(pauseButton, LayoutHelper.createFrame(64, 28, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, 46, 0));
+
+        menuView = new ImageView(context);
+        menuView.setScaleType(ImageView.ScaleType.CENTER);
+        menuView.setImageResource(R.drawable.msg_mini_customize);
+        menuView.setBackground(Theme.createCircleSelectorDrawable(Theme.getColor(Theme.key_listSelector, resourcesProvider), 0, 0));
+        menuView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_topPanelClose, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        menuView.setOnClickListener(e -> {
+            ItemOptions itemOptions = ItemOptions.makeOptions(chatActivity.getLayoutContainer(), resourcesProvider, menuView);
+            itemOptions.add(R.drawable.msg_cancel, LocaleController.getString(R.string.BizBotRemove), true, () -> {
+                TL_account.disablePeerConnectedBot req = new TL_account.disablePeerConnectedBot();
+                req.peer = MessagesController.getInstance(currentAccount).getInputPeer(dialogId);
+                ConnectionsManager.getInstance(currentAccount).sendRequest(req, null);
+
+                MessagesController.getNotificationsSettings(currentAccount).edit()
+                    .remove("dialog_botid" + dialogId).remove("dialog_boturl" + dialogId).remove("dialog_botflags" + dialogId)
+                    .apply();
+                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+
+                BusinessChatbotController.getInstance(currentAccount).invalidate(false);
+
+            }).makeMultiline(false);
+            if (manageUrl != null) {
+                itemOptions.add(R.drawable.msg_settings, LocaleController.getString(R.string.BizBotManage), () -> {
+                    Browser.openUrl(getContext(), manageUrl);
+                });
             }
+            itemOptions.translate(dp(10), dp(7));
+            itemOptions.setDimAlpha(0);
+            itemOptions.show();
         });
-        clickableAnimatedTextView.setText(LocaleController.getString(this.paused ? R.string.BizBotStart : R.string.BizBotStop));
-        addView(clickableAnimatedTextView, LayoutHelper.createFrame(64, 28.0f, 21, 0.0f, 0.0f, 46.0f, 0.0f));
-        ImageView imageView = new ImageView(context);
-        this.menuView = imageView;
-        imageView.setScaleType(ImageView.ScaleType.CENTER);
-        imageView.setImageResource(R.drawable.msg_mini_customize);
-        imageView.setBackground(Theme.createCircleSelectorDrawable(Theme.getColor(Theme.key_listSelector, resourcesProvider), 0, 0));
-        imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_topPanelClose, resourcesProvider), PorterDuff.Mode.MULTIPLY));
-        imageView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Business.BusinessBotButton$$ExternalSyntheticLambda2
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$new$3(chatActivity, resourcesProvider, view);
-            }
-        });
-        addView(imageView, LayoutHelper.createFrame(32, 32.0f, 21, 8.0f, 0.0f, 6.0f, 0.0f));
+        addView(menuView, LayoutHelper.createFrame(32, 32, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 8, 0, 6, 0));
     }
 
-    public /* synthetic */ void lambda$new$0(View view) {
-        boolean z = this.paused;
-        this.paused = !z;
-        this.pauseButton.setText(LocaleController.getString(!z ? R.string.BizBotStart : R.string.BizBotStop), true);
-        this.subtitleView.cancelAnimation();
-        this.subtitleView.setText(LocaleController.getString(this.paused ? R.string.BizBotStatusStopped : R.string.BizBotStatusManages), true);
-        boolean z2 = this.paused;
-        int i = this.flags;
-        if (z2) {
-            this.flags = i | 1;
-        } else {
-            this.flags = i & (-2);
-        }
-        MessagesController.getNotificationsSettings(this.currentAccount).edit().putInt("dialog_botflags" + this.dialogId, this.flags).apply();
-        TL_account.toggleConnectedBotPaused toggleconnectedbotpaused = new TL_account.toggleConnectedBotPaused();
-        toggleconnectedbotpaused.peer = MessagesController.getInstance(this.currentAccount).getInputPeer(this.dialogId);
-        toggleconnectedbotpaused.paused = this.paused;
-        ConnectionsManager.getInstance(this.currentAccount).sendRequest(toggleconnectedbotpaused, null);
-    }
-
-    public /* synthetic */ void lambda$new$3(ChatActivity chatActivity, Theme.ResourcesProvider resourcesProvider, View view) {
-        ItemOptions itemOptionsMakeOptions = ItemOptions.makeOptions(chatActivity.getLayoutContainer(), resourcesProvider, this.menuView);
-        itemOptionsMakeOptions.add(R.drawable.msg_cancel, (CharSequence) LocaleController.getString(R.string.BizBotRemove), true, new Runnable() { // from class: org.telegram.ui.Business.BusinessBotButton$$ExternalSyntheticLambda3
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$new$1();
-            }
-        }).makeMultiline(false);
-        if (this.manageUrl != null) {
-            itemOptionsMakeOptions.add(R.drawable.msg_settings, LocaleController.getString(R.string.BizBotManage), new Runnable() { // from class: org.telegram.ui.Business.BusinessBotButton$$ExternalSyntheticLambda4
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$new$2();
-                }
-            });
-        }
-        itemOptionsMakeOptions.translate(AndroidUtilities.dp(10.0f), AndroidUtilities.dp(7.0f));
-        itemOptionsMakeOptions.setDimAlpha(0);
-        itemOptionsMakeOptions.show();
-    }
-
-    public /* synthetic */ void lambda$new$1() {
-        TL_account.disablePeerConnectedBot disablepeerconnectedbot = new TL_account.disablePeerConnectedBot();
-        disablepeerconnectedbot.peer = MessagesController.getInstance(this.currentAccount).getInputPeer(this.dialogId);
-        ConnectionsManager.getInstance(this.currentAccount).sendRequest(disablepeerconnectedbot, null);
-        MessagesController.getNotificationsSettings(this.currentAccount).edit().remove("dialog_botid" + this.dialogId).remove("dialog_boturl" + this.dialogId).remove("dialog_botflags" + this.dialogId).apply();
-        NotificationCenter.getInstance(this.currentAccount).lambda$postNotificationNameOnUIThread$1(NotificationCenter.peerSettingsDidLoad, Long.valueOf(this.dialogId));
-        BusinessChatbotController.getInstance(this.currentAccount).invalidate(false);
-    }
-
-    public /* synthetic */ void lambda$new$2() {
-        Browser.openUrl(getContext(), this.manageUrl);
-    }
-
-    public void setLeftMargin(float f) {
-        this.leftMargin = f;
-        this.avatarView.setTranslationX(f);
-        this.textLayout.setTranslationX(f);
+    private float leftMargin;
+    public void setLeftMargin(float leftMargin) {
+        this.leftMargin = leftMargin;
+        avatarView.setTranslationX(leftMargin);
+        textLayout.setTranslationX(leftMargin);
         updateTextRightPadding();
     }
 
-    public void updateTextRightPadding() {
-        float paddingLeft = this.leftMargin + this.pauseButton.getPaddingLeft() + this.pauseButton.getDrawable().getCurrentWidth() + this.pauseButton.getPaddingRight() + AndroidUtilities.dp(12.0f);
-        this.titleView.setRightPadding(paddingLeft);
-        this.subtitleView.setRightPadding(paddingLeft);
+    private void updateTextRightPadding() {
+        final float padding = this.leftMargin + pauseButton.getPaddingLeft() + pauseButton.getDrawable().getCurrentWidth() + pauseButton.getPaddingRight() + dp(12);
+        titleView.setRightPadding(padding);
+        subtitleView.setRightPadding(padding);
     }
 
-    public void set(long j, long j2, String str, int i) {
-        this.dialogId = j;
-        this.botId = j2;
-        this.manageUrl = str;
-        this.flags = i;
-        this.paused = (i & 1) != 0;
-        TLRPC.User user = MessagesController.getInstance(this.currentAccount).getUser(Long.valueOf(j2));
-        this.avatarDrawable.setInfo(user);
-        this.avatarView.setForUserOrChat(user, this.avatarDrawable);
-        this.titleView.setText(UserObject.getUserName(user));
-        this.subtitleView.setText(LocaleController.getString(this.paused ? R.string.BizBotStatusStopped : R.string.BizBotStatusManages));
-        this.pauseButton.setText(LocaleController.getString(this.paused ? R.string.BizBotStart : R.string.BizBotStop));
+    public void set(
+        long dialogId,
+        long botId,
+        String url,
+        int flags
+    ) {
+        this.dialogId = dialogId;
+        this.botId = botId;
+        this.manageUrl = url;
+        this.flags = flags;
+        this.paused = (flags & 1) != 0;
+
+        TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(botId);
+        avatarDrawable.setInfo(user);
+        avatarView.setForUserOrChat(user, avatarDrawable);
+        titleView.setText(UserObject.getUserName(user));
+        subtitleView.setText(LocaleController.getString(paused ? R.string.BizBotStatusStopped : R.string.BizBotStatusManages));
+        pauseButton.setText(LocaleController.getString(paused ? R.string.BizBotStart : R.string.BizBotStop));
     }
+
 }

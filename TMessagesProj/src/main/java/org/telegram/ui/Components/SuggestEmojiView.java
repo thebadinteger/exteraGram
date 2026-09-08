@@ -7,7 +7,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.Spannable;
@@ -15,22 +14,20 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.exteragram.messenger.api.dto.BadgeDTO;
-import com.exteragram.messenger.badges.BadgesController;
-import com.exteragram.messenger.utils.system.VibratorUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.function.Consumer;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.LocaleController;
@@ -42,760 +39,1074 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.ContentPreviewViewer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class SuggestEmojiView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
-    private Adapter adapter;
-    private Integer arrowToEnd;
-    private Emoji.EmojiSpan arrowToSpan;
-    private Integer arrowToStart;
-    private float arrowX;
-    private AnimatedFloat arrowXAnimated;
-    private Paint backgroundPaint;
-    private Path circlePath;
-    private boolean clear;
-    private FrameLayout containerView;
+
+    public final static int DIRECTION_TO_BOTTOM = 0;
+    public final static int DIRECTION_TO_TOP = 1;
+
     private final int currentAccount;
-    private int direction;
-    private AnchorViewDelegate enterView;
-    private boolean forceClose;
-    private int horizontalPadding;
-    private boolean isCopyForbidden;
-    private boolean isSetAsStatusForbidden;
-    private ArrayList<MediaDataController.KeywordResult> keywordResults;
-    private String[] lastLang;
-    private long lastLangChangedTime;
-    private String lastQuery;
-    private int lastQueryId;
-    private int lastQueryType;
-    private float lastSpanY;
-    private AnimatedFloat leftGradientAlpha;
-    private RecyclerListView listView;
-    private AnimatedFloat listViewCenterAnimated;
-    private AnimatedFloat listViewWidthAnimated;
-    private MediaDataController.SearchStickersKey loadingKey;
-    private OvershootInterpolator overshootInterpolator;
-    private Path path;
-    private ContentPreviewViewer.ContentPreviewViewerDelegate previewDelegate;
     private final Theme.ResourcesProvider resourcesProvider;
-    private AnimatedFloat rightGradientAlpha;
-    private Runnable searchRunnable;
-    private boolean show;
-    private AnimatedFloat showFloat1;
-    private AnimatedFloat showFloat2;
-    private Runnable updateRunnable;
+    private AnchorViewDelegate enterView;
+
+    @Nullable
+    private FrameLayout containerView;
+    @Nullable
+    private RecyclerListView listView;
+    @Nullable
+    private Adapter adapter;
+    private int direction = DIRECTION_TO_BOTTOM;
+    private int horizontalPadding = AndroidUtilities.dp(10);
 
     public interface AnchorViewDelegate {
-        void addTextChangedListener(TextWatcher textWatcher);
-
-        EditTextBoldCursor getEditField();
-
-        Editable getEditText();
-
-        CharSequence getFieldText();
-
         BaseFragment getParentFragment();
-
+        void setFieldText(CharSequence text);
+        void addTextChangedListener(TextWatcher watcher);
         int getVisibility();
-
-        void setFieldText(CharSequence charSequence);
+        EditTextBoldCursor getEditField();
+        CharSequence getFieldText();
+        Editable getEditText();
     }
 
-    public int emojiCacheType() {
-        return 2;
-    }
+    private ContentPreviewViewer.ContentPreviewViewerDelegate previewDelegate;
+    private ContentPreviewViewer.ContentPreviewViewerDelegate getPreviewDelegate() {
+        if (previewDelegate == null) {
+            previewDelegate = new ContentPreviewViewer.ContentPreviewViewerDelegate() {
+                @Override
+                public boolean can() {
+                    return true;
+                }
 
-    public class AnonymousClass1 implements ContentPreviewViewer.ContentPreviewViewerDelegate {
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public boolean can() {
-            return true;
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public boolean canSchedule() {
-            return false;
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public long getDialogId() {
-            return 0L;
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public void openSet(TLRPC.InputStickerSet inputStickerSet, boolean z) {
-        }
-
-        public AnonymousClass1() {
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public boolean needSend(int i) {
-            if (SuggestEmojiView.this.enterView == null) {
-                return false;
-            }
-            BaseFragment parentFragment = SuggestEmojiView.this.enterView.getParentFragment();
-            if (parentFragment instanceof ChatActivity) {
-                ChatActivity chatActivity = (ChatActivity) parentFragment;
-                if (chatActivity.canSendMessage()) {
-                    if (UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
-                        return true;
+                @Override
+                public boolean needSend(int contentType) {
+                    if (enterView == null) {
+                        return false;
                     }
-                    if (chatActivity.getCurrentUser() != null && UserObject.isUserSelf(chatActivity.getCurrentUser())) {
-                        return true;
+                    BaseFragment fragment = enterView.getParentFragment();
+                    if (fragment instanceof ChatActivity) {
+                        ChatActivity chatActivity = (ChatActivity) fragment;
+                        return chatActivity.canSendMessage() && (UserConfig.getInstance(UserConfig.selectedAccount).isPremium() || chatActivity.getCurrentUser() != null && UserObject.isUserSelf(chatActivity.getCurrentUser()));
+                    }
+                    return false;
+                }
+
+                @Override
+                public void sendEmoji(TLRPC.Document emoji) {
+                    if (enterView == null) {
+                        return;
+                    }
+                    BaseFragment fragment = enterView.getParentFragment();
+                    if (fragment instanceof ChatActivity) {
+                        ChatActivity chatActivity = (ChatActivity) fragment;
+                        chatActivity.sendAnimatedEmoji(emoji, true, 0);
+                        enterView.setFieldText("");
                     }
                 }
-            }
-            return false;
-        }
 
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public void sendEmoji(TLRPC.Document document) {
-            if (SuggestEmojiView.this.enterView == null) {
-                return;
-            }
-            BaseFragment parentFragment = SuggestEmojiView.this.enterView.getParentFragment();
-            if (parentFragment instanceof ChatActivity) {
-                ((ChatActivity) parentFragment).sendAnimatedEmoji(document, true, 0);
-                SuggestEmojiView.this.enterView.setFieldText(_UrlKt.FRAGMENT_ENCODE_SET);
-            }
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public boolean needCopy(TLRPC.Document document) {
-            if (SuggestEmojiView.this.isCopyForbidden) {
-                return false;
-            }
-            return UserConfig.getInstance(UserConfig.selectedAccount).isPremium();
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public void copyEmoji(TLRPC.Document document) {
-            SpannableStringBuilder spannableStringBuilderValueOf = SpannableStringBuilder.valueOf(MessageObject.findAnimatedEmojiEmoticon(document));
-            spannableStringBuilderValueOf.setSpan(new AnimatedEmojiSpan(document, (Paint.FontMetricsInt) null), 0, spannableStringBuilderValueOf.length(), 33);
-            if (!AndroidUtilities.addToClipboard(spannableStringBuilderValueOf) || SuggestEmojiView.this.enterView == null) {
-                return;
-            }
-            BulletinFactory.of(SuggestEmojiView.this.enterView.getParentFragment()).createCopyBulletin(LocaleController.getString(R.string.EmojiCopied)).show();
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public Boolean canSetAsStatus(TLRPC.Document document) {
-            TLRPC.User currentUser;
-            if (SuggestEmojiView.this.isSetAsStatusForbidden || !UserConfig.getInstance(UserConfig.selectedAccount).isPremium() || (currentUser = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser()) == null) {
-                return null;
-            }
-            Long emojiStatusDocumentId = UserObject.getEmojiStatusDocumentId(currentUser);
-            return Boolean.valueOf(document != null && (emojiStatusDocumentId == null || emojiStatusDocumentId.longValue() != document.id));
-        }
-
-        @Override // org.telegram.ui.ContentPreviewViewer.ContentPreviewViewerDelegate
-        public void setAsEmojiStatus(TLRPC.Document document, Integer num) {
-            TLRPC.EmojiStatus tL_emojiStatusEmpty;
-            if (document == null) {
-                tL_emojiStatusEmpty = new TLRPC.TL_emojiStatusEmpty();
-            } else {
-                TLRPC.TL_emojiStatus tL_emojiStatus = new TLRPC.TL_emojiStatus();
-                tL_emojiStatus.document_id = document.id;
-                if (num != null) {
-                    tL_emojiStatus.flags |= 1;
-                    tL_emojiStatus.until = num.intValue();
+                @Override
+                public boolean needCopy(TLRPC.Document document) {
+                    if (isCopyForbidden) {
+                        return false;
+                    }
+                    return UserConfig.getInstance(UserConfig.selectedAccount).isPremium();
                 }
-                tL_emojiStatusEmpty = tL_emojiStatus;
-            }
-            TLRPC.User currentUser = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
-            final TLRPC.EmojiStatus tL_emojiStatusEmpty2 = currentUser == null ? new TLRPC.TL_emojiStatusEmpty() : currentUser.emoji_status;
-            MessagesController.getInstance(SuggestEmojiView.this.currentAccount).updateEmojiStatus(tL_emojiStatusEmpty);
-            Runnable runnable = new Runnable() { // from class: org.telegram.ui.Components.SuggestEmojiView$1$$ExternalSyntheticLambda2
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$setAsEmojiStatus$0(tL_emojiStatusEmpty2);
+
+                @Override
+                public void copyEmoji(TLRPC.Document document) {
+                    Spannable spannable = SpannableStringBuilder.valueOf(MessageObject.findAnimatedEmojiEmoticon(document));
+                    spannable.setSpan(new AnimatedEmojiSpan(document, null), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    if (AndroidUtilities.addToClipboard(spannable) && enterView != null) {
+                        BulletinFactory.of(enterView.getParentFragment()).createCopyBulletin(LocaleController.getString(R.string.EmojiCopied)).show();
+                    }
+                }
+
+                @Override
+                public Boolean canSetAsStatus(TLRPC.Document document) {
+                    if (isSetAsStatusForbidden) {
+                        return null;
+                    }
+                    if (!UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
+                        return null;
+                    }
+                    TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
+                    if (user == null) {
+                        return null;
+                    }
+                    Long emojiStatusId = UserObject.getEmojiStatusDocumentId(user);
+                    return document != null && (emojiStatusId == null || emojiStatusId != document.id);
+                }
+
+                @Override
+                public void setAsEmojiStatus(TLRPC.Document document, Integer until) {
+                    final TLRPC.EmojiStatus emojiStatus;
+                    if (document == null) {
+                        emojiStatus = new TLRPC.TL_emojiStatusEmpty();
+                    } else {
+                        final TLRPC.TL_emojiStatus status = new TLRPC.TL_emojiStatus();
+                        status.document_id = document.id;
+                        if (until != null) {
+                            status.flags |= 1;
+                            status.until = until;
+                        }
+                        emojiStatus = status;
+                    }
+                    final TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
+                    final TLRPC.EmojiStatus previousEmojiStatus = user == null ? new TLRPC.TL_emojiStatusEmpty() : user.emoji_status;
+                    MessagesController.getInstance(currentAccount).updateEmojiStatus(emojiStatus);
+
+                    final Runnable undoAction = () -> MessagesController.getInstance(currentAccount).updateEmojiStatus(previousEmojiStatus);
+                    final BaseFragment fragment = enterView == null ? null : enterView.getParentFragment();
+                    if (fragment != null) {
+                        if (document == null) {
+                            final Bulletin.SimpleLayout layout = new Bulletin.SimpleLayout(getContext(), resourcesProvider);
+                            layout.textView.setText(LocaleController.getString(R.string.RemoveStatusInfo));
+                            layout.imageView.setImageResource(R.drawable.msg_settings_premium);
+                            Bulletin.UndoButton undoButton = new Bulletin.UndoButton(getContext(), true, resourcesProvider);
+                            undoButton.setUndoAction(undoAction);
+                            layout.setButton(undoButton);
+                            Bulletin.make(fragment, layout, Bulletin.DURATION_SHORT).show();
+                        } else {
+                            BulletinFactory.of(fragment).createEmojiBulletin(document, LocaleController.getString(R.string.SetAsEmojiStatusInfo), LocaleController.getString(R.string.UndoNoCaps), undoAction).show();
+                        }
+                    }
+                }
+
+                @Override
+                public boolean canSchedule() {
+                    return false;
+                }
+
+                @Override
+                public boolean isInScheduleMode() {
+                    if (enterView == null) {
+                        return false;
+                    }
+                    BaseFragment fragment = enterView.getParentFragment();
+                    if (fragment instanceof ChatActivity) {
+                        ChatActivity chatActivity = (ChatActivity) fragment;
+                        return chatActivity.isInScheduleMode();
+                    } else {
+                        return false;
+                    }
+                }
+
+                @Override
+                public void openSet(TLRPC.InputStickerSet set, boolean clearsInputField) {}
+
+                @Override
+                public long getDialogId() {
+                    return 0;
                 }
             };
-            BaseFragment parentFragment = SuggestEmojiView.this.enterView == null ? null : SuggestEmojiView.this.enterView.getParentFragment();
-            if (parentFragment != null) {
-                if (document == null) {
-                    Bulletin.SimpleLayout simpleLayout = new Bulletin.SimpleLayout(SuggestEmojiView.this.getContext(), SuggestEmojiView.this.resourcesProvider);
-                    simpleLayout.textView.setText(LocaleController.getString(R.string.RemoveStatusInfo));
-                    simpleLayout.imageView.setImageResource(R.drawable.msg_settings_premium);
-                    Bulletin.UndoButton undoButton = new Bulletin.UndoButton(SuggestEmojiView.this.getContext(), true, SuggestEmojiView.this.resourcesProvider);
-                    undoButton.setUndoAction(runnable);
-                    simpleLayout.setButton(undoButton);
-                    Bulletin.make(parentFragment, simpleLayout, 1500).show();
-                    return;
-                }
-                BulletinFactory.of(parentFragment).createEmojiBulletin(document, LocaleController.getString(R.string.SetAsEmojiStatusInfo), LocaleController.getString(R.string.UndoNoCaps), runnable).show();
-            }
         }
+        return previewDelegate;
+    }
 
-        public void lambda$searchKeywords$3(int i, String str, HashSet hashSet, ArrayList arrayList, ArrayList arrayList2, String str2) {
-        if (i != this.lastQueryId) {
+    private boolean show, forceClose;
+    @Nullable
+    private ArrayList<MediaDataController.KeywordResult> keywordResults;
+    private boolean clear;
+    private boolean isCopyForbidden;
+    private boolean isSetAsStatusForbidden;
+
+    public SuggestEmojiView(Context context, int currentAccount, AnchorViewDelegate enterView, Theme.ResourcesProvider resourcesProvider) {
+        super(context);
+        this.currentAccount = currentAccount;
+        this.enterView = enterView;
+        this.resourcesProvider = resourcesProvider;
+
+        postDelayed(() -> MediaDataController.getInstance(currentAccount).checkStickers(MediaDataController.TYPE_EMOJIPACKS), 260);
+    }
+
+    public void forbidCopy() {
+        isCopyForbidden = true;
+    }
+
+    public void forbidSetAsStatus() {
+        isSetAsStatusForbidden = true;
+    }
+
+    private void createListView() {
+        if (listView != null) {
             return;
         }
-        this.lastQueryType = 1;
-        this.lastQuery = str;
-        if (arrayList2 != null) {
-            int size = arrayList2.size();
-            int i2 = 0;
-            while (i2 < size) {
-                Object obj = arrayList2.get(i2);
-                i2++;
-                MediaDataController.KeywordResult keywordResult = (MediaDataController.KeywordResult) obj;
-                if (!hashSet.contains(keywordResult.emoji)) {
-                    hashSet.add(keywordResult.emoji);
-                    arrayList.add(keywordResult);
-                }
-            }
-        }
-        if (!arrayList.isEmpty()) {
-            this.clear = false;
-            this.forceClose = false;
-            createListView();
-            FrameLayout frameLayout = this.containerView;
-            if (frameLayout != null) {
-                frameLayout.setVisibility(0);
-            }
-            this.lastSpanY = AndroidUtilities.dp(10.0f);
-            this.keywordResults = arrayList2;
-            this.arrowToStart = 0;
-            this.arrowToEnd = Integer.valueOf(str.length());
-            FrameLayout frameLayout2 = this.containerView;
-            if (frameLayout2 != null) {
-                frameLayout2.invalidate();
-            }
-            Adapter adapter = this.adapter;
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
-                return;
-            }
-            return;
-        }
-        this.keywordResults = null;
-        this.clear = true;
-        forceClose();
-    }
 
-    private void searchAnimated(final String str) {
-        ArrayList<MediaDataController.KeywordResult> arrayList;
-        if (str == null) {
-            return;
-        }
-        String str2 = this.lastQuery;
-        if (str2 != null && this.lastQueryType == 2 && str2.equals(str) && !this.clear && (arrayList = this.keywordResults) != null && !arrayList.isEmpty()) {
-            this.forceClose = false;
-            createListView();
-            FrameLayout frameLayout = this.containerView;
-            if (frameLayout != null) {
-                frameLayout.setVisibility(0);
-                this.containerView.invalidate();
-                return;
-            }
-            return;
-        }
-        final int i = this.lastQueryId + 1;
-        this.lastQueryId = i;
-        Runnable runnable = this.searchRunnable;
-        if (runnable != null) {
-            AndroidUtilities.cancelRunOnUIThread(runnable);
-        }
-        this.searchRunnable = new Runnable() { // from class: org.telegram.ui.Components.SuggestEmojiView$$ExternalSyntheticLambda2
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$searchAnimated$6(str, i);
-            }
-        };
-        ArrayList<MediaDataController.KeywordResult> arrayList2 = this.keywordResults;
-        if (arrayList2 == null || arrayList2.isEmpty()) {
-            AndroidUtilities.runOnUIThread(this.searchRunnable, 600L);
-        } else {
-            this.searchRunnable.run();
-        }
-    }
+        path = new Path();
+        circlePath = new Path();
 
-    public /* synthetic */ void lambda$searchAnimated$6(final String str, final int i) {
-        final ArrayList<MediaDataController.KeywordResult> arrayList = new ArrayList<>(1);
-        arrayList.add(new MediaDataController.KeywordResult(str, null));
-        MediaDataController.getInstance(this.currentAccount).fillWithAnimatedEmoji(arrayList, 15, false, false, false, new Runnable() { // from class: org.telegram.ui.Components.SuggestEmojiView$$ExternalSyntheticLambda7
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$searchAnimated$5(i, str, arrayList);
+        containerView = new FrameLayout(getContext()) {
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                SuggestEmojiView.this.drawContainerBegin(canvas);
+                super.dispatchDraw(canvas);
+                SuggestEmojiView.this.drawContainerEnd(canvas);
             }
-        });
-    }
 
-    public /* synthetic */ void lambda$searchAnimated$5(int i, String str, ArrayList arrayList) {
-        if (i == this.lastQueryId) {
-            this.lastQuery = str;
-            this.lastQueryType = 2;
-            arrayList.remove(arrayList.size() - 1);
-            if (!arrayList.isEmpty()) {
-                this.clear = false;
-                this.forceClose = false;
-                createListView();
-                FrameLayout frameLayout = this.containerView;
-                if (frameLayout != null) {
-                    frameLayout.setVisibility(0);
-                    this.containerView.invalidate();
-                }
-                this.keywordResults = arrayList;
-                Adapter adapter = this.adapter;
-                if (adapter != null) {
-                    adapter.notifyDataSetChanged();
-                    return;
-                }
-                return;
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                this.setPadding(horizontalPadding, direction == DIRECTION_TO_BOTTOM ? AndroidUtilities.dp(8) : AndroidUtilities.dp(6.66f), horizontalPadding, direction == DIRECTION_TO_BOTTOM ? AndroidUtilities.dp(6.66f) : AndroidUtilities.dp(8));
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             }
-            this.clear = true;
-            forceClose();
-        }
-    }
 
-    private CharSequence makeEmoji(String str) {
-        AnimatedEmojiSpan animatedEmojiSpan;
-        Paint.FontMetricsInt fontMetricsInt = this.enterView.getEditField() != null ? this.enterView.getEditField().getPaint().getFontMetricsInt() : null;
-        if (fontMetricsInt == null) {
-            Paint paint = new Paint();
-            paint.setTextSize(AndroidUtilities.dp(18.0f));
-            fontMetricsInt = paint.getFontMetricsInt();
-        }
-        if (str != null && str.startsWith("animated_")) {
-            try {
-                long j = Long.parseLong(str.substring(9));
-                TLRPC.Document documentFindDocument = AnimatedEmojiDrawable.findDocument(this.currentAccount, j);
-                SpannableString spannableString = new SpannableString(MessageObject.findAnimatedEmojiEmoticon(documentFindDocument));
-                if (documentFindDocument == null) {
-                    animatedEmojiSpan = new AnimatedEmojiSpan(j, fontMetricsInt);
-                } else {
-                    animatedEmojiSpan = new AnimatedEmojiSpan(documentFindDocument, fontMetricsInt);
-                }
-                spannableString.setSpan(animatedEmojiSpan, 0, spannableString.length(), 33);
-                return spannableString;
-            } catch (Exception unused) {
-                return null;
-            }
-        }
-        return Emoji.replaceEmoji(str, fontMetricsInt, true);
-    }
-
-    private void onClick(String str) {
-        AnchorViewDelegate anchorViewDelegate;
-        int iIntValue;
-        int iIntValue2;
-        CharSequence charSequenceMakeEmoji;
-        AnimatedEmojiSpan[] animatedEmojiSpanArr;
-        if (this.show && (anchorViewDelegate = this.enterView) != null && (anchorViewDelegate.getFieldText() instanceof Spanned)) {
-            if (this.arrowToSpan != null) {
-                iIntValue = ((Spanned) this.enterView.getFieldText()).getSpanStart(this.arrowToSpan);
-                iIntValue2 = ((Spanned) this.enterView.getFieldText()).getSpanEnd(this.arrowToSpan);
-            } else {
-                Integer num = this.arrowToStart;
-                if (num == null || this.arrowToEnd == null) {
-                    return;
-                }
-                iIntValue = num.intValue();
-                iIntValue2 = this.arrowToEnd.intValue();
-                this.arrowToEnd = null;
-                this.arrowToStart = null;
-            }
-            Editable editText = this.enterView.getEditText();
-            if (editText == null || iIntValue < 0 || iIntValue2 < 0 || iIntValue > editText.length() || iIntValue2 > editText.length()) {
-                return;
-            }
-            if (this.arrowToSpan != null) {
-                if (this.enterView.getFieldText() instanceof Spannable) {
-                    ((Spannable) this.enterView.getFieldText()).removeSpan(this.arrowToSpan);
-                }
-                this.arrowToSpan = null;
-            }
-            String string = editText.toString();
-            String strSubstring = string.substring(iIntValue, iIntValue2);
-            int length = strSubstring.length();
-            while (true) {
-                iIntValue2 -= length;
-                if (iIntValue2 < 0) {
-                    break;
-                }
-                int i = iIntValue2 + length;
-                if (!string.substring(iIntValue2, i).equals(strSubstring) || (charSequenceMakeEmoji = makeEmoji(str)) == null || ((animatedEmojiSpanArr = (AnimatedEmojiSpan[]) editText.getSpans(iIntValue2, i, AnimatedEmojiSpan.class)) != null && animatedEmojiSpanArr.length > 0)) {
-                    break;
-                }
-                Emoji.EmojiSpan[] emojiSpanArr = (Emoji.EmojiSpan[]) editText.getSpans(iIntValue2, i, Emoji.EmojiSpan.class);
-                if (emojiSpanArr != null) {
-                    for (Emoji.EmojiSpan emojiSpan : emojiSpanArr) {
-                        editText.removeSpan(emojiSpan);
+            @Override
+            public void setVisibility(int visibility) {
+                boolean same = getVisibility() == visibility;
+                super.setVisibility(visibility);
+                if (!same) {
+                    boolean visible = visibility == View.VISIBLE;
+                    if (listView != null) {
+                        for (int i = 0; i < listView.getChildCount(); ++i) {
+                            if (visible) {
+                                ((EmojiImageView) listView.getChildAt(i)).attach();
+                            } else {
+                                ((EmojiImageView) listView.getChildAt(i)).detach();
+                            }
+                        }
                     }
                 }
-                editText.replace(iIntValue2, i, _UrlKt.FRAGMENT_ENCODE_SET);
-                editText.insert(iIntValue2, charSequenceMakeEmoji);
             }
-            try {
-                performHapticFeedback(VibratorUtils.getType(3), 1);
-            } catch (Exception unused) {
+        };
+
+        showFloat1 = new AnimatedFloat(containerView, 120, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+        showFloat2 = new AnimatedFloat(containerView, 150, 600, CubicBezierInterpolator.EASE_OUT_QUINT);
+        overshootInterpolator = new OvershootInterpolator(.4f);
+        leftGradientAlpha = new AnimatedFloat(containerView, 300, CubicBezierInterpolator.EASE_OUT_QUINT);
+        rightGradientAlpha = new AnimatedFloat(containerView, 300, CubicBezierInterpolator.EASE_OUT_QUINT);
+        arrowXAnimated = new AnimatedFloat(containerView, 200, CubicBezierInterpolator.EASE_OUT_QUINT);
+        listViewCenterAnimated = new AnimatedFloat(containerView, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+        listViewWidthAnimated = new AnimatedFloat(containerView, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
+
+        listView = new RecyclerListView(getContext()) {
+            private boolean left, right;
+            @Override
+            public void onScrolled(int dx, int dy) {
+                super.onScrolled(dx, dy);
+                boolean left = canScrollHorizontally(-1);
+                boolean right = canScrollHorizontally(1);
+                if (this.left != left || this.right != right) {
+                    if (containerView != null) {
+                        containerView.invalidate();
+                    }
+                    this.left = left;
+                    this.right = right;
+                }
             }
-            Emoji.addRecentEmoji(str);
-            this.show = false;
-            this.forceClose = true;
-            this.lastQueryType = 0;
-            FrameLayout frameLayout = this.containerView;
-            if (frameLayout != null) {
-                frameLayout.invalidate();
+
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent event) {
+                boolean result = ContentPreviewViewer.getInstance().onInterceptTouchEvent(event, listView, 0, getPreviewDelegate(), resourcesProvider);
+                return super.onInterceptTouchEvent(event) || result;
             }
+        };
+        listView.setAdapter(adapter = new Adapter(this));
+        LinearLayoutManager layout = new LinearLayoutManager(getContext());
+        layout.setOrientation(RecyclerView.HORIZONTAL);
+        listView.setLayoutManager(layout);
+        DefaultItemAnimator itemAnimator = new DefaultItemAnimator();
+        itemAnimator.setDurations(45);
+        itemAnimator.setTranslationInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        listView.setItemAnimator(itemAnimator);
+        listView.setSelectorDrawableColor(Theme.getColor(Theme.key_listSelector, resourcesProvider));
+        RecyclerListView.OnItemClickListener onItemClickListener;
+        listView.setOnItemClickListener(onItemClickListener = (view, position) -> {
+            onClick(((EmojiImageView) view).emoji);
+        });
+        listView.setOnTouchListener((v, event) -> ContentPreviewViewer.getInstance().onTouch(event, listView, 0, onItemClickListener, getPreviewDelegate(), resourcesProvider));
+
+        containerView.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 44 + 8));
+        addView(containerView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 8 + 44 + 8 + 6.66f, Gravity.BOTTOM));
+        if (enterView != null) {
+            enterView.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    if (enterView != null && enterView.getVisibility() == View.VISIBLE) {
+                        fireUpdate();
+                    }
+                }
+            });
         }
     }
 
-    public void drawContainerBegin(Canvas canvas) {
-        float f;
-        ArrayList<MediaDataController.KeywordResult> arrayList;
-        AnchorViewDelegate anchorViewDelegate = this.enterView;
-        if (anchorViewDelegate != null && anchorViewDelegate.getEditField() != null) {
-            Emoji.EmojiSpan emojiSpan = this.arrowToSpan;
-            if (emojiSpan != null && emojiSpan.drawn) {
-                float x = this.enterView.getEditField().getX() + this.enterView.getEditField().getPaddingLeft();
-                Emoji.EmojiSpan emojiSpan2 = this.arrowToSpan;
-                this.arrowX = x + emojiSpan2.lastDrawX;
-                this.lastSpanY = emojiSpan2.lastDrawY;
-            } else if (this.arrowToStart != null && this.arrowToEnd != null) {
-                this.arrowX = this.enterView.getEditField().getX() + this.enterView.getEditField().getPaddingLeft() + AndroidUtilities.dp(12.0f);
+    public void setDelegate(AnchorViewDelegate delegate) {
+        this.enterView = delegate;
+    }
+
+    public void setHorizontalPadding(int padding) {
+        this.horizontalPadding = padding;
+    }
+
+    public AnchorViewDelegate getDelegate() {
+        return enterView;
+    }
+
+    public void onTextSelectionChanged(int start, int end) {
+        fireUpdate();
+    }
+
+    public boolean isShown() {
+        return show;
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public void setDirection(int direction) {
+        if (this.direction != direction) {
+            this.direction = direction;
+            requestLayout();
+        }
+    }
+
+    public void updateColors() {
+        if (backgroundPaint != null) {
+            backgroundPaint.setColor(Theme.getColor(Theme.key_chat_stickersHintPanel, resourcesProvider));
+        }
+        Theme.chat_gradientLeftDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_stickersHintPanel, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        Theme.chat_gradientRightDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_stickersHintPanel, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+    }
+
+    public void forceClose() {
+        if (updateRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(updateRunnable);
+            updateRunnable = null;
+        }
+        show = false;
+        forceClose = true;
+        if (containerView != null) {
+            containerView.invalidate();
+        }
+    }
+
+    private Runnable updateRunnable;
+    public void fireUpdate() {
+        if (updateRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(updateRunnable);
+        }
+        AndroidUtilities.runOnUIThread(updateRunnable = this::update, 16);
+    }
+
+    private void update() {
+        updateRunnable = null;
+        if (enterView == null || enterView.getEditField() == null || enterView.getFieldText() == null) {
+            show = false;
+            forceClose = true;
+            if (containerView != null) {
+                containerView.invalidate();
             }
+            return;
         }
-        boolean z = (!this.show || this.forceClose || (arrayList = this.keywordResults) == null || arrayList.isEmpty() || this.clear) ? false : true;
-        float f2 = this.showFloat1.set(z ? 1.0f : 0.0f);
-        float f3 = this.showFloat2.set(z ? 1.0f : 0.0f);
-        float f4 = this.arrowXAnimated.set(this.arrowX);
-        if (f2 <= 0.0f && f3 <= 0.0f && !z) {
-            this.containerView.setVisibility(8);
-        }
-        this.path.rewind();
-        float left = this.listView.getLeft();
-        int left2 = this.listView.getLeft();
-        ArrayList<MediaDataController.KeywordResult> arrayList2 = this.keywordResults;
-        float size = left2 + ((arrayList2 == null ? 0 : arrayList2.size()) * AndroidUtilities.dp(44.0f));
-        boolean z2 = this.listViewWidthAnimated.get() <= 0.0f;
-        float f5 = size - left;
-        AnimatedFloat animatedFloat = this.listViewWidthAnimated;
-        float f6 = f5 <= 0.0f ? animatedFloat.get() : animatedFloat.set(f5, z2);
-        float f7 = this.listViewCenterAnimated.set((left + size) / 2.0f, z2);
-        AnchorViewDelegate anchorViewDelegate2 = this.enterView;
-        if (anchorViewDelegate2 != null && anchorViewDelegate2.getEditField() != null) {
-            int i = this.direction;
-            if (i == 0) {
-                this.containerView.setTranslationY(((-this.enterView.getEditField().getHeight()) - this.enterView.getEditField().getScrollY()) + this.lastSpanY + AndroidUtilities.dp(5.0f));
-            } else if (i == 1) {
-                this.containerView.setTranslationY(((-getMeasuredHeight()) - this.enterView.getEditField().getScrollY()) + this.lastSpanY + AndroidUtilities.dp(20.0f) + this.containerView.getHeight());
+        int selectionStart = enterView.getEditField().getSelectionStart();
+        int selectionEnd = enterView.getEditField().getSelectionEnd();
+        if (selectionStart != selectionEnd) {
+            show = false;
+            if (containerView != null) {
+                containerView.invalidate();
             }
+            return;
         }
-        float f8 = f6 / 4.0f;
-        float f9 = f6 / 2.0f;
-        int iMax = (int) Math.max((this.arrowX - Math.max(f8, Math.min(f9, AndroidUtilities.dp(66.0f)))) - this.listView.getLeft(), 0.0f);
-        if (this.listView.getPaddingLeft() != iMax) {
-            int paddingLeft = this.listView.getPaddingLeft() - iMax;
-            this.listView.setPadding(iMax, 0, 0, 0);
-            this.listView.scrollBy(paddingLeft, 0);
-        }
-        this.listView.setTranslationX(((int) Math.max((f4 - Math.max(f8, Math.min(f9, AndroidUtilities.dp(66.0f)))) - this.listView.getLeft(), 0.0f)) - iMax);
-        float paddingLeft2 = (f7 - f9) + this.listView.getPaddingLeft() + this.listView.getTranslationX();
-        float top = this.listView.getTop() + this.listView.getTranslationY() + this.listView.getPaddingTop() + (this.direction == 0 ? 0 : AndroidUtilities.dp(6.66f));
-        float fMin = Math.min(f7 + f9 + this.listView.getPaddingLeft() + this.listView.getTranslationX(), getWidth() - this.containerView.getPaddingRight());
-        float bottom = (this.listView.getBottom() + this.listView.getTranslationY()) - (this.direction == 0 ? AndroidUtilities.dp(6.66f) : 0);
-        float fMin2 = Math.min(AndroidUtilities.dp(9.0f), f9) * 2.0f;
-        int i2 = this.direction;
-        if (i2 == 0) {
-            RectF rectF = AndroidUtilities.rectTmp;
-            f = 6.66f;
-            float f10 = bottom - fMin2;
-            float f11 = paddingLeft2 + fMin2;
-            rectF.set(paddingLeft2, f10, f11, bottom);
-            this.path.arcTo(rectF, 90.0f, 90.0f);
-            float f12 = top + fMin2;
-            rectF.set(paddingLeft2, top, f11, f12);
-            this.path.arcTo(rectF, -180.0f, 90.0f);
-            float f13 = fMin - fMin2;
-            rectF.set(f13, top, fMin, f12);
-            this.path.arcTo(rectF, -90.0f, 90.0f);
-            rectF.set(f13, f10, fMin, bottom);
-            this.path.arcTo(rectF, 0.0f, 90.0f);
-            this.path.lineTo(AndroidUtilities.dp(8.66f) + f4, bottom);
-            this.path.lineTo(f4, AndroidUtilities.dp(6.66f) + bottom);
-            this.path.lineTo(f4 - AndroidUtilities.dp(8.66f), bottom);
+        CharSequence text = enterView.getFieldText();
+        Emoji.EmojiSpan[] emojiSpans = (text instanceof Spanned) ? ((Spanned) text).getSpans(Math.max(0, selectionEnd - 24), selectionEnd, Emoji.EmojiSpan.class) : null;
+        if (emojiSpans != null && emojiSpans.length > 0 && SharedConfig.suggestAnimatedEmoji && UserConfig.getInstance(currentAccount).isPremium()) {
+            Emoji.EmojiSpan lastEmoji = emojiSpans[emojiSpans.length - 1];
+            if (lastEmoji != null) {
+                int emojiStart = ((Spanned) text).getSpanStart(lastEmoji);
+                int emojiEnd   = ((Spanned) text).getSpanEnd(lastEmoji);
+                if (selectionStart == emojiEnd) {
+                    String emoji = text.toString().substring(emojiStart, emojiEnd);
+                    show = true;
+                    createListView();
+//                    containerView.setVisibility(View.VISIBLE);
+                    arrowToSpan = lastEmoji;
+                    arrowToStart = arrowToEnd = null;
+                    searchAnimated(emoji);
+                    if (containerView != null) {
+                        containerView.invalidate();
+                    }
+                    return;
+                }
+            }
         } else {
-            f = 6.66f;
-            if (i2 == 1) {
-                RectF rectF2 = AndroidUtilities.rectTmp;
-                float f14 = fMin - fMin2;
-                float f15 = top + fMin2;
-                rectF2.set(f14, top, fMin, f15);
-                this.path.arcTo(rectF2, -90.0f, 90.0f);
-                float f16 = bottom - fMin2;
-                rectF2.set(f14, f16, fMin, bottom);
-                this.path.arcTo(rectF2, 0.0f, 90.0f);
-                float f17 = fMin2 + paddingLeft2;
-                rectF2.set(paddingLeft2, f16, f17, bottom);
-                this.path.arcTo(rectF2, 90.0f, 90.0f);
-                rectF2.set(paddingLeft2, top, f17, f15);
-                this.path.arcTo(rectF2, -180.0f, 90.0f);
-                this.path.lineTo(f4 - AndroidUtilities.dp(8.66f), top);
-                this.path.lineTo(f4, top - AndroidUtilities.dp(6.66f));
-                this.path.lineTo(AndroidUtilities.dp(8.66f) + f4, top);
+            AnimatedEmojiSpan[] aspans = (text instanceof Spanned) ? ((Spanned) text).getSpans(Math.max(0, selectionEnd), selectionEnd, AnimatedEmojiSpan.class) : null;
+            if ((aspans == null || aspans.length == 0) && selectionEnd < 52) {
+                show = true;
+                createListView();
+//                containerView.setVisibility(View.VISIBLE);
+                arrowToSpan = null;
+                searchKeywords(text.toString().substring(0, selectionEnd));
+                if (containerView != null) {
+                    containerView.invalidate();
+                }
+                return;
             }
         }
-        this.path.close();
-        if (this.backgroundPaint == null) {
-            Paint paint = new Paint(1);
-            this.backgroundPaint = paint;
-            paint.setPathEffect(new CornerPathEffect(AndroidUtilities.dp(2.0f)));
-            this.backgroundPaint.setShadowLayer(AndroidUtilities.dp(4.33f), 0.0f, AndroidUtilities.dp(0.33333334f), 855638016);
-            this.backgroundPaint.setColor(Theme.getColor(Theme.key_chat_stickersHintPanel, this.resourcesProvider));
+        if (searchRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(searchRunnable);
+            searchRunnable = null;
         }
-        if (f2 < 1.0f) {
-            this.circlePath.rewind();
-            float fDp = this.direction == 0 ? AndroidUtilities.dp(f) + bottom : top - AndroidUtilities.dp(f);
-            double d = f4 - paddingLeft2;
-            double d2 = fDp - top;
-            double d3 = f4 - fMin;
-            double d4 = fDp - bottom;
-            this.circlePath.addCircle(f4, fDp, ((float) Math.sqrt(Math.max(Math.max(Math.pow(d, 2.0d) + Math.pow(d2, 2.0d), Math.pow(d3, 2.0d) + Math.pow(d2, 2.0d)), Math.max(Math.pow(d, 2.0d) + Math.pow(d4, 2.0d), Math.pow(d3, 2.0d) + Math.pow(d4, 2.0d))))) * f2, Path.Direction.CW);
+        show = false;
+        if (containerView != null) {
+            containerView.invalidate();
+        }
+    }
+
+    private int lastQueryType;
+    private String lastQuery;
+    private int lastQueryId;
+    private String[] lastLang;
+    private Runnable searchRunnable;
+    private long lastLangChangedTime = 0;
+
+    /**
+     * The user needs time to change the locale. We estimate this time to be at least 360 ms.
+     */
+    private String[] detectKeyboardLangThrottleFirstWithDelay() {
+        long currentTime = System.currentTimeMillis();
+        int delay = 360;
+        if (lastLang == null || Math.abs(currentTime - lastLangChangedTime) > delay) {
+            lastLangChangedTime = currentTime;
+            return AndroidUtilities.getCurrentKeyboardLanguage();
+        } else {
+            lastLangChangedTime = currentTime;
+        }
+        return lastLang;
+    }
+
+    private MediaDataController.SearchStickersKey loadingKey;
+    private void searchKeywords(String query) {
+        if (query == null) {
+            return;
+        }
+        if (lastQuery != null && lastQueryType == 1 && lastQuery.equals(query) && !clear && keywordResults != null && !keywordResults.isEmpty()) {
+            forceClose = false;
+            createListView();
+            containerView.setVisibility(View.VISIBLE);
+            lastSpanY = AndroidUtilities.dp(10);
+            containerView.invalidate();
+            return;
+        }
+        final int id = ++lastQueryId;
+        if (loadingKey != null) {
+            MediaDataController.getInstance(currentAccount).cancelSearchStickers(loadingKey);
+            loadingKey = null;
+        }
+
+        String[] lang = detectKeyboardLangThrottleFirstWithDelay();
+        if (lastLang == null || !Arrays.equals(lang, lastLang)) {
+            MediaDataController.getInstance(currentAccount).fetchNewEmojiKeywords(lang);
+        }
+        lastLang = lang;
+
+        if (searchRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(searchRunnable);
+            searchRunnable = null;
+        }
+        searchRunnable = () -> {
+            final HashSet<String> addedToResult = new HashSet<>();
+            final ArrayList<MediaDataController.KeywordResult> result = new ArrayList<>();
+//            Runnable localSearch = () -> {
+                MediaDataController.getInstance(currentAccount).getEmojiSuggestions(lang, query, true, (param, alias) -> {
+                    if (id != lastQueryId) return;
+                    lastQueryType = 1;
+                    lastQuery = query;
+                    if (param != null) {
+                        for (MediaDataController.KeywordResult r : param) {
+                            if (!addedToResult.contains(r.emoji)) {
+                                addedToResult.add(r.emoji);
+                                result.add(r);
+                            }
+                        }
+                    }
+                    if (!result.isEmpty()) {
+                        clear = false;
+                        forceClose = false;
+                        createListView();
+                        if (containerView != null) {
+                            containerView.setVisibility(View.VISIBLE);
+                        }
+                        lastSpanY = AndroidUtilities.dp(10);
+                        keywordResults = param;
+                        arrowToStart = 0;
+                        arrowToEnd = query.length();
+                        if (containerView != null) {
+                            containerView.invalidate();
+                        }
+                        if (adapter != null) {
+                            adapter.notifyDataSetChanged();
+                        }
+                    } else {
+                        keywordResults = null;
+                        clear = true;
+                        forceClose();
+                    }
+                }, SharedConfig.suggestAnimatedEmoji && UserConfig.getInstance(currentAccount).isPremium());
+//            };
+//            Runnable serverSearch = () -> {
+//                if (ConnectionsManager.getInstance(currentAccount).getConnectionState() != ConnectionsManager.ConnectionStateConnected) {
+//                    localSearch.run();
+//                    return;
+//                }
+//                loadingKey = MediaDataController.getInstance(currentAccount).searchStickers(true, query, lang == null ? "" : lang[0], emojis -> {
+//                    if (id != lastQueryId) return;
+//                    AnimatedEmojiDrawable.getDocumentFetcher(currentAccount).putDocuments(emojis);
+//                    for (TLRPC.Document doc : emojis) {
+//                        final String emoji = "animated_" + doc.id;
+//                        if (!addedToResult.contains(emoji)) {
+//                            MediaDataController.KeywordResult keywordResult = new MediaDataController.KeywordResult();
+//                            keywordResult.emoji = emoji;
+//                            addedToResult.add(emoji);
+//                            result.add(keywordResult);
+//                        }
+//                    }
+//                    localSearch.run();
+//                });
+//            };
+//            serverSearch.run();
+        };
+        if (keywordResults == null || keywordResults.isEmpty()) {
+            AndroidUtilities.runOnUIThread(searchRunnable, 600);
+        } else {
+            searchRunnable.run();
+        }
+    }
+
+    private void searchAnimated(String emoji) {
+        if (emoji == null) {
+            return;
+        }
+        if (lastQuery != null && lastQueryType == 2 && lastQuery.equals(emoji) && !clear && keywordResults != null && !keywordResults.isEmpty()) {
+            forceClose = false;
+            createListView();
+            if (containerView != null) {
+                containerView.setVisibility(View.VISIBLE);
+                containerView.invalidate();
+            }
+            return;
+        }
+        final int id = ++lastQueryId;
+
+        if (searchRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(searchRunnable);
+        }
+
+        searchRunnable = () -> {
+            ArrayList<MediaDataController.KeywordResult> standard = new ArrayList<>(1);
+            standard.add(new MediaDataController.KeywordResult(emoji, null));
+            MediaDataController.getInstance(currentAccount).fillWithAnimatedEmoji(standard, 15, false, false, false, () -> {
+                if (id == lastQueryId) {
+                    lastQuery = emoji;
+                    lastQueryType = 2;
+                    standard.remove(standard.size() - 1);
+                    if (!standard.isEmpty()) {
+                        clear = false;
+                        forceClose = false;
+                        createListView();
+                        if (containerView != null) {
+                            containerView.setVisibility(View.VISIBLE);
+                            containerView.invalidate();
+                        }
+                        keywordResults = standard;
+                        if (adapter != null) {
+                            adapter.notifyDataSetChanged();
+                        }
+                    } else {
+                        clear = true;
+                        forceClose();
+                    }
+                }
+            });
+        };
+        if (keywordResults == null || keywordResults.isEmpty()) {
+            AndroidUtilities.runOnUIThread(searchRunnable, 600);
+        } else {
+            searchRunnable.run();
+        }
+    }
+
+    private CharSequence makeEmoji(String emojiSource) {
+        Paint.FontMetricsInt fontMetricsInt = null;
+        if (enterView.getEditField() != null) {
+            fontMetricsInt = enterView.getEditField().getPaint().getFontMetricsInt();
+        }
+        if (fontMetricsInt == null) {
+            Paint paint = new Paint();
+            paint.setTextSize(AndroidUtilities.dp(18));
+            fontMetricsInt = paint.getFontMetricsInt();
+        }
+        CharSequence emoji;
+        if (emojiSource != null && emojiSource.startsWith("animated_")) {
+            try {
+                long documentId = Long.parseLong(emojiSource.substring(9));
+                TLRPC.Document document = AnimatedEmojiDrawable.findDocument(currentAccount, documentId);
+                emoji = new SpannableString(MessageObject.findAnimatedEmojiEmoticon(document));
+                AnimatedEmojiSpan span;
+                if (document == null) {
+                    span = new AnimatedEmojiSpan(documentId, fontMetricsInt);
+                } else {
+                    span = new AnimatedEmojiSpan(document, fontMetricsInt);
+                }
+                ((SpannableString) emoji).setSpan(span, 0, emoji.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } catch (Exception ignore) {
+                return null;
+            }
+        } else {
+            emoji = emojiSource;
+            emoji = Emoji.replaceEmoji(emoji, fontMetricsInt, true);
+        }
+        return emoji;
+    }
+
+    private void onClick(String emojiSource) {
+        if (!show || enterView == null || !(enterView.getFieldText() instanceof Spanned)) {
+            return;
+        }
+        int start, end;
+        if (arrowToSpan != null) {
+            start = ((Spanned) enterView.getFieldText()).getSpanStart(arrowToSpan);
+            end = ((Spanned) enterView.getFieldText()).getSpanEnd(arrowToSpan);
+        } else if (arrowToStart != null && arrowToEnd != null) {
+            start = arrowToStart;
+            end = arrowToEnd;
+            arrowToStart = arrowToEnd = null;
+        } else {
+            return;
+        }
+        Editable editable = enterView.getEditText();
+        if (editable == null || start < 0 || end < 0 || start > editable.length() || end > editable.length()) {
+            return;
+        }
+        if (arrowToSpan != null) {
+            if (enterView.getFieldText() instanceof Spannable) {
+                ((Spannable) enterView.getFieldText()).removeSpan(arrowToSpan);
+            }
+            arrowToSpan = null;
+        }
+        String fromString = editable.toString();
+        String replacing = fromString.substring(start, end);
+        int replacingLength = replacing.length();
+        for (int i = end - replacingLength; i >= 0; i -= replacingLength) {
+            if (fromString.substring(i, i + replacingLength).equals(replacing)) {
+                CharSequence emoji = makeEmoji(emojiSource);
+                if (emoji != null) {
+                    AnimatedEmojiSpan[] animatedEmojiSpans = editable.getSpans(i, i + replacingLength, AnimatedEmojiSpan.class);
+                    if (animatedEmojiSpans != null && animatedEmojiSpans.length > 0) {
+                        break;
+                    }
+                    Emoji.EmojiSpan[] emojiSpans = editable.getSpans(i, i + replacingLength, Emoji.EmojiSpan.class);
+                    if (emojiSpans != null) {
+                        for (int j = 0; j < emojiSpans.length; ++j) {
+                            editable.removeSpan(emojiSpans[j]);
+                        }
+                    }
+                    editable.replace(i, i + replacingLength, "");
+                    editable.insert(i, emoji);
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        try {
+            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+        } catch (Exception ignore) {}
+        Emoji.addRecentEmoji(emojiSource);
+        show = false;
+        forceClose = true;
+        lastQueryType = 0;
+        if (containerView != null) {
+            containerView.invalidate();
+        }
+    }
+
+    private Path path, circlePath;
+    private Paint backgroundPaint;
+    private AnimatedFloat showFloat1;
+    private AnimatedFloat showFloat2;
+    private OvershootInterpolator overshootInterpolator;
+
+    private AnimatedFloat leftGradientAlpha;
+    private AnimatedFloat rightGradientAlpha;
+
+    private Emoji.EmojiSpan arrowToSpan;
+    private float lastSpanY;
+    private Integer arrowToStart, arrowToEnd;
+    private float arrowX;
+    private AnimatedFloat arrowXAnimated;
+
+    private AnimatedFloat listViewCenterAnimated;
+    private AnimatedFloat listViewWidthAnimated;
+
+    private void drawContainerBegin(Canvas canvas) {
+        if (enterView != null && enterView.getEditField() != null) {
+            if (arrowToSpan != null && arrowToSpan.drawn) {
+                arrowX = enterView.getEditField().getX() + enterView.getEditField().getPaddingLeft() + arrowToSpan.lastDrawX;
+                lastSpanY = arrowToSpan.lastDrawY;
+            } else if (arrowToStart != null && arrowToEnd != null) {
+                arrowX = enterView.getEditField().getX() + enterView.getEditField().getPaddingLeft() + AndroidUtilities.dp(12);
+            }
+        }
+
+        final boolean show = this.show && !forceClose && keywordResults != null && !keywordResults.isEmpty() && !clear;
+        final float showT1 = showFloat1.set(show ? 1f : 0f);
+        final float showT2 = showFloat2.set(show ? 1f : 0f);
+        final float arrowX = arrowXAnimated.set(this.arrowX);
+
+        if (showT1 <= 0 && showT2 <= 0 && !show) {
+            containerView.setVisibility(View.GONE);
+        }
+
+        path.rewind();
+
+        float listViewLeft = listView.getLeft();
+        float listViewRight = listView.getLeft() + (keywordResults == null ? 0 : keywordResults.size()) * AndroidUtilities.dp(44);
+
+        boolean force = listViewWidthAnimated.get() <= 0;
+        float width =  listViewRight - listViewLeft <= 0 ? listViewWidthAnimated.get() : listViewWidthAnimated.set(listViewRight - listViewLeft, force);
+        float center = listViewCenterAnimated.set((listViewLeft + listViewRight) / 2f, force);
+
+        if (enterView != null && enterView.getEditField() != null) {
+            if (direction == DIRECTION_TO_BOTTOM) {
+                containerView.setTranslationY(-enterView.getEditField().getHeight() - enterView.getEditField().getScrollY() + lastSpanY + AndroidUtilities.dp(5));
+            } else if (direction == DIRECTION_TO_TOP) {
+                containerView.setTranslationY(-getMeasuredHeight() - enterView.getEditField().getScrollY() + lastSpanY + AndroidUtilities.dp(20) + containerView.getHeight());
+            }
+        }
+        int listViewPaddingLeft = (int) Math.max(this.arrowX - Math.max(width / 4f, Math.min(width / 2f, AndroidUtilities.dp(66))) - listView.getLeft(), 0);
+        if (listView.getPaddingLeft() != listViewPaddingLeft) {
+            int dx = listView.getPaddingLeft() - listViewPaddingLeft;
+            listView.setPadding(listViewPaddingLeft, 0, 0, 0);
+            listView.scrollBy(dx, 0);
+        }
+        int listViewPaddingLeftI = (int) Math.max(arrowX - Math.max(width / 4f, Math.min(width / 2f, AndroidUtilities.dp(66))) - listView.getLeft(), 0);
+        listView.setTranslationX(listViewPaddingLeftI - listViewPaddingLeft);
+
+        float left = center - width / 2f + listView.getPaddingLeft() + listView.getTranslationX();
+        float top = listView.getTop() + listView.getTranslationY() + listView.getPaddingTop() + (direction == DIRECTION_TO_BOTTOM ? 0: AndroidUtilities.dp(6.66f));
+        float right = Math.min(center + width / 2f + listView.getPaddingLeft() + listView.getTranslationX(), getWidth() - containerView.getPaddingRight());
+        float bottom = listView.getBottom() + listView.getTranslationY() - (direction == DIRECTION_TO_BOTTOM ? AndroidUtilities.dp(6.66f) : 0);
+
+        float R = Math.min(AndroidUtilities.dp(9), width / 2f), D = R * 2;
+
+        if (direction == DIRECTION_TO_BOTTOM) {
+            AndroidUtilities.rectTmp.set(left, bottom - D, left + D, bottom);
+            path.arcTo(AndroidUtilities.rectTmp, 90, 90);
+
+            AndroidUtilities.rectTmp.set(left, top, left + D, top + D);
+            path.arcTo(AndroidUtilities.rectTmp, -180, 90);
+
+            AndroidUtilities.rectTmp.set(right - D, top, right, top + D);
+            path.arcTo(AndroidUtilities.rectTmp, -90, 90);
+
+            AndroidUtilities.rectTmp.set(right - D, bottom - D, right, bottom);
+            path.arcTo(AndroidUtilities.rectTmp, 0, 90);
+
+            path.lineTo(arrowX + AndroidUtilities.dp(8.66f), bottom);
+            path.lineTo(arrowX, bottom + AndroidUtilities.dp(6.66f));
+            path.lineTo(arrowX - AndroidUtilities.dp(8.66f), bottom);
+        } else if (direction == DIRECTION_TO_TOP) {
+            AndroidUtilities.rectTmp.set(right - D, top, right, top + D);
+            path.arcTo(AndroidUtilities.rectTmp, -90, 90);
+
+            AndroidUtilities.rectTmp.set(right - D, bottom - D, right, bottom);
+            path.arcTo(AndroidUtilities.rectTmp, 0, 90);
+
+            AndroidUtilities.rectTmp.set(left, bottom - D, left + D, bottom);
+            path.arcTo(AndroidUtilities.rectTmp, 90, 90);
+
+            AndroidUtilities.rectTmp.set(left, top, left + D, top + D);
+            path.arcTo(AndroidUtilities.rectTmp, -180, 90);
+
+            path.lineTo(arrowX - AndroidUtilities.dp(8.66f), top);
+            path.lineTo(arrowX, top - AndroidUtilities.dp(6.66f));
+            path.lineTo(arrowX + AndroidUtilities.dp(8.66f), top);
+        }
+        path.close();
+
+        if (backgroundPaint == null) {
+            backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            backgroundPaint.setPathEffect(new CornerPathEffect(AndroidUtilities.dp(2)));
+            backgroundPaint.setShadowLayer(AndroidUtilities.dp(4.33f), 0, AndroidUtilities.dp(1 / 3f), 0x33000000);
+            backgroundPaint.setColor(Theme.getColor(Theme.key_chat_stickersHintPanel, resourcesProvider));
+        }
+
+        if (showT1 < 1) {
+            circlePath.rewind();
+            float cx = arrowX, cy = (direction == DIRECTION_TO_BOTTOM) ? bottom + AndroidUtilities.dp(6.66f) : top - AndroidUtilities.dp(6.66f);
+            float toRadius = (float) Math.sqrt(Math.max(
+                    Math.max(
+                            Math.pow(cx - left, 2) + Math.pow(cy - top, 2),
+                            Math.pow(cx - right, 2) + Math.pow(cy - top, 2)
+                    ),
+                    Math.max(
+                            Math.pow(cx - left, 2) + Math.pow(cy - bottom, 2),
+                            Math.pow(cx - right, 2) + Math.pow(cy - bottom, 2)
+                    )
+            ));
+            circlePath.addCircle(cx, cy, toRadius * showT1, Path.Direction.CW);
             canvas.save();
-            canvas.clipPath(this.circlePath);
-            canvas.saveLayerAlpha(0.0f, 0.0f, getWidth(), getHeight(), (int) (255.0f * f2), 31);
+            canvas.clipPath(circlePath);
+            canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), (int) (255 * showT1), Canvas.ALL_SAVE_FLAG);
         }
-        canvas.drawPath(this.path, this.backgroundPaint);
+
+        canvas.drawPath(path, backgroundPaint);
         canvas.save();
-        canvas.clipPath(this.path);
+        canvas.clipPath(path);
     }
 
     public void drawContainerEnd(Canvas canvas) {
-        float f = this.listViewWidthAnimated.get();
-        float f2 = this.listViewCenterAnimated.get();
-        float f3 = f / 2.0f;
-        float paddingLeft = (f2 - f3) + this.listView.getPaddingLeft() + this.listView.getTranslationX();
-        float top = this.listView.getTop() + this.listView.getPaddingTop();
-        float fMin = Math.min(f2 + f3 + this.listView.getPaddingLeft() + this.listView.getTranslationX(), getWidth() - this.containerView.getPaddingRight());
-        float bottom = this.listView.getBottom();
-        float f4 = this.leftGradientAlpha.set(this.listView.canScrollHorizontally(-1) ? 1.0f : 0.0f);
-        if (f4 > 0.0f) {
-            int i = (int) paddingLeft;
-            Theme.chat_gradientRightDrawable.setBounds(i, (int) top, AndroidUtilities.dp(32.0f) + i, (int) bottom);
-            Theme.chat_gradientRightDrawable.setAlpha((int) (f4 * 255.0f));
+        final float width =  listViewWidthAnimated.get();
+        final float center = listViewCenterAnimated.get();
+
+        float left = center - width / 2f + listView.getPaddingLeft() + listView.getTranslationX();
+        float top = listView.getTop() + listView.getPaddingTop();
+        float right = Math.min(center + width / 2f + listView.getPaddingLeft() + listView.getTranslationX(), getWidth() - containerView.getPaddingRight());
+        float bottom = listView.getBottom();
+
+        float leftAlpha = leftGradientAlpha.set(listView.canScrollHorizontally(-1) ? 1f : 0f);
+        if (leftAlpha > 0) {
+            Theme.chat_gradientRightDrawable.setBounds((int) left, (int) top, (int) left + AndroidUtilities.dp(32), (int) bottom);
+            Theme.chat_gradientRightDrawable.setAlpha((int) (255 * leftAlpha));
             Theme.chat_gradientRightDrawable.draw(canvas);
         }
-        float f5 = this.rightGradientAlpha.set(this.listView.canScrollHorizontally(1) ? 1.0f : 0.0f);
-        if (f5 > 0.0f) {
-            int i2 = (int) fMin;
-            Theme.chat_gradientLeftDrawable.setBounds(i2 - AndroidUtilities.dp(32.0f), (int) top, i2, (int) bottom);
-            Theme.chat_gradientLeftDrawable.setAlpha((int) (f5 * 255.0f));
+
+        float rightAlpha = rightGradientAlpha.set(listView.canScrollHorizontally(1) ? 1f : 0f);
+        if (rightAlpha > 0) {
+            Theme.chat_gradientLeftDrawable.setBounds((int) right - AndroidUtilities.dp(32), (int) top, (int) right, (int) bottom);
+            Theme.chat_gradientLeftDrawable.setAlpha((int) (255 * rightAlpha));
             Theme.chat_gradientLeftDrawable.draw(canvas);
         }
+
         canvas.restore();
-        if (this.showFloat1.get() < 1.0f) {
+        if (showFloat1.get() < 1) {
             canvas.restore();
             canvas.restore();
         }
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public boolean dispatchTouchEvent(MotionEvent motionEvent) {
-        if (this.listView == null) {
-            return super.dispatchTouchEvent(motionEvent);
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (listView == null) {
+            return super.dispatchTouchEvent(ev);
         }
-        float f = this.listViewWidthAnimated.get();
-        float f2 = this.listViewCenterAnimated.get();
-        RectF rectF = AndroidUtilities.rectTmp;
-        float f3 = f / 2.0f;
-        rectF.set((f2 - f3) + this.listView.getPaddingLeft() + this.listView.getTranslationX(), this.listView.getTop() + this.listView.getPaddingTop(), Math.min(f2 + f3 + this.listView.getPaddingLeft() + this.listView.getTranslationX(), getWidth() - this.containerView.getPaddingRight()), this.listView.getBottom());
-        rectF.offset(this.containerView.getX(), this.containerView.getY());
-        if (this.show && rectF.contains(motionEvent.getX(), motionEvent.getY())) {
-            return super.dispatchTouchEvent(motionEvent);
+
+        final float width =  listViewWidthAnimated.get();
+        final float center = listViewCenterAnimated.get();
+
+        AndroidUtilities.rectTmp.set(
+            center - width / 2f + listView.getPaddingLeft() + listView.getTranslationX(),
+            listView.getTop() + listView.getPaddingTop(),
+            Math.min(center + width / 2f + listView.getPaddingLeft() + listView.getTranslationX(), getWidth() - containerView.getPaddingRight()),
+            listView.getBottom()
+        );
+        AndroidUtilities.rectTmp.offset(containerView.getX(), containerView.getY());
+
+        if (show && AndroidUtilities.rectTmp.contains(ev.getX(), ev.getY())) {
+            return super.dispatchTouchEvent(ev);
+        } else {
+            if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+                return false;
+            } else {
+                if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+                    ev.setAction(MotionEvent.ACTION_CANCEL);
+                }
+                return super.dispatchTouchEvent(ev);
+            }
         }
-        if (motionEvent.getAction() == 0) {
-            return false;
-        }
-        if (motionEvent.getAction() == 0) {
-            motionEvent.setAction(3);
-        }
-        return super.dispatchTouchEvent(motionEvent);
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.emojiLoaded);
-        NotificationCenter.getInstance(this.currentAccount).addObserver(this, NotificationCenter.newEmojiSuggestionsAvailable);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.newEmojiSuggestionsAvailable);
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onDetachedFromWindow() {
+    @Override
+    protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
-        NotificationCenter.getInstance(this.currentAccount).removeObserver(this, NotificationCenter.newEmojiSuggestionsAvailable);
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.newEmojiSuggestionsAvailable);
     }
 
-    @Override 
-    public void didReceivedNotification(int i, int i2, Object... objArr) {
-        if (i == NotificationCenter.newEmojiSuggestionsAvailable) {
-            ArrayList<MediaDataController.KeywordResult> arrayList = this.keywordResults;
-            if (arrayList == null || arrayList.isEmpty()) {
-                return;
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.newEmojiSuggestionsAvailable) {
+            if (keywordResults != null && !keywordResults.isEmpty()) {
+                fireUpdate();
             }
-            fireUpdate();
-            return;
+        } else if (id == NotificationCenter.emojiLoaded) {
+            if (listView != null) {
+                for (int i = 0; i < listView.getChildCount(); ++i) {
+                    listView.getChildAt(i).invalidate();
+                }
+            }
         }
-        if (i != NotificationCenter.emojiLoaded || this.listView == null) {
-            return;
-        }
-        for (int i3 = 0; i3 < this.listView.getChildCount(); i3++) {
-            this.listView.getChildAt(i3).invalidate();
+    }
+
+    protected int emojiCacheType() {
+        return AnimatedEmojiDrawable.CACHE_TYPE_KEYBOARD;
+    }
+
+    public void invalidateContent() {
+        if (containerView != null) {
+            containerView.invalidate();
         }
     }
 
     public class EmojiImageView extends View {
-        private boolean attached;
-        private int direction;
-        public Drawable drawable;
+
         private String emoji;
-        private final int paddingDp;
-        private AnimatedFloat pressed;
+        public Drawable drawable;
+        private boolean attached;
+        private int direction = DIRECTION_TO_BOTTOM;
+
+        private AnimatedFloat pressed = new AnimatedFloat(this, 350, new OvershootInterpolator(5.0f));
 
         public EmojiImageView(Context context) {
             super(context);
-            this.direction = 0;
-            this.pressed = new AnimatedFloat(this, 350L, new OvershootInterpolator(5.0f));
-            this.paddingDp = 3;
         }
 
-        @Override // android.view.View
-        public void onMeasure(int i, int i2) {
-            setPadding(AndroidUtilities.dp(3.0f), AndroidUtilities.dp((this.direction == 0 ? 0.0f : 6.66f) + 3.0f), AndroidUtilities.dp(3.0f), AndroidUtilities.dp((this.direction != 0 ? 0.0f : 6.66f) + 3.0f));
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(52.0f), TLObject.FLAG_30));
+        private final int paddingDp = 3;
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            setPadding(AndroidUtilities.dp(paddingDp), AndroidUtilities.dp(paddingDp + (direction == DIRECTION_TO_BOTTOM ? 0 : 6.66f)), AndroidUtilities.dp(paddingDp), AndroidUtilities.dp(paddingDp + (direction == DIRECTION_TO_BOTTOM ? 6.66f : 0)));
+            super.onMeasure(
+                    MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44), MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44 + 8), MeasureSpec.EXACTLY)
+            );
         }
 
-        public void setEmoji(String str, int i) {
-            this.emoji = str;
-            if (str != null && str.startsWith("animated_")) {
+        private void setEmoji(String emoji, int direction) {
+            this.emoji = emoji;
+            if (emoji != null && emoji.startsWith("animated_")) {
                 try {
-                    long j = Long.parseLong(str.substring(9));
-                    Drawable drawable = this.drawable;
-                    if (!(drawable instanceof AnimatedEmojiDrawable) || ((AnimatedEmojiDrawable) drawable).getDocumentId() != j) {
-                        setImageDrawable(AnimatedEmojiDrawable.make(UserConfig.selectedAccount, SuggestEmojiView.this.emojiCacheType(), j));
+                    long documentId = Long.parseLong(emoji.substring(9));
+                    if (!(drawable instanceof AnimatedEmojiDrawable) || ((AnimatedEmojiDrawable) drawable).getDocumentId() != documentId) {
+                        setImageDrawable(AnimatedEmojiDrawable.make(UserConfig.selectedAccount, emojiCacheType(), documentId));
                     }
-                } catch (Exception unused) {
+                } catch (Exception ignore) {
                     setImageDrawable(null);
                 }
             } else {
-                setImageDrawable(Emoji.getEmojiBigDrawable(str));
+                setImageDrawable(Emoji.getEmojiBigDrawable(emoji));
             }
-            if (this.direction != i) {
-                this.direction = i;
+            if (this.direction != direction) {
+                this.direction = direction;
                 requestLayout();
             }
         }
 
-        public void setImageDrawable(Drawable drawable) {
-            Drawable drawable2 = this.drawable;
-            if (drawable2 instanceof AnimatedEmojiDrawable) {
-                ((AnimatedEmojiDrawable) drawable2).removeView(this);
+        public void setImageDrawable(@Nullable Drawable drawable) {
+            if (this.drawable instanceof AnimatedEmojiDrawable) {
+                ((AnimatedEmojiDrawable) this.drawable).removeView(this);
             }
             this.drawable = drawable;
-            if ((drawable instanceof AnimatedEmojiDrawable) && this.attached) {
+            if (drawable instanceof AnimatedEmojiDrawable && attached) {
                 ((AnimatedEmojiDrawable) drawable).addView(this);
             }
         }
 
-        public void setDirection(int i) {
-            this.direction = i;
+        public void setDirection(int direction) {
+            this.direction = direction;
             invalidate();
         }
 
-        @Override // android.view.View
-        public void setPressed(boolean z) {
-            super.setPressed(z);
+        @Override
+        public void setPressed(boolean pressed) {
+            super.setPressed(pressed);
             invalidate();
         }
 
-        @Override // android.view.View
-        public void dispatchDraw(Canvas canvas) {
-            float f = ((1.0f - this.pressed.set(isPressed() ? 1.0f : 0.0f)) * 0.2f) + 0.8f;
-            if (this.drawable != null) {
-                int width = getWidth() / 2;
-                int height = ((getHeight() - getPaddingBottom()) + getPaddingTop()) / 2;
-                this.drawable.setBounds(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
-                canvas.scale(f, f, width, height);
-                Drawable drawable = this.drawable;
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            float scale = 0.8f + 0.2f * (1f - pressed.set(isPressed() ? 1f : 0f));
+            if (drawable != null) {
+                int cx = getWidth() / 2;
+                int cy = (getHeight() - getPaddingBottom() + getPaddingTop()) / 2;
+                drawable.setBounds(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
+                canvas.scale(scale, scale, cx, cy);
                 if (drawable instanceof AnimatedEmojiDrawable) {
                     ((AnimatedEmojiDrawable) drawable).setTime(System.currentTimeMillis());
                 }
-                this.drawable.draw(canvas);
+                drawable.draw(canvas);
             }
         }
 
-        @Override // android.view.View
-        public void onAttachedToWindow() {
+        @Override
+        protected void onAttachedToWindow() {
             super.onAttachedToWindow();
             attach();
         }
 
-        @Override // android.view.View
-        public void onDetachedFromWindow() {
+        @Override
+        protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
             detach();
         }
 
         public void detach() {
-            Drawable drawable = this.drawable;
             if (drawable instanceof AnimatedEmojiDrawable) {
                 ((AnimatedEmojiDrawable) drawable).removeView(this);
             }
-            this.attached = false;
+            attached = false;
         }
-
         public void attach() {
-            Drawable drawable = this.drawable;
             if (drawable instanceof AnimatedEmojiDrawable) {
                 ((AnimatedEmojiDrawable) drawable).addView(this);
             }
-            this.attached = true;
+            attached = true;
         }
     }
 
-    public class Adapter extends RecyclerListView.SelectionAdapter {
+    private class Adapter extends RecyclerListView.SelectionAdapter {
+
         SuggestEmojiView suggestEmojiView;
-
-        @Override // org.telegram.ui.Components.RecyclerListView.SelectionAdapter
-        public boolean isEnabled(RecyclerView.ViewHolder viewHolder) {
-            return true;
-        }
-
         public Adapter(SuggestEmojiView suggestEmojiView) {
             this.suggestEmojiView = suggestEmojiView;
         }
 
-        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-        public long getItemId(int i) {
-            if (this.suggestEmojiView.keywordResults == null) {
-                return 0L;
-            }
-            return ((MediaDataController.KeywordResult) this.suggestEmojiView.keywordResults.get(i)).emoji.hashCode();
+        @Override
+        public long getItemId(int position) {
+            return suggestEmojiView.keywordResults == null ? 0 : suggestEmojiView.keywordResults.get(position).emoji.hashCode();
         }
 
-        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-            return new RecyclerListView.Holder(SuggestEmojiView.this.new EmojiImageView(this.suggestEmojiView.getContext()));
+        @Override
+        public boolean isEnabled(RecyclerView.ViewHolder holder) {
+            return true;
         }
 
-        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
-        public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int i) {
-            ((EmojiImageView) viewHolder.itemView).setEmoji(this.suggestEmojiView.keywordResults == null ? null : ((MediaDataController.KeywordResult) this.suggestEmojiView.keywordResults.get(i)).emoji, this.suggestEmojiView.getDirection());
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new RecyclerListView.Holder(new EmojiImageView(suggestEmojiView.getContext()));
         }
 
-        @Override // androidx.recyclerview.widget.RecyclerView.Adapter
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            ((EmojiImageView) holder.itemView).setEmoji(suggestEmojiView.keywordResults == null ? null : suggestEmojiView.keywordResults.get(position).emoji, suggestEmojiView.getDirection());
+        }
+
+        @Override
         public int getItemCount() {
-            if (this.suggestEmojiView.keywordResults == null) {
-                return 0;
-            }
-            return this.suggestEmojiView.keywordResults.size();
+            return suggestEmojiView.keywordResults == null ? 0 : suggestEmojiView.keywordResults.size();
         }
     }
 }

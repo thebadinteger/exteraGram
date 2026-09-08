@@ -1,27 +1,30 @@
 package org.telegram.ui.Components;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.formatString;
+import static org.telegram.messenger.LocaleController.getString;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.TextUtils;
-import android.util.Property;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.Locale;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.FileLoader;
@@ -34,7 +37,6 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserObject;
-import org.telegram.messenger.utils.BitmapsCache;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
@@ -45,488 +47,533 @@ import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.PremiumPreviewFragment;
 import org.telegram.ui.Stories.recorder.HintView2;
 
-public abstract class ChatGreetingsView extends LinearLayout {
-    private int backgroundHeight;
-    private final int currentAccount;
-    private TextView descriptionView;
-    private boolean disableBackground;
-    boolean ignoreLayot;
-    private boolean isSuggest;
-    private Listener listener;
-    public BackupImageView nextStickerToSendView;
+import java.util.Locale;
+
+public class ChatGreetingsView extends LinearLayout {
+
     private TLRPC.Document preloadedGreetingsSticker;
-    private TextView premiumButtonView;
-    private RLottieImageView premiumIconView;
-    private boolean premiumLock;
-    private TextView premiumTextView;
-    public boolean preview;
-    private final Theme.ResourcesProvider resourcesProvider;
-    boolean showGreetings;
-    public FrameLayout stickerContainer;
-    boolean stickerExplicitlyHidden;
-    public BackupImageView stickerToSendView;
     private TextView titleView;
-    private AnimatorSet togglingStickersAnimator;
-    private float viewTop;
-    private float viewTranslationX;
-    private boolean visiblePartSet;
+    private TextView descriptionView;
+    private Listener listener;
+
+    private final int currentAccount;
+
+    public FrameLayout stickerContainer;
+    public BackupImageView stickerToSendView;
+    public BackupImageView nextStickerToSendView;
+    private final Theme.ResourcesProvider resourcesProvider;
     boolean wasDraw;
 
-    public interface Listener {
-        void onGreetings(TLRPC.Document document);
-    }
-
-    public ChatGreetingsView(Context context, TLRPC.User user, int i, TLRPC.Document document, Theme.ResourcesProvider resourcesProvider) {
+    public ChatGreetingsView(Context context, TLRPC.User user, int currentAccount, TLRPC.Document sticker, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.showGreetings = !ExteraConfig.getDisableGreetingSticker();
-        setOrientation(1);
-        this.currentAccount = i;
+        setOrientation(VERTICAL);
+        this.currentAccount = currentAccount;
         this.resourcesProvider = resourcesProvider;
-        setPadding(0, AndroidUtilities.dp(8.0f), 0, 0);
-        TextView textView = new TextView(context);
-        this.titleView = textView;
-        textView.setTextSize(1, 14.0f);
-        this.titleView.setTypeface(AndroidUtilities.bold());
-        this.titleView.setTextAlignment(4);
-        this.titleView.setGravity(17);
-        TextView textView2 = new TextView(context);
-        this.descriptionView = textView2;
-        textView2.setTextAlignment(4);
-        this.descriptionView.setGravity(17);
-        this.descriptionView.setTextSize(1, 14.0f);
-        this.descriptionView.setGravity(1);
-        this.stickerContainer = new FrameLayout(context);
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.stickerToSendView = backupImageView;
-        backupImageView.getImageReceiver().setAspectFit(true);
-        this.stickerContainer.addView(this.stickerToSendView, LayoutHelper.createFrame(112, 112.0f));
-        ScaleStateListAnimator.apply(this.stickerToSendView);
-        BackupImageView backupImageView2 = new BackupImageView(context);
-        this.nextStickerToSendView = backupImageView2;
-        backupImageView2.getImageReceiver().setAspectFit(true);
-        this.stickerContainer.addView(this.nextStickerToSendView, LayoutHelper.createFrame(112, 112.0f));
-        this.nextStickerToSendView.setVisibility(8);
-        this.nextStickerToSendView.setAlpha(0.0f);
-        ScaleStateListAnimator.apply(this.nextStickerToSendView);
+
+        setPadding(0, dp(8), 0, 0);
+
+        titleView = new TextView(context);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        titleView.setTypeface(AndroidUtilities.bold());
+        titleView.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+
+        descriptionView = new TextView(context);
+        descriptionView.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+        descriptionView.setGravity(Gravity.CENTER);
+        descriptionView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        descriptionView.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        stickerContainer = new FrameLayout(context);
+        stickerToSendView = new BackupImageView(context);
+        stickerToSendView.getImageReceiver().setAspectFit(true);
+        stickerContainer.addView(stickerToSendView, LayoutHelper.createFrame(112, 112));
+        ScaleStateListAnimator.apply(stickerToSendView);
+
+        nextStickerToSendView = new BackupImageView(context);
+        nextStickerToSendView.getImageReceiver().setAspectFit(true);
+        stickerContainer.addView(nextStickerToSendView, LayoutHelper.createFrame(112, 112));
+        nextStickerToSendView.setVisibility(View.GONE);
+        nextStickerToSendView.setAlpha(0f);
+        ScaleStateListAnimator.apply(nextStickerToSendView);
         updateLayout();
+
         updateColors();
-        setText(LocaleController.getString(R.string.NoMessages), LocaleController.getString(R.string.NoMessagesGreetingsDescription));
-        this.preloadedGreetingsSticker = document;
-        if (document == null) {
-            this.preloadedGreetingsSticker = MediaDataController.getInstance(i).getGreetingsSticker();
+
+        setText(getString(R.string.NoMessages), getString(R.string.NoMessagesGreetingsDescription));
+
+        preloadedGreetingsSticker = sticker;
+        if (preloadedGreetingsSticker == null) {
+            preloadedGreetingsSticker = MediaDataController.getInstance(currentAccount).getGreetingsSticker();
         }
     }
 
-    public void setText(CharSequence charSequence, CharSequence charSequence2) {
-        this.titleView.setText(charSequence);
-        this.descriptionView.setText(charSequence2);
-        TextView textView = this.descriptionView;
-        textView.setMaxWidth(HintView2.cutInFancyHalf(textView.getText(), this.descriptionView.getPaint()));
-        this.stickerToSendView.setContentDescription(this.descriptionView.getText());
+    public void setText(CharSequence title, CharSequence description) {
+        titleView.setText(title);
+        descriptionView.setText(description);
+        descriptionView.setMaxWidth(HintView2.cutInFancyHalf(descriptionView.getText(), descriptionView.getPaint()));
+        stickerToSendView.setContentDescription(descriptionView.getText());
     }
+
+    private RLottieImageView premiumIconView;
+    private TextView premiumTextView;
+    private TextView premiumButtonView;
+
+    private boolean premiumLock;
+    private boolean isSuggest;
 
     public void resetPremiumLock() {
         setPremiumLock(false, null, null, null);
     }
-
-    public void setPremiumLock(boolean z, CharSequence charSequence, CharSequence charSequence2, View.OnClickListener onClickListener) {
-        setPremiumLock(z, false, charSequence, charSequence2, onClickListener);
+    public void setPremiumLock(boolean lock, CharSequence text, CharSequence buttonText, View.OnClickListener onButtonClick) {
+        setPremiumLock(lock, false, text, buttonText, onButtonClick);
     }
 
-    public void setPremiumLock(boolean z, boolean z2, CharSequence charSequence, CharSequence charSequence2, View.OnClickListener onClickListener) {
-        if (this.premiumLock == z) {
-            return;
-        }
-        this.premiumLock = z;
-        this.isSuggest = z2;
-        if (z) {
-            if (this.premiumIconView == null) {
-                RLottieImageView rLottieImageView = new RLottieImageView(getContext());
-                this.premiumIconView = rLottieImageView;
-                rLottieImageView.setScaleType(ImageView.ScaleType.CENTER);
-                this.premiumIconView.setColorFilter(new PorterDuffColorFilter(-1, PorterDuff.Mode.SRC_IN));
-                this.premiumIconView.setBackground(Theme.createCircleDrawable(AndroidUtilities.dp(78.0f), 469762048));
-                RLottieImageView rLottieImageView2 = this.premiumIconView;
-                if (z2) {
-                    rLottieImageView2.setImageResource(R.drawable.filled_chatlist2);
+
+    public void setPremiumLock(boolean lock, boolean isSuggestion, CharSequence text, CharSequence buttonText, View.OnClickListener onButtonClick) {
+        if (premiumLock == lock) return;
+        premiumLock = lock;
+        isSuggest = isSuggestion;
+        if (premiumLock) {
+            if (premiumIconView == null) {
+                premiumIconView = new RLottieImageView(getContext());
+                premiumIconView.setScaleType(ImageView.ScaleType.CENTER);
+                premiumIconView.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
+                premiumIconView.setBackground(Theme.createCircleDrawable(dp(78), 0x1c000000));
+
+                if (isSuggestion) {
+                    premiumIconView.setImageResource(R.drawable.filled_chatlist2);
                 } else {
-                    rLottieImageView2.setAnimation(R.raw.large_message_lock, 80, 80);
-                    this.premiumIconView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.ChatGreetingsView$$ExternalSyntheticLambda1
-                        @Override // android.view.View.OnClickListener
-                        public final void onClick(View view) {
-                            this.f$0.lambda$setPremiumLock$0(view);
-                        }
+                    premiumIconView.setAnimation(R.raw.large_message_lock, 80, 80);
+                    premiumIconView.setOnClickListener(v -> {
+                        premiumIconView.setProgress(0);
+                        premiumIconView.playAnimation();
                     });
                 }
             }
-            this.premiumIconView.playAnimation();
-            if (this.premiumTextView == null) {
-                TextView textView = new TextView(getContext());
-                this.premiumTextView = textView;
-                textView.setTextAlignment(4);
-                this.premiumTextView.setGravity(17);
-                this.premiumTextView.setTextSize(1, 13.0f);
+            premiumIconView.playAnimation();
+            if (premiumTextView == null) {
+                premiumTextView = new TextView(getContext());
+                premiumTextView.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+                premiumTextView.setGravity(Gravity.CENTER);
+                premiumTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
             }
-            this.premiumTextView.setText(charSequence);
-            TextView textView2 = this.premiumTextView;
-            textView2.setMaxWidth(HintView2.cutInFancyHalf(textView2.getText(), this.premiumTextView.getPaint()));
-            TextView textView3 = this.premiumTextView;
-            int i = Theme.key_chat_serviceText;
-            textView3.setTextColor(getThemedColor(i));
-            this.premiumTextView.setLineSpacing(AndroidUtilities.dp(2.0f), 1.0f);
-            if (this.premiumButtonView == null) {
-                TextView textView4 = new TextView(getContext()) { // from class: org.telegram.ui.Components.ChatGreetingsView.1
-                    private final Path clipPath = new Path();
+            premiumTextView.setText(text);
+            premiumTextView.setMaxWidth(HintView2.cutInFancyHalf(premiumTextView.getText(), premiumTextView.getPaint()));
+            premiumTextView.setTextColor(getThemedColor(Theme.key_chat_serviceText));
+            premiumTextView.setLineSpacing(dp(2f), 1f);
+            if (premiumButtonView == null) {
+                premiumButtonView = new TextView(getContext()) {
                     StarParticlesView.Drawable starParticlesDrawable;
 
-                    @Override // android.widget.TextView, android.view.View
-                    public void onLayout(boolean z3, int i2, int i3, int i4, int i5) {
-                        super.onLayout(z3, i2, i3, i4, i5);
-                        StarParticlesView.Drawable drawable = new StarParticlesView.Drawable(10);
-                        this.starParticlesDrawable = drawable;
-                        drawable.type = 100;
-                        drawable.isCircle = false;
-                        drawable.roundEffect = true;
-                        drawable.useRotate = false;
-                        drawable.useBlur = true;
-                        drawable.checkBounds = true;
-                        drawable.size1 = 1;
-                        drawable.k3 = 0.98f;
-                        drawable.k2 = 0.98f;
-                        drawable.k1 = 0.98f;
-                        drawable.paused = false;
-                        drawable.speedScale = 0.0f;
-                        drawable.minLifeTime = 750L;
-                        drawable.randLifeTime = 750;
-                        drawable.init();
-                        RectF rectF = AndroidUtilities.rectTmp;
-                        rectF.set(0.0f, 0.0f, getWidth(), getHeight());
-                        this.starParticlesDrawable.rect.set(rectF);
-                        this.starParticlesDrawable.rect2.set(rectF);
-                        this.starParticlesDrawable.resetPositions();
-                        this.clipPath.reset();
-                        this.clipPath.addRoundRect(rectF, getHeight() / 2.0f, getHeight() / 2.0f, Path.Direction.CW);
+                    @Override
+                    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+                        super.onLayout(changed, left, top, right, bottom);
+                        starParticlesDrawable = new StarParticlesView.Drawable(10);
+                        starParticlesDrawable.type = 100;
+                        starParticlesDrawable.isCircle = false;
+                        starParticlesDrawable.roundEffect = true;
+                        starParticlesDrawable.useRotate = false;
+                        starParticlesDrawable.useBlur = true;
+                        starParticlesDrawable.checkBounds = true;
+                        starParticlesDrawable.size1 = 1;
+                        starParticlesDrawable.k1 = starParticlesDrawable.k2 = starParticlesDrawable.k3 = 0.98f;
+                        starParticlesDrawable.paused = false;
+                        starParticlesDrawable.speedScale = 0f;
+                        starParticlesDrawable.minLifeTime = 750;
+                        starParticlesDrawable.randLifeTime = 750;
+                        starParticlesDrawable.init();
+
+                        AndroidUtilities.rectTmp.set(0, 0, getWidth(), getHeight());
+                        starParticlesDrawable.rect.set(AndroidUtilities.rectTmp);
+                        starParticlesDrawable.rect2.set(AndroidUtilities.rectTmp);
+                        starParticlesDrawable.resetPositions();
+
+                        clipPath.reset();
+                        clipPath.addRoundRect(AndroidUtilities.rectTmp, getHeight() / 2f, getHeight() / 2f, Path.Direction.CW);
                     }
 
-                    @Override // android.widget.TextView, android.view.View
-                    public void onDraw(Canvas canvas) {
-                        if (this.starParticlesDrawable != null) {
+                    private final Path clipPath = new Path();
+                    @Override
+                    protected void onDraw(Canvas canvas) {
+                        if (starParticlesDrawable != null) {
                             canvas.save();
-                            canvas.clipPath(this.clipPath);
-                            this.starParticlesDrawable.onDraw(canvas);
+                            canvas.clipPath(clipPath);
+                            starParticlesDrawable.onDraw(canvas);
                             canvas.restore();
                             invalidate();
                         }
                         super.onDraw(canvas);
                     }
                 };
-                this.premiumButtonView = textView4;
-                textView4.setTextAlignment(4);
-                this.premiumButtonView.setGravity(17);
-                this.premiumButtonView.setTypeface(AndroidUtilities.bold());
-                this.premiumButtonView.setTextSize(1, 14.0f);
-                this.premiumButtonView.setPadding(AndroidUtilities.dp(13.0f), AndroidUtilities.dp(5.0f), AndroidUtilities.dp(13.0f), AndroidUtilities.dp(8.0f));
-                this.premiumButtonView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(15.0f), 503316480, 855638016));
-                ScaleStateListAnimator.apply(this.premiumButtonView);
+                premiumButtonView.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+                premiumButtonView.setGravity(Gravity.CENTER);
+                premiumButtonView.setTypeface(AndroidUtilities.bold());
+                premiumButtonView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+                premiumButtonView.setPadding(dp(13), dp(5), dp(13), dp(8));
+                premiumButtonView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(15), 0x1e000000, 0x33000000));
+
+                ScaleStateListAnimator.apply(premiumButtonView);
             }
-            this.premiumButtonView.setText(charSequence2);
-            this.premiumButtonView.setTextColor(getThemedColor(i));
-            this.premiumButtonView.setOnClickListener(onClickListener);
+            premiumButtonView.setText(buttonText);
+            premiumButtonView.setTextColor(getThemedColor(Theme.key_chat_serviceText));
+            premiumButtonView.setOnClickListener(onButtonClick);
         }
         updateLayout();
     }
 
-    public void lambda$didSetImageBitmap$0(Runnable runnable) {
-            ChatGreetingsView.this.toggleToNextSticker();
-            if (runnable != null) {
-                runnable.run();
-            }
-        }
-    }
-
-    public /* synthetic */ void lambda$setNextSticker$2(TLRPC.Document document, View view) {
-        Listener listener = this.listener;
-        if (listener != null) {
-            listener.onGreetings(document);
-        }
-    }
-
-    public void toggleToNextSticker() {
-        AnimatorSet animatorSet = this.togglingStickersAnimator;
-        if (animatorSet != null) {
-            animatorSet.cancel();
-        }
-        this.nextStickerToSendView.setVisibility(0);
-        this.stickerToSendView.setVisibility(0);
-        AnimatorSet animatorSet2 = new AnimatorSet();
-        this.togglingStickersAnimator = animatorSet2;
-        animatorSet2.setDuration(420L);
-        this.togglingStickersAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-        this.togglingStickersAnimator.addListener(new AnimatorListenerAdapter() { // from class: org.telegram.ui.Components.ChatGreetingsView.3
-            private boolean cancelled;
-
-            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-            public void onAnimationEnd(Animator animator) {
-                if (this.cancelled) {
-                    return;
+    private void updateLayout() {
+        removeAllViews();
+        if (premiumLock) {
+            addView(premiumIconView, LayoutHelper.createLinear(78, 78, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 20, 9, 20, 9));
+            final boolean premiumLocked = MessagesController.getInstance(currentAccount).premiumFeaturesBlocked();
+            addView(premiumTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 20, 0, 20, premiumLocked ? 13 : 9));
+            if (!premiumLocked) {
+                if (premiumButtonView != null && !TextUtils.isEmpty(premiumButtonView.getText()) || !isSuggest) {
+                    addView(premiumButtonView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 30, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 20, 2, 20, 13));
                 }
-                ChatGreetingsView chatGreetingsView = ChatGreetingsView.this;
-                BackupImageView backupImageView = chatGreetingsView.stickerToSendView;
-                chatGreetingsView.stickerToSendView = chatGreetingsView.nextStickerToSendView;
-                chatGreetingsView.nextStickerToSendView = backupImageView;
-                backupImageView.setVisibility(8);
-                ChatGreetingsView.this.nextStickerToSendView.setAlpha(0.0f);
-                ChatGreetingsView.this.stickerToSendView.setVisibility(0);
-                ChatGreetingsView.this.stickerToSendView.setAlpha(1.0f);
             }
+        } else {
+            addView(titleView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 20, 6, 20, 6));
+            addView(descriptionView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 20, 6, 20, 6));
+            addView(stickerContainer, LayoutHelper.createLinear(112, 112, Gravity.CENTER_HORIZONTAL, 16, 10, 16, 16));
+        }
+    }
 
-            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
-            public void onAnimationCancel(Animator animator) {
-                this.cancelled = true;
+    public void setSticker(TLRPC.Document sticker) {
+        if (sticker == null) {
+            return;
+        }
+        wasDraw = true;
+        nextStickerToSendView.clearImage();
+        SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(sticker, Theme.key_chat_serviceBackground, 1.0f);
+        if (svgThumb != null) {
+            stickerToSendView.setImage(ImageLocation.getForDocument(sticker), createFilter(sticker), svgThumb, 0, sticker);
+        } else {
+            TLRPC.PhotoSize thumb = FileLoader.getClosestPhotoSizeWithSize(sticker.thumbs, 90);
+            stickerToSendView.setImage(ImageLocation.getForDocument(sticker), createFilter(sticker), ImageLocation.getForDocument(thumb, sticker), null, 0, sticker);
+        }
+        stickerToSendView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onGreetings(sticker);
             }
         });
-        AnimatorSet animatorSet3 = this.togglingStickersAnimator;
-        Property property = View.ALPHA;
-        ObjectAnimator objectAnimatorOfFloat = ObjectAnimator.ofFloat(this.nextStickerToSendView, (Property<BackupImageView, Float>) property, 0.0f, 1.0f);
-        Property property2 = View.SCALE_X;
-        ObjectAnimator objectAnimatorOfFloat2 = ObjectAnimator.ofFloat(this.nextStickerToSendView, (Property<BackupImageView, Float>) property2, 0.7f, 1.0f);
-        Property property3 = View.SCALE_Y;
-        ObjectAnimator objectAnimatorOfFloat3 = ObjectAnimator.ofFloat(this.nextStickerToSendView, (Property<BackupImageView, Float>) property3, 0.7f, 1.0f);
-        BackupImageView backupImageView = this.nextStickerToSendView;
-        float[] fArr = {-AndroidUtilities.dp(24.0f), 0.0f};
-        Property property4 = View.TRANSLATION_Y;
-        animatorSet3.playTogether(objectAnimatorOfFloat, objectAnimatorOfFloat2, objectAnimatorOfFloat3, ObjectAnimator.ofFloat(backupImageView, (Property<BackupImageView, Float>) property4, fArr), ObjectAnimator.ofFloat(this.stickerToSendView, (Property<BackupImageView, Float>) property, 1.0f, 0.0f), ObjectAnimator.ofFloat(this.stickerToSendView, (Property<BackupImageView, Float>) property2, 1.0f, 0.7f), ObjectAnimator.ofFloat(this.stickerToSendView, (Property<BackupImageView, Float>) property3, 1.0f, 0.7f), ObjectAnimator.ofFloat(this.stickerToSendView, (Property<BackupImageView, Float>) property4, 0.0f, AndroidUtilities.dp(24.0f)));
-        this.togglingStickersAnimator.start();
+    }
+
+    public void setSticker(String stickerPath) {
+        if (stickerPath == null) {
+            return;
+        }
+        wasDraw = true;
+        nextStickerToSendView.clearImage();
+        stickerToSendView.setImage(ImageLocation.getForPath(stickerPath), "256_256", null, null, 0, null);
+    }
+
+    public void setNextSticker(TLRPC.Document sticker, Runnable whenDone) {
+        if (sticker == null) {
+            return;
+        }
+        if (togglingStickersAnimator != null) {
+            togglingStickersAnimator.cancel();
+        }
+        nextStickerToSendView.getImageReceiver().setDelegate(new ImageReceiver.ImageReceiverDelegate() {
+            private boolean waited;
+            @Override
+            public void didSetImageBitmap(int type, String key, Drawable drawable) {
+                if (waited) {
+                    return;
+                }
+                if ((type == ImageReceiver.TYPE_IMAGE || type == ImageReceiver.TYPE_MEDIA) && drawable != null) {
+                    waited = true;
+                    if (drawable instanceof RLottieDrawable && ((RLottieDrawable) drawable).bitmapsCache != null && ((RLottieDrawable) drawable).bitmapsCache.needGenCache()) {
+                        ((RLottieDrawable) drawable).whenCacheDone = () -> {
+                            toggleToNextSticker();
+                            if (whenDone != null) {
+                                whenDone.run();
+                            }
+                        };
+                    } else {
+                        toggleToNextSticker();
+                        if (whenDone != null) {
+                            whenDone.run();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void didSetImage(ImageReceiver imageReceiver, boolean set, boolean thumb, boolean memCache) {}
+        });
+        SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(sticker, Theme.key_chat_serviceBackground, 1.0f);
+        if (svgThumb != null) {
+            nextStickerToSendView.setImage(ImageLocation.getForDocument(sticker), createFilter(sticker), svgThumb, 0, sticker);
+        } else {
+            TLRPC.PhotoSize thumb = FileLoader.getClosestPhotoSizeWithSize(sticker.thumbs, 90);
+            nextStickerToSendView.setImage(ImageLocation.getForDocument(sticker), createFilter(sticker), ImageLocation.getForDocument(thumb, sticker), null, 0, sticker);
+        }
+        nextStickerToSendView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onGreetings(sticker);
+            }
+        });
+    }
+
+    private AnimatorSet togglingStickersAnimator;
+    private void toggleToNextSticker() {
+        if (togglingStickersAnimator != null) {
+            togglingStickersAnimator.cancel();
+        }
+
+        nextStickerToSendView.setVisibility(View.VISIBLE);
+        stickerToSendView.setVisibility(View.VISIBLE);
+
+        togglingStickersAnimator = new AnimatorSet();
+        togglingStickersAnimator.setDuration(420);
+        togglingStickersAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        togglingStickersAnimator.addListener(new AnimatorListenerAdapter() {
+            private boolean cancelled;
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (cancelled) return;
+
+                BackupImageView temp = stickerToSendView;
+                stickerToSendView = nextStickerToSendView;
+                nextStickerToSendView = temp;
+
+                nextStickerToSendView.setVisibility(View.GONE);
+                nextStickerToSendView.setAlpha(0f);
+                stickerToSendView.setVisibility(View.VISIBLE);
+                stickerToSendView.setAlpha(1f);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                cancelled = true;
+            }
+        });
+        togglingStickersAnimator.playTogether(
+            ObjectAnimator.ofFloat(nextStickerToSendView, View.ALPHA, 0f, 1f),
+            ObjectAnimator.ofFloat(nextStickerToSendView, View.SCALE_X, .7f, 1f),
+            ObjectAnimator.ofFloat(nextStickerToSendView, View.SCALE_Y, .7f, 1f),
+            ObjectAnimator.ofFloat(nextStickerToSendView, View.TRANSLATION_Y, -dp(24), 0),
+
+            ObjectAnimator.ofFloat(stickerToSendView, View.ALPHA, 1f, 0f),
+            ObjectAnimator.ofFloat(stickerToSendView, View.SCALE_X, 1f, .7f),
+            ObjectAnimator.ofFloat(stickerToSendView, View.SCALE_Y, 1f, .7f),
+            ObjectAnimator.ofFloat(stickerToSendView, View.TRANSLATION_Y, 0, dp(24))
+        );
+        togglingStickersAnimator.start();
     }
 
     public static String createFilter(TLRPC.Document document) {
-        float fMin;
-        float f;
-        int i;
+        float maxHeight;
+        float maxWidth;
+        int photoWidth = 0;
+        int photoHeight = 0;
         if (AndroidUtilities.isTablet()) {
-            fMin = AndroidUtilities.getMinTabletSide();
-            f = 0.4f;
+            maxHeight = maxWidth = AndroidUtilities.getMinTabletSide() * 0.4f;
         } else {
-            Point point = AndroidUtilities.displaySize;
-            fMin = Math.min(point.x, point.y);
-            f = 0.5f;
+            maxHeight = maxWidth = Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y) * 0.5f;
         }
-        float f2 = fMin * f;
-        int iDp = 0;
-        int i2 = 0;
-        while (true) {
-            if (i2 >= document.attributes.size()) {
-                i = 0;
+        for (int a = 0; a < document.attributes.size(); a++) {
+            TLRPC.DocumentAttribute attribute = document.attributes.get(a);
+            if (attribute instanceof TLRPC.TL_documentAttributeImageSize) {
+                photoWidth = attribute.w;
+                photoHeight = attribute.h;
                 break;
             }
-            TLRPC.DocumentAttribute documentAttribute = document.attributes.get(i2);
-            if (documentAttribute instanceof TLRPC.TL_documentAttributeImageSize) {
-                iDp = documentAttribute.w;
-                i = documentAttribute.h;
-                break;
-            }
-            i2++;
         }
-        if (MessageObject.isAnimatedStickerDocument(document, true) && iDp == 0 && i == 0) {
-            iDp = 512;
-            i = 512;
+        if (MessageObject.isAnimatedStickerDocument(document, true) && photoWidth == 0 && photoHeight == 0) {
+            photoWidth = photoHeight = 512;
         }
-        if (iDp == 0) {
-            i = (int) f2;
-            iDp = i + AndroidUtilities.dp(100.0f);
+
+        if (photoWidth == 0) {
+            photoHeight = (int) maxHeight;
+            photoWidth = photoHeight + dp(100);
         }
-        int i3 = (int) (i * (f2 / iDp));
-        int i4 = (int) f2;
-        float f3 = i3;
-        if (f3 > f2) {
-            i4 = (int) (i4 * (f2 / f3));
-            i3 = i4;
+        photoHeight *= maxWidth / photoWidth;
+        photoWidth = (int) maxWidth;
+        if (photoHeight > maxHeight) {
+            photoWidth *= maxHeight / photoHeight;
+            photoHeight = (int) maxHeight;
         }
-        float f4 = i4;
-        float f5 = AndroidUtilities.density;
-        return String.format(Locale.US, "%d_%d", Integer.valueOf((int) (f4 / f5)), Integer.valueOf((int) (i3 / f5)));
+
+        int w = (int) (photoWidth / AndroidUtilities.density);
+        int h = (int) (photoHeight / AndroidUtilities.density);
+        return String.format(Locale.US, "%d_%d", w, h);
     }
 
     private void updateColors() {
-        TextView textView = this.titleView;
-        int i = Theme.key_chat_serviceText;
-        textView.setTextColor(getThemedColor(i));
-        this.descriptionView.setTextColor(getThemedColor(i));
+        titleView.setTextColor(getThemedColor(Theme.key_chat_serviceText));
+        descriptionView.setTextColor(getThemedColor(Theme.key_chat_serviceText));
     }
 
     public void setListener(Listener listener) {
         this.listener = listener;
     }
 
-    @Override // android.widget.LinearLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        this.ignoreLayot = true;
-        this.descriptionView.setVisibility(0);
-        if (!this.stickerExplicitlyHidden) {
-            this.stickerContainer.setVisibility(0);
+    public interface Listener {
+        void onGreetings(TLRPC.Document sticker);
+    }
+
+    boolean ignoreLayot;
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        ignoreLayot = true;
+        if (!preview) {
+            descriptionView.setVisibility(View.VISIBLE);
         }
-        super.onMeasure(i, i2);
-        if ((!this.showGreetings || getMeasuredHeight() > View.MeasureSpec.getSize(i2)) && !this.preview) {
-            this.descriptionView.setVisibility(8);
-            this.stickerContainer.setVisibility(8);
+        stickerToSendView.setVisibility(View.VISIBLE);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (getMeasuredHeight() > MeasureSpec.getSize(heightMeasureSpec) && !preview) {
+            descriptionView.setVisibility(View.GONE);
+            stickerToSendView.setVisibility(View.GONE);
         } else {
-            this.descriptionView.setVisibility(0);
-            if (!this.stickerExplicitlyHidden) {
-                this.stickerContainer.setVisibility(0);
+            if (!preview) {
+                descriptionView.setVisibility(View.VISIBLE);
             }
+            stickerToSendView.setVisibility(View.VISIBLE);
         }
-        this.ignoreLayot = false;
-        super.onMeasure(i, i2);
+        ignoreLayot = false;
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void setPreview(CharSequence charSequence, CharSequence charSequence2) {
-        int iMin;
-        this.preview = true;
-        TextView textView = this.titleView;
-        if (TextUtils.isEmpty(charSequence == null ? null : charSequence.toString().trim())) {
-            charSequence = LocaleController.getString(R.string.NoMessages);
-        }
-        textView.setText(charSequence);
-        TextView textView2 = this.descriptionView;
-        if (TextUtils.isEmpty(charSequence2 != null ? charSequence2.toString().trim() : null)) {
-            charSequence2 = LocaleController.getString(R.string.NoMessagesGreetingsDescription);
-        }
-        textView2.setText(charSequence2);
-        TextView textView3 = this.descriptionView;
-        if (textView3.getText().length() > 60) {
-            iMin = Math.min((int) (AndroidUtilities.displaySize.x * 0.5f), HintView2.cutInFancyHalf(this.descriptionView.getText(), this.descriptionView.getPaint()));
-        } else {
-            iMin = (int) (AndroidUtilities.displaySize.x * 0.5f);
-        }
-        textView3.setMaxWidth(iMin);
-        updateLayout();
+    public boolean preview;
+    public void setPreview(CharSequence title, CharSequence message) {
+        preview = true;
+        titleView.setText(TextUtils.isEmpty(title == null ? null : title.toString().trim()) ? getString(R.string.NoMessages) : title);
+        descriptionView.setText(TextUtils.isEmpty(message == null ? null : message.toString().trim()) ? getString(R.string.NoMessagesGreetingsDescription) : message);
+        descriptionView.setMaxWidth(
+            descriptionView.getText().length() > 60 ?
+                Math.min((int) (AndroidUtilities.displaySize.x * .5f), HintView2.cutInFancyHalf(descriptionView.getText(), descriptionView.getPaint())) :
+                (int) (AndroidUtilities.displaySize.x * .5f)
+        );
     }
 
-    public void setVisiblePart(float f, int i) {
-        this.visiblePartSet = true;
-        this.backgroundHeight = i;
-        this.viewTop = f;
-        this.viewTranslationX = 0.0f;
+    private float viewTop;
+    private float viewTranslationX;
+    private int backgroundHeight;
+    private boolean visiblePartSet;
+
+    public void setVisiblePart(float visibleTop, int parentH) {
+        visiblePartSet = true;
+        backgroundHeight = parentH;
+        viewTop = visibleTop;
+        viewTranslationX = 0;
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void dispatchDraw(Canvas canvas) {
-        Canvas canvas2;
-        if (this.disableBackground) {
-            canvas2 = canvas;
-        } else {
-            Theme.ResourcesProvider resourcesProvider = this.resourcesProvider;
+    private boolean disableBackground;
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (!disableBackground) {
             if (resourcesProvider != null) {
-                resourcesProvider.applyServiceShaderMatrix(getMeasuredWidth(), this.backgroundHeight, this.viewTranslationX, this.viewTop + AndroidUtilities.dp(4.0f));
+                resourcesProvider.applyServiceShaderMatrix(getMeasuredWidth(), backgroundHeight, viewTranslationX, viewTop + dp(4));
             } else {
-                Theme.applyServiceShaderMatrix(getMeasuredWidth(), this.backgroundHeight, this.viewTranslationX, this.viewTop + AndroidUtilities.dp(4.0f));
+                Theme.applyServiceShaderMatrix(getMeasuredWidth(), backgroundHeight, viewTranslationX, viewTop + dp(4));
             }
-            canvas2 = canvas;
-            canvas2.drawRoundRect(0.0f, 0.0f, getWidth(), getHeight(), AndroidUtilities.dp(16.0f), AndroidUtilities.dp(16.0f), Theme.getThemePaint("paintChatActionBackground", this.resourcesProvider));
-        }
-        if (!this.wasDraw) {
-            this.wasDraw = true;
-            if (!this.stickerExplicitlyHidden) {
-                setSticker(this.preloadedGreetingsSticker);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                canvas.drawRoundRect(0, 0, getWidth(), getHeight(), dp(16), dp(16), Theme.getThemePaint(Theme.key_paint_chatActionBackground, resourcesProvider));
             }
         }
-        super.dispatchDraw(canvas2);
+        if (!wasDraw) {
+            wasDraw = true;
+            setSticker(preloadedGreetingsSticker);
+        }
+        super.dispatchDraw(canvas);
     }
 
-    @Override // android.view.View, android.view.ViewParent
+    @Override
     public void requestLayout() {
-        if (this.ignoreLayot) {
+        if (ignoreLayot) {
             return;
         }
         super.requestLayout();
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         fetchSticker();
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onDetachedFromWindow() {
+    @Override
+    protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
     }
 
     private void fetchSticker() {
-        if (this.preloadedGreetingsSticker != null || this.stickerExplicitlyHidden) {
-            return;
-        }
-        TLRPC.Document greetingsSticker = MediaDataController.getInstance(this.currentAccount).getGreetingsSticker();
-        this.preloadedGreetingsSticker = greetingsSticker;
-        if (this.wasDraw) {
-            setSticker(greetingsSticker);
+        if (preloadedGreetingsSticker == null) {
+            preloadedGreetingsSticker = MediaDataController.getInstance(currentAccount).getGreetingsSticker();
+            if (wasDraw) {
+                setSticker(preloadedGreetingsSticker);
+            }
         }
     }
 
-    @Override // android.view.View
-    public void setBackground(Drawable drawable) {
-        super.setBackground(drawable);
-        this.disableBackground = true;
+    @Override
+    public void setBackground(Drawable background) {
+        super.setBackground(background);
+        disableBackground = true;
     }
 
-    private int getThemedColor(int i) {
-        return Theme.getColor(i, this.resourcesProvider);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 
-    public static void showPremiumSheet(Context context, int i, long j, Theme.ResourcesProvider resourcesProvider) {
-        String firstName;
-        final BottomSheet bottomSheet = new BottomSheet(context, false, resourcesProvider);
-        bottomSheet.fixNavigationBar(Theme.getColor(Theme.key_dialogBackground, resourcesProvider));
-        LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setOrientation(1);
-        linearLayout.setPadding(AndroidUtilities.dp(16.0f), 0, AndroidUtilities.dp(16.0f), 0);
-        RLottieImageView rLottieImageView = new RLottieImageView(context);
-        rLottieImageView.setScaleType(ImageView.ScaleType.CENTER);
-        rLottieImageView.setAnimation(R.raw.large_message_lock, 80, 80);
-        rLottieImageView.playAnimation();
-        rLottieImageView.setColorFilter(new PorterDuffColorFilter(-1, PorterDuff.Mode.SRC_IN));
-        rLottieImageView.setBackground(Theme.createCircleDrawable(AndroidUtilities.dp(80.0f), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider)));
-        linearLayout.addView(rLottieImageView, LayoutHelper.createLinear(80, 80, 1, 0, 16, 0, 16));
-        boolean zPremiumFeaturesBlocked = MessagesController.getInstance(i).premiumFeaturesBlocked();
-        TextView textView = new TextView(context);
-        textView.setTypeface(AndroidUtilities.bold());
-        textView.setGravity(17);
-        int i2 = Theme.key_dialogTextBlack;
-        textView.setTextColor(Theme.getColor(i2, resourcesProvider));
-        textView.setTextSize(1, 20.0f);
-        textView.setText(LocaleController.getString(zPremiumFeaturesBlocked ? R.string.PremiumMessageHeaderLocked : R.string.PremiumMessageHeader));
-        linearLayout.addView(textView, LayoutHelper.createLinear(-1, -2, 1, 12, 0, 12, 0));
-        TextView textView2 = new TextView(context);
-        textView2.setGravity(17);
-        textView2.setTextColor(Theme.getColor(i2, resourcesProvider));
-        textView2.setTextSize(1, 14.0f);
-        if (j <= 0) {
-            firstName = _UrlKt.FRAGMENT_ENCODE_SET;
-        } else {
-            firstName = UserObject.getFirstName(MessagesController.getInstance(i).getUser(Long.valueOf(j)));
+    public static void showPremiumSheet(Context context, int currentAccount, long dialogId, Theme.ResourcesProvider resourcesProvider) {
+        BottomSheet sheet = new BottomSheet(context, false, resourcesProvider);
+        sheet.fixNavigationBar(Theme.getColor(Theme.key_dialogBackground, resourcesProvider));
+
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dp(16), 0, dp(16), 0);
+
+        RLottieImageView imageView = new RLottieImageView(context);
+        imageView.setScaleType(ImageView.ScaleType.CENTER);
+        imageView.setAnimation(R.raw.large_message_lock, 80, 80);
+        imageView.playAnimation();
+        imageView.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
+        imageView.setBackground(Theme.createCircleDrawable(dp(80), Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider)));
+        layout.addView(imageView, LayoutHelper.createLinear(80, 80, Gravity.CENTER_HORIZONTAL, 0, 16, 0, 16));
+
+        final boolean premiumLocked = MessagesController.getInstance(currentAccount).premiumFeaturesBlocked();
+
+        TextView headerView = new TextView(context);
+        headerView.setTypeface(AndroidUtilities.bold());
+        headerView.setGravity(Gravity.CENTER);
+        headerView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack, resourcesProvider));
+        headerView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+        headerView.setText(LocaleController.getString(premiumLocked ? R.string.PremiumMessageHeaderLocked : R.string.PremiumMessageHeader));
+        layout.addView(headerView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 12, 0, 12, 0));
+
+        TextView descriptionView = new TextView(context);
+        descriptionView.setGravity(Gravity.CENTER);
+        descriptionView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack, resourcesProvider));
+        descriptionView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        String username = "";
+        if (dialogId > 0) {
+            TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+            username = UserObject.getFirstName(user);
         }
-        textView2.setText(AndroidUtilities.replaceTags(LocaleController.formatString(zPremiumFeaturesBlocked ? R.string.PremiumMessageTextLocked : R.string.PremiumMessageText, firstName, firstName)));
-        linearLayout.addView(textView2, LayoutHelper.createLinear(-1, -2, 1, 12, 9, 12, 19));
-        if (!zPremiumFeaturesBlocked) {
-            PremiumButtonView premiumButtonView = new PremiumButtonView(context, true, resourcesProvider);
-            premiumButtonView.setOnClickListener(new View.OnClickListener() { // from class: org.telegram.ui.Components.ChatGreetingsView$$ExternalSyntheticLambda0
-                @Override // android.view.View.OnClickListener
-                public final void onClick(View view) {
-                    ChatGreetingsView.$r8$lambda$13a8CLbV7ZHYOY05YUpOVmneXOw(bottomSheet, view);
+        descriptionView.setText(AndroidUtilities.replaceTags(formatString(premiumLocked ? R.string.PremiumMessageTextLocked : R.string.PremiumMessageText, username, username)));
+        layout.addView(descriptionView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 12, 9, 12, 19));
+
+        if (!premiumLocked) {
+            PremiumButtonView button2 = new PremiumButtonView(context, true, resourcesProvider);
+            button2.setOnClickListener(v2 -> {
+                BaseFragment lastFragment = LaunchActivity.getLastFragment();
+                if (lastFragment != null) {
+                    lastFragment.presentFragment(new PremiumPreviewFragment("contact"));
+                    sheet.dismiss();
                 }
             });
-            premiumButtonView.setOverlayText(LocaleController.getString(R.string.PremiumMessageButton), false, false);
-            linearLayout.addView(premiumButtonView, LayoutHelper.createLinear(-1, 48, 1, 0, 0, 0, 4));
+            button2.setOverlayText(LocaleController.getString(R.string.PremiumMessageButton), false, false);
+            layout.addView(button2, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, Gravity.CENTER_HORIZONTAL, 0, 0, 0, 4));
         }
-        bottomSheet.setCustomView(linearLayout);
-        bottomSheet.show();
-    }
 
-    public static /* synthetic */ void $r8$lambda$13a8CLbV7ZHYOY05YUpOVmneXOw(BottomSheet bottomSheet, View view) {
-        BaseFragment lastFragment = LaunchActivity.getLastFragment();
-        if (lastFragment != null) {
-            lastFragment.presentFragment(new PremiumPreviewFragment("contact"));
-            bottomSheet.lambda$new$0();
-        }
+        sheet.setCustomView(layout);
+        sheet.show();
     }
 }
