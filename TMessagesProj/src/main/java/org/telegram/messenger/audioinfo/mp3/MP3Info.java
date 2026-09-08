@@ -1,4 +1,133 @@
-data.reset(); // reset input to b2
+/*
+ * Copyright 2013-2014 Odysseus Software GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.telegram.messenger.audioinfo.mp3;
+
+import org.telegram.messenger.audioinfo.AudioInfo;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class MP3Info extends AudioInfo {
+	static final Logger LOGGER = Logger.getLogger(MP3Info.class.getName());
+
+	interface StopReadCondition {
+		boolean stopRead(MP3Input data) throws IOException;
+	}
+
+	public MP3Info(InputStream input, long fileLength) throws IOException, ID3v2Exception, MP3Exception {
+		this(input, fileLength, Level.FINEST);
+	}
+
+	public MP3Info(InputStream input, final long fileLength, Level debugLevel) throws IOException, ID3v2Exception, MP3Exception {
+		brand = "MP3";
+		version = "0";
+		MP3Input data = new MP3Input(input);
+		if (ID3v2Info.isID3v2StartPosition(data)) {
+			ID3v2Info info = new ID3v2Info(data, debugLevel);
+			album = info.getAlbum();
+			albumArtist = info.getAlbumArtist();
+			artist = info.getArtist();
+			comment = info.getComment();
+			cover = info.getCover();
+			smallCover = info.getSmallCover();
+			compilation = info.isCompilation();
+			composer = info.getComposer();
+			copyright = info.getCopyright();
+			disc = info.getDisc();
+			discs = info.getDiscs();
+			duration = info.getDuration();
+			genre = info.getGenre();
+			grouping = info.getGrouping();
+			lyrics = info.getLyrics();
+			title = info.getTitle();
+			track = info.getTrack();
+			tracks = info.getTracks();
+			year = info.getYear();
+		}
+		if (duration <= 0 || duration >= 3600000L) { // don't trust strange durations (e.g. old lame versions always write TLEN 97391548)
+			try {
+				duration = calculateDuration(data, fileLength, new StopReadCondition() {
+					final long stopPosition = fileLength - 128;
+
+					@Override
+					public boolean stopRead(MP3Input data) throws IOException {
+						return (data.getPosition() == stopPosition) && ID3v1Info.isID3v1StartPosition(data);
+					}
+				});
+			} catch (MP3Exception e) {
+				if (LOGGER.isLoggable(debugLevel)) {
+					LOGGER.log(debugLevel, "Could not determine MP3 duration", e);
+				}
+			}
+		}
+		if (title == null || album == null || artist == null) {
+			if (data.getPosition() <= fileLength - 128) { // position to last 128 bytes
+				data.skipFully(fileLength - 128 - data.getPosition());
+				if (ID3v1Info.isID3v1StartPosition(input)) {
+					ID3v1Info info = new ID3v1Info(input);
+					if (album == null) {
+						album = info.getAlbum();
+					}
+					if (artist == null) {
+						artist = info.getArtist();
+					}
+					if (comment == null) {
+						comment = info.getComment();
+					}
+					if (genre == null) {
+						genre = info.getGenre();
+					}
+					if (title == null) {
+						title = info.getTitle();
+					}
+					if (track == 0) {
+						track = info.getTrack();
+					}
+					if (year == 0) {
+						year = info.getYear();
+					}
+				}
+			}
+		}
+	}
+
+	MP3Frame readFirstFrame(MP3Input data, StopReadCondition stopCondition) throws IOException, MP3Exception {
+		int b0 = 0;
+		int b1 = stopCondition.stopRead(data) ? -1 : data.read();
+		while (b1 != -1) {
+			if (b0 == 0xFF && (b1 & 0xE0) == 0xE0) { // first 11 bits should be 1
+				data.mark(2); // set mark at b2
+				int b2 = stopCondition.stopRead(data) ? -1 : data.read();
+				if (b2 == -1) {
+					break;
+				}
+				int b3 = stopCondition.stopRead(data) ? -1 : data.read();
+				if (b3 == -1) {
+					break;
+				}
+				MP3Frame.Header header = new MP3Frame.Header(b1, b2, b3);
+				if (header != null) { // we have a candidate
+					/*
+					 * The code gets a bit complex here, because we need to be able to reset() to b2 if
+					 * the check fails. Thus, we have to reset() to b2 before doing a call to mark().
+					 */
+					data.reset(); // reset input to b2
 					data.mark(header.getFrameSize() + 2); // rest of frame (size - 2) + next header
 					/*
 					 * read frame data

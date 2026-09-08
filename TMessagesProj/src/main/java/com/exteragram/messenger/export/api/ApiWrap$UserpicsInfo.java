@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import org.telegram.messenger.NotificationBadge;
 
 public final class ApiWrap$UserpicsInfo extends RecordTag {
@@ -28,10 +27,10 @@ public final class ApiWrap$UserpicsInfo extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$UserpicsInfo$$ExternalSyntheticRecord0.m(this.count);
+        return java.util.Objects.hash(this.count);
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$UserpicsInfo.class, NotificationBadge.NewHtcHomeBadger.COUNT);
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$UserpicsInfo.class, NotificationBadge.NewHtcHomeBadger.COUNT);
     }
 }

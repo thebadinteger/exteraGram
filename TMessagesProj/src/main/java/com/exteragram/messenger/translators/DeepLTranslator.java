@@ -2,7 +2,6 @@ package com.exteragram.messenger.translators;
 
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.TranslationFormality;
-import com.exteragram.messenger.backup.PreferencesUtils$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.utils.network.ExteraHttpClient;
 import com.exteragram.messenger.utils.text.TranslatorUtils;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class DeepLTranslator extends BaseTranslator {
             return DeepLTranslator.$r8$lambda$C3t8HA5LdSNw5SCJiN1vp78rw6U(chain);
         }
     }).build();
-    private static final Set<String> SUPPORTED_LANGUAGES = new HashSet(PreferencesUtils$$ExternalSyntheticBackport1.m(new String[]{"bg", "cs", "da", "de", "el", "en", "en-GB", "en-US", "es", "fi", "fr", "hu", "id", "it", "ja", "lt", "lv", "nl", "pl", "pt", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "zh"}));
+    private static final Set<String> SUPPORTED_LANGUAGES = new HashSet(new java.util.HashSet<>(java.util.Arrays.asList("bg", "cs", "da", "de", "el", "en", "en-GB", "en-US", "es", "fi", "fr", "hu", "id", "it", "ja", "lt", "lv", "nl", "pl", "pt", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "zh")));
 
     public static class AnonymousClass2 {
         static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$TranslationFormality;

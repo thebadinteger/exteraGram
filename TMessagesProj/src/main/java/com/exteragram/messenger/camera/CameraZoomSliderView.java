@@ -27,7 +27,6 @@ import android.widget.SeekBar;
 import androidx.dynamicanimation.animation.FloatPropertyCompat;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
-import c.f$$ExternalSyntheticBUOutline1;
 import java.util.Arrays;
 import java.util.Locale;
 import org.mvel2.MVEL;

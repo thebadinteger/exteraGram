@@ -14,7 +14,6 @@ public final class ArchiveValidationException extends SimpliFilesException {
         return this.report;
     }
 
-    /* JADX WARN: Illegal instructions before constructor call */
     public ArchiveValidationException(ValidationReport validationReport) {
         String message;
         ArchiveIssue archiveIssue = (ArchiveIssue) CollectionsKt.firstOrNull((List) validationReport.getIssues());

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.output;
 
 import android.util.Log;
-import com.android.dx.DexMaker$$ExternalSyntheticBUOutline0;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,7 +8,6 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import okhttp3.HttpUrl$$ExternalSyntheticBUOutline0;
 import okhttp3.internal.url._UrlKt;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.Utilities;
@@ -97,7 +95,6 @@ public class OutputFile {
         return null;
     }
 
-    /* JADX WARN: Code duplicated, block: B:40:0x0068 A[Catch: IOException -> 0x005c, TRY_ENTER, TRY_LEAVE, TryCatch #4 {IOException -> 0x005c, blocks: (B:40:0x0068, B:32:0x0058), top: B:47:0x0021 }] */
     public AbstractWriter.Result writeBlockAttempt(String str) throws Throwable {
         FileOutputStream fileOutputStream;
         Stats stats = this._stats;

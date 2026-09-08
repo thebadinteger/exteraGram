@@ -13,7 +13,6 @@ import androidx.core.graphics.PathParser;
 import com.exteragram.messenger.ExteraConfig;
 import kotlin.Metadata;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 

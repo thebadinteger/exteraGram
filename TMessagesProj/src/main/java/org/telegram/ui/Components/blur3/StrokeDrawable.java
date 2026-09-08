@@ -1,124 +1,104 @@
 package org.telegram.ui.Components.blur3;
 
+import static org.telegram.messenger.AndroidUtilities.dpf2;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.GlassOutlineStyle;
-import org.telegram.messenger.AndroidUtilities;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProvider;
 
 public class StrokeDrawable extends Drawable {
+
     private BlurredBackgroundColorProvider colorProvider;
-    public boolean nonRound;
-    private int padding;
-    public float radius;
-    protected int strokeColorBottom;
-    protected int strokeColorFull;
-    protected int strokeColorTop;
+    protected int strokeColorTop, strokeColorBottom;
+
     private float alpha = 1.0f;
     private final RectF rect = new RectF();
-    private final Paint paintFill = new Paint(1);
-    private final Paint paintStrokeTop = new Paint(1);
-    private final Paint paintStrokeBottom = new Paint(1);
-    private final Paint paintStrokeFull = new Paint(1);
+    private int padding;
 
-    @Override // android.graphics.drawable.Drawable
-    public int getOpacity() {
-        return -2;
-    }
+    private final Paint paintFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint paintStrokeTop = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint paintStrokeBottom = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    @Override // android.graphics.drawable.Drawable
-    public void setColorFilter(ColorFilter colorFilter) {
-    }
-
-    public void setBackgroundColor(int i) {
-        this.paintFill.setColor(i);
+    public void setBackgroundColor(int color) {
+        paintFill.setColor(color);
         invalidateSelf();
     }
 
-    public void setPadding(int i) {
-        this.padding = i;
+    public void setPadding(int padding) {
+        this.padding = padding;
     }
 
-    public void setColorProvider(BlurredBackgroundColorProvider blurredBackgroundColorProvider) {
-        this.colorProvider = blurredBackgroundColorProvider;
-        Paint paint = this.paintStrokeTop;
-        Paint.Style style = Paint.Style.STROKE;
-        paint.setStyle(style);
-        this.paintStrokeBottom.setStyle(style);
-        this.paintStrokeFull.setStyle(style);
+    public void setColorProvider(BlurredBackgroundColorProvider colorProvider) {
+        this.colorProvider = colorProvider;
+
+        paintStrokeTop.setStyle(Paint.Style.STROKE);
+        paintStrokeBottom.setStyle(Paint.Style.STROKE);
+
         updateColors();
     }
 
     public void updateColors() {
-        if (this.colorProvider == null) {
-            return;
-        }
-        GlassOutlineStyle glassOutlineStyle = ExteraConfig.getGlassOutlineStyle();
-        if (glassOutlineStyle == GlassOutlineStyle.GLARE) {
-            this.strokeColorTop = Theme.multAlpha(this.colorProvider.getStrokeColorTop(), this.alpha);
-            this.strokeColorBottom = Theme.multAlpha(this.colorProvider.getStrokeColorBottom(), this.alpha);
-        } else {
-            this.strokeColorTop = 0;
-            this.strokeColorBottom = 0;
-        }
-        this.strokeColorFull = glassOutlineStyle == GlassOutlineStyle.SOLID ? Theme.multAlpha(this.colorProvider.getStrokeColorFull(), this.alpha) : 0;
-        this.paintStrokeTop.setColor(this.strokeColorTop);
-        this.paintStrokeTop.setStrokeWidth(AndroidUtilities.dpf2(1.0f));
-        this.paintStrokeBottom.setColor(this.strokeColorBottom);
-        this.paintStrokeBottom.setStrokeWidth(AndroidUtilities.dpf2(0.6666667f));
-        this.paintStrokeFull.setColor(this.strokeColorFull);
-        this.paintStrokeFull.setStrokeWidth(AndroidUtilities.dpf2(1.0f));
+        if (colorProvider == null) return;
+
+        strokeColorTop = Theme.multAlpha(colorProvider.getStrokeColorTop(), alpha);
+        strokeColorBottom = Theme.multAlpha(colorProvider.getStrokeColorBottom(), alpha);
+
+        paintStrokeTop.setColor(strokeColorTop);
+        paintStrokeTop.setStrokeWidth(dpf2(1));
+        paintStrokeBottom.setColor(strokeColorBottom);
+        paintStrokeBottom.setStrokeWidth(dpf2(2 / 3f));
     }
 
-    @Override // android.graphics.drawable.Drawable
-    public void draw(Canvas canvas) {
-        Canvas canvas2;
-        float fCenterX = getBounds().centerX();
-        float fCenterY = getBounds().centerY();
-        float fMin = (Math.min(getBounds().width(), getBounds().height()) / 2.0f) - this.padding;
-        this.rect.set(fCenterX - fMin, fCenterY - fMin, fCenterX + fMin, fCenterY + fMin);
-        if (this.nonRound) {
-            this.rect.set(getBounds());
-            fMin = this.radius;
+    public boolean nonRound;
+    public float radius;
+
+    @Override
+    public void draw(@NonNull Canvas canvas) {
+        final float cx = getBounds().centerX();
+        final float cy = getBounds().centerY();
+        float radius = Math.min(getBounds().width(), getBounds().height()) / 2.0f - padding;
+        rect.set(cx - radius, cy - radius, cx + radius, cy + radius);
+
+        if (nonRound) {
+            rect.set(getBounds());
+            radius = this.radius;
         }
-        float f = fMin;
-        if (Color.alpha(this.paintFill.getColor()) > 0) {
-            canvas.drawCircle(fCenterX, fCenterY, f, this.paintFill);
+
+        if (Color.alpha(paintFill.getColor()) > 0) {
+            canvas.drawCircle(cx, cy, radius, paintFill);
         }
-        if (this.strokeColorFull != 0) {
-            float strokeWidth = this.paintStrokeFull.getStrokeWidth() / 2.0f;
-            if (this.nonRound) {
-                this.rect.inset(strokeWidth, strokeWidth);
-                float fMax = Math.max(0.0f, f - strokeWidth);
-                canvas.drawRoundRect(this.rect, fMax, fMax, this.paintStrokeFull);
-            } else {
-                canvas.drawCircle(fCenterX, fCenterY, Math.max(0.0f, f - strokeWidth), this.paintStrokeFull);
-            }
-        } else {
-            if (this.strokeColorTop != 0) {
-                canvas2 = canvas;
-                BlurredBackgroundDrawable.drawStroke(canvas2, this.rect, f, AndroidUtilities.dpf2(1.0f), true, this.paintStrokeTop);
-            }
-            if (this.strokeColorFull == 0 || this.strokeColorBottom == 0) {
-            }
-            BlurredBackgroundDrawable.drawStroke(canvas2, this.rect, f, AndroidUtilities.dpf2(0.6666667f), false, this.paintStrokeBottom);
-            return;
+        if (strokeColorTop != 0) {
+            BlurredBackgroundDrawable.drawStroke(canvas, rect, radius, dpf2(1), true, paintStrokeTop);
         }
-        canvas2 = canvas;
-        if (this.strokeColorFull == 0) {
+        if (strokeColorBottom != 0) {
+            BlurredBackgroundDrawable.drawStroke(canvas, rect, radius, dpf2(2 / 3f), false, paintStrokeBottom);
         }
     }
 
-    @Override // android.graphics.drawable.Drawable
+    @Override
     public void setAlpha(int i) {
-        this.alpha = i / 255.0f;
+        alpha = i / 255.0f;
         updateColors();
+    }
+
+    @Override
+    public void setColorFilter(@Nullable ColorFilter colorFilter) {
+
+    }
+
+    @Override
+    public int getOpacity() {
+        return PixelFormat.TRANSPARENT;
     }
 }

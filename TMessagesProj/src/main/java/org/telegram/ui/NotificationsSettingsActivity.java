@@ -1,4 +1,694 @@
-else if (position == pinnedMessageRow) {
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.getString;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.LongSparseArray;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.Keep;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.ChatObject;
+import org.telegram.messenger.DialogObject;
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaDataController;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.MessagesStorage;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.NotificationsController;
+import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.Utilities;
+import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.tl.TL_account;
+import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BackDrawable;
+import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeDescription;
+import org.telegram.ui.Cells.HeaderCell;
+import org.telegram.ui.Cells.NotificationsCheckCell;
+import org.telegram.ui.Cells.ShadowSectionCell;
+import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextDetailSettingsCell;
+import org.telegram.ui.Cells.TextInfoPrivacyCell;
+import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.AlertsCreator;
+import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RecyclerListView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
+
+public class NotificationsSettingsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
+
+    public static class NotificationException {
+        public int muteUntil;
+        public boolean hasCustom;
+        public int notify;
+        public long did;
+        public boolean story;
+        public boolean auto;
+    }
+
+    private RecyclerListView listView;
+    private boolean reseting = false;
+    private ListAdapter adapter;
+    @SuppressWarnings("FieldCanBeLocal")
+    private LinearLayoutManager layoutManager;
+    private ArrayList<NotificationException> exceptionUsers = null;
+    private ArrayList<NotificationException> exceptionChats = null;
+    private ArrayList<NotificationException> exceptionChannels = null;
+    private ArrayList<NotificationException> exceptionStories = null;
+    private ArrayList<NotificationException> exceptionAutoStories = null;
+
+    private int accountsSectionRow;
+    @Keep
+    private int accountsAllRow;
+    private int accountsInfoRow;
+
+    private int notificationsServiceRow;
+    private int notificationsServiceConnectionRow;
+
+    private int notificationsSectionRow;
+    @Keep
+    private int privateRow;
+    @Keep
+    private int groupRow;
+    @Keep
+    private int channelsRow;
+    @Keep
+    private int storiesRow;
+    @Keep
+    private int reactionsRow;
+    private int notificationsSection2Row;
+
+    private int inappSectionRow;
+    @Keep
+    private int inappSoundRow;
+    @Keep
+    private int inappVibrateRow;
+    @Keep
+    private int inappPreviewRow;
+    @Keep
+    private int inchatSoundRow;
+    @Keep
+    private int inappPriorityRow;
+    private int callsSection2Row;
+    private int callsSectionRow;
+    private int callsVibrateRow;
+    private int callsRingtoneRow;
+    private int eventsSection2Row;
+    private int eventsSectionRow;
+    @Keep
+    private int contactJoinedRow;
+    @Keep
+    private int pinnedMessageRow;
+    private int otherSection2Row;
+    private int otherSectionRow;
+    private int badgeNumberSection;
+    @Keep
+    private int badgeNumberShowRow;
+    @Keep
+    private int badgeNumberMutedRow;
+    @Keep
+    private int badgeNumberMessagesRow;
+    private int badgeNumberSection2Row;
+    private int androidAutoAlertRow;
+    private int repeatRow;
+    private int resetSection2Row;
+    private int resetSectionRow;
+    @Keep
+    private int resetNotificationsRow;
+    private int resetNotificationsSectionRow;
+    private int rowCount = 0;
+
+    private boolean updateVibrate;
+    private boolean updateRingtone;
+    private boolean updateRepeatNotifications;
+
+    @Override
+    public boolean onFragmentCreate() {
+        MessagesController.getInstance(currentAccount).loadSignUpNotificationsSettings();
+        loadExceptions(null);
+
+        if (UserConfig.getActivatedAccountsCount() > 1) {
+            accountsSectionRow = rowCount++;
+            accountsAllRow = rowCount++;
+            accountsInfoRow = rowCount++;
+        } else {
+            accountsSectionRow = -1;
+            accountsAllRow = -1;
+            accountsInfoRow = -1;
+        }
+
+        notificationsSectionRow = rowCount++;
+        privateRow = rowCount++;
+        groupRow = rowCount++;
+        channelsRow = rowCount++;
+        storiesRow = rowCount++;
+        reactionsRow = rowCount++;
+        notificationsSection2Row = rowCount++;
+
+        callsSectionRow = rowCount++;
+        callsVibrateRow = rowCount++;
+        callsRingtoneRow = rowCount++;
+        eventsSection2Row = rowCount++;
+
+        badgeNumberSection = rowCount++;
+        badgeNumberShowRow = rowCount++;
+        badgeNumberMutedRow = rowCount++;
+        badgeNumberMessagesRow = rowCount++;
+        badgeNumberSection2Row = rowCount++;
+
+        inappSectionRow = rowCount++;
+        inappSoundRow = rowCount++;
+        inappVibrateRow = rowCount++;
+        inappPreviewRow = rowCount++;
+        inchatSoundRow = rowCount++;
+        if (Build.VERSION.SDK_INT >= 21) {
+            inappPriorityRow = rowCount++;
+        } else {
+            inappPriorityRow = -1;
+        }
+        callsSection2Row = rowCount++;
+
+        eventsSectionRow = rowCount++;
+        contactJoinedRow = rowCount++;
+        pinnedMessageRow = rowCount++;
+        otherSection2Row = rowCount++;
+
+        otherSectionRow = rowCount++;
+        notificationsServiceRow = rowCount++;
+        notificationsServiceConnectionRow = rowCount++;
+        androidAutoAlertRow = -1;
+        repeatRow = rowCount++;
+        resetSection2Row = rowCount++;
+        resetSectionRow = rowCount++;
+        resetNotificationsRow = rowCount++;
+        resetNotificationsSectionRow = rowCount++;
+
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.notificationsSettingsUpdated);
+
+        getMessagesController().reloadReactionsNotifySettings();
+
+        return super.onFragmentCreate();
+    }
+
+    public void loadExceptions(Runnable onDone) {
+        MediaDataController.getInstance(currentAccount).loadHints(true);
+        final ArrayList<TLRPC.TL_topPeer> topPeers = new ArrayList<>(MediaDataController.getInstance(currentAccount).hints);
+        MessagesStorage.getInstance(currentAccount).getStorageQueue().postRunnable(() -> {
+            ArrayList<NotificationException> usersResult = new ArrayList<>();
+            ArrayList<NotificationException> chatsResult = new ArrayList<>();
+            ArrayList<NotificationException> channelsResult = new ArrayList<>();
+            ArrayList<NotificationException> storiesResult = new ArrayList<>();
+            ArrayList<NotificationException> storiesAutoResult = new ArrayList<>();
+            LongSparseArray<NotificationException> waitingForLoadExceptions = new LongSparseArray<>();
+
+            ArrayList<Long> usersToLoad = new ArrayList<>();
+            ArrayList<Long> chatsToLoad = new ArrayList<>();
+            ArrayList<Integer> encryptedChatsToLoad = new ArrayList<>();
+
+            ArrayList<TLRPC.User> users = new ArrayList<>();
+            ArrayList<TLRPC.Chat> chats = new ArrayList<>();
+            ArrayList<TLRPC.EncryptedChat> encryptedChats = new ArrayList<>();
+            long selfId = UserConfig.getInstance(currentAccount).clientUserId;
+
+            SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+            Map<String, ?> values = preferences.getAll();
+            for (Map.Entry<String, ?> entry : values.entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith("notify2_")) {
+                    key = key.replace("notify2_", "");
+                    if (key.contains("_")) {
+                        //it's topic
+                        continue;
+                    }
+
+                    long did = Utilities.parseLong(key);
+                    if (did != 0 && did != selfId) {
+                        NotificationException exception = new NotificationException();
+                        exception.did = did;
+                        exception.hasCustom = preferences.getBoolean("custom_" + did, false);
+                        exception.notify = (Integer) entry.getValue();
+                        if (exception.notify != 0) {
+                            Integer time = (Integer) values.get("notifyuntil_" + key);
+                            if (time != null) {
+                                exception.muteUntil = time;
+                            }
+                        }
+
+                        if (DialogObject.isEncryptedDialog(did)) {
+                            int encryptedChatId = DialogObject.getEncryptedChatId(did);
+                            TLRPC.EncryptedChat encryptedChat = MessagesController.getInstance(currentAccount).getEncryptedChat(encryptedChatId);
+                            if (encryptedChat == null) {
+                                encryptedChatsToLoad.add(encryptedChatId);
+                                waitingForLoadExceptions.put(did, exception);
+                            } else {
+                                TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(encryptedChat.user_id);
+                                if (user == null) {
+                                    usersToLoad.add(encryptedChat.user_id);
+                                    waitingForLoadExceptions.put(encryptedChat.user_id, exception);
+                                } else if (user.deleted) {
+                                    continue;
+                                }
+                            }
+                            usersResult.add(exception);
+                        } else if (DialogObject.isUserDialog(did)) {
+                            TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(did);
+                            if (user == null) {
+                                usersToLoad.add(did);
+                                waitingForLoadExceptions.put(did, exception);
+                            } else if (user.deleted) {
+                                continue;
+                            }
+                            usersResult.add(exception);
+                        } else {
+                            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-did);
+                            if (chat == null) {
+                                chatsToLoad.add(-did);
+                                waitingForLoadExceptions.put(did, exception);
+                                continue;
+                            } else if (chat.left || chat.kicked || chat.migrated_to != null) {
+                                continue;
+                            }
+                            if (ChatObject.isChannel(chat) && !chat.megagroup) {
+                                channelsResult.add(exception);
+                            } else {
+                                chatsResult.add(exception);
+                            }
+                        }
+                    }
+                }
+            }
+            final HashSet<Long> customStories = new HashSet<>();
+            for (Map.Entry<String, ?> entry : values.entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith("stories_")) {
+                    key = key.substring(8);
+                    try {
+                        long did = Utilities.parseLong(key);
+                        if (did != 0 && did != selfId) {
+                            NotificationsSettingsActivity.NotificationException exception = new NotificationsSettingsActivity.NotificationException();
+                            exception.did = did;
+                            exception.notify = ((Boolean) entry.getValue()) ? 0 : Integer.MAX_VALUE;
+                            exception.story = true;
+                            if (DialogObject.isUserDialog(did)) {
+                                TLRPC.User user = getMessagesController().getUser(did);
+                                if (user == null) {
+                                    usersToLoad.add(did);
+                                    waitingForLoadExceptions.put(did, exception);
+                                } else if (user.deleted) {
+                                    continue;
+                                }
+                                storiesResult.add(exception);
+                                customStories.add(did);
+                            }
+                        }
+                    } catch (Exception ignore) {}
+                }
+            }
+            if (topPeers != null) {
+                Collections.sort(topPeers, Comparator.comparingDouble(a -> a.rating));
+                for (int i = Math.max(0, topPeers.size() - 5); i < topPeers.size(); ++i) {
+                    TLRPC.TL_topPeer topPeer = topPeers.get(i);
+                    final long did = DialogObject.getPeerDialogId(topPeer.peer);
+                    if (!customStories.contains(did)) {
+                        NotificationsSettingsActivity.NotificationException exception = new NotificationsSettingsActivity.NotificationException();
+                        exception.did = did;
+                        exception.notify = 0;
+                        exception.auto = true;
+                        exception.story = true;
+                        if (DialogObject.isUserDialog(did)) {
+                            TLRPC.User user = getMessagesController().getUser(did);
+                            if (user == null) {
+                                usersToLoad.add(did);
+                                waitingForLoadExceptions.put(did, exception);
+                            } else if (user.deleted) {
+                                continue;
+                            }
+                            storiesAutoResult.add(0, exception);
+                            customStories.add(did);
+                        }
+                    }
+                }
+            }
+            if (waitingForLoadExceptions.size() != 0) {
+                try {
+                    if (!encryptedChatsToLoad.isEmpty()) {
+                        MessagesStorage.getInstance(currentAccount).getEncryptedChatsInternal(TextUtils.join(",", encryptedChatsToLoad), encryptedChats, usersToLoad);
+                    }
+                    if (!usersToLoad.isEmpty()) {
+                        MessagesStorage.getInstance(currentAccount).getUsersInternal(usersToLoad, users);
+                    }
+                    if (!chatsToLoad.isEmpty()) {
+                        MessagesStorage.getInstance(currentAccount).getChatsInternal(TextUtils.join(",", chatsToLoad), chats);
+                    }
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                for (int a = 0, size = chats.size(); a < size; a++) {
+                    TLRPC.Chat chat = chats.get(a);
+                    if (chat.left || chat.kicked || chat.migrated_to != null) {
+                        continue;
+                    }
+                    NotificationException exception = waitingForLoadExceptions.get(-chat.id);
+                    waitingForLoadExceptions.remove(-chat.id);
+
+                    if (exception != null) {
+                        if (ChatObject.isChannel(chat) && !chat.megagroup) {
+                            channelsResult.add(exception);
+                        } else {
+                            chatsResult.add(exception);
+                        }
+                    }
+                }
+                for (int a = 0, size = users.size(); a < size; a++) {
+                    TLRPC.User user = users.get(a);
+                    if (user.deleted) {
+                        continue;
+                    }
+                    waitingForLoadExceptions.remove(user.id);
+                }
+                for (int a = 0, size = encryptedChats.size(); a < size; a++) {
+                    TLRPC.EncryptedChat encryptedChat = encryptedChats.get(a);
+                    waitingForLoadExceptions.remove(DialogObject.makeEncryptedDialogId(encryptedChat.id));
+                }
+                for (int a = 0, size = waitingForLoadExceptions.size(); a < size; a++) {
+                    long did = waitingForLoadExceptions.keyAt(a);
+                    if (DialogObject.isChatDialog(did)) {
+                        chatsResult.remove(waitingForLoadExceptions.valueAt(a));
+                        channelsResult.remove(waitingForLoadExceptions.valueAt(a));
+                    } else {
+                        usersResult.remove(waitingForLoadExceptions.valueAt(a));
+                    }
+                }
+            }
+            AndroidUtilities.runOnUIThread(() -> {
+                MessagesController.getInstance(currentAccount).putUsers(users, true);
+                MessagesController.getInstance(currentAccount).putChats(chats, true);
+                MessagesController.getInstance(currentAccount).putEncryptedChats(encryptedChats, true);
+                exceptionUsers = usersResult;
+                exceptionChats = chatsResult;
+                exceptionChannels = channelsResult;
+                exceptionStories = storiesResult;
+                exceptionAutoStories = storiesAutoResult;
+                if (adapter != null) {
+                    adapter.notifyItemChanged(privateRow);
+                    adapter.notifyItemChanged(groupRow);
+                    adapter.notifyItemChanged(channelsRow);
+                    adapter.notifyItemChanged(storiesRow);
+                }
+
+                if (onDone != null) {
+                    onDone.run();
+                }
+            });
+        });
+
+        // stories exceptions
+        // adapter.notifyItemChanged(storiesRow);
+    }
+
+    public NotificationsCustomSettingsActivity makeNotificationsCustomSettingsActivity(int type) {
+        ArrayList<NotificationException> exceptions;
+        ArrayList<NotificationException> autoExceptions = null;
+        if (type == NotificationsController.TYPE_PRIVATE) {
+            exceptions = exceptionUsers;
+        } else if (type == NotificationsController.TYPE_GROUP) {
+            exceptions = exceptionChats;
+        } else if (type == NotificationsController.TYPE_REACTIONS_MESSAGES) {
+            exceptions = null;
+        } else if (type == NotificationsController.TYPE_STORIES) {
+            exceptions = exceptionStories;
+            autoExceptions = exceptionAutoStories;
+        } else {
+            exceptions = exceptionChannels;
+        }
+        return new NotificationsCustomSettingsActivity(type, exceptions, autoExceptions);
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        super.onFragmentDestroy();
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.notificationsSettingsUpdated);
+    }
+
+    @Override
+    public View createView(Context context) {
+        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
+        actionBar.setAllowOverlayTitle(true);
+        actionBar.setTitle(getString(R.string.NotificationsAndSounds));
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    finishFragment();
+                }
+            }
+        });
+        if (parentLayout != null && parentLayout.isRightLayout()) {
+            actionBar.setBackButtonImage(R.drawable.ic_ab_close);
+        }
+
+        fragmentView = new FrameLayout(context);
+        FrameLayout frameLayout = (FrameLayout) fragmentView;
+        frameLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+
+        listView = new RecyclerListView(context);
+        listView.setSections();
+        actionBar.setAdaptiveBackground(listView);
+        listView.setItemAnimator(null);
+        listView.setLayoutAnimation(null);
+        listView.setLayoutManager(layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
+            @Override
+            public boolean supportsPredictiveItemAnimations() {
+                return false;
+            }
+        });
+        listView.setVerticalScrollBarEnabled(false);
+        frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        listView.setAdapter(adapter = new ListAdapter(context));
+        listView.setOnItemClickListener((view, position, x, y) -> {
+            boolean enabled = false;
+            if (getParentActivity() == null) {
+                return;
+            }
+            if (position == privateRow || position == groupRow || position == channelsRow || position == storiesRow || position == reactionsRow) {
+                int type;
+                ArrayList<NotificationException> exceptions;
+                ArrayList<NotificationException> autoExceptions = null;
+                if (position == privateRow) {
+                    type = NotificationsController.TYPE_PRIVATE;
+                    exceptions = exceptionUsers;
+                    enabled = getNotificationsController().isGlobalNotificationsEnabled(type);
+                } else if (position == groupRow) {
+                    type = NotificationsController.TYPE_GROUP;
+                    exceptions = exceptionChats;
+                    enabled = getNotificationsController().isGlobalNotificationsEnabled(type);
+                } else if (position == storiesRow) {
+                    type = NotificationsController.TYPE_STORIES;
+                    exceptions = exceptionStories;
+                    autoExceptions = exceptionAutoStories;
+                    enabled = getNotificationsSettings().getBoolean("EnableAllStories", false);
+                } else if (position == reactionsRow) {
+                    type = NotificationsController.TYPE_REACTIONS_MESSAGES;
+                    exceptions = null;
+                    enabled = getNotificationsSettings().getBoolean("EnableReactionsMessages", true) || getNotificationsSettings().getBoolean("EnableReactionsStories", true);
+                } else {
+                    type = NotificationsController.TYPE_CHANNEL;
+                    exceptions = exceptionChannels;
+                    enabled = getNotificationsController().isGlobalNotificationsEnabled(type);
+                }
+                if (exceptions == null && type != NotificationsController.TYPE_REACTIONS_MESSAGES) {
+                    return;
+                }
+
+                NotificationsCheckCell checkCell = (NotificationsCheckCell) view;
+                if (LocaleController.isRTL && x <= dp(76) || !LocaleController.isRTL && x >= view.getMeasuredWidth() - dp(76)) {
+                    final boolean enabledFinal = enabled;
+                    showExceptionsAlert(position, () -> {
+                        if (type == NotificationsController.TYPE_STORIES) {
+                            SharedPreferences.Editor edit = getNotificationsSettings().edit();
+                            if (enabledFinal) {
+                                edit.remove("EnableAllStories");
+                            } else {
+                                edit.putBoolean("EnableAllStories", true);
+                            }
+                            edit.apply();
+                            getNotificationsController().updateServerNotificationsSettings(type);
+                        } else if (
+                            type == NotificationsController.TYPE_REACTIONS_MESSAGES ||
+                            type == NotificationsController.TYPE_REACTIONS_STORIES
+                        ) {
+                            SharedPreferences.Editor edit = getNotificationsSettings().edit();
+                            if (enabledFinal) {
+                                edit.putBoolean("EnableReactionsMessages", false);
+                                edit.putBoolean("EnableReactionsStories", false);
+                            } else {
+                                edit.putBoolean("EnableReactionsMessages", true);
+                                edit.putBoolean("EnableReactionsStories", true);
+                            }
+                            edit.apply();
+                            getNotificationsController().updateServerNotificationsSettings(type);
+                            getNotificationsController().deleteNotificationChannelGlobal(type);
+                        } else {
+                            getNotificationsController().setGlobalNotificationsEnabled(type, !enabledFinal ? 0 : Integer.MAX_VALUE);
+                        }
+                        checkCell.setChecked(!enabledFinal, 0);
+                        adapter.notifyItemChanged(position);
+                    });
+                } else {
+                    presentFragment(new NotificationsCustomSettingsActivity(type, exceptions, autoExceptions));
+                }
+            } else if (position == callsRingtoneRow) {
+                try {
+                    SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                    Intent tmpIntent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+                    tmpIntent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
+                    tmpIntent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
+                    tmpIntent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true);
+                    tmpIntent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
+                    Uri currentSound = null;
+
+                    String defaultPath = null;
+                    Uri defaultUri = Settings.System.DEFAULT_RINGTONE_URI;
+                    if (defaultUri != null) {
+                        defaultPath = defaultUri.getPath();
+                    }
+                    String path = preferences.getString("CallsRingtonePath", defaultPath);
+                    if (path != null && !path.equals("NoSound")) {
+                        if (path.equals(defaultPath)) {
+                            currentSound = defaultUri;
+                        } else {
+                            currentSound = Uri.parse(path);
+                        }
+                    }
+                    tmpIntent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, currentSound);
+                    startActivityForResult(tmpIntent, position);
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            } else if (position == resetNotificationsRow) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+                builder.setTitle(getString("ResetNotificationsAlertTitle", R.string.ResetNotificationsAlertTitle));
+                builder.setMessage(getString("ResetNotificationsAlert", R.string.ResetNotificationsAlert));
+                builder.setPositiveButton(getString("Reset", R.string.Reset), (dialogInterface, i) -> {
+                    if (reseting) {
+                        return;
+                    }
+                    reseting = true;
+                    TL_account.resetNotifySettings req = new TL_account.resetNotifySettings();
+                    ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                        getMessagesController().enableJoined = true;
+                        reseting = false;
+                        SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.clear();
+                        editor.commit();
+                        exceptionChats.clear();
+                        exceptionUsers.clear();
+                        adapter.notifyDataSetChanged();
+                        if (getParentActivity() != null) {
+                            Toast toast = Toast.makeText(getParentActivity(), getString("ResetNotificationsText", R.string.ResetNotificationsText), Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
+                        getMessagesStorage().updateMutedDialogsFiltersCounters();
+                    }));
+                });
+                builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
+                AlertDialog alertDialog = builder.create();
+                showDialog(alertDialog);
+                TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                if (button != null) {
+                    button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+                }
+            } else if (position == inappSoundRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableInAppSounds", true);
+                editor.putBoolean("EnableInAppSounds", !enabled);
+                editor.commit();
+            } else if (position == inappVibrateRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableInAppVibrate", true);
+                editor.putBoolean("EnableInAppVibrate", !enabled);
+                editor.commit();
+            } else if (position == inappPreviewRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableInAppPreview", true);
+                editor.putBoolean("EnableInAppPreview", !enabled);
+                editor.commit();
+            } else if (position == inchatSoundRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableInChatSound", true);
+                editor.putBoolean("EnableInChatSound", !enabled);
+                editor.commit();
+                getNotificationsController().setInChatSoundEnabled(!enabled);
+            } else if (position == inappPriorityRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableInAppPopup", true);
+                editor.putBoolean("EnableInAppPopup", !enabled);
+                editor.commit();
+            } else if (position == contactJoinedRow) {
+                SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableContactJoined", true);
+                MessagesController.getInstance(currentAccount).enableJoined = !enabled;
+                editor.putBoolean("EnableContactJoined", !enabled);
+                editor.commit();
+                TL_account.setContactSignUpNotification req = new TL_account.setContactSignUpNotification();
+                req.silent = enabled;
+                ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
+
+                });
+            } /*else if (position == storiesRow) {
+                SharedPreferences preferences = getNotificationsSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableAllStories", true);
+                editor.putBoolean("EnableAllStories", !enabled);
+                editor.commit();
+                getNotificationsController().updateServerNotificationsSettings(NotificationsController.TYPE_PRIVATE);
+            } */else if (position == pinnedMessageRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("PinnedMessages", true);

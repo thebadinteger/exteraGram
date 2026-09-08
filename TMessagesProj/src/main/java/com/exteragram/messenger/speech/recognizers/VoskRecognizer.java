@@ -1,7 +1,6 @@
 package com.exteragram.messenger.speech.recognizers;
 
 import android.text.TextUtils;
-import com.android.dx.dex.code.CstInsn$$ExternalSyntheticBUOutline0;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.speech.VoiceRecognitionController;
 import com.exteragram.messenger.speech.utils.FormatConverter;

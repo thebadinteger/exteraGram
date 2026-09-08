@@ -130,7 +130,6 @@ public final /* data */ class SecurityPolicy {
             return new SecurityPolicy(0L, 0L, 0L, 0.0d, 0, false, false, false, null, 511, null);
         }
 
-        /* JADX WARN: Multi-variable type inference failed */
         @JvmStatic
         public final Builder builder() {
             return new Builder(null, 1, 0 == true ? 1 : 0);

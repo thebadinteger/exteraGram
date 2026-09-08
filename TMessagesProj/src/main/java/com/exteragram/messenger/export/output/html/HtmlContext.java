@@ -2,12 +2,9 @@ package com.exteragram.messenger.export.output.html;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.media.session.MediaSessionCompat$$ExternalSyntheticThrowCCEIfNotNull0;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-import androidx.camera.core.impl.Quirks$$ExternalSyntheticBackport0;
-import com.android.dx.DexMaker$$ExternalSyntheticBUOutline0;
 import com.exteragram.messenger.export.api.ApiWrap$ActionChatEditPhoto;
 import com.exteragram.messenger.export.api.ApiWrap$ActionSuggestProfilePhoto;
 import com.exteragram.messenger.export.api.ApiWrap$Chat;
@@ -40,7 +37,6 @@ import com.exteragram.messenger.export.output.FileManager;
 import com.exteragram.messenger.export.output.OutputFile;
 import com.exteragram.messenger.utils.chats.ChatUtils;
 import com.google.android.gms.cast.MediaTrack;
-import com.google.android.gms.internal.cast.zzaak$$ExternalSyntheticBUOutline0;
 import com.google.zxing.Dimension;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,7 +48,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
 import okhttp3.internal.url._UrlKt;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.scilab.forge.jlatexmath.TeXSymbolParser;
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AndroidUtilities;
@@ -61,7 +56,6 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
-import org.webrtc.GlShader$$ExternalSyntheticBUOutline1;
 
 public class HtmlContext {
     private final String _base;
@@ -73,7 +67,7 @@ public class HtmlContext {
     public HtmlContext(String str, String str2, OutputFile.Stats stats) {
         this._file = new OutputFile(str, stats);
         String strSubstring = str.substring(str2.length() + 1);
-        this._base = HtmlContext$$ExternalSyntheticBackport1.m("../", strSubstring.length() - strSubstring.replace("/", _UrlKt.FRAGMENT_ENCODE_SET).length());
+        this._base = com.exteragram.messenger.utils.RecordUtils.repeat("../", strSubstring.length() - strSubstring.replace("/", _UrlKt.FRAGMENT_ENCODE_SET).length());
         this._composedStart = composeStart();
     }
 
@@ -418,7 +412,7 @@ public class HtmlContext {
         } else {
             str = _UrlKt.FRAGMENT_ENCODE_SET;
         }
-        sb.append(Quirks$$ExternalSyntheticBackport0.m(", ", arrayList));
+        sb.append(android.text.TextUtils.join(", ", arrayList));
         sb.append(str);
         sb.append(popTag());
         sb.append(pushDiv("section_body"));

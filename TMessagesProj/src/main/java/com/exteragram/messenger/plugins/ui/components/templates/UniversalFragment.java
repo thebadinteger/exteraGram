@@ -15,7 +15,6 @@ import org.telegram.ui.Components.UniversalAdapter;
 public final class UniversalFragment extends org.telegram.ui.Components.UniversalFragment {
     private UniversalFragmentDelegate delegate;
 
-    /* JADX WARN: Multi-variable type inference failed */
     public UniversalFragment() {
         this(null, 1, 0 == true ? 1 : 0);
     }

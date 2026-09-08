@@ -221,7 +221,829 @@ public class StoryEntry {
                     if (isAnimated(entity.document, entity.text)) {
                         return true;
                     }
-                } else if ((entity.type == VideoEditedInfo.MediaEntity.TYPE_TEXT}
+                } else if ((entity.type == VideoEditedInfo.MediaEntity.TYPE_TEXT/* || entity.type == VideoEditedInfo.MediaEntity.TYPE_LOCATION*/) && entity.entities != null && !entity.entities.isEmpty()) {
+                    for (int j = 0; j < entity.entities.size(); ++j) {
+                        VideoEditedInfo.EmojiEntity e = entity.entities.get(j);
+                        if (isAnimated(e.document, e.documentAbsolutePath)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isAnimated(TLRPC.Document document, String path) {
+        return document != null && (
+            "video/webm".equals(document.mime_type) || "video/mp4".equals(document.mime_type) ||
+            MessageObject.isAnimatedStickerDocument(document, true) && RLottieNative.getFramesCount(path, null) > 1
+        );
+    }
+
+    public static void drawBackgroundDrawable(Canvas canvas, Drawable drawable, int w, int h) {
+        if (drawable == null) {
+            return;
+        }
+        Rect rect = new Rect(drawable.getBounds());
+        Drawable.Callback callback = drawable.getCallback();
+        drawable.setCallback(null);
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bd = (BitmapDrawable) drawable;
+            int bw = bd.getBitmap().getWidth();
+            int bh = bd.getBitmap().getHeight();
+            final float scale = Math.max(w / (float) bw, h / (float) bh);
+            drawable.setBounds(0, 0, (int) (bw * scale), (int) (bh * scale));
+            drawable.draw(canvas);
+        } else {
+            drawable.setBounds(0, 0, w, h);
+            drawable.draw(canvas);
+        }
+        drawable.setBounds(rect);
+        drawable.setCallback(callback);
+    }
+
+    public Bitmap buildBitmap(float scale, Bitmap mainFileBitmap) {
+        Matrix tempMatrix = new Matrix();
+
+        Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+        final int w = (int) (resultWidth * scale), h = (int) (resultHeight * scale);
+        Bitmap finalBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(finalBitmap);
+
+        if (backgroundFile != null) {
+            try {
+                Bitmap paintBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(backgroundFile.getPath(), opts), w, h, false, true);
+                canvas.save();
+                float s = resultWidth / (float) paintBitmap.getWidth();
+                canvas.scale(s, s);
+                tempMatrix.postScale(scale, scale);
+                canvas.drawBitmap(paintBitmap, 0, 0, bitmapPaint);
+                canvas.restore();
+                paintBitmap.recycle();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        } else if (backgroundWallpaperEmoticon != null) {
+            Drawable drawable = backgroundDrawable;
+            if (drawable == null) {
+                drawable = PreviewView.getBackgroundDrawableFromTheme(currentAccount, backgroundWallpaperEmoticon, isDark);
+            }
+            drawBackgroundDrawable(canvas, drawable, canvas.getWidth(), canvas.getHeight());
+        } else if (backgroundWallpaperPeerId != Long.MIN_VALUE) {
+            Drawable drawable = backgroundDrawable;
+            if (drawable == null) {
+                drawable = PreviewView.getBackgroundDrawable(null, currentAccount, backgroundWallpaperPeerId, isDark);
+            }
+            drawBackgroundDrawable(canvas, drawable, canvas.getWidth(), canvas.getHeight());
+        } else {
+            Paint gradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            gradientPaint.setShader(new LinearGradient(0, 0, 0, canvas.getHeight(), new int[]{gradientTopColor, gradientBottomColor}, new float[]{0, 1}, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), gradientPaint);
+        }
+
+        tempMatrix.set(matrix);
+        if (mainFileBitmap != null) {
+            final float s = (float) width / mainFileBitmap.getWidth();
+            tempMatrix.preScale(s, s);
+            tempMatrix.postScale(scale, scale);
+            canvas.drawBitmap(mainFileBitmap, tempMatrix, bitmapPaint);
+//            final float s = (float) width / mainFileBitmap.getWidth();
+//            canvas.save();
+//            canvas.scale(scale, scale);
+//            canvas.concat(matrix);
+//            if (crop != null) {
+//                canvas.translate(width / 2.0f, height / 2.0f);
+//                int _w = width, _h = height;
+//                if ((crop.transformRotation / 90) % 2 == 1) {
+//                    _w = height;
+//                    _h = width;
+//                }
+//                canvas.clipRect(
+//                    -_w * crop.cropPw / 2.0f, -_h * crop.cropPh / 2.0f,
+//                    +_w * crop.cropPw / 2.0f, +_h * crop.cropPh / 2.0f
+//                );
+//                canvas.scale(crop.cropScale, crop.cropScale);
+//                canvas.translate(crop.cropPx * _w, crop.cropPy * _h);
+//                canvas.rotate(crop.cropRotate + crop.transformRotation);
+//                if (crop.mirrored) {
+//                    canvas.scale(-1, 1);
+//                }
+//                canvas.translate(-width / 2.0f, -height / 2.0f);
+//            }
+//            canvas.scale(s, s);
+//            canvas.drawBitmap(mainFileBitmap, 0, 0, bitmapPaint);
+//            canvas.restore();
+        } else {
+            if (isCollage()) {
+                for (int i = 0; i < collageContent.size(); ++i) {
+                    final StoryEntry entry = collageContent.get(i);
+                    final File file = entry.filterFile != null ? entry.filterFile : entry.file;
+                    if (file != null) {
+                        try {
+                            final Bitmap fileBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(file.getPath(), opts), w, h, true, true);
+                            canvas.save();
+                            final RectF bounds = new RectF();
+                            int fw = fileBitmap.getWidth(), fh = fileBitmap.getHeight();
+                            final Pair<Integer, Integer> orientation = AndroidUtilities.getImageOrientation(file);
+                            if ((orientation.first / 90) % 2 == 1) {
+                                fw = fileBitmap.getHeight();
+                                fh = fileBitmap.getWidth();
+                            }
+                            collage.parts.get(i).bounds(bounds, w, h);
+                            canvas.translate(bounds.centerX(), bounds.centerY());
+                            canvas.clipRect(-bounds.width() / 2.0f, -bounds.height() / 2.0f, bounds.width() / 2.0f, bounds.height() / 2.0f);
+                            final float s = Math.max(bounds.width() / fw, bounds.height() / fh);
+                            canvas.scale(s, s);
+                            canvas.rotate(orientation.first);
+                            canvas.translate(-fileBitmap.getWidth() / 2.0f, -fileBitmap.getHeight() / 2.0f);
+                            canvas.drawBitmap(fileBitmap, 0, 0, null);
+                            canvas.restore();
+                        } catch (Exception e) {
+                            FileLog.e(e);
+                        }
+                    }
+                }
+            } else {
+                final File file = filterFile != null ? filterFile : this.file;
+                if (file != null) {
+                    try {
+                        Bitmap fileBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(file.getPath(), opts), w, h, true, true);
+                        final float s = (float) width / fileBitmap.getWidth();
+                        tempMatrix.preScale(s, s);
+                        tempMatrix.postScale(scale, scale);
+                        canvas.drawBitmap(fileBitmap, tempMatrix, bitmapPaint);
+                        fileBitmap.recycle();
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                    }
+                }
+//                if (file != null) {
+//                    try {
+//                        Bitmap fileBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(file.getPath(), opts), w, h, true, true);
+//                        final float s = (float) width / fileBitmap.getWidth();
+//                        canvas.save();
+//                        canvas.scale(scale, scale);
+//                        canvas.concat(matrix);
+//                        if (crop != null) {
+//                            canvas.translate(width / 2.0f, height / 2.0f);
+//                            int _w = width, _h = height;
+//                            if ((crop.transformRotation / 90) % 2 == 1) {
+//                                _w = height;
+//                                _h = width;
+//                            }
+//                            canvas.clipRect(
+//                                -_w * crop.cropPw / 2.0f, -_h * crop.cropPh / 2.0f,
+//                                +_w * crop.cropPw / 2.0f, +_h * crop.cropPh / 2.0f
+//                            );
+//                            canvas.scale(crop.cropScale, crop.cropScale);
+//                            canvas.translate(crop.cropPx * _w, crop.cropPy * _h);
+//                            canvas.rotate(crop.cropRotate + crop.transformRotation);
+//                            if (crop.mirrored) {
+//                                canvas.scale(-1, 1);
+//                            }
+//                            canvas.translate(-width / 2.0f, -height / 2.0f);
+//                        }
+//                        canvas.scale(s, s);
+//                        canvas.drawBitmap(fileBitmap, 0, 0, bitmapPaint);
+//                        canvas.restore();
+//                        fileBitmap.recycle();
+//                    } catch (Exception e) {
+//                        FileLog.e(e);
+//                    }
+//                }
+            }
+
+            if (paintFile != null) {
+                try {
+                    Bitmap paintBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(paintFile.getPath(), opts), w, h, false, true);
+                    canvas.save();
+                    float s = resultWidth / (float) paintBitmap.getWidth();
+                    canvas.scale(s, s);
+                    tempMatrix.postScale(scale, scale);
+                    canvas.drawBitmap(paintBitmap, 0, 0, bitmapPaint);
+                    canvas.restore();
+                    paintBitmap.recycle();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
+
+            if (messageFile != null) {
+                try {
+                    Bitmap paintBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(messageFile.getPath(), opts), w, h, false, true);
+                    canvas.save();
+                    float s = resultWidth / (float) paintBitmap.getWidth();
+                    canvas.scale(s, s);
+                    tempMatrix.postScale(scale, scale);
+                    canvas.drawBitmap(paintBitmap, 0, 0, bitmapPaint);
+                    canvas.restore();
+                    paintBitmap.recycle();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
+
+            if (paintEntitiesFile != null) {
+                try {
+                    Bitmap paintBitmap = getScaledBitmap(opts -> BitmapFactory.decodeFile(paintEntitiesFile.getPath(), opts), w, h, false, true);
+                    canvas.save();
+                    float s = resultWidth / (float) paintBitmap.getWidth();
+                    canvas.scale(s, s);
+                    tempMatrix.postScale(scale, scale);
+                    canvas.drawBitmap(paintBitmap, 0, 0, bitmapPaint);
+                    canvas.restore();
+                    paintBitmap.recycle();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
+        }
+
+        return finalBitmap;
+    }
+
+    public void buildPhoto(File dest) {
+        final Bitmap finalBitmap = buildBitmap(1f, null);
+        if (thumbBitmap != null) {
+            thumbBitmap.recycle();
+            thumbBitmap = null;
+        }
+        thumbBitmap = Bitmap.createScaledBitmap(finalBitmap, 40, 22, true);
+        try {
+            FileOutputStream stream = new FileOutputStream(dest);
+            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream);
+            stream.close();
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        finalBitmap.recycle();
+    }
+
+    public static interface DecodeBitmap {
+        public Bitmap decode(BitmapFactory.Options options);
+    }
+
+    public static Bitmap getScaledBitmap(DecodeBitmap decode, int maxWidth, int maxHeight, boolean allowBlur, boolean scale) {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+        decode.decode(opts);
+
+        opts.inJustDecodeBounds = false;
+        opts.inScaled = false;
+
+        final Runtime runtime = Runtime.getRuntime();
+        final long availableMemory = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+        final boolean enoughMemory = (opts.outWidth * opts.outHeight * 4L + maxWidth * maxHeight * 4L) * 1.1 <= availableMemory;
+
+        if (opts.outWidth <= maxWidth && opts.outHeight <= maxHeight) {
+            return decode.decode(opts);
+        }
+
+        if (scale && enoughMemory && SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE) {
+            Bitmap bitmap = decode.decode(opts);
+
+            final float scaleX = maxWidth / (float) bitmap.getWidth(), scaleY = maxHeight / (float) bitmap.getHeight();
+            float s = Math.max(scaleX, scaleY);
+//            if (SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_HIGH) {
+//                scale = Math.min(scale * 2, 1);
+//            }
+            final int w = (int) (bitmap.getWidth() * s), h = (int) (bitmap.getHeight() * s);
+
+            Bitmap scaledBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(scaledBitmap);
+
+            final Matrix matrix = new Matrix();
+            final BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+            paint.setShader(shader);
+
+            int blurRadius = Utilities.clamp(Math.round(1f / s), 8, 0);
+
+            matrix.reset();
+            matrix.postScale(s, s);
+            shader.setLocalMatrix(matrix);
+            canvas.drawRect(0, 0, w, h, paint);
+
+//            if (allowBlur && blurRadius > 0) {
+//                Utilities.stackBlurBitmap(scaledBitmap, blurRadius);
+//            }
+
+            return scaledBitmap;
+        } else {
+            opts.inScaled = true;
+            opts.inDensity = opts.outWidth;
+            opts.inTargetDensity = maxWidth;
+            return decode.decode(opts);
+        }
+    }
+
+    public File getOriginalFile() {
+        if (filterFile != null) {
+            return filterFile;
+        }
+        return file;
+    }
+
+    private String ext(File file) {
+        if (file == null) {
+            return null;
+        }
+        String s = file.getPath();
+        int i;
+        if ((i = s.lastIndexOf('.')) > 0)
+            return s.substring(i + 1);
+        return null;
+    }
+
+    public void updateFilter(PhotoFilterView filterView, Runnable whenDone) {
+        clearFilter();
+
+        filterState = filterView.getSavedFilterState();
+        if (!isVideo) {
+            if (filterState.isEmpty()) {
+                if (whenDone != null) {
+                    whenDone.run();
+                }
+                return;
+            }
+
+            Bitmap bitmap = filterView.getBitmap();
+            if (bitmap == null) {
+                if (whenDone != null) {
+                    whenDone.run();
+                }
+                return;
+            }
+
+            final Matrix matrix = new Matrix();
+            matrix.postScale(invert == 1 ? -1.0f : 1.0f, invert == 2 ? -1.0f : 1.0f,  width / 2f, height / 2f);
+            matrix.postRotate(-orientation);
+            final Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            this.matrix.preScale((float) width / rotatedBitmap.getWidth(), (float) height / rotatedBitmap.getHeight());
+            width = rotatedBitmap.getWidth();
+            height = rotatedBitmap.getHeight();
+
+            bitmap.recycle();
+
+            if (filterFile != null && filterFile.exists()) {
+                filterFile.delete();
+            }
+            String ext = ext(file);
+            final boolean supportTransparent = "png".equals(ext) || "webp".equals(ext);
+            filterFile = makeCacheFile(currentAccount, supportTransparent ? "webp" : "jpg");
+            if (whenDone == null) {
+                try {
+                    FileOutputStream stream = new FileOutputStream(filterFile);
+                    rotatedBitmap.compress(supportTransparent ? Bitmap.CompressFormat.WEBP : Bitmap.CompressFormat.JPEG, 90, stream);
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                rotatedBitmap.recycle();
+            } else {
+                Utilities.themeQueue.postRunnable(() -> {
+                    try {
+                        FileOutputStream stream = new FileOutputStream(filterFile);
+                        rotatedBitmap.compress(supportTransparent ? Bitmap.CompressFormat.WEBP : Bitmap.CompressFormat.JPEG, 90, stream);
+                    } catch (Exception e) {
+                        FileLog.e(e, false);
+                        if (supportTransparent) {
+                            try {
+                                FileOutputStream stream = new FileOutputStream(filterFile);
+                                rotatedBitmap.compress(Bitmap.CompressFormat.PNG, 90, stream);
+                            } catch (Exception e2) {
+                                FileLog.e(e2, false);
+                            }
+                        }
+                    }
+                    rotatedBitmap.recycle();
+                    AndroidUtilities.runOnUIThread(whenDone);
+                });
+            }
+        } else {
+            if (whenDone != null) {
+                whenDone.run();
+            }
+        }
+    }
+
+    public void clearFilter() {
+        if (filterFile != null) {
+            filterFile.delete();
+            filterFile = null;
+        }
+    }
+
+    public void clearPaint() {
+        if (paintFile != null) {
+            paintFile.delete();
+            paintFile = null;
+        }
+        if (backgroundFile != null) {
+            backgroundFile.delete();
+            backgroundFile = null;
+        }
+        if (messageFile != null) {
+            messageFile.delete();
+            messageFile = null;
+        }
+        if (messageVideoMaskFile != null) {
+            messageVideoMaskFile.delete();
+            messageVideoMaskFile = null;
+        }
+        if (paintEntitiesFile != null) {
+            paintEntitiesFile.delete();
+            paintEntitiesFile = null;
+        }
+    }
+
+    public void destroy(boolean draft) {
+        if (blurredVideoThumb != null) {
+            blurredVideoThumb = null;
+        }
+        if (uploadThumbFile != null) {
+            uploadThumbFile.delete();
+            uploadThumbFile = null;
+        }
+        if (!draft) {
+            clearPaint();
+            clearFilter();
+            if (file != null) {
+                if (fileDeletable && (!isEdit || editedMedia)) {
+                    file.delete();
+                }
+                file = null;
+            }
+            if (thumbPath != null) {
+                if (fileDeletable) {
+                    new File(thumbPath).delete();
+                }
+                thumbPath = null;
+            }
+            if (mediaEntities != null) {
+                for (VideoEditedInfo.MediaEntity entity : mediaEntities) {
+                    if (entity.type == VideoEditedInfo.MediaEntity.TYPE_PHOTO && !TextUtils.isEmpty(entity.segmentedPath)) {
+                        try {
+                            new File(entity.segmentedPath).delete();
+                        } catch (Exception e) {
+                            FileLog.e(e);
+                        }
+                        entity.segmentedPath = "";
+                    }
+                }
+            }
+            if (round != null && (!isEdit || editedMedia)) {
+                round.delete();
+                round = null;
+            }
+            if (roundThumb != null && (!isEdit || editedMedia)) {
+                try {
+                    new File(roundThumb).delete();
+                } catch (Exception e) {}
+                roundThumb = null;
+            }
+        }
+        thumbPathBitmap = null;
+        if (collageContent != null) {
+            for (int i = 0; i < collageContent.size(); ++i) {
+                collageContent.get(i).destroy(draft);
+            }
+        }
+        cancelCheckStickers();
+    }
+
+    public static StoryEntry repostStoryItem(File file, TL_stories.StoryItem storyItem) {
+        StoryEntry entry = new StoryEntry();
+        entry.isRepost = true;
+        entry.repostMedia = storyItem.media;
+        entry.repostPeer = MessagesController.getInstance(entry.currentAccount).getPeer(storyItem.dialogId);
+        entry.repostStoryId = storyItem.id;
+        entry.repostCaption = storyItem.caption;
+        entry.file = file;
+        entry.fileDeletable = false;
+        entry.width = 720;
+        entry.height = 1280;
+        if (storyItem.media instanceof TLRPC.TL_messageMediaPhoto) {
+            entry.isVideo = false;
+            if (file != null) {
+                entry.decodeBounds(file.getAbsolutePath());
+            }
+        } else if (storyItem.media instanceof TLRPC.TL_messageMediaDocument) {
+            entry.isVideo = true;
+            if (storyItem.media.document != null && storyItem.media.document.attributes != null) {
+                for (int i = 0; i < storyItem.media.document.attributes.size(); ++i) {
+                    TLRPC.DocumentAttribute attr = storyItem.media.document.attributes.get(i);
+                    if (attr instanceof TLRPC.TL_documentAttributeVideo) {
+                        entry.width = attr.w;
+                        entry.height = attr.h;
+                        entry.fileDuration = attr.duration;
+                        break;
+                    }
+                }
+            }
+            if (storyItem.media.document != null) {
+                if (storyItem.firstFramePath != null) {
+                    entry.thumbPath = storyItem.firstFramePath;
+                } else if (storyItem.media.document.thumbs != null) {
+                    for (int i = 0; i < storyItem.media.document.thumbs.size(); ++i) {
+                        TLRPC.PhotoSize photoSize = storyItem.media.document.thumbs.get(i);
+                        if (photoSize instanceof TLRPC.TL_photoStrippedSize) {
+                            entry.thumbPathBitmap = ImageLoader.getStrippedPhotoBitmap(photoSize.bytes, null);
+                            continue;
+                        }
+                        File path = FileLoader.getInstance(entry.currentAccount).getPathToAttach(photoSize, true);
+                        if (path != null && path.exists()) {
+                            entry.thumbPath = path.getAbsolutePath();
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        entry.setupMatrix();
+        entry.checkStickers(storyItem);
+        return entry;
+    }
+
+    public static boolean canRepostMessage(MessageObject messageObject) {
+        if (messageObject == null || messageObject.isSponsored()) {
+            return false;
+        }
+        if (messageObject.messageOwner != null && messageObject.messageOwner.noforwards) {
+            return false;
+        }
+        if (messageObject.type == MessageObject.TYPE_POLL || messageObject.type == MessageObject.TYPE_CONTACT) {
+            return false;
+        }
+        long dialogId = messageObject.getDialogId();
+        TLRPC.Chat chat = MessagesController.getInstance(messageObject.currentAccount).getChat(-dialogId);
+        if (chat != null && chat.noforwards) {
+            return false;
+        }
+        if (dialogId >= 0 || !ChatObject.isChannelAndNotMegaGroup(chat)) {
+            if (messageObject.messageOwner.fwd_from != null && messageObject.messageOwner.fwd_from.from_id != null && (messageObject.messageOwner.fwd_from.flags & 4) != 0) {
+                dialogId = DialogObject.getPeerDialogId(messageObject.messageOwner.fwd_from.from_id);
+                chat = MessagesController.getInstance(messageObject.currentAccount).getChat(-dialogId);
+                if (dialogId >= 0 || chat != null && chat.noforwards || !ChatObject.isChannelAndNotMegaGroup(chat) || !ChatObject.isPublic(chat)) {
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public static Boolean useForwardForRepost(MessageObject messageObject) {
+        if (messageObject == null || messageObject.messageOwner == null) return null;
+        TLRPC.Peer peer = messageObject.messageOwner.peer_id;
+        long dialogId = DialogObject.getPeerDialogId(peer);
+        TLRPC.Chat chat = MessagesController.getInstance(messageObject.currentAccount).getChat(-dialogId);
+        if (chat != null && chat.noforwards || !ChatObject.isChannelAndNotMegaGroup(chat)) {
+            if (messageObject.messageOwner.fwd_from != null && messageObject.messageOwner.fwd_from.from_id != null && (messageObject.messageOwner.fwd_from.flags & 4) != 0) {
+                dialogId = DialogObject.getPeerDialogId(messageObject.messageOwner.fwd_from.from_id);
+                chat = MessagesController.getInstance(messageObject.currentAccount).getChat(-dialogId);
+                if (dialogId >= 0 || chat != null && chat.noforwards || !ChatObject.isChannelAndNotMegaGroup(chat)) {
+                    return null; // no repost
+                } else {
+                    return true; // repost of forward
+                }
+            }
+            return null; // no repost
+        }
+        return false; // repost
+    }
+
+    public static long getRepostDialogId(MessageObject messageObject) {
+        Boolean useForward = useForwardForRepost(messageObject);
+        if (useForward == null) return 0;
+        if (useForward) {
+            return DialogObject.getPeerDialogId(messageObject.messageOwner.fwd_from.from_id);
+        } else {
+            return messageObject.getDialogId();
+        }
+    }
+
+    public static int getRepostMessageId(MessageObject messageObject) {
+        Boolean useForward = useForwardForRepost(messageObject);
+        if (useForward == null) return 0;
+        if (useForward) {
+            return messageObject.messageOwner.fwd_from.channel_post;
+        } else {
+            return messageObject.getId();
+        }
+    }
+
+    public static StoryEntry repostMessage(ArrayList<MessageObject> messageObjects) {
+        StoryEntry entry = new StoryEntry();
+        entry.isRepostMessage = true;
+        entry.messageObjects = messageObjects;
+        entry.resultWidth = 1080;
+        entry.resultHeight = 1920;
+        MessageObject msg = messageObjects.get(0);
+        entry.backgroundWallpaperPeerId = getRepostDialogId(msg);
+
+        VideoEditedInfo.MediaEntity entity = new VideoEditedInfo.MediaEntity();
+        entity.type = VideoEditedInfo.MediaEntity.TYPE_MESSAGE;
+        entity.x = 0.5f;
+        entity.y = 0.5f;
+        entry.mediaEntities = new ArrayList<>();
+        entry.mediaEntities.add(entity);
+
+        if (messageObjects.size() == 1) {
+            MessageObject messageObject = messageObjects.get(0);
+            if (messageObject != null && (messageObject.type == MessageObject.TYPE_GIF || messageObject.type == MessageObject.TYPE_VIDEO || messageObject.type == MessageObject.TYPE_ROUND_VIDEO)) {
+                if (messageObject.messageOwner != null && messageObject.messageOwner.attachPath != null) {
+                    entry.file = new File(messageObject.messageOwner.attachPath);
+                }
+                if (entry.file == null || !entry.file.exists()) {
+                    entry.file = FileLoader.getInstance(entry.currentAccount).getPathToMessage(messageObject.messageOwner);
+                }
+                if (entry.file != null && entry.file.exists()) {
+                    entry.isVideo = true;
+                    entry.fileDeletable = false;
+                    entry.duration = (long) (messageObject.getDuration() * 1000);
+                    entry.left = 0;
+                    entry.right = Math.min(1, 59_500f / entry.duration);
+                } else {
+                    entry.file = null;
+                }
+            }
+        }
+
+        return entry;
+    }
+
+    public static StoryEntry fromStoryItem(File file, TL_stories.StoryItem storyItem) {
+        StoryEntry entry = new StoryEntry();
+        entry.isEdit = true;
+        entry.editStoryId = storyItem.id;
+        entry.file = file;
+        entry.fileDeletable = false;
+        entry.width = 720;
+        entry.height = 1280;
+        if (storyItem.media instanceof TLRPC.TL_messageMediaPhoto) {
+            entry.isVideo = false;
+            if (file != null) {
+                entry.decodeBounds(file.getAbsolutePath());
+            }
+        } else if (storyItem.media instanceof TLRPC.TL_messageMediaDocument) {
+            entry.isVideo = true;
+            if (storyItem.media.document != null && storyItem.media.document.attributes != null) {
+                for (int i = 0; i < storyItem.media.document.attributes.size(); ++i) {
+                    TLRPC.DocumentAttribute attr = storyItem.media.document.attributes.get(i);
+                    if (attr instanceof TLRPC.TL_documentAttributeVideo) {
+                        entry.width = attr.w;
+                        entry.height = attr.h;
+                        entry.fileDuration = attr.duration;
+                        break;
+                    }
+                }
+            }
+            if (storyItem.media.document != null) {
+                if (storyItem.firstFramePath != null) {
+                    entry.thumbPath = storyItem.firstFramePath;
+                } else if (storyItem.media.document.thumbs != null) {
+                    for (int i = 0; i < storyItem.media.document.thumbs.size(); ++i) {
+                        TLRPC.PhotoSize photoSize = storyItem.media.document.thumbs.get(i);
+                        if (photoSize instanceof TLRPC.TL_photoStrippedSize) {
+                            entry.thumbPathBitmap = ImageLoader.getStrippedPhotoBitmap(photoSize.bytes, null);
+                            break;
+                        }
+                        File path = FileLoader.getInstance(entry.currentAccount).getPathToAttach(photoSize, true);
+                        if (path != null && path.exists()) {
+                            entry.thumbPath = path.getAbsolutePath();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        entry.privacyRules.clear();
+        entry.privacyRules.addAll(StoryPrivacyBottomSheet.StoryPrivacy.toInput(entry.currentAccount, storyItem.privacy));
+        entry.period = storyItem.expire_date - storyItem.date;
+        try {
+            CharSequence caption = new SpannableString(storyItem.caption);
+            caption = Emoji.replaceEmoji(caption, Theme.chat_msgTextPaint.getFontMetricsInt(), true);
+            MessageObject.addEntitiesToText(caption, storyItem.entities, true, false, true, false);
+            caption = MessageObject.replaceAnimatedEmoji(caption, storyItem.entities, Theme.chat_msgTextPaint.getFontMetricsInt());
+            entry.caption = caption;
+        } catch (Exception ignore) {}
+        entry.setupMatrix();
+        entry.checkStickers(storyItem);
+        entry.editedMediaAreas = storyItem.media_areas;
+        entry.peer = MessagesController.getInstance(entry.currentAccount).getInputPeer(storyItem.dialogId);
+        return entry;
+    }
+
+    public static StoryEntry fromPhotoEntry(MediaController.PhotoEntry photoEntry) {
+        StoryEntry entry = new StoryEntry();
+        entry.file = new File(photoEntry.path);
+        entry.orientation = photoEntry.orientation;
+        entry.invert = photoEntry.invert;
+        entry.isVideo = !photoEntry.isLivePhoto() && photoEntry.isVideo;
+        entry.thumbPath = photoEntry.thumbPath;
+        entry.duration = photoEntry.duration * 1000L;
+        entry.left = 0;
+        entry.right = Math.min(1, (float) TimelineView.MAX_SELECT_DURATION / entry.duration);
+        if (entry.isVideo && entry.thumbPath == null) {
+            entry.thumbPath = "vthumb://" + photoEntry.imageId;
+        }
+        entry.gradientTopColor = photoEntry.gradientTopColor;
+        entry.gradientBottomColor = photoEntry.gradientBottomColor;
+        entry.decodeBounds(entry.file.getAbsolutePath());
+        if (photoEntry.width > 0 && photoEntry.height > 0) {
+            entry.width = photoEntry.width;
+            entry.height = photoEntry.height;
+        }
+        entry.setupMatrix();
+        return entry;
+    }
+
+    public void setupMultipleStoriesSelector() {
+        if (isVideo && !isCollage() && !isEdit && !isRepost && duration > TimelineView.MAX_SELECT_DURATION + 10_000L && UserConfig.getInstance(currentAccount).isPremium()) {
+            long newDuration = TimelineView.MAX_SELECT_DURATION;
+            if (duration - newDuration > 10_000L) {
+                newDuration += Math.min(TimelineView.MAX_SELECT_DURATION, duration - newDuration);
+            }
+            if (duration - newDuration > 10_000L) {
+                newDuration += Math.min(TimelineView.MAX_SELECT_DURATION, duration - newDuration);
+            }
+            right = Math.min(1, (float) newDuration / duration);
+        }
+    }
+
+    public boolean isCollage() {
+        return collage != null && collageContent != null;
+    }
+
+    public boolean hasVideo() {
+        if (!isCollage()) return false;
+        for (int i = 0; i < collageContent.size(); ++i) {
+            if (collageContent.get(i).isVideo)
+                return true;
+        }
+        return false;
+    }
+
+    public static StoryEntry asCollage(CollageLayout layout, ArrayList<StoryEntry> entries) {
+        StoryEntry entry = new StoryEntry();
+        entry.collage = layout;
+        entry.collageContent = entries;
+        for (StoryEntry e : entries) {
+            if (e.isVideo) {
+                entry.isVideo = true;
+                e.videoLeft = 0;
+                e.videoRight = Math.min(1.0f, 59_000.0f / e.duration);
+            }
+        }
+        if (entry.isVideo) {
+            entry.width = 720;
+            entry.height = 1280;
+            entry.resultWidth = 720;
+            entry.resultHeight = 1280;
+        } else {
+            entry.width = 1080;
+            entry.height = 1920;
+            entry.resultWidth = 1080;
+            entry.resultHeight = 1920;
+        }
+        entry.setupMatrix();
+        return entry;
+    }
+
+    public static StoryEntry fromPhotoShoot(File file, int rotate) {
+        StoryEntry entry = new StoryEntry();
+        entry.file = file;
+        entry.fileDeletable = true;
+        entry.orientation = rotate;
+        entry.invert = 0;
+        entry.isVideo = false;
+        if (file != null) {
+            entry.decodeBounds(file.getAbsolutePath());
+        }
+        entry.setupMatrix();
+        return entry;
+    }
+
+    @Nullable
+    public static StoryEntry fromMedia(ArrayList<SendMessagesHelper.SendingMediaInfo> photoPathes) {
+        final ArrayList<MediaController.PhotoEntry> entries = ChatActivity.createEntriesFromMedia(photoPathes, false, null);
+        if (entries.isEmpty()) {
+            return null;
+        }
+
+        //if (entries.size() == 1) {
+            return fromPhotoEntry(entries.get(0));
+        /*}
+
+        final ArrayList<StoryEntry> entries1 = new ArrayList<>(entries.size());
+        for (MediaController.PhotoEntry entry: entries) {
+            entries1.add(fromPhotoEntry(entry));
+        }
+
+        return asCollage(CollageLayout.of(entries1.size()), entries1);*/
+    }
 
     public void decodeBounds(String path) {
         if (path != null) {

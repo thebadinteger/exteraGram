@@ -1,23 +1,32 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
-import android.view.View;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.exteragram.messenger.ExteraConfig;
-import okhttp3.internal.url._UrlKt;
-import org.telegram.messenger.AndroidUtilities;
+
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
@@ -27,277 +36,261 @@ import org.telegram.ui.Components.ColoredImageSpan;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class MentionCell extends LinearLayout {
-    private boolean attached;
-    private final AvatarDrawable avatarDrawable;
-    private Drawable emojiDrawable;
+
     private final BackupImageView imageView;
     private final TextView nameTextView;
-    private boolean needsDivider;
-    private final Theme.ResourcesProvider resourcesProvider;
     private final TextView usernameTextView;
+    private final AvatarDrawable avatarDrawable;
+    private final Theme.ResourcesProvider resourcesProvider;
+
+    private Drawable emojiDrawable;
 
     public MentionCell(Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.needsDivider = false;
         this.resourcesProvider = resourcesProvider;
-        setOrientation(0);
-        AvatarDrawable avatarDrawable = new AvatarDrawable();
-        this.avatarDrawable = avatarDrawable;
-        avatarDrawable.setTextSize(AndroidUtilities.dp(18.0f));
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.imageView = backupImageView;
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(28.0f));
-        addView(backupImageView, LayoutHelper.createLinear(28, 28, 8.0f, 4.0f, 0.0f, 0.0f));
-        TextView textView = new TextView(context) { // from class: org.telegram.ui.Cells.MentionCell.1
-            @Override // android.widget.TextView
-            public void setText(CharSequence charSequence, TextView.BufferType bufferType) {
-                super.setText(Emoji.replaceEmoji(charSequence, getPaint().getFontMetricsInt(), false), bufferType);
+
+        setOrientation(HORIZONTAL);
+
+        avatarDrawable = new AvatarDrawable();
+        avatarDrawable.setTextSize(dp(18));
+
+        imageView = new BackupImageView(context);
+        imageView.setRoundRadius(dp(14));
+        addView(imageView, LayoutHelper.createLinear(28, 28, 8, 4, 0, 0));
+
+        nameTextView = new TextView(context) {
+            @Override
+            public void setText(CharSequence text, BufferType type) {
+                text = Emoji.replaceEmoji(text, getPaint().getFontMetricsInt(), false);
+                super.setText(text, type);
             }
         };
-        this.nameTextView = textView;
-        textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
-        textView.setTextSize(1, 15.0f);
-        textView.setSingleLine(true);
-        textView.setGravity(3);
-        TextUtils.TruncateAt truncateAt = TextUtils.TruncateAt.END;
-        textView.setEllipsize(truncateAt);
-        addView(textView, LayoutHelper.createLinear(-2, -2, 16, 12, 0, 0, 0));
-        TextView textView2 = new TextView(context);
-        this.usernameTextView = textView2;
-        textView2.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText3));
-        textView2.setTextSize(1, 15.0f);
-        textView2.setSingleLine(true);
-        textView2.setGravity(3);
-        textView2.setEllipsize(truncateAt);
-        addView(textView2, LayoutHelper.createLinear(-2, -2, 16, 12, 0, 8, 0));
+        nameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+        nameTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        nameTextView.setSingleLine(true);
+        nameTextView.setGravity(Gravity.LEFT);
+        nameTextView.setEllipsize(TextUtils.TruncateAt.END);
+        addView(nameTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
+
+        usernameTextView = new TextView(context);
+        usernameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText3));
+        usernameTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        usernameTextView.setSingleLine(true);
+        usernameTextView.setGravity(Gravity.LEFT);
+        usernameTextView.setEllipsize(TextUtils.TruncateAt.END);
+        addView(usernameTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL, 12, 0, 8, 0));
     }
 
     public void invalidateEmojis() {
-        this.nameTextView.invalidate();
-        this.usernameTextView.invalidate();
+        nameTextView.invalidate();
+        usernameTextView.invalidate();
     }
 
-    @Override // android.widget.LinearLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(36.0f), TLObject.FLAG_30));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(36), MeasureSpec.EXACTLY));
     }
 
     public void setUser(TLRPC.User user) {
         resetEmojiSuggestion();
         if (user == null) {
-            this.nameTextView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-            this.usernameTextView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-            this.imageView.setImageDrawable(null);
+            nameTextView.setText("");
+            usernameTextView.setText("");
+            imageView.setImageDrawable(null);
             return;
         }
-        this.avatarDrawable.setInfo(user);
-        TLRPC.UserProfilePhoto userProfilePhoto = user.photo;
-        if (userProfilePhoto != null && userProfilePhoto.photo_small != null) {
-            this.imageView.setForUserOrChat(user, this.avatarDrawable);
+        avatarDrawable.setInfo(user);
+        if (user.photo != null && user.photo.photo_small != null) {
+            imageView.setForUserOrChat(user, avatarDrawable);
         } else {
-            this.imageView.setImageDrawable(this.avatarDrawable);
+            imageView.setImageDrawable(avatarDrawable);
         }
-        this.nameTextView.setText(UserObject.getUserName(user));
-        String publicUsername = UserObject.getPublicUsername(user);
-        TextView textView = this.usernameTextView;
-        if (publicUsername != null) {
-            textView.setText("@" + UserObject.getPublicUsername(user));
+        nameTextView.setText(UserObject.getUserName(user));
+        if (UserObject.getPublicUsername(user) != null) {
+            usernameTextView.setText("@" + UserObject.getPublicUsername(user));
         } else {
-            textView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
+            usernameTextView.setText("");
         }
-        this.imageView.setVisibility(0);
-        this.usernameTextView.setVisibility(0);
+        imageView.setVisibility(VISIBLE);
+        usernameTextView.setVisibility(VISIBLE);
     }
 
-    public void setDivider(boolean z) {
-        if (z != this.needsDivider) {
-            this.needsDivider = z;
-            setWillNotDraw(!z);
+    private boolean needsDivider = false;
+    public void setDivider(boolean enabled) {
+        if (enabled != needsDivider) {
+            needsDivider = enabled;
+            setWillNotDraw(!needsDivider);
             invalidate();
         }
     }
 
-    @Override // android.widget.LinearLayout, android.view.View
-    public void onDraw(Canvas canvas) {
+    @Override
+    protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (this.needsDivider) {
-            canvas.drawLine(AndroidUtilities.dp(52.0f), getHeight() - 1, getWidth() - AndroidUtilities.dp(8.0f), getHeight() - 1, Theme.dividerPaint);
+        if (needsDivider) {
+            canvas.drawLine(dp(52), getHeight() - 1, getWidth() - dp(8), getHeight() - 1, Theme.dividerPaint);
         }
     }
 
     public void setChat(TLRPC.Chat chat) {
         resetEmojiSuggestion();
         if (chat == null) {
-            this.nameTextView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-            this.usernameTextView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
-            this.imageView.setImageDrawable(null);
+            nameTextView.setText("");
+            usernameTextView.setText("");
+            imageView.setImageDrawable(null);
             return;
         }
-        this.avatarDrawable.setInfo(chat);
-        TLRPC.ChatPhoto chatPhoto = chat.photo;
-        if (chatPhoto != null && chatPhoto.photo_small != null) {
-            this.imageView.setForUserOrChat(chat, this.avatarDrawable);
+        avatarDrawable.setInfo(chat);
+        if (chat.photo != null && chat.photo.photo_small != null) {
+            imageView.setForUserOrChat(chat, avatarDrawable);
         } else {
-            this.imageView.setImageDrawable(this.avatarDrawable);
+            imageView.setImageDrawable(avatarDrawable);
         }
-        this.nameTextView.setText(chat.title);
-        String publicUsername = ChatObject.getPublicUsername(chat);
-        TextView textView = this.usernameTextView;
-        if (publicUsername != null) {
-            textView.setText("@".concat(publicUsername));
+        nameTextView.setText(chat.title);
+        String username;
+        if ((username = ChatObject.getPublicUsername(chat)) != null) {
+            usernameTextView.setText("@" + username);
         } else {
-            textView.setText(_UrlKt.FRAGMENT_ENCODE_SET);
+            usernameTextView.setText("");
         }
-        this.imageView.setVisibility(0);
-        this.usernameTextView.setVisibility(0);
+        imageView.setVisibility(VISIBLE);
+        usernameTextView.setVisibility(VISIBLE);
     }
 
-    public void setText(String str) {
+    public void setText(String text) {
         resetEmojiSuggestion();
-        this.imageView.setVisibility(4);
-        this.usernameTextView.setVisibility(4);
-        this.nameTextView.setText(str);
+        imageView.setVisibility(INVISIBLE);
+        usernameTextView.setVisibility(INVISIBLE);
+        nameTextView.setText(text);
     }
 
-    @Override // android.view.View
+    @Override
     public void invalidate() {
         super.invalidate();
-        this.nameTextView.invalidate();
+        nameTextView.invalidate();
     }
 
     public void resetEmojiSuggestion() {
-        this.nameTextView.setPadding(0, 0, 0, 0);
-        Drawable drawable = this.emojiDrawable;
-        if (drawable != null) {
-            if (drawable instanceof AnimatedEmojiDrawable) {
-                ((AnimatedEmojiDrawable) drawable).removeView(this);
+        nameTextView.setPadding(0, 0, 0, 0);
+        if (emojiDrawable != null) {
+            if (emojiDrawable instanceof AnimatedEmojiDrawable) {
+                ((AnimatedEmojiDrawable) emojiDrawable).removeView(this);
             }
-            this.emojiDrawable = null;
+            emojiDrawable = null;
             invalidate();
         }
     }
 
-    public void setEmojiSuggestion(MediaDataController.KeywordResult keywordResult) {
-        this.imageView.setVisibility(4);
-        this.usernameTextView.setVisibility(4);
-        String str = keywordResult.emoji;
-        if (str != null && str.startsWith("animated_")) {
+    public void setEmojiSuggestion(MediaDataController.KeywordResult suggestion) {
+        imageView.setVisibility(INVISIBLE);
+        usernameTextView.setVisibility(INVISIBLE);
+        if (suggestion.emoji != null && suggestion.emoji.startsWith("animated_")) {
             try {
-                Drawable drawable = this.emojiDrawable;
-                if (drawable instanceof AnimatedEmojiDrawable) {
-                    ((AnimatedEmojiDrawable) drawable).removeView(this);
-                    this.emojiDrawable = null;
+                if (emojiDrawable instanceof AnimatedEmojiDrawable) {
+                    ((AnimatedEmojiDrawable) emojiDrawable).removeView(this);
+                    emojiDrawable = null;
                 }
-                AnimatedEmojiDrawable animatedEmojiDrawableMake = AnimatedEmojiDrawable.make(UserConfig.selectedAccount, 0, Long.parseLong(keywordResult.emoji.substring(9)));
-                this.emojiDrawable = animatedEmojiDrawableMake;
-                if (this.attached) {
-                    animatedEmojiDrawableMake.addView(this);
+                long documentId = Long.parseLong(suggestion.emoji.substring(9));
+                emojiDrawable = AnimatedEmojiDrawable.make(UserConfig.selectedAccount, AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, documentId);
+                if (attached) {
+                    ((AnimatedEmojiDrawable) emojiDrawable).addView(this);
                 }
-            } catch (Exception unused) {
-                this.emojiDrawable = Emoji.getEmojiDrawable(keywordResult.emoji);
+            } catch (Exception ignore) {
+                emojiDrawable = Emoji.getEmojiDrawable(suggestion.emoji);
             }
         } else {
-            this.emojiDrawable = Emoji.getEmojiDrawable(keywordResult.emoji);
+            emojiDrawable = Emoji.getEmojiDrawable(suggestion.emoji);
         }
-        Drawable drawable2 = this.emojiDrawable;
-        TextView textView = this.nameTextView;
-        if (drawable2 == null) {
-            textView.setPadding(0, 0, 0, 0);
-            TextView textView2 = this.nameTextView;
-            StringBuilder sb = new StringBuilder();
-            sb.append(keywordResult.emoji);
-            sb.append(":  ");
-            sb.append(keywordResult.keyword);
-            textView2.setText(sb);
-            return;
+        if (emojiDrawable == null) {
+            nameTextView.setPadding(0, 0, 0, 0);
+            nameTextView.setText(new StringBuilder().append(suggestion.emoji).append(":  ").append(suggestion.keyword));
+        } else {
+            nameTextView.setPadding(dp(22), 0, 0, 0);
+            nameTextView.setText(new StringBuilder().append(":  ").append(suggestion.keyword));
         }
-        textView.setPadding(AndroidUtilities.dp(22.0f), 0, 0, 0);
-        TextView textView3 = this.nameTextView;
-        StringBuilder sb2 = new StringBuilder();
-        sb2.append(":  ");
-        sb2.append(keywordResult.keyword);
-        textView3.setText(sb2);
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void dispatchDraw(Canvas canvas) {
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        Drawable drawable = this.emojiDrawable;
-        if (drawable != null) {
-            int iDp = AndroidUtilities.dp(drawable instanceof AnimatedEmojiDrawable ? 24.0f : 20.0f);
-            int iDp2 = AndroidUtilities.dp(this.emojiDrawable instanceof AnimatedEmojiDrawable ? -2.0f : 0.0f);
-            this.emojiDrawable.setBounds(this.nameTextView.getLeft() + iDp2, ((this.nameTextView.getTop() + this.nameTextView.getBottom()) - iDp) / 2, this.nameTextView.getLeft() + iDp2 + iDp, ((this.nameTextView.getTop() + this.nameTextView.getBottom()) + iDp) / 2);
-            Drawable drawable2 = this.emojiDrawable;
-            if (drawable2 instanceof AnimatedEmojiDrawable) {
-                ((AnimatedEmojiDrawable) drawable2).setTime(System.currentTimeMillis());
+
+        if (emojiDrawable != null) {
+            final int sz = dp(emojiDrawable instanceof AnimatedEmojiDrawable ? 24 : 20);
+            final int offsetX = dp(emojiDrawable instanceof AnimatedEmojiDrawable ? -2 : 0);
+            emojiDrawable.setBounds(
+                nameTextView.getLeft() + offsetX,
+                (nameTextView.getTop() + nameTextView.getBottom() - sz) / 2,
+                nameTextView.getLeft() + offsetX + sz,
+                (nameTextView.getTop() + nameTextView.getBottom() + sz) / 2
+            );
+            if (emojiDrawable instanceof AnimatedEmojiDrawable) {
+                ((AnimatedEmojiDrawable) emojiDrawable).setTime(System.currentTimeMillis());
             }
-            this.emojiDrawable.draw(canvas);
+            emojiDrawable.draw(canvas);
         }
     }
 
-    public void setBotCommand(String str, String str2, TLRPC.User user, boolean z) {
+    public void setBotCommand(String command, String help, TLRPC.User user, boolean ephemeral) {
         resetEmojiSuggestion();
-        BackupImageView backupImageView = this.imageView;
         if (user != null) {
-            backupImageView.setVisibility(0);
-            this.avatarDrawable.setInfo(user);
-            TLRPC.UserProfilePhoto userProfilePhoto = user.photo;
-            if (userProfilePhoto != null && userProfilePhoto.photo_small != null) {
-                this.imageView.setForUserOrChat(user, this.avatarDrawable);
+            imageView.setVisibility(VISIBLE);
+            avatarDrawable.setInfo(user);
+            if (user.photo != null && user.photo.photo_small != null) {
+                imageView.setForUserOrChat(user, avatarDrawable);
             } else {
-                this.imageView.setImageDrawable(this.avatarDrawable);
+                imageView.setImageDrawable(avatarDrawable);
             }
         } else {
-            backupImageView.setVisibility(4);
+            imageView.setVisibility(INVISIBLE);
         }
-        this.usernameTextView.setVisibility(0);
-        if (z) {
-            ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.mini_ephemeral_hidden_14);
+        usernameTextView.setVisibility(VISIBLE);
+
+        if (ephemeral) {
+            final ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.mini_ephemeral_hidden_14);
             coloredImageSpan.setColorKey(Theme.key_windowBackgroundWhiteGrayText3);
             coloredImageSpan.setTopOffset(1);
-            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(str);
-            spannableStringBuilder.append((CharSequence) " *");
-            spannableStringBuilder.setSpan(coloredImageSpan, spannableStringBuilder.length() - 1, spannableStringBuilder.length(), 33);
-            this.nameTextView.setText(spannableStringBuilder);
+            final SpannableStringBuilder ssb = new SpannableStringBuilder(command);
+            ssb.append(" *");
+            ssb.setSpan(coloredImageSpan, ssb.length() - 1, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            nameTextView.setText(ssb);
         } else {
-            this.nameTextView.setText(str);
+            nameTextView.setText(command);
         }
-        TextView textView = this.usernameTextView;
-        textView.setText(Emoji.replaceEmoji(str2, textView.getPaint().getFontMetricsInt(), false));
+
+        usernameTextView.setText(Emoji.replaceEmoji(help, usernameTextView.getPaint().getFontMetricsInt(), false));
     }
 
-    public void setIsDarkTheme(boolean z) {
-        TextView textView = this.nameTextView;
-        if (z) {
-            textView.setTextColor(-1);
-            this.usernameTextView.setTextColor(-4473925);
+    public void setIsDarkTheme(boolean isDarkTheme) {
+        if (isDarkTheme) {
+            nameTextView.setTextColor(0xffffffff);
+            usernameTextView.setTextColor(0xffbbbbbb);
         } else {
-            textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
-            this.usernameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText3));
+            nameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+            usernameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText3));
         }
     }
 
-    private int getThemedColor(int i) {
-        return Theme.getColor(i, this.resourcesProvider);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onDetachedFromWindow() {
+    private boolean attached;
+
+    @Override
+    protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        this.attached = false;
-        Drawable drawable = this.emojiDrawable;
-        if (drawable instanceof AnimatedEmojiDrawable) {
-            ((AnimatedEmojiDrawable) drawable).removeView(this);
+        attached = false;
+        if (emojiDrawable instanceof AnimatedEmojiDrawable) {
+            ((AnimatedEmojiDrawable) emojiDrawable).removeView(this);
         }
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        this.attached = true;
-        Drawable drawable = this.emojiDrawable;
-        if (drawable instanceof AnimatedEmojiDrawable) {
-            ((AnimatedEmojiDrawable) drawable).addView(this);
+        attached = true;
+        if (emojiDrawable instanceof AnimatedEmojiDrawable) {
+            ((AnimatedEmojiDrawable) emojiDrawable).addView(this);
         }
     }
 }

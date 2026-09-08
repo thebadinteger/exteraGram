@@ -1,3 +1,11 @@
+/*
+ * This is the source code of Telegram for Android v. 2.0.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
 
 import android.content.Context;
@@ -5,11 +13,12 @@ import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.FrameLayout;
-import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.FileLoader;
@@ -18,106 +27,101 @@ import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.messenger.SvgHelper;
 import org.telegram.ui.Components.Premium.PremiumLockIconView;
 
 public class StickerCell extends FrameLayout {
-    private static AccelerateInterpolator interpolator = new AccelerateInterpolator(0.5f);
-    private boolean clearsInputField;
+
     private BackupImageView imageView;
-    private boolean isPremiumSticker;
-    private long lastUpdateTime;
-    private Object parentObject;
-    private float premiumAlpha;
-    private PremiumLockIconView premiumIconView;
-    Theme.ResourcesProvider resourcesProvider;
-    private float scale;
-    private boolean scaled;
-    private boolean showPremiumLock;
     private TLRPC.Document sticker;
-    private long time;
+    private Object parentObject;
+    private long lastUpdateTime;
+    private boolean scaled;
+    private float scale;
+    private long time = 0;
+    private boolean clearsInputField;
+    private static AccelerateInterpolator interpolator = new AccelerateInterpolator(0.5f);
+    private PremiumLockIconView premiumIconView;
+    private float premiumAlpha = 1f;
+    private boolean showPremiumLock;
+    private boolean isPremiumSticker;
+
+    Theme.ResourcesProvider resourcesProvider;
 
     public StickerCell(Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.time = 0L;
-        this.premiumAlpha = 1.0f;
         this.resourcesProvider = resourcesProvider;
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.imageView = backupImageView;
-        backupImageView.setAspectFit(true);
-        this.imageView.setRoundRadius(ExteraConfig.getStickerShape() == 0 ? 0 : AndroidUtilities.dp(4.0f));
-        this.imageView.setLayerNum(1);
-        addView(this.imageView, LayoutHelper.createFrame(66, 66.0f, 1, 0.0f, 5.0f, 0.0f, 0.0f));
+
+        imageView = new BackupImageView(context);
+        imageView.setAspectFit(true);
+        imageView.setLayerNum(1);
+        addView(imageView, LayoutHelper.createFrame(66, 66, Gravity.CENTER_HORIZONTAL, 0, 5, 0, 0));
         setFocusable(true);
-        PremiumLockIconView premiumLockIconView = new PremiumLockIconView(context, PremiumLockIconView.TYPE_STICKERS_PREMIUM_LOCKED);
-        this.premiumIconView = premiumLockIconView;
-        premiumLockIconView.setPadding(AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f));
-        this.premiumIconView.setImageReceiver(this.imageView.getImageReceiver());
-        addView(this.premiumIconView, LayoutHelper.createFrame(24, 24.0f, 81, 0.0f, 0.0f, 0.0f, 0.0f));
+
+        premiumIconView = new PremiumLockIconView(context, PremiumLockIconView.TYPE_STICKERS_PREMIUM_LOCKED);
+        premiumIconView.setPadding(AndroidUtilities.dp(4), AndroidUtilities.dp(4), AndroidUtilities.dp(4), AndroidUtilities.dp(4));
+        premiumIconView.setImageReceiver(imageView.getImageReceiver());
+        addView(premiumIconView, LayoutHelper.createFrame(24, 24, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0 ,0, 0, 0));
     }
 
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        super.onMeasure(View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(76.0f) + getPaddingLeft() + getPaddingRight(), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(78.0f), TLObject.FLAG_30));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(76) + getPaddingLeft() + getPaddingRight(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(78), MeasureSpec.EXACTLY));
     }
 
-    @Override // android.view.View
-    public void setPressed(boolean z) {
-        if (this.imageView.getImageReceiver().getPressed() != z) {
-            this.imageView.getImageReceiver().setPressed(z ? 1 : 0);
-            this.imageView.invalidate();
+    @Override
+    public void setPressed(boolean pressed) {
+        if (imageView.getImageReceiver().getPressed() != pressed) {
+            imageView.getImageReceiver().setPressed(pressed ? 1 : 0);
+            imageView.invalidate();
         }
-        super.setPressed(z);
+        super.setPressed(pressed);
     }
 
-    public void setClearsInputField(boolean z) {
-        this.clearsInputField = z;
+    public void setClearsInputField(boolean value) {
+        clearsInputField = value;
     }
 
     public boolean isClearsInputField() {
-        return this.clearsInputField;
+        return clearsInputField;
     }
 
-    public void setSticker(TLRPC.Document document, Object obj) {
-        this.parentObject = obj;
-        boolean zIsPremiumSticker = MessageObject.isPremiumSticker(document);
-        this.isPremiumSticker = zIsPremiumSticker;
-        if (zIsPremiumSticker) {
-            this.premiumIconView.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-            this.premiumIconView.setWaitingImage();
+    public void setSticker(TLRPC.Document document, Object parent) {
+        parentObject = parent;
+        isPremiumSticker = MessageObject.isPremiumSticker(document);
+        if (isPremiumSticker) {
+            premiumIconView.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            premiumIconView.setWaitingImage();
         }
         if (document != null) {
-            TLRPC.PhotoSize closestPhotoSizeWithSize = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 90);
-            SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundGray, 1.0f, 1.0f, this.resourcesProvider);
+            TLRPC.PhotoSize thumb = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 90);
+            SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundGray, 1.0f, 1f, resourcesProvider);
             if (MessageObject.canAutoplayAnimatedSticker(document)) {
                 if (svgThumb != null) {
-                    this.imageView.setImage(ImageLocation.getForDocument(document), "80_80", (String) null, svgThumb, this.parentObject);
+                    imageView.setImage(ImageLocation.getForDocument(document), "80_80", null, svgThumb, parentObject);
+                } else if (thumb != null) {
+                    imageView.setImage(ImageLocation.getForDocument(document), "80_80", ImageLocation.getForDocument(thumb, document), null, 0, parentObject);
                 } else {
-                    BackupImageView backupImageView = this.imageView;
-                    if (closestPhotoSizeWithSize != null) {
-                        backupImageView.setImage(ImageLocation.getForDocument(document), "80_80", ImageLocation.getForDocument(closestPhotoSizeWithSize, document), (String) null, 0, this.parentObject);
-                    } else {
-                        backupImageView.setImage(ImageLocation.getForDocument(document), "80_80", (String) null, (Drawable) null, this.parentObject);
-                    }
-                }
-            } else if (svgThumb != null) {
-                BackupImageView backupImageView2 = this.imageView;
-                if (closestPhotoSizeWithSize != null) {
-                    backupImageView2.setImage(ImageLocation.getForDocument(closestPhotoSizeWithSize, document), (String) null, "webp", svgThumb, this.parentObject);
-                } else {
-                    backupImageView2.setImage(ImageLocation.getForDocument(document), (String) null, "webp", svgThumb, this.parentObject);
+                    imageView.setImage(ImageLocation.getForDocument(document), "80_80", null, null, parentObject);
                 }
             } else {
-                this.imageView.setImage(ImageLocation.getForDocument(closestPhotoSizeWithSize, document), (String) null, "webp", (Drawable) null, this.parentObject);
+                if (svgThumb != null) {
+                    if (thumb != null) {
+                        imageView.setImage(ImageLocation.getForDocument(thumb, document), null, "webp", svgThumb, parentObject);
+                    } else {
+                        imageView.setImage(ImageLocation.getForDocument(document), null, "webp", svgThumb, parentObject);
+                    }
+                } else {
+                    imageView.setImage(ImageLocation.getForDocument(thumb, document), null, "webp", null, parentObject);
+                }
             }
         }
-        this.sticker = document;
+        sticker = document;
         Drawable background = getBackground();
         if (background != null) {
             background.setAlpha(230);
@@ -127,127 +131,104 @@ public class StickerCell extends FrameLayout {
     }
 
     public TLRPC.Document getSticker() {
-        return this.sticker;
+        return sticker;
     }
 
     public Object getParentObject() {
-        return this.parentObject;
+        return parentObject;
     }
 
-    public void setScaled(boolean z) {
-        this.scaled = z;
-        this.lastUpdateTime = System.currentTimeMillis();
+    public void setScaled(boolean value) {
+        scaled = value;
+        lastUpdateTime = System.currentTimeMillis();
         invalidate();
     }
 
     public boolean showingBitmap() {
-        return this.imageView.getImageReceiver().getBitmap() != null;
+        return imageView.getImageReceiver().getBitmap() != null;
     }
 
     public MessageObject.SendAnimationData getSendAnimationData() {
-        ImageReceiver imageReceiver = this.imageView.getImageReceiver();
+        ImageReceiver imageReceiver = imageView.getImageReceiver();
         if (!imageReceiver.hasNotThumb()) {
             return null;
         }
-        MessageObject.SendAnimationData sendAnimationData = new MessageObject.SendAnimationData();
-        int[] iArr = new int[2];
-        this.imageView.getLocationInWindow(iArr);
-        sendAnimationData.x = imageReceiver.getCenterX() + iArr[0];
-        sendAnimationData.y = imageReceiver.getCenterY() + iArr[1];
-        sendAnimationData.width = imageReceiver.getImageWidth();
-        sendAnimationData.height = imageReceiver.getImageHeight();
-        return sendAnimationData;
+        MessageObject.SendAnimationData data = new MessageObject.SendAnimationData();
+        int[] position = new int[2];
+        imageView.getLocationInWindow(position);
+        data.x = imageReceiver.getCenterX() + position[0];
+        data.y = imageReceiver.getCenterY() + position[1];
+        data.width = imageReceiver.getImageWidth();
+        data.height = imageReceiver.getImageHeight();
+        return data;
     }
 
-    /* JADX WARN: Code duplicated, block: B:18:0x0041  */
-    /* JADX WARN: Code duplicated, block: B:20:0x004c  */
-    @Override // android.view.ViewGroup
-    public boolean drawChild(Canvas canvas, View view, long j) {
-        boolean z;
-        float f;
-        boolean zDrawChild = super.drawChild(canvas, view, j);
-        if (view == this.imageView && (((z = this.scaled) && this.scale != 0.8f) || (!z && this.scale != 1.0f))) {
-            long jCurrentTimeMillis = System.currentTimeMillis();
-            long j2 = jCurrentTimeMillis - this.lastUpdateTime;
-            this.lastUpdateTime = jCurrentTimeMillis;
-            if (this.scaled) {
-                float f2 = this.scale;
-                if (f2 != 0.8f) {
-                    float f3 = f2 - (j2 / 400.0f);
-                    this.scale = f3;
-                    if (f3 < 0.8f) {
-                        this.scale = 0.8f;
-                    }
-                } else {
-                    f = this.scale + (j2 / 400.0f);
-                    this.scale = f;
-                    if (f > 1.0f) {
-                        this.scale = 1.0f;
-                    }
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        boolean result = super.drawChild(canvas, child, drawingTime);
+        if (child == imageView && (scaled && scale != 0.8f || !scaled && scale != 1.0f)) {
+            long newTime = System.currentTimeMillis();
+            long dt = (newTime - lastUpdateTime);
+            lastUpdateTime = newTime;
+            if (scaled && scale != 0.8f) {
+                scale -= dt / 400.0f;
+                if (scale < 0.8f) {
+                    scale = 0.8f;
                 }
             } else {
-                f = this.scale + (j2 / 400.0f);
-                this.scale = f;
-                if (f > 1.0f) {
-                    this.scale = 1.0f;
+                scale += dt / 400.0f;
+                if (scale > 1.0f) {
+                    scale = 1.0f;
                 }
             }
-            this.imageView.setScaleX(this.scale);
-            this.imageView.setScaleY(this.scale);
-            this.imageView.invalidate();
+            imageView.setScaleX(scale);
+            imageView.setScaleY(scale);
+            imageView.invalidate();
             invalidate();
         }
-        return zDrawChild;
+        return result;
     }
 
-    @Override // android.view.View
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo accessibilityNodeInfo) {
-        super.onInitializeAccessibilityNodeInfo(accessibilityNodeInfo);
-        if (this.sticker == null) {
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info){
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (sticker == null)
             return;
-        }
-        String str = null;
-        for (int i = 0; i < this.sticker.attributes.size(); i++) {
-            TLRPC.DocumentAttribute documentAttribute = this.sticker.attributes.get(i);
-            if (documentAttribute instanceof TLRPC.TL_documentAttributeSticker) {
-                String str2 = documentAttribute.alt;
-                str = (str2 == null || str2.length() <= 0) ? null : documentAttribute.alt;
+        String emoji = null;
+        for (int a = 0; a < sticker.attributes.size(); a++) {
+            TLRPC.DocumentAttribute attribute = sticker.attributes.get(a);
+            if (attribute instanceof TLRPC.TL_documentAttributeSticker) {
+                emoji = attribute.alt != null && attribute.alt.length() > 0 ? attribute.alt : null;
             }
         }
-        if (str != null) {
-            accessibilityNodeInfo.setText(str + " " + LocaleController.getString(R.string.AttachSticker));
-        } else {
-            accessibilityNodeInfo.setText(LocaleController.getString(R.string.AttachSticker));
-        }
-        accessibilityNodeInfo.setEnabled(true);
+        if (emoji != null)
+            info.setText(emoji + " " + LocaleController.getString(R.string.AttachSticker));
+        else
+            info.setText(LocaleController.getString(R.string.AttachSticker));
+        info.setEnabled(true);
     }
 
-    private void updatePremiumStatus(boolean z) {
-        if (this.isPremiumSticker) {
-            this.showPremiumLock = true;
+    private void updatePremiumStatus(boolean animated) {
+        if (isPremiumSticker) {
+            showPremiumLock = true;
         } else {
-            this.showPremiumLock = false;
+            showPremiumLock = false;
         }
-        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) this.premiumIconView.getLayoutParams();
+        FrameLayout.LayoutParams layoutParams = (LayoutParams) premiumIconView.getLayoutParams();
         if (!UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
-            int iDp = AndroidUtilities.dp(24.0f);
-            layoutParams.width = iDp;
-            layoutParams.height = iDp;
-            layoutParams.gravity = 81;
-            layoutParams.rightMargin = 0;
-            layoutParams.bottomMargin = 0;
-            this.premiumIconView.setPadding(AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f), AndroidUtilities.dp(4.0f));
+            layoutParams.height = layoutParams.width = AndroidUtilities.dp(24);
+            layoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            layoutParams.bottomMargin = layoutParams.rightMargin = 0;
+            premiumIconView.setPadding(AndroidUtilities.dp(4), AndroidUtilities.dp(4), AndroidUtilities.dp(4), AndroidUtilities.dp(4));
         } else {
-            int iDp2 = AndroidUtilities.dp(16.0f);
-            layoutParams.width = iDp2;
-            layoutParams.height = iDp2;
-            layoutParams.gravity = 85;
-            layoutParams.bottomMargin = AndroidUtilities.dp(8.0f);
-            layoutParams.rightMargin = AndroidUtilities.dp(8.0f);
-            this.premiumIconView.setPadding(AndroidUtilities.dp(1.0f), AndroidUtilities.dp(1.0f), AndroidUtilities.dp(1.0f), AndroidUtilities.dp(1.0f));
+            layoutParams.height = layoutParams.width = AndroidUtilities.dp(16);
+            layoutParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+            layoutParams.bottomMargin = AndroidUtilities.dp(8);
+            layoutParams.rightMargin = AndroidUtilities.dp(8);
+            premiumIconView.setPadding(AndroidUtilities.dp(1), AndroidUtilities.dp(1), AndroidUtilities.dp(1), AndroidUtilities.dp(1));
         }
-        this.premiumIconView.setLocked(!UserConfig.getInstance(UserConfig.selectedAccount).isPremium());
-        AndroidUtilities.updateViewVisibilityAnimated(this.premiumIconView, this.showPremiumLock, 0.9f, z);
+        premiumIconView.setLocked(!UserConfig.getInstance(UserConfig.selectedAccount).isPremium());
+        AndroidUtilities.updateViewVisibilityAnimated(premiumIconView, showPremiumLock, 0.9f, animated);
         invalidate();
     }
 }

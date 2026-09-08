@@ -35,13 +35,11 @@ class PyMap extends AbstractMap<PyObject, PyObject> {
                 @Override // com.chaquo.python.PyIterator
                 public Map.Entry<PyObject, PyObject> makeNext(final PyObject pyObject) {
                     return new Map.Entry<PyObject, PyObject>() { // from class: com.chaquo.python.PyMap.1.1.1
-                        /* JADX WARN: Can't rename method to resolve collision */
                         @Override // java.util.Map.Entry
                         public PyObject getKey() {
                             return pyObject;
                         }
 
-                        /* JADX WARN: Can't rename method to resolve collision */
                         @Override // java.util.Map.Entry
                         public PyObject getValue() {
                             return PyMap.this.get((Object) pyObject);

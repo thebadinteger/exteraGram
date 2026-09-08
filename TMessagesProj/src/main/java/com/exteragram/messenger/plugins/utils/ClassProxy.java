@@ -11,7 +11,6 @@ import com.android.dx.MethodId;
 import com.android.dx.TypeId;
 import com.android.tools.r8.RecordTag;
 import com.chaquo.python.PyObject;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.utils.AppUtils;
 import dalvik.system.InMemoryDexClassLoader;
 import java.io.Serializable;
@@ -31,7 +30,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.mvel2.MVEL;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Utilities;
@@ -116,7 +114,7 @@ public class ClassProxy {
         }
 
         public final int hashCode() {
-            return ClassProxy$ProxyMethodSpec$$ExternalSyntheticRecord0.m(this.overrideExisting, this.modifiers, this.name, this.returnType, this.parameterTypes, this.implementation, this.mvelCode, this.argumentNames);
+            return java.util.Objects.hash(this.overrideExisting, this.modifiers, this.name, this.returnType, this.parameterTypes, this.implementation, this.mvelCode, this.argumentNames);
         }
 
         public String implementation() {
@@ -148,7 +146,7 @@ public class ClassProxy {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ProxyMethodSpec.class, "name;returnType;parameterTypes;modifiers;overrideExisting;implementation;mvelCode;argumentNames");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ProxyMethodSpec.class, "name;returnType;parameterTypes;modifiers;overrideExisting;implementation;mvelCode;argumentNames");
         }
 
         public ProxyMethodSpec(String str, Class<?> cls, Class<?>[] clsArr, int i, boolean z) {
@@ -190,7 +188,7 @@ public class ClassProxy {
         }
 
         public final int hashCode() {
-            return ClassProxy$FieldSpec$$ExternalSyntheticRecord0.m(this.modifiers, this.name, this.type, this.methods);
+            return java.util.Objects.hash(this.modifiers, this.name, this.type, this.methods);
         }
 
         public List<FieldMethodSpec> methods() {
@@ -206,7 +204,7 @@ public class ClassProxy {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), FieldSpec.class, "name;type;modifiers;methods");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), FieldSpec.class, "name;type;modifiers;methods");
         }
 
         public Class<?> type() {
@@ -250,7 +248,7 @@ public class ClassProxy {
         }
 
         public final int hashCode() {
-            return ClassProxy$FieldMethodSpec$$ExternalSyntheticRecord0.m(this.getter, this.modifiers, this.name);
+            return java.util.Objects.hash(this.getter, this.modifiers, this.name);
         }
 
         public int modifiers() {
@@ -262,7 +260,7 @@ public class ClassProxy {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), FieldMethodSpec.class, "name;modifiers;getter");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), FieldMethodSpec.class, "name;modifiers;getter");
         }
     }
 

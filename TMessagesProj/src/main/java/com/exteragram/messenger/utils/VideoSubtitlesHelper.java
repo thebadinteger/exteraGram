@@ -7,9 +7,6 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.widget.TextView;
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord0;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
-import com.exteragram.messenger.ai.ui.activities.EditServiceActivity$ParsedServiceInput$$ExternalSyntheticRecord0;
 import java.io.File;
 import java.util.Locale;
 import java.util.Objects;
@@ -58,7 +55,7 @@ public abstract class VideoSubtitlesHelper {
         }
 
         public final int hashCode() {
-            return EditServiceActivity$ParsedServiceInput$$ExternalSyntheticRecord0.m(this.path, this.mimeType, this.label);
+            return java.util.Objects.hash(this.path, this.mimeType, this.label);
         }
 
         public String mimeType() {
@@ -70,7 +67,7 @@ public abstract class VideoSubtitlesHelper {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), SubtitleState.class, "path;mimeType;label");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), SubtitleState.class, "path;mimeType;label");
         }
 
         public boolean isValid() {
@@ -125,7 +122,7 @@ public abstract class VideoSubtitlesHelper {
         }
 
         public final int hashCode() {
-            return Client$ImagePayload$$ExternalSyntheticRecord0.m(this.subtitleState, this.error);
+            return java.util.Objects.hash(this.subtitleState, this.error);
         }
 
         public SubtitleState subtitleState() {
@@ -133,7 +130,7 @@ public abstract class VideoSubtitlesHelper {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), SubtitleLoadResult.class, "subtitleState;error");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), SubtitleLoadResult.class, "subtitleState;error");
         }
 
         public boolean isSuccess() {

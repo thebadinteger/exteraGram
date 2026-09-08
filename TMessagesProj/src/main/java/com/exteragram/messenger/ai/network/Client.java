@@ -441,7 +441,7 @@ public class Client {
         }
 
         public final int hashCode() {
-            return Client$ImagePayload$$ExternalSyntheticRecord0.m(this.data, this.mimeType);
+            return java.util.Objects.hash(this.data, this.mimeType);
         }
 
         public String mimeType() {
@@ -449,7 +449,7 @@ public class Client {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ImagePayload.class, "data;mimeType");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ImagePayload.class, "data;mimeType");
         }
     }
 
@@ -487,11 +487,11 @@ public class Client {
         }
 
         public final int hashCode() {
-            return Client$StreamResponsePart$$ExternalSyntheticRecord0.m(this.hasReasoning, this.content);
+            return java.util.Objects.hash(this.hasReasoning, this.content);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), StreamResponsePart.class, "content;hasReasoning");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), StreamResponsePart.class, "content;hasReasoning");
         }
     }
 }

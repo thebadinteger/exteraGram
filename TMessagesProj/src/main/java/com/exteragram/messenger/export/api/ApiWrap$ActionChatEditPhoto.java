@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.export.output.html.HtmlWriter;
 import java.util.Objects;
 
@@ -33,6 +32,6 @@ public final class ApiWrap$ActionChatEditPhoto extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$ActionChatEditPhoto.class, "photo");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$ActionChatEditPhoto.class, "photo");
     }
 }

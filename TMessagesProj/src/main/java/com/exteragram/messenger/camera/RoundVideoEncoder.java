@@ -26,8 +26,6 @@ import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.mvel2.ast.Instance$$ExternalSyntheticBUOutline0;
-import org.mvel2.util.Make$Map$$ExternalSyntheticBUOutline0;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
@@ -42,7 +40,6 @@ import org.telegram.messenger.video.MediaCodecVideoConvertor;
 import org.telegram.messenger.video.Mp4Movie;
 import org.telegram.ui.Components.PermissionRequest;
 import org.webrtc.EglBase;
-import org.webrtc.GlShader$$ExternalSyntheticBUOutline1;
 import org.webrtc.MediaStreamTrack;
 
 public class RoundVideoEncoder {
@@ -1045,8 +1042,6 @@ public class RoundVideoEncoder {
             this.session = audioCaptureSession;
         }
 
-        /* JADX WARN: Code duplicated, block: B:106:0x01b2 A[Catch: all -> 0x01b8, TryCatch #1 {all -> 0x01b8, blocks: (B:104:0x01a8, B:106:0x01b2, B:109:0x01ba), top: B:120:0x01a8 }] */
-        /* JADX WARN: Code duplicated, block: B:120:0x01a8 A[EXC_TOP_SPLITTER, SYNTHETIC] */
         @Override // java.lang.Runnable
         public void run() {
             int i;
@@ -1207,7 +1202,6 @@ public class RoundVideoEncoder {
         }
     }
 
-    /* JADX WARN: Code duplicated, block: B:45:? A[RETURN, SYNTHETIC] */
     private void setBluetoothScoOn(boolean z) {
         AudioManager audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(MediaStreamTrack.AUDIO_TRACK_KIND);
         if (SharedConfig.recordViaSco && !PermissionRequest.hasPermission("android.permission.BLUETOOTH_CONNECT")) {

@@ -63,7 +63,6 @@ public final class ArchiveExtractionOptions {
             return new ArchiveExtractionOptions(null, null, 0, null, 15, null);
         }
 
-        /* JADX WARN: Multi-variable type inference failed */
         @JvmStatic
         public final Builder builder() {
             return new Builder(null, 1, 0 == true ? 1 : 0);

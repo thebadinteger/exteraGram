@@ -7,7 +7,6 @@ import android.graphics.Typeface;
 import android.graphics.fonts.Font;
 import android.graphics.fonts.SystemFonts;
 import android.os.Build;
-import androidx.camera.core.ImageCapture$$ExternalSyntheticBackport1;
 import com.google.android.gms.cast.MediaError;
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,9 +53,9 @@ public abstract class FontUtils {
         } catch (Exception e) {
             FileLog.e(e);
         }
-        if (ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{"zh", "ja", "ko"}).contains(language)) {
+        if (java.util.Arrays.asList("zh", "ja", "ko").contains(language)) {
             TEST_TEXT = "你好";
-        } else if (ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{"ar", "fa"}).contains(language)) {
+        } else if (java.util.Arrays.asList("ar", "fa").contains(language)) {
             TEST_TEXT = "مرحبا";
         } else if ("iw".equals(language)) {
             TEST_TEXT = "שלום";
@@ -64,7 +63,7 @@ public abstract class FontUtils {
             TEST_TEXT = "สวัสดี";
         } else if ("hi".equals(language)) {
             TEST_TEXT = "नमस्ते";
-        } else if (ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{"ru", "uk", "ky", "be", "sr"}).contains(language)) {
+        } else if (java.util.Arrays.asList("ru", "uk", "ky", "be", "sr").contains(language)) {
             TEST_TEXT = "Привет";
         } else {
             TEST_TEXT = "R";
@@ -125,7 +124,7 @@ public abstract class FontUtils {
             paint.setTypeface(null);
         }
         boolean z = !bitmapCreateBitmap.sameAs(bitmapCreateBitmap2);
-        AndroidUtilities.recycleBitmaps(ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{bitmapCreateBitmap, bitmapCreateBitmap2}));
+        AndroidUtilities.recycleBitmaps(java.util.Arrays.asList(bitmapCreateBitmap, bitmapCreateBitmap2));
         return z;
     }
 

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.feed.ads;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.feed.FeedChatIntegration;
 import com.exteragram.messenger.feed.FeedMessageUtils;
 import java.util.ArrayList;
@@ -287,11 +286,11 @@ public final class FeedAdInjector {
         }
 
         public final int hashCode() {
-            return FeedAdInjector$AnchorSlot$$ExternalSyntheticRecord0.m(this.ordinal, this.anchor);
+            return java.util.Objects.hash(this.ordinal, this.anchor);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), AnchorSlot.class, "anchor;ordinal");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), AnchorSlot.class, "anchor;ordinal");
         }
     }
 }

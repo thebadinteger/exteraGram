@@ -8,8 +8,6 @@ import android.view.View;
 import android.widget.TextView;
 import com.android.tools.r8.RecordTag;
 import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord0;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.api.db.DatabaseHelper;
 import com.exteragram.messenger.api.dto.BoostySubscriberDTO;
 import com.exteragram.messenger.backup.PreferencesUtils;
@@ -106,7 +104,7 @@ public class OtherPreferencesActivity extends BasePreferencesActivity {
 
     @Override 
     public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
-        Map mapM = OtherPreferencesActivity$$ExternalSyntheticBackport1.m(new Map.Entry[]{new AbstractMap.SimpleEntry("mastercard", new IconInfo(R.drawable.mastercard_icon, Theme.isCurrentThemeDark() ? "M50,0A50,50,0,0,1,50,100A50,50,0,0,1,50,0" : "100\u0006n2_200\u0006n2_300\u0006n2_400\u0006n2_500\u0006n2_600\u0006n2_700\u0006n2_800\u0006n2_900%android.intent.action.OVERLAY_CHANG"), new AbstractMap.SimpleEntry("tonkeeper", new IconInfo(R.drawable.ton_icon, Theme.isCurrentThemeDark() ? -14207411 : -15722977)), new AbstractMap.SimpleEntry("space", new IconInfo(R.drawable.ton_space_icon, -13587978)), new AbstractMap.SimpleEntry("boosty", new IconInfo(R.drawable.boosty_icon, Theme.isCurrentThemeDark() ? -1118482 : -14406868))});
+        Map mapM = com.exteragram.messenger.utils.RecordUtils.mapOf(new Map.Entry[]{new AbstractMap.SimpleEntry("mastercard", new IconInfo(R.drawable.mastercard_icon, Theme.isCurrentThemeDark() ? "M50,0A50,50,0,0,1,50,100A50,50,0,0,1,50,0" : "100\u0006n2_200\u0006n2_300\u0006n2_400\u0006n2_500\u0006n2_600\u0006n2_700\u0006n2_800\u0006n2_900%android.intent.action.OVERLAY_CHANG"), new AbstractMap.SimpleEntry("tonkeeper", new IconInfo(R.drawable.ton_icon, Theme.isCurrentThemeDark() ? -14207411 : -15722977)), new AbstractMap.SimpleEntry("space", new IconInfo(R.drawable.ton_space_icon, -13587978)), new AbstractMap.SimpleEntry("boosty", new IconInfo(R.drawable.boosty_icon, Theme.isCurrentThemeDark() ? -1118482 : -14406868))});
         List<Donate> donates = getDonates();
         this.donates = donates;
         if (!donates.isEmpty()) {
@@ -244,11 +242,11 @@ public class OtherPreferencesActivity extends BasePreferencesActivity {
         }
 
         public final int hashCode() {
-            return OtherPreferencesActivity$IconInfo$$ExternalSyntheticRecord0.m(this.iconResId, this.iconColor);
+            return java.util.Objects.hash(this.iconResId, this.iconColor);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), IconInfo.class, "iconResId;iconColor");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), IconInfo.class, "iconResId;iconColor");
         }
     }
 
@@ -282,7 +280,7 @@ public class OtherPreferencesActivity extends BasePreferencesActivity {
         }
 
         public final int hashCode() {
-            return Client$ImagePayload$$ExternalSyntheticRecord0.m(this.name, this.details);
+            return java.util.Objects.hash(this.name, this.details);
         }
 
         public String name() {
@@ -290,7 +288,7 @@ public class OtherPreferencesActivity extends BasePreferencesActivity {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), Donate.class, "name;details");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), Donate.class, "name;details");
         }
     }
 }

@@ -159,7 +159,7 @@ public abstract class AdBlockClient {
         if (strArr == null || strArr.length == 0) {
             return null;
         }
-        return "(function() {var parent = document.getElementsByTagName('head').item(0);var style = document.createElement('style');style.type = 'text/css';style.innerHTML = window.atob('" + Base64.getEncoder().encodeToString((AdBlockClient$$ExternalSyntheticBackport0.m(",", strArr) + "{display: none !important;}").getBytes()) + "');parent.appendChild(style)})()";
+        return "(function() {var parent = document.getElementsByTagName('head').item(0);var style = document.createElement('style');style.type = 'text/css';style.innerHTML = window.atob('" + Base64.getEncoder().encodeToString((android.text.TextUtils.join(",", strArr) + "{display: none !important;}").getBytes()) + "');parent.appendChild(style)})()";
     }
 
     public static class CosmeticHide {

@@ -30,10 +30,8 @@ import kotlin.Metadata;
 import kotlin.jvm.JvmStatic;
 import kotlin.jvm.internal.DefaultConstructorMarker;
 import kotlin.jvm.internal.SourceDebugExtension;
-import kotlin.random.RandomKt$$ExternalSyntheticBUOutline0;
 import kotlin.text.StringsKt;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaDataController;
@@ -77,7 +75,6 @@ public final class InstallPluginBottomSheet extends BottomSheet {
             private Companion() {
             }
 
-            /* JADX WARN: Code duplicated, block: B:11:0x0037  */
             @JvmStatic
             public final PluginInstallParams of(MessageObject messageObject) {
                 "messageObject";

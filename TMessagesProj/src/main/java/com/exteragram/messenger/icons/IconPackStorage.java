@@ -32,7 +32,6 @@ import kotlinx.coroutines.BuildersKt__BuildersKt;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Dispatchers;
 import okhttp3.internal.url._UrlKt;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simplifiles.SimpliFiles;
@@ -94,7 +93,6 @@ public final class IconPackStorage {
         private File $file;
         int label;
 
-        /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
         public C01512(File file, Continuation<? super C01512> continuation) {
             super(2, continuation);
             this.$file = file;

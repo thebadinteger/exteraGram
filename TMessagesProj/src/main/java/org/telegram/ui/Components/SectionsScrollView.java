@@ -1,219 +1,208 @@
 package org.telegram.ui.Components;
 
+import static org.telegram.messenger.AndroidUtilities.dp;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
-import android.graphics.RectF;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
-import java.util.Objects;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.FiltersSetupActivity;
 
+import java.util.ArrayList;
+import java.util.Objects;
+
 public class SectionsScrollView extends ScrollView {
-    private ArrayList<View> children;
-    private final Path clipPath;
-    private LinearLayout contentView;
-    private ArrayList<Runnable> onScroll;
+
     private Theme.ResourcesProvider resourcesProvider;
-    private float sectionRadius;
-    private float[] sectionRadiusBottom;
-    private float[] sectionRadiusTop;
+    private LinearLayout contentView;
+
+    private float sectionRadius = dp(16);
+    private float[] sectionRadiusTop, sectionRadiusBottom;
 
     public static boolean isSectionView(View view) {
-        return (Objects.equals(view.getTag(), -33024) || (view instanceof TextInfoPrivacyCell) || (view instanceof ShadowSectionCell) || (view instanceof FiltersSetupActivity.HintInnerCell)) ? false : true;
+        return !Objects.equals(view.getTag(), RecyclerListView.TAG_NOT_SECTION) && !(
+            view instanceof TextInfoPrivacyCell ||
+            view instanceof ShadowSectionCell ||
+            view instanceof FiltersSetupActivity.HintInnerCell
+        );
     }
 
-    public SectionsScrollView(Context context, LinearLayout linearLayout, Theme.ResourcesProvider resourcesProvider) {
-        this(context, linearLayout, resourcesProvider, true);
+    public SectionsScrollView(Context context, LinearLayout content, Theme.ResourcesProvider resourcesProvider) {
+        this(context, content, resourcesProvider, true);
     }
-
-    public SectionsScrollView(Context context, LinearLayout linearLayout, Theme.ResourcesProvider resourcesProvider, boolean z) {
+    public SectionsScrollView(
+        Context context,
+        LinearLayout content,
+        Theme.ResourcesProvider resourcesProvider,
+        boolean enableTopPadding
+    ) {
         super(context);
-        this.sectionRadius = AndroidUtilities.dp(ExteraConfig.getSectionRadiusDp());
-        this.onScroll = new ArrayList<>();
-        this.children = new ArrayList<>();
-        this.clipPath = new Path();
         this.resourcesProvider = resourcesProvider;
-        this.contentView = linearLayout;
+        this.contentView = content;
         setWillNotDraw(false);
-        this.contentView.setPadding(AndroidUtilities.dp(12.0f), AndroidUtilities.dp(z ? 12.0f : 4.0f), AndroidUtilities.dp(12.0f), AndroidUtilities.dp(12.0f));
-        float f = this.sectionRadius;
-        this.sectionRadiusTop = new float[]{f, f, f, f, 0.0f, 0.0f, 0.0f, 0.0f};
-        this.sectionRadiusBottom = new float[]{0.0f, 0.0f, 0.0f, 0.0f, f, f, f, f};
+
+        contentView.setPadding(dp(12), dp(enableTopPadding ? 12 : 4), dp(12), dp(12));
+
+        this.sectionRadiusTop = new float[] {
+            dp(16), dp(16),
+            dp(16), dp(16),
+            0, 0,
+            0, 0
+        };
+        this.sectionRadiusBottom = new float[] {
+            0, 0,
+            0, 0,
+            dp(16), dp(16),
+            dp(16), dp(16)
+        };
     }
 
-    public void onScroll(Runnable runnable) {
-        this.onScroll.add(runnable);
+    private ArrayList<Runnable> onScroll = new ArrayList<>();
+    public void onScroll(Runnable listener) {
+        onScroll.add(listener);
     }
 
-    @Override // android.view.View
-    public void onScrollChanged(int i, int i2, int i3, int i4) {
-        super.onScrollChanged(i, i2, i3, i4);
-        ArrayList<Runnable> arrayList = this.onScroll;
-        int size = arrayList.size();
-        int i5 = 0;
-        while (i5 < size) {
-            Runnable runnable = arrayList.get(i5);
-            i5++;
-            runnable.run();
-        }
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        super.onScrollChanged(l, t, oldl, oldt);
+
+        for (Runnable listener : onScroll)
+            listener.run();
+
         invalidate();
-        this.contentView.invalidate();
+        contentView.invalidate();
     }
 
-    /* JADX WARN: Code duplicated, block: B:17:0x005b  */
-    private void gatherChildren(ViewGroup viewGroup, float f, float f2) {
-        for (int i = 0; i < viewGroup.getChildCount(); i++) {
-            View childAt = viewGroup.getChildAt(i);
-            if (childAt.getVisibility() == 0) {
-                if (childAt instanceof LinearLayout) {
-                    LinearLayout linearLayout = (LinearLayout) childAt;
-                    if (linearLayout.getOrientation() == 1 && childAt.getX() + f <= this.contentView.getPaddingLeft() && childAt.getX() + f + childAt.getWidth() >= this.contentView.getWidth() - this.contentView.getPaddingRight()) {
-                        gatherChildren(linearLayout, childAt.getX() + f, childAt.getY() + f2);
-                    } else {
-                        this.children.add(childAt);
-                    }
-                } else {
-                    this.children.add(childAt);
-                }
+    private ArrayList<View> children = new ArrayList<>();
+    private void gatherChildren(ViewGroup layout, float x, float y) {
+        for (int i = 0; i < layout.getChildCount(); ++i) {
+            final View child = layout.getChildAt(i);
+            if (child.getVisibility() != View.VISIBLE) continue;
+            if (child instanceof LinearLayout && ((LinearLayout) child).getOrientation() == LinearLayout.VERTICAL && x + child.getX() <= contentView.getPaddingLeft() && x + child.getX() + child.getWidth() >= contentView.getWidth() - contentView.getPaddingRight()) {
+                gatherChildren((LinearLayout) child, x + child.getX(), y + child.getY());
+            } else {
+                children.add(child);
             }
         }
     }
-
-    private float getChildX(View view) {
-        if (view == this.contentView || !(view.getParent() instanceof View)) {
-            return view.getX();
-        }
-        return getChildX((View) view.getParent()) + view.getX();
+    private float getChildX(View child) {
+        if (child == contentView || !(child.getParent() instanceof View)) return child.getX();
+        return getChildX((View) child.getParent()) + child.getX();
     }
-
-    private float getChildY(View view) {
-        if (view == this.contentView || !(view.getParent() instanceof View)) {
-            return view.getY();
-        }
-        return getChildY((View) view.getParent()) + view.getY();
+    private float getChildY(View child) {
+        if (child == contentView || !(child.getParent() instanceof View)) return child.getY();
+        return getChildY((View) child.getParent()) + child.getY();
     }
 
     private void drawSectionsBackgrounds(Canvas canvas) {
-        this.children.clear();
-        gatherChildren(this.contentView, 0.0f, 0.0f);
-        ArrayList<View> arrayList = this.children;
-        int size = arrayList.size();
-        int i = 0;
-        while (true) {
-            View view = null;
-            View view2 = null;
-            while (true) {
-                if (i < size) {
-                    View view3 = arrayList.get(i);
-                    i++;
-                    View view4 = view3;
-                    if (!isSectionView(view4)) {
-                        break;
-                    }
-                    if (view != null && Math.abs(view2.getAlpha() - view4.getAlpha()) > 0.1f) {
-                        drawSectionBackground(canvas, view, view2);
-                        view = null;
-                    }
-                    if (view == null) {
-                        view = view4;
-                    }
-                    view2 = view4;
-                } else {
-                    drawSectionBackground(canvas, view, view2);
-                    return;
-                }
+        children.clear();
+        gatherChildren(contentView, 0, 0);
+
+        View start = null, prev = null;
+        for (View child : children) {
+            if (!isSectionView(child)) {
+                drawSectionBackground(canvas, start, prev);
+                start = prev = null;
+                continue;
             }
-            drawSectionBackground(canvas, view, view2);
+            if (start != null && Math.abs(prev.getAlpha() - child.getAlpha()) > 0.1f) {
+                drawSectionBackground(canvas, start, prev);
+                start = null;
+            }
+            if (start == null) {
+                start = child;
+            }
+            prev = child;
         }
+        drawSectionBackground(canvas, start, prev);
     }
 
-    private void drawSectionBackground(Canvas canvas, View view, View view2) {
-        if (view == null || view2 == null) {
-            return;
+    private void drawSectionBackground(
+        Canvas canvas,
+        View from, View to
+    ) {
+        if (from == null || to == null) return;
+
+        float fromTopMargin = 0, toBottomMargin = 0;
+        ViewGroup.LayoutParams fromLp = from.getLayoutParams();
+        ViewGroup.LayoutParams toLp = to.getLayoutParams();
+        if (from.getParent() != contentView && fromLp instanceof MarginLayoutParams) {
+            fromTopMargin = ((MarginLayoutParams) fromLp).topMargin;
         }
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        ViewGroup.LayoutParams layoutParams2 = view2.getLayoutParams();
-        float f = 0.0f;
-        float f2 = (view.getParent() == this.contentView || !(layoutParams instanceof ViewGroup.MarginLayoutParams)) ? 0.0f : ((ViewGroup.MarginLayoutParams) layoutParams).topMargin;
-        ViewParent parent = view2.getParent();
-        LinearLayout linearLayout = this.contentView;
-        if (parent != linearLayout && (layoutParams2 instanceof ViewGroup.MarginLayoutParams)) {
-            f = ((ViewGroup.MarginLayoutParams) layoutParams2).topMargin;
+        if (to.getParent() != contentView && toLp instanceof MarginLayoutParams) {
+            toBottomMargin = ((MarginLayoutParams) toLp).topMargin;
         }
-        RectF rectF = AndroidUtilities.rectTmp;
-        rectF.set(linearLayout.getX() + getChildX(view), Math.max(getScrollY() - this.sectionRadius, (this.contentView.getY() + getChildY(view)) - f2), this.contentView.getX() + getChildX(view) + view.getWidth(), Math.min(getHeight() + this.sectionRadius + getScrollY(), this.contentView.getY() + getChildY(view2) + view2.getHeight() + f));
-        if (rectF.bottom < rectF.top) {
-            return;
-        }
-        float singleSectionRadius = (view == view2 && RecyclerListView.isRoundSectionView(view)) ? getSingleSectionRadius() : this.sectionRadius;
-        RecyclerListView.drawBackgroundRect(canvas, rectF, singleSectionRadius, singleSectionRadius, view.getAlpha(), this.resourcesProvider);
+
+        AndroidUtilities.rectTmp.set(
+            contentView.getX() + getChildX(from),
+            Math.max(getScrollY() - dp(16), contentView.getY() + getChildY(from) - fromTopMargin),
+            contentView.getX() + getChildX(from) + from.getWidth(),
+            Math.min(getHeight() + dp(16) + getScrollY(), contentView.getY() + getChildY(to) + to.getHeight() + toBottomMargin)
+        );
+        if (AndroidUtilities.rectTmp.bottom < AndroidUtilities.rectTmp.top) return;
+        RecyclerListView.drawBackgroundRect(canvas, AndroidUtilities.rectTmp, dp(16), dp(16), from.getAlpha(), resourcesProvider);
     }
 
-    private float getSingleSectionRadius() {
-        return AndroidUtilities.rectTmp.height() / 2.0f;
-    }
-
-    @Override // android.view.ViewGroup, android.view.View
-    public void dispatchDraw(Canvas canvas) {
+    @Override
+    protected void dispatchDraw(@NonNull Canvas canvas) {
         drawSectionsBackgrounds(canvas);
         super.dispatchDraw(canvas);
     }
 
-    @Override // android.view.ViewGroup
-    public boolean drawChild(Canvas canvas, View view, long j) {
-        return super.drawChild(canvas, view, j);
+    @Override
+    protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+        return super.drawChild(canvas, child, drawingTime);
     }
 
-    public void clipChild(Canvas canvas, View view) {
-        if (view == null || !isSectionView(view)) {
+    private final Path clipPath = new Path();
+    private void clipChild(Canvas canvas, View child) {
+        if (child == null || !isSectionView(child))
             return;
+
+        boolean prev, next;
+        int position = contentView.indexOfChild(child);
+        final View prevChild = position - 1 < 0 ? null : contentView.getChildAt(position - 1);
+        final View nextChild = position + 1 >= contentView.getChildCount() ? null : contentView.getChildAt(position + 1);
+        prev = prevChild != null && isSectionView(prevChild);
+        next = nextChild != null && isSectionView(nextChild);
+
+        AndroidUtilities.rectTmp.set(
+            child.getX(),
+            Math.max(getScrollY() - dp(16), contentView.getY() + child.getY()),
+            child.getX() + child.getWidth(),
+            Math.min(getHeight() + getScrollY() + dp(16), contentView.getY() + child.getY() + child.getHeight())
+        );
+        if (prev && next) {
+            prev = child.getY() >= AndroidUtilities.rectTmp.top;
+            next = child.getY() + child.getHeight() <= AndroidUtilities.rectTmp.bottom;
+            if (prev && next) return;
         }
-        int iIndexOfChild = this.contentView.indexOfChild(view);
-        int i = iIndexOfChild - 1;
-        View childAt = i < 0 ? null : this.contentView.getChildAt(i);
-        int i2 = iIndexOfChild + 1;
-        View childAt2 = i2 < this.contentView.getChildCount() ? this.contentView.getChildAt(i2) : null;
-        boolean z = childAt != null && isSectionView(childAt);
-        boolean z2 = childAt2 != null && isSectionView(childAt2);
-        RectF rectF = AndroidUtilities.rectTmp;
-        rectF.set(view.getX(), Math.max(getScrollY() - this.sectionRadius, this.contentView.getY() + view.getY()), view.getX() + view.getWidth(), Math.min(getHeight() + getScrollY() + this.sectionRadius, this.contentView.getY() + view.getY() + view.getHeight()));
-        if (z && z2) {
-            z = view.getY() >= rectF.top;
-            boolean z3 = view.getY() + ((float) view.getHeight()) <= rectF.bottom;
-            if (z && z3) {
-                return;
-            } else {
-                z2 = z3;
-            }
-        }
-        if (!z && !z2) {
-            this.clipPath.rewind();
-            float singleSectionRadius = RecyclerListView.isRoundSectionView(view) ? getSingleSectionRadius() : this.sectionRadius;
-            this.clipPath.addRoundRect(rectF, singleSectionRadius, singleSectionRadius, Path.Direction.CW);
-            canvas.clipPath(this.clipPath);
-            return;
-        }
-        if (!z) {
-            this.clipPath.rewind();
-            this.clipPath.addRoundRect(rectF, this.sectionRadiusTop, Path.Direction.CW);
-            canvas.clipPath(this.clipPath);
-        } else {
-            if (z2) {
-                return;
-            }
-            this.clipPath.rewind();
-            this.clipPath.addRoundRect(rectF, this.sectionRadiusBottom, Path.Direction.CW);
-            canvas.clipPath(this.clipPath);
+        if (!prev && !next) {
+            clipPath.rewind();
+            clipPath.addRoundRect(AndroidUtilities.rectTmp, sectionRadius, sectionRadius, Path.Direction.CW);
+            canvas.clipPath(clipPath);
+        } else if (!prev) {
+            clipPath.rewind();
+            clipPath.addRoundRect(AndroidUtilities.rectTmp, sectionRadiusTop, Path.Direction.CW);
+            canvas.clipPath(clipPath);
+        } else if (!next) {
+            clipPath.rewind();
+            clipPath.addRoundRect(AndroidUtilities.rectTmp, sectionRadiusBottom, Path.Direction.CW);
+            canvas.clipPath(clipPath);
         }
     }
 
@@ -223,22 +212,22 @@ public class SectionsScrollView extends ScrollView {
             setWillNotDraw(false);
         }
 
-        @Override // android.view.ViewGroup
-        public boolean drawChild(Canvas canvas, View view, long j) {
+        @Override
+        protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
             if (getParent() instanceof SectionsScrollView) {
-                SectionsScrollView sectionsScrollView = (SectionsScrollView) getParent();
+                final SectionsScrollView scrollView = (SectionsScrollView) getParent();
                 canvas.save();
-                sectionsScrollView.clipChild(canvas, view);
-                boolean zDrawChild = super.drawChild(canvas, view, j);
+                scrollView.clipChild(canvas, child);
+                boolean r = super.drawChild(canvas, child, drawingTime);
                 canvas.restore();
-                return zDrawChild;
+                return r;
             }
-            return super.drawChild(canvas, view, j);
+            return super.drawChild(canvas, child, drawingTime);
         }
 
-        @Override // android.widget.LinearLayout, android.view.ViewGroup, android.view.View
-        public void onLayout(boolean z, int i, int i2, int i3, int i4) {
-            super.onLayout(z, i, i2, i3, i4);
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            super.onLayout(changed, l, t, r, b);
             if (getParent() instanceof SectionsScrollView) {
                 ((SectionsScrollView) getParent()).invalidate();
             }

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.util.Objects;
 import org.telegram.tgnet.TLRPC;
 
@@ -29,7 +28,7 @@ public final class ApiWrap$FileOrigin extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$FileOrigin$$ExternalSyntheticRecord0.m(this.split, this.messageId, this.storyId, this.customEmojiId, this.peer);
+        return java.util.Objects.hash(this.split, this.messageId, this.storyId, this.customEmojiId, this.peer);
     }
 
     public int messageId() {
@@ -49,7 +48,7 @@ public final class ApiWrap$FileOrigin extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$FileOrigin.class, "split;peer;messageId;storyId;customEmojiId");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$FileOrigin.class, "split;peer;messageId;storyId;customEmojiId");
     }
 
     public ApiWrap$FileOrigin() {

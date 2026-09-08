@@ -59,7 +59,6 @@ public class ChatListPreviewCell extends FrameLayout implements CustomPreference
         }
     }
 
-    /* JADX WARN: Code duplicated, block: B:18:0x0076  */
     public void updateStatus(boolean z) {
         Drawable drawable;
         if (this.actionBar == null) {

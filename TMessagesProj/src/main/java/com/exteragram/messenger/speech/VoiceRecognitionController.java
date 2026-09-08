@@ -1,7 +1,6 @@
 package com.exteragram.messenger.speech;
 
 import android.text.TextUtils;
-import androidx.camera.core.impl.Quirks$$ExternalSyntheticBackport0;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.ai.AiController;
 import com.exteragram.messenger.ai.data.Role;

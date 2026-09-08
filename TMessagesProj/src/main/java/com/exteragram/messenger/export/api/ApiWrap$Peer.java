@@ -1,6 +1,5 @@
 package com.exteragram.messenger.export.api;
 
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.telegram.tgnet.TLRPC;
 
 public class ApiWrap$Peer {

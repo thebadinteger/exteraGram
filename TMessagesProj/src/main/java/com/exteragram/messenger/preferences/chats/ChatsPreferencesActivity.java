@@ -3,7 +3,6 @@ package com.exteragram.messenger.preferences.chats;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.view.View;
-import androidx.camera.core.ImageCapture$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.CameraType;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.VideoMessagesCamera;
@@ -56,7 +55,7 @@ public class ChatsPreferencesActivity extends BasePreferencesActivity {
     private StickerShapeCell stickerShapeCell;
     private SliderPreviewCell stickerSizeCell;
     private CharSequence[] videoMessagesCamera;
-    private final List<String> languageCodes = ImageCapture$$ExternalSyntheticBackport1.m(new String[]{"none", "en", "es", "zh", "hi", "fa", "fr", "ru", "pt", "de", "ja", "ko", "it", "uk", "gu", "pl", "nl", "tr", "vi", "cs", "uz", "eo", "kk", "tg", "ca"});
+    private final List<String> languageCodes = java.util.Arrays.asList("none", "en", "es", "zh", "hi", "fa", "fr", "ru", "pt", "de", "ja", "ko", "it", "uk", "gu", "pl", "nl", "tr", "vi", "cs", "uz", "eo", "kk", "tg", "ca");
     private final SwitchGroup replyElements = SwitchGroup.of(this, ChatsItem.REPLY_ELEMENTS.getId(), R.string.RepliesTitle).searchable().linkAlias("replyElements").onChanged(new Runnable() { 
         @Override // java.lang.Runnable
         public final void run() {

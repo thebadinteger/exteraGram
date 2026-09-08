@@ -1,21 +1,28 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
 
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.text.SpannableStringBuilder;
-import android.view.View;
+import android.text.Spanned;
+import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.exteragram.messenger.ExteraConfig;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
-import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
@@ -26,114 +33,102 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.URLSpanNoUnderline;
 
 public class AdminedChannelCell extends FrameLayout {
-    private AvatarDrawable avatarDrawable;
+
     private BackupImageView avatarImageView;
-    CheckBox2 checkBox;
-    private int currentAccount;
-    private TLRPC.Chat currentChannel;
-    private ImageView deleteButton;
-    private boolean isLast;
     private SimpleTextView nameTextView;
     private SimpleTextView statusTextView;
+    private AvatarDrawable avatarDrawable;
+    private ImageView deleteButton;
+    private TLRPC.Chat currentChannel;
+    private boolean isLast;
+    private int currentAccount = UserConfig.selectedAccount;
+    CheckBox2 checkBox;
 
-    @Override // android.view.View
+    public AdminedChannelCell(Context context, OnClickListener onClickListener, boolean needCheck, int padding) {
+        super(context);
+
+        avatarDrawable = new AvatarDrawable();
+        avatarImageView = new BackupImageView(context);
+        avatarImageView.setRoundRadius(AndroidUtilities.dp(24));
+        addView(avatarImageView, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : 12 + padding, 6, LocaleController.isRTL ? 12 + padding : 0, 6));
+
+        if (needCheck) {
+            checkBox = new CheckBox2(context, 21);
+            checkBox.setColor(-1, Theme.key_windowBackgroundWhite, Theme.key_checkboxCheck);
+            checkBox.setDrawUnchecked(false);
+            checkBox.setDrawBackgroundAsArc(3);
+            addView(checkBox, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : 42 + padding,  32, LocaleController.isRTL ? 42 + padding: 0, 0));
+        }
+
+        int leftPadding = onClickListener == null ? 24 : 62;
+        nameTextView = new SimpleTextView(context);
+        nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        nameTextView.setTextSize(17);
+        nameTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
+        addView(nameTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? leftPadding : 73 + padding, 9.5f, LocaleController.isRTL ? 73 + padding: leftPadding, 0));
+
+        statusTextView = new SimpleTextView(context);
+        statusTextView.setTextSize(14);
+        statusTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        statusTextView.setLinkTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteLinkText));
+        statusTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
+        addView(statusTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? leftPadding : 73 + padding, 32.5f, LocaleController.isRTL ? 73 + padding : leftPadding, 6));
+
+        if (onClickListener != null) {
+            deleteButton = new ImageView(context);
+            deleteButton.setScaleType(ImageView.ScaleType.CENTER);
+            deleteButton.setImageResource(R.drawable.msg_panel_clear);
+            deleteButton.setOnClickListener(onClickListener);
+            deleteButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector)));
+            deleteButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.MULTIPLY));
+            addView(deleteButton, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, LocaleController.isRTL ? 7 : 0, 6, LocaleController.isRTL ? 0 : 7, 0));
+        }
+    }
+
+    public void setChannel(TLRPC.Chat channel, boolean last) {
+        final String url = MessagesController.getInstance(currentAccount).linkPrefix + "/";
+        currentChannel = channel;
+        avatarDrawable.setInfo(currentAccount, channel);
+        nameTextView.setText(channel.title);
+        SpannableStringBuilder stringBuilder = new SpannableStringBuilder(url + ChatObject.getPublicUsername(channel));
+        stringBuilder.setSpan(new URLSpanNoUnderline(""), url.length(), stringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        statusTextView.setText(stringBuilder);
+        avatarImageView.setForUserOrChat(channel, avatarDrawable);
+        isLast = last;
+    }
+
+    public void update() {
+        avatarDrawable.setInfo(currentAccount, currentChannel);
+        avatarImageView.invalidate();
+    }
+
+    public TLRPC.Chat getCurrentChannel() {
+        return currentChannel;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(60 + (isLast ? 12 : 0)), MeasureSpec.EXACTLY));
+    }
+
+    @Override
     public boolean hasOverlappingRendering() {
         return false;
     }
 
-    public AdminedChannelCell(Context context, View.OnClickListener onClickListener, boolean z, int i) {
-        super(context);
-        this.currentAccount = UserConfig.selectedAccount;
-        this.avatarDrawable = new AvatarDrawable();
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.avatarImageView = backupImageView;
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(48.0f));
-        BackupImageView backupImageView2 = this.avatarImageView;
-        boolean z2 = LocaleController.isRTL;
-        addView(backupImageView2, LayoutHelper.createFrame(48, 48.0f, (z2 ? 5 : 3) | 48, z2 ? 0.0f : i + 12, 6.0f, z2 ? i + 12 : 0.0f, 6.0f));
-        if (z) {
-            CheckBox2 checkBox2 = new CheckBox2(context, 21);
-            this.checkBox = checkBox2;
-            checkBox2.setColor(-1, Theme.key_windowBackgroundWhite, Theme.key_checkboxCheck);
-            this.checkBox.setDrawUnchecked(false);
-            this.checkBox.setDrawBackgroundAsArc(3);
-            CheckBox2 checkBox3 = this.checkBox;
-            boolean z3 = LocaleController.isRTL;
-            addView(checkBox3, LayoutHelper.createFrame(24, 24.0f, (z3 ? 5 : 3) | 48, z3 ? 0.0f : i + 42, 32.0f, z3 ? i + 42 : 0.0f, 0.0f));
-        }
-        int i2 = onClickListener == null ? 24 : 62;
-        SimpleTextView simpleTextView = new SimpleTextView(context);
-        this.nameTextView = simpleTextView;
-        simpleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        this.nameTextView.setTextSize(17);
-        this.nameTextView.setGravity((LocaleController.isRTL ? 5 : 3) | 48);
-        SimpleTextView simpleTextView2 = this.nameTextView;
-        boolean z4 = LocaleController.isRTL;
-        addView(simpleTextView2, LayoutHelper.createFrame(-1, 20.0f, (z4 ? 5 : 3) | 48, z4 ? i2 : i + 73, 9.5f, z4 ? i + 73 : i2, 0.0f));
-        SimpleTextView simpleTextView3 = new SimpleTextView(context);
-        this.statusTextView = simpleTextView3;
-        simpleTextView3.setTextSize(14);
-        SimpleTextView simpleTextView4 = this.statusTextView;
-        int i3 = Theme.key_windowBackgroundWhiteGrayText;
-        simpleTextView4.setTextColor(Theme.getColor(i3));
-        this.statusTextView.setLinkTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteLinkText));
-        this.statusTextView.setGravity((LocaleController.isRTL ? 5 : 3) | 48);
-        SimpleTextView simpleTextView5 = this.statusTextView;
-        boolean z5 = LocaleController.isRTL;
-        addView(simpleTextView5, LayoutHelper.createFrame(-1, 20.0f, (z5 ? 5 : 3) | 48, z5 ? i2 : i + 73, 32.5f, z5 ? i + 73 : i2, 6.0f));
-        if (onClickListener != null) {
-            ImageView imageView = new ImageView(context);
-            this.deleteButton = imageView;
-            imageView.setScaleType(ImageView.ScaleType.CENTER);
-            this.deleteButton.setImageResource(R.drawable.msg_panel_clear);
-            this.deleteButton.setOnClickListener(onClickListener);
-            this.deleteButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector)));
-            this.deleteButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i3), PorterDuff.Mode.MULTIPLY));
-            ImageView imageView2 = this.deleteButton;
-            boolean z6 = LocaleController.isRTL;
-            addView(imageView2, LayoutHelper.createFrame(48, 48.0f, (z6 ? 3 : 5) | 48, z6 ? 7.0f : 0.0f, 6.0f, z6 ? 0.0f : 7.0f, 0.0f));
-        }
-    }
-
-    public void setChannel(TLRPC.Chat chat, boolean z) {
-        String str = MessagesController.getInstance(this.currentAccount).linkPrefix + "/";
-        this.currentChannel = chat;
-        this.avatarDrawable.setInfo(this.currentAccount, chat);
-        this.nameTextView.setText(chat.title);
-        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(str + ChatObject.getPublicUsername(chat));
-        spannableStringBuilder.setSpan(new URLSpanNoUnderline(_UrlKt.FRAGMENT_ENCODE_SET), str.length(), spannableStringBuilder.length(), 33);
-        this.statusTextView.setText(spannableStringBuilder);
-        this.avatarImageView.setForUserOrChat(chat, this.avatarDrawable);
-        this.isLast = z;
-    }
-
-    public void update() {
-        this.avatarDrawable.setInfo(this.currentAccount, this.currentChannel);
-        this.avatarImageView.invalidate();
-    }
-
-    public TLRPC.Chat getCurrentChannel() {
-        return this.currentChannel;
-    }
-
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp((this.isLast ? 12 : 0) + 60), TLObject.FLAG_30));
-    }
-
     public SimpleTextView getNameTextView() {
-        return this.nameTextView;
+        return nameTextView;
     }
 
     public SimpleTextView getStatusTextView() {
-        return this.statusTextView;
+        return statusTextView;
     }
 
     public ImageView getDeleteButton() {
-        return this.deleteButton;
+        return deleteButton;
     }
 
-    public void setChecked(boolean z, boolean z2) {
-        this.checkBox.setChecked(z, z2);
+    public void setChecked(boolean checked, boolean animated) {
+        checkBox.setChecked(checked, animated);
     }
 }

@@ -386,16 +386,6 @@ public final class IntentsController {
         return file2;
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Code duplicated, block: B:34:0x007c  */
-    /* JADX WARN: Code duplicated, block: B:37:0x0085  */
-    /* JADX WARN: Code duplicated, block: B:40:0x008f  */
-    /* JADX WARN: Code duplicated, block: B:43:0x0099  */
-    /* JADX WARN: Code duplicated, block: B:46:0x00a3  */
-    /* JADX WARN: Code duplicated, block: B:48:0x00ac  */
-    /* JADX WARN: Code duplicated, block: B:50:0x00b8  */
-    /* JADX WARN: Code duplicated, block: B:52:0x00ca  */
-    /* JADX WARN: Failed to restore switch over string. Please report as a decompilation issue */
     public final boolean handleIntent(Intent intent) {
         String scheme;
         String host;

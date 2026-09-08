@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.SQLite.SQLiteCursor;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.FileLog;
@@ -178,7 +177,6 @@ final class FeedTimelineLoader {
         return this.channelCacheEpoch.get();
     }
 
-    /* JADX WARN: Code duplicated, block: B:10:0x0012  */
     public synchronized boolean isEnumerationCurrent(ChannelEnumeration channelEnumeration) {
         boolean z;
         if (channelEnumeration == null) {
@@ -240,7 +238,6 @@ final class FeedTimelineLoader {
         }
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
     public OlderPage loadOlderPage(ArrayList<ChannelSnapshot> arrayList, Cursor cursor, HashSet<Long> hashSet) {
         boolean z;
         int i;
@@ -477,8 +474,8 @@ final class FeedTimelineLoader {
     }
 
     private static void appendCursorBound(StringBuilder sb, Cursor cursor, boolean z, boolean z2) {
-        String string = Deobfuscator$exteraGramDev$TMessagesProj.getString(z ? "<" : ">";
-        sb.append(-49638953731631L));
+        String string = z ? "<" : ">";
+        sb.append(" AND (date ");
         sb.append(string);
         sb.append(' ');
         sb.append(cursor.date);
@@ -492,7 +489,7 @@ final class FeedTimelineLoader {
         sb.append(cursor.uid);
         sb.append(" AND mid ");
         sb.append(string);
-        sb.append(Deobfuscator$exteraGramDev$TMessagesProj.getString(z2 ? "= " : " ");
+        sb.append(z2 ? "= " : " ");
         sb.append(cursor.mid);
         sb.append("))");
     }

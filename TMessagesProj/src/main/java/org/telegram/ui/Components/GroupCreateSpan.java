@@ -1,22 +1,34 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Components;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
+
+import androidx.annotation.NonNull;
 import androidx.core.graphics.ColorUtils;
-import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.Emoji;
@@ -31,508 +43,338 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.GroupCreateUserCell;
 
 public class GroupCreateSpan extends View {
-    private AvatarDrawable avatarDrawable;
-    private int[] colors;
+
     private String countryIso2;
-    private ContactsController.Contact currentContact;
-    private Drawable deleteDrawable;
-    private boolean deleting;
-    private boolean drawAvatarBackground;
-    private ImageReceiver imageReceiver;
-    public boolean isFlag;
+    private long uid;
     private String key;
-    private long lastUpdateTime;
+    public boolean isFlag;
+    private static TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    private static Paint backPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Drawable deleteDrawable;
+    private RectF rect = new RectF();
+    private ImageReceiver imageReceiver;
     private StaticLayout nameLayout;
-    private float progress;
-    private RectF rect;
-    private Theme.ResourcesProvider resourcesProvider;
-    private boolean small;
+    private AvatarDrawable avatarDrawable;
+    private ContactsController.Contact currentContact;
     private int textWidth;
     private float textX;
-    private long uid;
-    private static TextPaint textPaint = new TextPaint(1);
-    private static Paint backPaint = new Paint(1);
+    private float progress;
+    private boolean deleting;
+    private long lastUpdateTime;
+    private int[] colors = new int[8];
+    private Theme.ResourcesProvider resourcesProvider;
+    private boolean small;
+    private boolean drawAvatarBackground = true;
 
-    public GroupCreateSpan(Context context, Object obj) {
-        this(context, obj, null);
+    public GroupCreateSpan(Context context, Object object) {
+        this(context, object, null);
     }
 
-    public GroupCreateSpan(Context context, Object obj, ContactsController.Contact contact) {
-        this(context, obj, contact, null);
+    public GroupCreateSpan(Context context, ContactsController.Contact contact) {
+        this(context, null, contact);
     }
 
-    public GroupCreateSpan(Context context, Object obj, ContactsController.Contact contact, Theme.ResourcesProvider resourcesProvider) {
-        this(context, obj, contact, false, resourcesProvider);
+    public GroupCreateSpan(Context context, Object object, ContactsController.Contact contact) {
+        this(context, object, contact, null);
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Code duplicated, block: B:104:0x039d  */
-    /* JADX WARN: Code duplicated, block: B:106:0x03a0  */
-    /* JADX WARN: Code duplicated, block: B:109:0x03b6  */
-    /* JADX WARN: Code duplicated, block: B:45:0x01ba  */
-    /* JADX WARN: Code duplicated, block: B:73:0x02d0  */
-    /* JADX WARN: Code duplicated, block: B:74:0x02d3  */
-    /* JADX WARN: Code duplicated, block: B:77:0x02e8  */
-    /* JADX WARN: Code duplicated, block: B:78:0x02ea  */
-    /* JADX WARN: Code duplicated, block: B:80:0x02f3  */
-    /* JADX WARN: Code duplicated, block: B:81:0x02f6  */
-    /* JADX WARN: Code duplicated, block: B:84:0x02ff  */
-    /* JADX WARN: Code duplicated, block: B:85:0x0302  */
-    /* JADX WARN: Code duplicated, block: B:88:0x0314 A[DONT_INVERT] */
-    /* JADX WARN: Code duplicated, block: B:90:0x0317  */
-    /* JADX WARN: Code duplicated, block: B:92:0x0322  */
-    /* JADX WARN: Code duplicated, block: B:95:0x032f  */
-    /* JADX WARN: Code duplicated, block: B:99:0x036c  */
-    public GroupCreateSpan(Context context, Object obj, ContactsController.Contact contact, boolean z, Theme.ResourcesProvider resourcesProvider) {
-        String string;
-        ImageLocation forUserOrChat;
-        Object obj2;
-        ImageLocation forUserOrChat2;
-        TLRPC.User user;
-        float f;
-        float fDp;
-        float f2;
-        float f3;
-        int iMin;
-        StaticLayout staticLayout;
+    public GroupCreateSpan(Context context, Object object, ContactsController.Contact contact, Theme.ResourcesProvider resourcesProvider) {
+        this(context, object, contact, false, resourcesProvider);
+    }
+
+    public GroupCreateSpan(Context context, Object object, ContactsController.Contact contact, boolean small, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.rect = new RectF();
-        this.colors = new int[8];
-        this.drawAvatarBackground = true;
         this.resourcesProvider = resourcesProvider;
-        this.small = z;
-        this.isFlag = false;
-        this.currentContact = contact;
-        this.deleteDrawable = getResources().getDrawable(R.drawable.delete);
-        textPaint.setTextSize(AndroidUtilities.dp(z ? 13.0f : 14.0f));
-        AvatarDrawable avatarDrawable = new AvatarDrawable();
-        this.avatarDrawable = avatarDrawable;
-        avatarDrawable.setTextSize(AndroidUtilities.dp(20.0f));
-        boolean z2 = obj instanceof String;
-        if (!z2) {
-            if (obj instanceof TLRPC.User) {
-                TLRPC.User user2 = (TLRPC.User) obj;
-                this.uid = user2.id;
-                if (UserObject.isReplyUser(user2)) {
-                    string = LocaleController.getString(R.string.RepliesTitle);
-                    this.avatarDrawable.setScaleSize(0.8f);
-                    this.avatarDrawable.setAvatarType(12);
-                } else {
-                    if (UserObject.isUserSelf(user2)) {
-                        string = LocaleController.getString(R.string.SavedMessages);
-                        this.avatarDrawable.setScaleSize(0.8f);
-                        this.avatarDrawable.setAvatarType(1);
-                    } else {
-                        this.avatarDrawable.setInfo(user2);
-                        String firstName = UserObject.getFirstName(user2);
-                        int iIndexOf = firstName.indexOf(32);
-                        firstName = iIndexOf >= 0 ? firstName.substring(0, iIndexOf) : firstName;
-                        forUserOrChat2 = ImageLocation.getForUserOrChat(user2, 1);
-                        String str = firstName;
-                        user = user2;
-                        string = str;
-                    }
-                    obj2 = user;
-                    forUserOrChat = forUserOrChat2;
-                }
-                user = null;
-                forUserOrChat2 = null;
-                obj2 = user;
-                forUserOrChat = forUserOrChat2;
-            } else if (obj instanceof TLRPC.Chat) {
-                TLRPC.Chat chat = (TLRPC.Chat) obj;
-                this.avatarDrawable.setInfo(chat);
-                this.uid = -chat.id;
-                string = chat.title;
-                forUserOrChat = ImageLocation.getForUserOrChat(chat, 1);
-                obj2 = chat;
-            } else if (obj instanceof TLRPC.TL_help_country) {
-                TLRPC.TL_help_country tL_help_country = (TLRPC.TL_help_country) obj;
-                String languageFlag = LocaleController.getLanguageFlag(tL_help_country.iso2);
-                String str2 = tL_help_country.default_name;
-                this.avatarDrawable.setAvatarType(17);
-                this.avatarDrawable.setTextSize(AndroidUtilities.dp(24.0f));
-                this.avatarDrawable.setInfo(0L, languageFlag, null, null);
-                this.avatarDrawable.setColor(Theme.multAlpha(Theme.getColor(Theme.key_text_RedRegular, resourcesProvider), 0.7f));
-                AvatarDrawable avatarDrawable2 = this.avatarDrawable;
-                this.drawAvatarBackground = false;
-                avatarDrawable2.setDrawAvatarBackground(false);
-                this.uid = tL_help_country.default_name.hashCode();
-                this.countryIso2 = tL_help_country.iso2;
-                string = str2;
+        this.small = small;
+        isFlag = false;
+
+        currentContact = contact;
+        deleteDrawable = getResources().getDrawable(R.drawable.delete);
+        textPaint.setTextSize(dp(small ? 13 : 14));
+
+        String firstName;
+
+        ImageLocation imageLocation;
+        Object imageParent;
+
+        avatarDrawable = new AvatarDrawable();
+        avatarDrawable.setTextSize(dp(20));
+        if (object instanceof String) {
+            imageLocation = null;
+            imageParent = null;
+            String str = (String) object;
+            avatarDrawable.setScaleSize(.8f);
+            switch (str) {
+                case "contacts":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_CONTACTS);
+                    uid = Long.MIN_VALUE;
+                    firstName = LocaleController.getString(R.string.FilterContacts);
+                    break;
+                case "non_contacts":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_NON_CONTACTS);
+                    uid = Long.MIN_VALUE + 1;
+                    firstName = LocaleController.getString(R.string.FilterNonContacts);
+                    break;
+                case "groups":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_GROUPS);
+                    uid = Long.MIN_VALUE + 2;
+                    firstName = LocaleController.getString(R.string.FilterGroups);
+                    break;
+                case "channels":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_CHANNELS);
+                    uid = Long.MIN_VALUE + 3;
+                    firstName = LocaleController.getString(R.string.FilterChannels);
+                    break;
+                case "bots":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_BOTS);
+                    uid = Long.MIN_VALUE + 4;
+                    firstName = LocaleController.getString(R.string.FilterBots);
+                    break;
+                case "muted":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_MUTED);
+                    uid = Long.MIN_VALUE + 5;
+                    firstName = LocaleController.getString(R.string.FilterMuted);
+                    break;
+                case "read":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_READ);
+                    uid = Long.MIN_VALUE + 6;
+                    firstName = LocaleController.getString(R.string.FilterRead);
+                    break;
+                case "existing_chats":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_EXISTING_CHATS);
+                    uid = Long.MIN_VALUE + 8;
+                    firstName = LocaleController.getString(R.string.FilterExistingChats);
+                    break;
+                case "new_chats":
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_NEW_CHATS);
+                    uid = Long.MIN_VALUE + 9;
+                    firstName = LocaleController.getString(R.string.FilterNewChats);
+                    break;
+                case "premium":
+                    isFlag = true;
+                    avatarDrawable.setColor(Theme.getColor(Theme.key_premiumGradientBackground2, resourcesProvider));
+                    firstName = LocaleController.getString(R.string.PrivacyPremium);
+                    break;
+                case "miniapps":
+                    isFlag = true;
+                    avatarDrawable.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue, resourcesProvider), Theme.getColor(Theme.key_avatar_background2Blue, resourcesProvider));
+                    firstName = LocaleController.getString(R.string.PrivacyMiniapps);
+                    break;
+                case "archived":
+                default:
+                    avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_FILTER_ARCHIVED);
+                    uid = Long.MIN_VALUE + 7;
+                    firstName = LocaleController.getString(R.string.FilterArchived);
+                    break;
+            }
+        } else if (object instanceof TLRPC.User) {
+            TLRPC.User user = (TLRPC.User) object;
+            uid = user.id;
+            if (UserObject.isReplyUser(user)) {
+                firstName = LocaleController.getString(R.string.RepliesTitle);
+                avatarDrawable.setScaleSize(.8f);
+                avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_REPLIES);
+                imageLocation = null;
+                imageParent = null;
+            } else if (UserObject.isUserSelf(user)) {
+                firstName = LocaleController.getString(R.string.SavedMessages);
+                avatarDrawable.setScaleSize(.8f);
+                avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_SAVED);
+                imageLocation = null;
+                imageParent = null;
             } else {
-                this.avatarDrawable.setInfo(contact.contact_id, contact.first_name, contact.last_name);
-                this.uid = contact.contact_id;
-                this.key = contact.key;
-                string = !TextUtils.isEmpty(contact.first_name) ? contact.first_name : contact.last_name;
+                avatarDrawable.setInfo(user);
+                firstName = UserObject.getFirstName(user);
+                int index;
+                if ((index = firstName.indexOf(' ')) >= 0) {
+                    firstName = firstName.substring(0, index);
+                }
+                imageLocation = ImageLocation.getForUserOrChat(user, ImageLocation.TYPE_SMALL);
+                imageParent = user;
             }
-            ImageReceiver imageReceiver = new ImageReceiver();
-            this.imageReceiver = imageReceiver;
-            if (z) {
-                f = 28.0f;
-            } else {
-                f = 32.0f;
-            }
-            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(f));
-            this.imageReceiver.setParentView(this);
-            ImageReceiver imageReceiver2 = this.imageReceiver;
-            if (this.drawAvatarBackground) {
-                fDp = 0.0f;
-            } else {
-                fDp = AndroidUtilities.dp(4.0f);
-            }
-            if (z) {
-                f2 = 28.0f;
-            } else {
-                f2 = 32.0f;
-            }
-            float fDp2 = AndroidUtilities.dp(f2);
-            if (z) {
-                f3 = 28.0f;
-            } else {
-                f3 = 32.0f;
-            }
-            imageReceiver2.setImageCoords(fDp, 0.0f, fDp2, AndroidUtilities.dp(f3));
-            if (AndroidUtilities.isTablet()) {
-                iMin = AndroidUtilities.dp(398 - (z ? 28 : 32)) / 2;
-            } else {
-                Point point = AndroidUtilities.displaySize;
-                iMin = (Math.min(point.x, point.y) - AndroidUtilities.dp((z ? 28 : 32) + 132)) / 2;
-            }
-            staticLayout = new StaticLayout(TextUtils.ellipsize(Emoji.replaceEmoji(string.replace('\n', ' '), textPaint.getFontMetricsInt(), false), textPaint, iMin, TextUtils.TruncateAt.END), textPaint, 1000, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-            this.nameLayout = staticLayout;
-            if (staticLayout.getLineCount() > 0) {
-                this.textWidth = (int) Math.ceil(this.nameLayout.getLineWidth(0));
-                this.textX = -this.nameLayout.getLineLeft(0);
-            }
-            if (!z2 && "premium".equals((String) obj)) {
-                this.imageReceiver.setImageBitmap(GroupCreateUserCell.makePremiumUsersDrawable(getContext(), true));
-            } else if (z2 || !"miniapps".equals((String) obj)) {
-                this.imageReceiver.setImage(forUserOrChat, "50_50", this.avatarDrawable, 0L, (String) null, obj2, 1);
-            } else {
-                this.imageReceiver.setImageBitmap(GroupCreateUserCell.makeMiniAppsDrawable(getContext(), true));
-            }
-            updateColors();
-            NotificationCenter.listenEmojiLoading(this);
-        }
-        String str3 = (String) obj;
-        this.avatarDrawable.setScaleSize(0.8f);
-        switch (str3.hashCode()) {
-            case -1716307998:
-                str3.equals("archived");
-                this.avatarDrawable.setAvatarType(11);
-                this.uid = -9223372036854775801L;
-                string = LocaleController.getString(R.string.FilterArchived);
-                break;
-            case -1359418551:
-                if (!str3.equals("miniapps")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.isFlag = true;
-                    this.avatarDrawable.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue, resourcesProvider), Theme.getColor(Theme.key_avatar_background2Blue, resourcesProvider));
-                    string = LocaleController.getString(R.string.PrivacyMiniapps);
-                }
-                break;
-            case -1237460524:
-                if (!str3.equals("groups")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(6);
-                    this.uid = -9223372036854775806L;
-                    string = LocaleController.getString(R.string.FilterGroups);
-                }
-                break;
-            case -1197490811:
-                if (!str3.equals("non_contacts")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(5);
-                    this.uid = -9223372036854775807L;
-                    string = LocaleController.getString(R.string.FilterNonContacts);
-                }
-                break;
-            case -567451565:
-                if (!str3.equals("contacts")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(4);
-                    this.uid = Long.MIN_VALUE;
-                    string = LocaleController.getString(R.string.FilterContacts);
-                }
-                break;
-            case -318452137:
-                if (!str3.equals("premium")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.isFlag = true;
-                    this.avatarDrawable.setColor(Theme.getColor(Theme.key_premiumGradientBackground2, resourcesProvider));
-                    string = LocaleController.getString(R.string.PrivacyPremium);
-                }
-                break;
-            case -268161860:
-                if (!str3.equals("new_chats")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(24);
-                    this.uid = -9223372036854775799L;
-                    string = LocaleController.getString(R.string.FilterNewChats);
-                }
-                break;
-            case 3029900:
-                if (!str3.equals("bots")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(8);
-                    this.uid = -9223372036854775804L;
-                    string = LocaleController.getString(R.string.FilterBots);
-                }
-                break;
-            case 3496342:
-                if (!str3.equals("read")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(10);
-                    this.uid = -9223372036854775802L;
-                    string = LocaleController.getString(R.string.FilterRead);
-                }
-                break;
-            case 104264043:
-                if (!str3.equals("muted")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(9);
-                    this.uid = -9223372036854775803L;
-                    string = LocaleController.getString(R.string.FilterMuted);
-                }
-                break;
-            case 151051367:
-                if (!str3.equals("existing_chats")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(23);
-                    this.uid = -9223372036854775800L;
-                    string = LocaleController.getString(R.string.FilterExistingChats);
-                }
-                break;
-            case 1432626128:
-                if (!str3.equals("channels")) {
-                    this.avatarDrawable.setAvatarType(11);
-                    this.uid = -9223372036854775801L;
-                    string = LocaleController.getString(R.string.FilterArchived);
-                } else {
-                    this.avatarDrawable.setAvatarType(7);
-                    this.uid = -9223372036854775805L;
-                    string = LocaleController.getString(R.string.FilterChannels);
-                }
-                break;
-            default:
-                this.avatarDrawable.setAvatarType(11);
-                this.uid = -9223372036854775801L;
-                string = LocaleController.getString(R.string.FilterArchived);
-                break;
-        }
-        forUserOrChat = null;
-        obj2 = null;
-        ImageReceiver imageReceiver3 = new ImageReceiver();
-        this.imageReceiver = imageReceiver3;
-        if (z) {
-            f = 28.0f;
+        } else if (object instanceof TLRPC.Chat) {
+            TLRPC.Chat chat = (TLRPC.Chat) object;
+            avatarDrawable.setInfo(chat);
+            uid = -chat.id;
+            firstName = chat.title;
+            imageLocation = ImageLocation.getForUserOrChat(chat, ImageLocation.TYPE_SMALL);
+            imageParent = chat;
+        } else if (object instanceof TLRPC.TL_help_country) {
+            TLRPC.TL_help_country country = (TLRPC.TL_help_country) object;
+            String flag = LocaleController.getLanguageFlag(country.iso2);
+            firstName = country.default_name;
+            avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_COUNTRY);
+            avatarDrawable.setTextSize(dp(24));
+            avatarDrawable.setInfo(0, flag, null, null);
+            avatarDrawable.setColor(Theme.multAlpha(Theme.getColor(Theme.key_text_RedRegular, resourcesProvider), 0.7f));
+            avatarDrawable.setDrawAvatarBackground(drawAvatarBackground = false);
+            uid = country.default_name.hashCode();
+            countryIso2 = country.iso2;
+            imageLocation = null;
+            imageParent = null;
         } else {
-            f = 32.0f;
+            avatarDrawable.setInfo(contact.contact_id, contact.first_name, contact.last_name);
+            uid = contact.contact_id;
+            key = contact.key;
+            if (!TextUtils.isEmpty(contact.first_name)) {
+                firstName = contact.first_name;
+            } else {
+                firstName = contact.last_name;
+            }
+            imageLocation = null;
+            imageParent = null;
         }
-        imageReceiver3.setRoundRadius(ExteraConfig.getAvatarCorners(f));
-        this.imageReceiver.setParentView(this);
-        ImageReceiver imageReceiver4 = this.imageReceiver;
-        if (this.drawAvatarBackground) {
-            fDp = 0.0f;
-        } else {
-            fDp = AndroidUtilities.dp(4.0f);
-        }
-        if (z) {
-            f2 = 28.0f;
-        } else {
-            f2 = 32.0f;
-        }
-        float fDp3 = AndroidUtilities.dp(f2);
-        if (z) {
-            f3 = 28.0f;
-        } else {
-            f3 = 32.0f;
-        }
-        imageReceiver4.setImageCoords(fDp, 0.0f, fDp3, AndroidUtilities.dp(f3));
+
+        imageReceiver = new ImageReceiver();
+        imageReceiver.setRoundRadius(dp(16));
+        imageReceiver.setParentView(this);
+        imageReceiver.setImageCoords(drawAvatarBackground ? 0 : dp(4), 0, dp(small ? 28 : 32), dp(small ? 28 : 32));
+
+        int maxNameWidth;
         if (AndroidUtilities.isTablet()) {
-            iMin = AndroidUtilities.dp(398 - (z ? 28 : 32)) / 2;
+            maxNameWidth = dp(530 - (small ? 28 : 32) - 18 - 57 * 2) / 2;
         } else {
-            Point point2 = AndroidUtilities.displaySize;
-            iMin = (Math.min(point2.x, point2.y) - AndroidUtilities.dp((z ? 28 : 32) + 132)) / 2;
+            maxNameWidth = (Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y) - dp((small ? 28 : 32) + 18 + 57 * 2)) / 2;
         }
-        staticLayout = new StaticLayout(TextUtils.ellipsize(Emoji.replaceEmoji(string.replace('\n', ' '), textPaint.getFontMetricsInt(), false), textPaint, iMin, TextUtils.TruncateAt.END), textPaint, 1000, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-        this.nameLayout = staticLayout;
-        if (staticLayout.getLineCount() > 0) {
-            this.textWidth = (int) Math.ceil(this.nameLayout.getLineWidth(0));
-            this.textX = -this.nameLayout.getLineLeft(0);
+
+        firstName = firstName.replace('\n', ' ');
+        CharSequence name = firstName;
+        name = Emoji.replaceEmoji(name, textPaint.getFontMetricsInt(), false);
+        name = TextUtils.ellipsize(name, textPaint, maxNameWidth, TextUtils.TruncateAt.END);
+        nameLayout = new StaticLayout(name, textPaint, 1000, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        if (nameLayout.getLineCount() > 0) {
+            textWidth = (int) Math.ceil(nameLayout.getLineWidth(0));
+            textX = -nameLayout.getLineLeft(0);
         }
-        if (!z2) {
-            if (z2) {
-                this.imageReceiver.setImage(forUserOrChat, "50_50", this.avatarDrawable, 0L, (String) null, obj2, 1);
-            } else {
-                this.imageReceiver.setImage(forUserOrChat, "50_50", this.avatarDrawable, 0L, (String) null, obj2, 1);
-            }
-        } else if (z2) {
-            this.imageReceiver.setImage(forUserOrChat, "50_50", this.avatarDrawable, 0L, (String) null, obj2, 1);
+        if (object instanceof String && "premium".equals((String) object)) {
+            imageReceiver.setImageBitmap(GroupCreateUserCell.makePremiumUsersDrawable(getContext(), true));
+        } else if (object instanceof String && "miniapps".equals((String) object)) {
+            imageReceiver.setImageBitmap(GroupCreateUserCell.makeMiniAppsDrawable(getContext(), true));
         } else {
-            this.imageReceiver.setImage(forUserOrChat, "50_50", this.avatarDrawable, 0L, (String) null, obj2, 1);
+            imageReceiver.setImage(imageLocation, "50_50", avatarDrawable, 0, null, imageParent, 1);
         }
         updateColors();
+
         NotificationCenter.listenEmojiLoading(this);
     }
 
     public void updateColors() {
-        int color = this.avatarDrawable.getColor();
-        int iMultAlpha = Theme.multAlpha(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, this.resourcesProvider), 0.05f);
-        int color2 = Theme.getColor(Theme.key_groupcreate_spanDelete, this.resourcesProvider);
-        this.colors[0] = Color.red(iMultAlpha);
-        this.colors[1] = Color.red(color);
-        this.colors[2] = Color.green(iMultAlpha);
-        this.colors[3] = Color.green(color);
-        this.colors[4] = Color.blue(iMultAlpha);
-        this.colors[5] = Color.blue(color);
-        this.colors[6] = Color.alpha(iMultAlpha);
-        this.colors[7] = Color.alpha(color);
-        this.deleteDrawable.setColorFilter(new PorterDuffColorFilter(color2, PorterDuff.Mode.MULTIPLY));
-        backPaint.setColor(iMultAlpha);
+        int color = avatarDrawable.getColor();
+        int back = Theme.multAlpha(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider), 0.05f);
+        int delete = Theme.getColor(Theme.key_groupcreate_spanDelete, resourcesProvider);
+        colors[0] = Color.red(back);
+        colors[1] = Color.red(color);
+        colors[2] = Color.green(back);
+        colors[3] = Color.green(color);
+        colors[4] = Color.blue(back);
+        colors[5] = Color.blue(color);
+        colors[6] = Color.alpha(back);
+        colors[7] = Color.alpha(color);
+        deleteDrawable.setColorFilter(new PorterDuffColorFilter(delete, PorterDuff.Mode.MULTIPLY));
+        backPaint.setColor(back);
     }
 
     public String getCountryIso2() {
-        return this.countryIso2;
+        return countryIso2;
     }
 
     public boolean isDeleting() {
-        return this.deleting;
+        return deleting;
     }
 
     public void startDeleteAnimation() {
-        if (this.deleting) {
+        if (deleting) {
             return;
         }
-        this.deleting = true;
-        this.lastUpdateTime = System.currentTimeMillis();
+        deleting = true;
+        lastUpdateTime = System.currentTimeMillis();
         invalidate();
     }
 
     public void cancelDeleteAnimation() {
-        if (this.deleting) {
-            this.deleting = false;
-            this.lastUpdateTime = System.currentTimeMillis();
-            invalidate();
+        if (!deleting) {
+            return;
         }
+        deleting = false;
+        lastUpdateTime = System.currentTimeMillis();
+        invalidate();
     }
 
     public long getUid() {
-        return this.uid;
+        return uid;
     }
 
     public String getKey() {
-        return this.key;
+        return key;
     }
 
     public ContactsController.Contact getContact() {
-        return this.currentContact;
+        return currentContact;
     }
 
-    @Override // android.view.View
-    public void onMeasure(int i, int i2) {
-        setMeasuredDimension(AndroidUtilities.dp((this.small ? 20 : 32) + 25) + this.textWidth, AndroidUtilities.dp(this.small ? 28.0f : 32.0f));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(
+            dp((small ? 28 - 8 : 32) + 25) + textWidth,
+            dp(small ? 28 : 32)
+        );
     }
 
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        boolean z = this.deleting;
-        if ((z && this.progress != 1.0f) || (!z && this.progress != 0.0f)) {
-            long jCurrentTimeMillis = System.currentTimeMillis() - this.lastUpdateTime;
-            if (jCurrentTimeMillis < 0 || jCurrentTimeMillis > 17) {
-                jCurrentTimeMillis = 17;
+    @Override
+    protected void onDraw(@NonNull Canvas canvas) {
+        if (deleting && progress != 1.0f || !deleting && progress != 0.0f) {
+            long newTime = System.currentTimeMillis();
+            long dt = newTime - lastUpdateTime;
+            if (dt < 0 || dt > 17) {
+                dt = 17;
             }
-            boolean z2 = this.deleting;
-            float f = this.progress;
-            if (z2) {
-                float f2 = f + (jCurrentTimeMillis / 120.0f);
-                this.progress = f2;
-                if (f2 >= 1.0f) {
-                    this.progress = 1.0f;
+            if (deleting) {
+                progress += dt / 120.0f;
+                if (progress >= 1.0f) {
+                    progress = 1.0f;
                 }
             } else {
-                float f3 = f - (jCurrentTimeMillis / 120.0f);
-                this.progress = f3;
-                if (f3 < 0.0f) {
-                    this.progress = 0.0f;
+                progress -= dt / 120.0f;
+                if (progress < 0.0f) {
+                    progress = 0.0f;
                 }
             }
             invalidate();
         }
         canvas.save();
-        this.rect.set(0.0f, 0.0f, getMeasuredWidth(), AndroidUtilities.dp(this.small ? 28.0f : 32.0f));
-        Paint paint = backPaint;
-        int[] iArr = this.colors;
-        int i = iArr[6];
-        float f4 = iArr[7] - i;
-        float f5 = this.progress;
-        int i2 = i + ((int) (f4 * f5));
-        int i3 = iArr[0];
-        int i4 = i3 + ((int) ((iArr[1] - i3) * f5));
-        int i5 = iArr[2];
-        int i6 = i5 + ((int) ((iArr[3] - i5) * f5));
-        int i7 = iArr[4];
-        paint.setColor(Color.argb(i2, i4, i6, i7 + ((int) ((iArr[5] - i7) * f5))));
-        canvas.drawRoundRect(this.rect, ExteraConfig.getAvatarCorners(this.small ? 28.0f : 32.0f), ExteraConfig.getAvatarCorners(this.small ? 28.0f : 32.0f), backPaint);
-        if (this.progress != 1.0f) {
-            this.imageReceiver.draw(canvas);
+        rect.set(0, 0, getMeasuredWidth(), dp(small ? 28 : 32));
+        backPaint.setColor(Color.argb(colors[6] + (int) ((colors[7] - colors[6]) * progress), colors[0] + (int) ((colors[1] - colors[0]) * progress), colors[2] + (int) ((colors[3] - colors[2]) * progress), colors[4] + (int) ((colors[5] - colors[4]) * progress)));
+        canvas.drawRoundRect(rect, dp(small ? 14 : 16), dp(small ? 14 : 16), backPaint);
+        if (progress != 1f) {
+            imageReceiver.draw(canvas);
         }
-        if (this.progress != 0.0f) {
-            int color = this.avatarDrawable.getColor();
-            float fAlpha = Color.alpha(color) / 255.0f;
+        if (progress != 0) {
+            int color = avatarDrawable.getColor();
+            float alpha = Color.alpha(color) / 255.0f;
             backPaint.setColor(color);
-            backPaint.setAlpha((int) (this.progress * 255.0f * fAlpha));
-            canvas.drawRoundRect(0.0f, 0.0f, AndroidUtilities.dp(this.small ? 28.0f : 32.0f), AndroidUtilities.dp(this.small ? 28.0f : 32.0f), ExteraConfig.getAvatarCorners(this.small ? 28.0f : 32.0f), ExteraConfig.getAvatarCorners(this.small ? 28.0f : 32.0f), backPaint);
+            backPaint.setAlpha((int) (255 * progress * alpha));
+            canvas.drawCircle(dp(small ? 14 : 16), dp(small ? 14 : 16), dp(small ? 14 : 16), backPaint);
             canvas.save();
-            canvas.rotate((1.0f - this.progress) * 45.0f, AndroidUtilities.dp(16.0f), AndroidUtilities.dp(16.0f));
-            this.deleteDrawable.setBounds(AndroidUtilities.dp(this.small ? 9.0f : 11.0f), AndroidUtilities.dp(this.small ? 9.0f : 11.0f), AndroidUtilities.dp(this.small ? 19.0f : 21.0f), AndroidUtilities.dp(this.small ? 19.0f : 21.0f));
-            this.deleteDrawable.setAlpha((int) (this.progress * 255.0f));
-            this.deleteDrawable.draw(canvas);
+            canvas.rotate(45 * (1.0f - progress), dp(16), dp(16));
+            deleteDrawable.setBounds(dp(small ? 9 : 11), dp(small ? 9 : 11), dp(small ? 19 : 21), dp(small ? 19 : 21));
+            deleteDrawable.setAlpha((int) (255 * progress));
+            deleteDrawable.draw(canvas);
             canvas.restore();
         }
-        canvas.translate(this.textX + AndroidUtilities.dp((this.small ? 26 : 32) + 9), AndroidUtilities.dp(this.small ? 6.0f : 8.0f));
-        textPaint.setColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_groupcreate_spanText, this.resourcesProvider), Theme.getColor(Theme.key_avatar_text, this.resourcesProvider), this.progress));
-        this.nameLayout.draw(canvas);
+        canvas.translate(textX + dp((small ? 26 : 32) + 9), dp(small ? 6 : 8));
+        int text = Theme.getColor(Theme.key_groupcreate_spanText, resourcesProvider);
+        int textSelected = Theme.getColor(Theme.key_avatar_text, resourcesProvider);
+        textPaint.setColor(ColorUtils.blendARGB(text, textSelected, progress));
+
+        nameLayout.draw(canvas);
         canvas.restore();
     }
 
-    @Override // android.view.View
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo accessibilityNodeInfo) {
-        super.onInitializeAccessibilityNodeInfo(accessibilityNodeInfo);
-        accessibilityNodeInfo.setText(this.nameLayout.getText());
-        if (isDeleting()) {
-            accessibilityNodeInfo.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK.getId(), LocaleController.getString(R.string.Delete)));
-        }
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        info.setText(nameLayout.getText());
+        if (isDeleting())
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK.getId(), LocaleController.getString(R.string.Delete)));
     }
 }

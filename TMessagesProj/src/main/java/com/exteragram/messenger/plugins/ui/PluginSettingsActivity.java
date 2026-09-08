@@ -37,7 +37,6 @@ import kotlin.collections.ArraysKt;
 import kotlin.jvm.internal.Intrinsics;
 import kotlin.jvm.internal.Ref;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
@@ -172,7 +171,6 @@ public final class PluginSettingsActivity extends BasePreferencesActivity implem
         companion.setPluginSettingAndTriggerOnChange(plugin.getId(), str, Integer.valueOf(i), selectorSetting.getOnChangeCallback());
     }
 
-    /* JADX WARN: Type inference failed for: r2v2, types: [T, java.util.ArrayList] */
     public static void $r8$lambda$py2IHrU6RevEMbA19W9LY0CNXXI(final PluginSettingsActivity pluginSettingsActivity, final PyObject pyObject, final UItem uItem) {
         PluginsController.Companion companion = PluginsController.INSTANCE;
         PluginsController companion2 = companion.getInstance();

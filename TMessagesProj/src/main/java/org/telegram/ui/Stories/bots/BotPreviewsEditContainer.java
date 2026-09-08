@@ -1752,8 +1752,8 @@ public class BotPreviewsEditContainer extends FrameLayout implements Notificatio
 //                        if (type == TAB_STORIES || type == TAB_ARCHIVED_STORIES) {
 //                            SharedMediaLayout.StoriesAdapter adapter = type == TAB_STORIES ? storiesAdapter : archivedStoriesAdapter;
 //                            if (adapter.storiesList != null) {
-
-
+//                                for (int i = 0; i < adapter.storiesList.messageObjects.size(); ++i) {
+//                                    if (messageId == adapter.storiesList.messageObjects.get(i).getId()) {
 //                                        index = i;
 //                                        break;
 //                                    }
@@ -1761,8 +1761,8 @@ public class BotPreviewsEditContainer extends FrameLayout implements Notificatio
 //                            }
 //                            position = index;
 //                        } else if (type >= 0 && type < sharedMediaData.length) {
-
-
+//                            for (int i = 0; i < sharedMediaData[type].messages.size(); i++) {
+//                                if (messageId == sharedMediaData[type].messages.get(i).getId()) {
 //                                    index = i;
 //                                    break;
 //                                }

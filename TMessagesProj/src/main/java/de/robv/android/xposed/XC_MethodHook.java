@@ -63,7 +63,6 @@ public abstract class XC_MethodHook extends XCallback {
             XposedBridge.unhookMethod(this.hookMethod, XC_MethodHook.this);
         }
 
-        /* JADX WARN: Can't rename method to resolve collision */
         @Override // de.robv.android.xposed.callbacks.IXUnhook
         public XC_MethodHook getCallback() {
             return XC_MethodHook.this;

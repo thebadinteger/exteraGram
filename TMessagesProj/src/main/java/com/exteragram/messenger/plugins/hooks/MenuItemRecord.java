@@ -2,7 +2,6 @@ package com.exteragram.messenger.plugins.hooks;
 
 import android.content.Context;
 import android.text.TextUtils;
-import c.f$$ExternalSyntheticBUOutline1;
 import com.chaquo.python.PyObject;
 import com.exteragram.messenger.plugins.PluginsController;
 import com.exteragram.messenger.plugins.utils.PyObjectUtils;
@@ -16,7 +15,6 @@ import kotlin.jvm.functions.Function1;
 import kotlin.jvm.internal.Intrinsics;
 import kotlin.jvm.internal.SourceDebugExtension;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.mvel2.MVEL;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;

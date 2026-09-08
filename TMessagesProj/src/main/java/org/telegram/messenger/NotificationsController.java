@@ -1,4 +1,1220 @@
-} else {
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger;
+
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ImageDecoder;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
+import android.os.SystemClock;
+import android.provider.Settings;
+import android.text.TextPaint;
+import android.text.TextUtils;
+import android.util.Pair;
+import android.util.SparseArray;
+import android.util.SparseBooleanArray;
+
+import androidx.collection.LongSparseArray;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
+import androidx.core.app.RemoteInput;
+import androidx.core.content.FileProvider;
+import androidx.core.content.LocusIdCompat;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.ColorUtils;
+import androidx.core.graphics.drawable.IconCompat;
+
+import com.google.common.collect.Lists;
+
+import org.telegram.messenger.support.LongSparseIntArray;
+import org.telegram.messenger.utils.tlutils.TlUtils;
+import org.telegram.messenger.voip.VoIPGroupNotification;
+import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.tl.TL_account;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.BubbleActivity;
+import org.telegram.ui.Components.AvatarDrawable;
+import org.telegram.ui.Components.Forum.ForumUtilities;
+import org.telegram.ui.Components.spoilers.SpoilerEffect;
+import org.telegram.ui.LaunchActivity;
+import org.telegram.ui.PopupNotificationActivity;
+import org.telegram.ui.Stories.recorder.StoryEntry;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
+
+public class NotificationsController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
+
+    public static final String EXTRA_VOICE_REPLY = "extra_voice_reply";
+    public static String OTHER_NOTIFICATIONS_CHANNEL = null;
+
+    private static final DispatchQueue notificationsQueue = new DispatchQueue("notificationsQueue");
+    private final ArrayList<MessageObject> pushMessages = new ArrayList<>();
+    private final ArrayList<MessageObject> delayedPushMessages = new ArrayList<>();
+    private final LongSparseArray<SparseArray<MessageObject>> pushMessagesDict = new LongSparseArray<>();
+    private final LongSparseArray<MessageObject> fcmRandomMessagesDict = new LongSparseArray<>();
+    private final LongSparseArray<Point> smartNotificationsDialogs = new LongSparseArray<>();
+    private static NotificationManagerCompat notificationManager = null;
+    private static NotificationManager systemNotificationManager = null;
+    private final LongSparseArray<Integer> pushDialogs = new LongSparseArray<>();
+    private final LongSparseArray<Integer> wearNotificationsIds = new LongSparseArray<>();
+    private final LongSparseArray<Integer> lastWearNotifiedMessageId = new LongSparseArray<>();
+    private final LongSparseArray<Integer> pushDialogsOverrideMention = new LongSparseArray<>();
+    private final HashSet<String> pendingVoiceLoads = new HashSet<>();
+    public final ArrayList<MessageObject> popupMessages = new ArrayList<>();
+    public ArrayList<MessageObject> popupReplyMessages = new ArrayList<>();
+    private final HashSet<Long> openedInBubbleDialogs = new HashSet<>();
+    private final ArrayList<StoryNotification> storyPushMessages = new ArrayList<>();
+    private final LongSparseArray<StoryNotification> storyPushMessagesDict = new LongSparseArray<>();
+    private long openedDialogId = 0;
+    private long openedTopicId = 0;
+    private int lastButtonId = 5000;
+    private int total_unread_count = 0;
+    private int personalCount = 0;
+    private boolean notifyCheck = false;
+    private int lastOnlineFromOtherDevice = 0;
+    private boolean inChatSoundEnabled;
+    private int lastBadgeCount = -1;
+    private String launcherClassName;
+
+    public long lastNotificationChannelCreateTime;
+
+    private Boolean groupsCreated;
+    private boolean channelGroupsCreated;
+
+    public static long globalSecretChatId = DialogObject.makeEncryptedDialogId(1);
+
+    public boolean showBadgeNumber;
+    public boolean showBadgeMuted;
+    public boolean showBadgeMessages;
+
+    private Runnable notificationDelayRunnable;
+    private PowerManager.WakeLock notificationDelayWakelock;
+
+    private long lastSoundPlay;
+    private long lastSoundOutPlay;
+    private SoundPool soundPool;
+    private int soundIn;
+    private int soundOut;
+    private int soundRecord;
+    private boolean soundInLoaded;
+    private boolean soundOutLoaded;
+    private boolean soundRecordLoaded;
+    protected static AudioManager audioManager;
+    private AlarmManager alarmManager;
+
+    private int notificationId;
+    private String notificationGroup;
+
+    private SpoilerEffect mediaSpoilerEffect = new SpoilerEffect();
+
+    public static final int SETTING_SOUND_ON = 0;
+    public static final int SETTING_SOUND_OFF = 1;
+
+    NotificationsSettingsFacade dialogsNotificationsFacade;
+
+    static {
+        if (Build.VERSION.SDK_INT >= 26 && ApplicationLoader.applicationContext != null) {
+            notificationManager = NotificationManagerCompat.from(ApplicationLoader.applicationContext);
+            systemNotificationManager = (NotificationManager) ApplicationLoader.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+            checkOtherNotificationsChannel();
+        }
+        audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+    }
+
+    private static volatile NotificationsController[] Instance = new NotificationsController[UserConfig.MAX_ACCOUNT_COUNT];
+    private static final Object[] lockObjects = new Object[UserConfig.MAX_ACCOUNT_COUNT];
+    static {
+        for (int i = 0; i < UserConfig.MAX_ACCOUNT_COUNT; i++) {
+            lockObjects[i] = new Object();
+        }
+    }
+
+    public static NotificationsController getInstance(int num) {
+        NotificationsController localInstance = Instance[num];
+        if (localInstance == null) {
+            synchronized (lockObjects[num]) {
+                localInstance = Instance[num];
+                if (localInstance == null) {
+                    Instance[num] = localInstance = new NotificationsController(num);
+                }
+            }
+        }
+        return localInstance;
+    }
+
+    public NotificationsController(int instance) {
+        super(instance);
+        notificationId = currentAccount + 1;
+        notificationGroup = "messages" + (currentAccount == 0 ? "" : currentAccount);
+        SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
+        inChatSoundEnabled = preferences.getBoolean("EnableInChatSound", true);
+        showBadgeNumber = preferences.getBoolean("badgeNumber", true);
+        showBadgeMuted = preferences.getBoolean("badgeNumberMuted", false);
+        showBadgeMessages = preferences.getBoolean("badgeNumberMessages", true);
+
+        notificationManager = NotificationManagerCompat.from(ApplicationLoader.applicationContext);
+        systemNotificationManager = (NotificationManager) ApplicationLoader.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        try {
+            audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        try {
+            alarmManager = (AlarmManager) ApplicationLoader.applicationContext.getSystemService(Context.ALARM_SERVICE);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+
+        try {
+            PowerManager pm = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
+            notificationDelayWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "telegram:notification_delay_lock");
+            notificationDelayWakelock.setReferenceCounted(false);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+
+        notificationDelayRunnable = () -> {
+            if (BuildVars.LOGS_ENABLED) {
+                FileLog.d("delay reached");
+            }
+            if (!delayedPushMessages.isEmpty()) {
+                showOrUpdateNotification(true);
+                delayedPushMessages.clear();
+            }
+            try {
+                if (notificationDelayWakelock.isHeld()) {
+                    notificationDelayWakelock.release();
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        };
+
+        dialogsNotificationsFacade = new NotificationsSettingsFacade(currentAccount);
+
+        AndroidUtilities.runOnUIThread(() -> {
+            getNotificationCenter().addObserver(this, NotificationCenter.fileLoaded);
+        });
+    }
+
+    public static void checkOtherNotificationsChannel() {
+        if (Build.VERSION.SDK_INT < 26) {
+            return;
+        }
+        SharedPreferences preferences = null;
+        if (OTHER_NOTIFICATIONS_CHANNEL == null) {
+            preferences = ApplicationLoader.applicationContext.getSharedPreferences("Notifications", Activity.MODE_PRIVATE);
+            OTHER_NOTIFICATIONS_CHANNEL = preferences.getString("OtherKey", "Other3");
+        }
+        NotificationChannel notificationChannel = systemNotificationManager.getNotificationChannel(OTHER_NOTIFICATIONS_CHANNEL);
+        if (notificationChannel != null && notificationChannel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+            try {
+                systemNotificationManager.deleteNotificationChannel(OTHER_NOTIFICATIONS_CHANNEL);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            OTHER_NOTIFICATIONS_CHANNEL = null;
+            notificationChannel = null;
+        }
+        if (OTHER_NOTIFICATIONS_CHANNEL == null) {
+            if (preferences == null) {
+                preferences = ApplicationLoader.applicationContext.getSharedPreferences("Notifications", Activity.MODE_PRIVATE);
+            }
+            OTHER_NOTIFICATIONS_CHANNEL = "Other" + Utilities.random.nextLong();
+            preferences.edit().putString("OtherKey", OTHER_NOTIFICATIONS_CHANNEL).commit();
+        }
+        if (notificationChannel == null) {
+            notificationChannel = new NotificationChannel(OTHER_NOTIFICATIONS_CHANNEL, "Internal notifications", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationChannel.enableLights(false);
+            notificationChannel.enableVibration(false);
+            notificationChannel.setSound(null, null);
+            try {
+                systemNotificationManager.createNotificationChannel(notificationChannel);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+    }
+
+    private static final LongSparseArray<String> sharedPrefCachedKeys = new LongSparseArray<>();
+
+    public static String getSharedPrefKey(long dialog_id, long topicId) {
+        return getSharedPrefKey(dialog_id, topicId, false);
+    }
+
+    public static String getSharedPrefKey(long dialog_id, long topicId, boolean backgroundThread) {
+        if (backgroundThread) {
+            String key;
+            if (topicId != 0) {
+                key = String.format(Locale.US, "%d_%d", dialog_id, topicId);
+            } else {
+                key = String.valueOf(dialog_id);
+            }
+            return key;
+        }
+//        if (BuildVars.DEBUG_PRIVATE_VERSION) {
+//            if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+//                throw new IllegalStateException("Not on main thread!");
+//            }
+//        }
+        long hash = dialog_id + ((long) topicId << 12);
+        int index = sharedPrefCachedKeys.indexOfKey(hash);
+        if (index >= 0) {
+            return sharedPrefCachedKeys.valueAt(index);
+        }
+        String key;
+        if (topicId != 0) {
+            key = String.format(Locale.US, "%d_%d", dialog_id, topicId);
+        } else {
+            key = String.valueOf(dialog_id);
+        }
+        sharedPrefCachedKeys.put(hash, key);
+        return key;
+    }
+
+    public void muteUntil(long did, long topicId, int selectedTimeInSeconds) {
+        if (did != 0) {
+            SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
+            SharedPreferences.Editor editor = preferences.edit();
+            long flags;
+            boolean override = topicId != 0;
+            boolean defaultEnabled = NotificationsController.getInstance(currentAccount).isGlobalNotificationsEnabled(did, false, false);
+
+            String sharedPrefKey = NotificationsController.getSharedPrefKey(did, topicId);
+            if (selectedTimeInSeconds == Integer.MAX_VALUE) {
+                if (!defaultEnabled && !override) {
+                    editor.remove("notify2_" + sharedPrefKey);
+                    flags = 0;
+                } else {
+                    editor.putInt("notify2_" + sharedPrefKey, 2);
+                    flags = 1;
+                }
+            } else {
+                editor.putInt("notify2_" + sharedPrefKey, 3);
+                editor.putInt("notifyuntil_" + sharedPrefKey,  getConnectionsManager().getCurrentTime() + selectedTimeInSeconds);
+                flags = ((long) selectedTimeInSeconds << 32) | 1;
+            }
+            editor.apply();
+            if (topicId == 0) {
+                NotificationsController.getInstance(currentAccount).removeNotificationsForDialog(did);
+                MessagesStorage.getInstance(currentAccount).setDialogFlags(did, flags);
+                TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(did);
+                if (dialog != null) {
+                    dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
+                    if (selectedTimeInSeconds != Integer.MAX_VALUE || defaultEnabled) {
+                        dialog.notify_settings.mute_until = selectedTimeInSeconds;
+                    }
+                }
+            }
+            NotificationsController.getInstance(currentAccount).updateServerNotificationsSettings(did, topicId);
+        }
+    }
+
+    public void cleanup() {
+        popupMessages.clear();
+        popupReplyMessages.clear();
+        channelGroupsCreated = false;
+        notificationsQueue.postRunnable(() -> {
+            openedDialogId = 0;
+            openedTopicId = 0;
+            total_unread_count = 0;
+            personalCount = 0;
+            pushMessages.clear();
+            pushMessagesDict.clear();
+            fcmRandomMessagesDict.clear();
+            pushDialogs.clear();
+            wearNotificationsIds.clear();
+            lastWearNotifiedMessageId.clear();
+            openedInBubbleDialogs.clear();
+            delayedPushMessages.clear();
+            notifyCheck = false;
+            lastBadgeCount = 0;
+            try {
+                if (notificationDelayWakelock.isHeld()) {
+                    notificationDelayWakelock.release();
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            dismissNotification();
+            setBadge(getTotalAllUnreadCount());
+            SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.clear();
+            editor.commit();
+
+            if (Build.VERSION.SDK_INT >= 26) {
+                try {
+                    systemNotificationManager.deleteNotificationChannelGroup("channels" + currentAccount);
+                    systemNotificationManager.deleteNotificationChannelGroup("groups" + currentAccount);
+                    systemNotificationManager.deleteNotificationChannelGroup("private" + currentAccount);
+                    systemNotificationManager.deleteNotificationChannelGroup("stories" + currentAccount);
+                    systemNotificationManager.deleteNotificationChannelGroup("other" + currentAccount);
+
+                    String keyStart = currentAccount + "channel";
+                    List<NotificationChannel> list = systemNotificationManager.getNotificationChannels();
+                    int count = list.size();
+                    for (int a = 0; a < count; a++) {
+                        NotificationChannel channel = list.get(a);
+                        String id = channel.getId();
+                        if (id.startsWith(keyStart)) {
+                            try {
+                                systemNotificationManager.deleteNotificationChannel(id);
+                            } catch (Exception e) {
+                                FileLog.e(e);
+                            }
+                            if (BuildVars.LOGS_ENABLED) {
+                                FileLog.d("delete channel cleanup " + id);
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    FileLog.e(e);
+                }
+            }
+        });
+    }
+
+    public void setInChatSoundEnabled(boolean value) {
+        inChatSoundEnabled = value;
+    }
+
+    public void setOpenedDialogId(long dialog_id, long topicId) {
+        notificationsQueue.postRunnable(() -> {
+            openedDialogId = dialog_id;
+            openedTopicId = topicId;
+        });
+    }
+
+    public void setOpenedInBubble(long dialogId, boolean opened) {
+        notificationsQueue.postRunnable(() -> {
+            if (opened) {
+                openedInBubbleDialogs.add(dialogId);
+            } else {
+                openedInBubbleDialogs.remove(dialogId);
+            }
+        });
+    }
+
+    public void setLastOnlineFromOtherDevice(int time) {
+        notificationsQueue.postRunnable(() -> {
+            if (BuildVars.LOGS_ENABLED) {
+                FileLog.d("set last online from other device = " + time);
+            }
+            lastOnlineFromOtherDevice = time;
+        });
+    }
+
+    public void removeNotificationsForDialog(long did) {
+        processReadMessages(null, did, 0, Integer.MAX_VALUE, false);
+        LongSparseIntArray dialogsToUpdate = new LongSparseIntArray();
+        dialogsToUpdate.put(did, 0);
+        processDialogsUpdateRead(dialogsToUpdate);
+    }
+
+    public boolean hasMessagesToReply() {
+        for (int a = 0; a < pushMessages.size(); a++) {
+            MessageObject messageObject = pushMessages.get(a);
+            long dialog_id = messageObject.getDialogId();
+            if (messageObject.isReactionPush ||
+                messageObject.messageOwner.mentioned && messageObject.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage ||
+                DialogObject.isEncryptedDialog(dialog_id) ||
+                messageObject.messageOwner.peer_id.channel_id != 0 && !messageObject.isSupergroup() ||
+                dialog_id == UserObject.VERIFY ||
+                dialog_id == UserObject.OAUTH
+            ) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    protected void forceShowPopupForReply() {
+        notificationsQueue.postRunnable(() -> {
+            ArrayList<MessageObject> popupArray = new ArrayList<>();
+            for (int a = 0; a < pushMessages.size(); a++) {
+                MessageObject messageObject = pushMessages.get(a);
+                long dialog_id = messageObject.getDialogId();
+                if (messageObject.messageOwner.mentioned && messageObject.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage ||
+                        DialogObject.isEncryptedDialog(dialog_id) || messageObject.messageOwner.peer_id.channel_id != 0 && !messageObject.isSupergroup()) {
+                    continue;
+                }
+                popupArray.add(0, messageObject);
+            }
+            if (!popupArray.isEmpty() && !AndroidUtilities.needShowPasscode() && !SharedConfig.isWaitingForPasscodeEnter) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    popupReplyMessages = popupArray;
+                    Intent popupIntent = new Intent(ApplicationLoader.applicationContext, PopupNotificationActivity.class);
+                    popupIntent.putExtra("force", true);
+                    popupIntent.putExtra("currentAccount", currentAccount);
+                    popupIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_NO_USER_ACTION | Intent.FLAG_FROM_BACKGROUND);
+                    ApplicationLoader.applicationContext.startActivity(popupIntent);
+                    Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                    ApplicationLoader.applicationContext.sendBroadcast(it);
+                });
+            }
+        });
+    }
+
+    public void removeDeletedMessagesFromNotifications(LongSparseArray<ArrayList<Integer>> deletedMessages, boolean isReactions) {
+        ArrayList<MessageObject> popupArrayRemove = new ArrayList<>(0);
+        notificationsQueue.postRunnable(() -> {
+            int old_unread_count = total_unread_count;
+            SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
+            for (int a = 0; a < deletedMessages.size(); a++) {
+                long key = deletedMessages.keyAt(a);
+                SparseArray<MessageObject> sparseArray = pushMessagesDict.get(key);
+                if (sparseArray == null) {
+                    continue;
+                }
+                ArrayList<Integer> mids = deletedMessages.get(key);
+                for (int b = 0, N = mids.size(); b < N; b++) {
+                    int mid = mids.get(b);
+                    MessageObject messageObject = sparseArray.get(mid);
+                    if (messageObject != null) {
+                        if (messageObject.isStoryReactionPush)
+                            continue;
+                        if (isReactions && !messageObject.isReactionPush) {
+                            continue;
+                        }
+                        long dialogId = messageObject.getDialogId();
+                        Integer currentCount = pushDialogs.get(dialogId);
+                        if (currentCount == null) {
+                            currentCount = 0;
+                        }
+                        Integer newCount = currentCount - 1;
+                        if (newCount <= 0) {
+                            newCount = 0;
+                            smartNotificationsDialogs.remove(dialogId);
+                        }
+                        if (!newCount.equals(currentCount)) {
+                            if (getMessagesController().isForum(dialogId)) {
+                                total_unread_count -= currentCount > 0 ? 1 : 0;
+                                total_unread_count += newCount > 0 ? 1 : 0;
+                            } else {
+                                total_unread_count -= currentCount;
+                                total_unread_count += newCount;
+                            }
+                            pushDialogs.put(dialogId, newCount);
+                        }
+                        if (newCount == 0) {
+                            pushDialogs.remove(dialogId);
+                            pushDialogsOverrideMention.remove(dialogId);
+                        }
+
+                        sparseArray.remove(mid);
+                        delayedPushMessages.remove(messageObject);
+                        pushMessages.remove(messageObject);
+                        if (isPersonalMessage(messageObject)) {
+                            personalCount--;
+                        }
+                        popupArrayRemove.add(messageObject);
+                    }
+                }
+                if (sparseArray.size() == 0) {
+                    pushMessagesDict.remove(key);
+                }
+            }
+            if (!popupArrayRemove.isEmpty()) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
+                        popupMessages.remove(popupArrayRemove.get(a));
+                    }
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
+                });
+            }
+            if (old_unread_count != total_unread_count) {
+                if (!notifyCheck) {
+                    delayedPushMessages.clear();
+                    showOrUpdateNotification(notifyCheck);
+                } else {
+                    scheduleNotificationDelay(lastOnlineFromOtherDevice > getConnectionsManager().getCurrentTime());
+                }
+                int pushDialogsCount = pushDialogs.size();
+                AndroidUtilities.runOnUIThread(() -> {
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.notificationsCountUpdated, currentAccount);
+                    getNotificationCenter().postNotificationName(NotificationCenter.dialogsUnreadCounterChanged, pushDialogsCount);
+                });
+            }
+            notifyCheck = false;
+            if (showBadgeNumber) {
+                setBadge(getTotalAllUnreadCount());
+            }
+        });
+    }
+
+    public void removeDeletedHisoryFromNotifications(LongSparseIntArray deletedMessages) {
+        ArrayList<MessageObject> popupArrayRemove = new ArrayList<>(0);
+        notificationsQueue.postRunnable(() -> {
+            int old_unread_count = total_unread_count;
+            SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
+
+            for (int a = 0; a < deletedMessages.size(); a++) {
+                long key = deletedMessages.keyAt(a);
+                long dialogId = -key;
+                long id = deletedMessages.get(key);
+                Integer currentCount = pushDialogs.get(dialogId);
+                if (currentCount == null) {
+                    currentCount = 0;
+                }
+                Integer newCount = currentCount;
+
+                for (int c = 0; c < pushMessages.size(); c++) {
+                    MessageObject messageObject = pushMessages.get(c);
+                    if (messageObject.getDialogId() == dialogId && messageObject.getId() <= id) {
+                        SparseArray<MessageObject> sparseArray = pushMessagesDict.get(dialogId);
+                        if (sparseArray != null) {
+                            sparseArray.remove(messageObject.getId());
+                            if (sparseArray.size() == 0) {
+                                pushMessagesDict.remove(dialogId);
+                            }
+                        }
+                        delayedPushMessages.remove(messageObject);
+                        pushMessages.remove(messageObject);
+                        c--;
+                        if (isPersonalMessage(messageObject)) {
+                            personalCount--;
+                        }
+                        popupArrayRemove.add(messageObject);
+                        newCount--;
+                    }
+                }
+
+                if (newCount <= 0) {
+                    newCount = 0;
+                    smartNotificationsDialogs.remove(dialogId);
+                }
+                if (!newCount.equals(currentCount)) {
+                    if (getMessagesController().isForum(dialogId)) {
+                        total_unread_count -= currentCount > 0 ? 1 : 0;
+                        total_unread_count += newCount > 0 ? 1 : 0;
+                    } else {
+                        total_unread_count -= currentCount;
+                        total_unread_count += newCount;
+                    }
+                    pushDialogs.put(dialogId, newCount);
+                }
+                if (newCount == 0) {
+                    pushDialogs.remove(dialogId);
+                    pushDialogsOverrideMention.remove(dialogId);
+                }
+            }
+            if (popupArrayRemove.isEmpty()) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
+                        popupMessages.remove(popupArrayRemove.get(a));
+                    }
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
+                });
+            }
+            if (old_unread_count != total_unread_count) {
+                if (!notifyCheck) {
+                    delayedPushMessages.clear();
+                    showOrUpdateNotification(notifyCheck);
+                } else {
+                    scheduleNotificationDelay(lastOnlineFromOtherDevice > getConnectionsManager().getCurrentTime());
+                }
+                int pushDialogsCount = pushDialogs.size();
+                AndroidUtilities.runOnUIThread(() -> {
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.notificationsCountUpdated, currentAccount);
+                    getNotificationCenter().postNotificationName(NotificationCenter.dialogsUnreadCounterChanged, pushDialogsCount);
+                });
+            }
+            notifyCheck = false;
+            if (showBadgeNumber) {
+                setBadge(getTotalAllUnreadCount());
+            }
+        });
+    }
+
+    public void processSeenStoryReactions(long dialogId, int storyId) {
+        if (dialogId != getUserConfig().getClientUserId())
+            return;
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = false;
+            for (int i = 0; i < pushMessages.size(); ++i) {
+                MessageObject msgObject = pushMessages.get(i);
+                if (msgObject.isStoryReactionPush && Math.abs(msgObject.getId()) == storyId) {
+                    pushMessages.remove(i);
+                    SparseArray<MessageObject> msgs = pushMessagesDict.get(msgObject.getDialogId());
+                    if (msgs != null) msgs.remove(msgObject.getId());
+                    if (msgs != null && msgs.size() <= 0) pushMessagesDict.remove(msgObject.getDialogId());
+                    ArrayList<Integer> ids = new ArrayList<>();
+                    ids.add(msgObject.getId());
+                    getMessagesStorage().deletePushMessages(msgObject.getDialogId(), ids);
+                    i--;
+                    changed = true;
+                }
+            }
+            if (changed) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processDeleteStory(long dialogId, int storyId) {
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = false;
+            StoryNotification notification = storyPushMessagesDict.get(dialogId);
+            if (notification != null) {
+                notification.dateByIds.remove(storyId);
+                if (notification.dateByIds.isEmpty()) {
+                    storyPushMessagesDict.remove(dialogId);
+                    storyPushMessages.remove(notification);
+                    changed = true;
+                    getMessagesStorage().deleteStoryPushMessage(dialogId);
+                } else {
+                    getMessagesStorage().putStoryPushMessage(notification);
+                }
+            }
+            for (int i = 0; i < pushMessages.size(); ++i) {
+                MessageObject msg = pushMessages.get(i);
+                if (msg != null && msg.isLiveStoryPush && msg.getId() == storyId) {
+                    pushMessages.remove(i);
+                    i--;
+                    SparseArray<MessageObject> arr = pushMessagesDict.get(msg.getDialogId());
+                    if (arr != null) arr.remove(msg.getId());
+                    if (arr != null && arr.size() <= 0) pushMessagesDict.remove(msg.getDialogId());
+                    changed = true;
+                }
+            }
+            if (changed) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processReadStories(long dialogId, int maxId) {
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = false;
+            StoryNotification notification = storyPushMessagesDict.get(dialogId);
+            if (notification != null) {
+//                if (notification.maxId <= maxId) {
+                    storyPushMessagesDict.remove(dialogId);
+                    storyPushMessages.remove(notification);
+                    changed = true;
+                    getMessagesStorage().deleteStoryPushMessage(dialogId);
+//                } else {
+//                    StoryNotification newNotification = new StoryNotification(dialogId, notification.localName, Math.max(notification.minId, maxId), Math.max(notification.maxId, maxId), notification.date);
+//                    storyPushMessagesDict.put(dialogId, newNotification);
+//                    storyPushMessages.remove(notification);
+//                    storyPushMessages.add(newNotification);
+//                    changed = true;
+//                    getMessagesStorage().putStoryPushMessage(newNotification);
+//                }
+            }
+            for (int i = 0; i < pushMessages.size(); ++i) {
+                MessageObject msg = pushMessages.get(i);
+                if (msg != null && msg.isLiveStoryPush && msg.getId() <= maxId) {
+                    pushMessages.remove(i);
+                    i--;
+                    SparseArray<MessageObject> arr = pushMessagesDict.get(msg.getDialogId());
+                    if (arr != null) arr.remove(msg.getId());
+                    if (arr != null && arr.size() <= 0) pushMessagesDict.remove(msg.getDialogId());
+                    changed = true;
+                }
+            }
+            if (changed) {
+                showOrUpdateNotification(false);
+                updateStoryPushesRunnable();
+            }
+        });
+    }
+
+    public void processIgnoreStories() {
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = !storyPushMessages.isEmpty();
+            storyPushMessages.clear();
+            storyPushMessagesDict.clear();
+            getMessagesStorage().deleteAllStoryPushMessages();
+            if (changed) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processIgnoreStoryReactions() {
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = false;
+            for (int i = 0; i < pushMessages.size(); ++i) {
+                MessageObject msg = pushMessages.get(i);
+                if (msg != null && msg.isStoryReactionPush) {
+                    pushMessages.remove(i);
+                    i--;
+                    SparseArray<MessageObject> arr = pushMessagesDict.get(msg.getDialogId());
+                    if (arr != null) arr.remove(msg.getId());
+                    if (arr != null && arr.size() <= 0) pushMessagesDict.remove(msg.getDialogId());
+                    changed = true;
+                }
+            }
+            getMessagesStorage().deleteAllStoryReactionPushMessages();
+            if (changed) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processIgnoreStories(long dialogId) {
+        notificationsQueue.postRunnable(() -> {
+            boolean changed = !storyPushMessages.isEmpty();
+            storyPushMessages.clear();
+            storyPushMessagesDict.clear();
+            getMessagesStorage().deleteStoryPushMessage(dialogId);
+            if (changed) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processReadStories() {
+
+    }
+
+    public void processReadMessages(LongSparseIntArray inbox, long dialogId, int maxDate, int maxId, boolean isPopup) {
+        ArrayList<MessageObject> popupArrayRemove = new ArrayList<>(0);
+        notificationsQueue.postRunnable(() -> {
+            if (inbox != null) {
+                for (int b = 0; b < inbox.size(); b++) {
+                    long key = inbox.keyAt(b);
+                    int messageId = inbox.get(key);
+                    for (int a = 0; a < pushMessages.size(); a++) {
+                        MessageObject messageObject = pushMessages.get(a);
+                        if (!messageObject.messageOwner.from_scheduled && messageObject.getDialogId() == key && messageObject.getId() <= messageId && !messageObject.isStoryReactionPush) {
+                            if (isPersonalMessage(messageObject)) {
+                                personalCount--;
+                            }
+                            popupArrayRemove.add(messageObject);
+                            long did;
+                            if (messageObject.isStoryReactionPush) {
+                                did = messageObject.getDialogId();
+                            } else if (messageObject.messageOwner.peer_id.channel_id != 0) {
+                                did = -messageObject.messageOwner.peer_id.channel_id;
+                            } else {
+                                did = 0;
+                            }
+                            SparseArray<MessageObject> sparseArray = pushMessagesDict.get(did);
+                            if (sparseArray != null) {
+                                sparseArray.remove(messageObject.getId());
+                                if (sparseArray.size() == 0) {
+                                    pushMessagesDict.remove(did);
+                                }
+                            }
+                            delayedPushMessages.remove(messageObject);
+                            pushMessages.remove(a);
+                            a--;
+                        }
+                    }
+                }
+            }
+            if (dialogId != 0 && (maxId != 0 || maxDate != 0)) {
+                for (int a = 0; a < pushMessages.size(); a++) {
+                    MessageObject messageObject = pushMessages.get(a);
+                    if (messageObject.getDialogId() == dialogId && !messageObject.isStoryReactionPush) {
+                        boolean remove = false;
+                        if (maxDate != 0) {
+                            if (messageObject.messageOwner.date <= maxDate) {
+                                remove = true;
+                            }
+                        } else {
+                            if (!isPopup) {
+                                if (messageObject.getId() <= maxId || maxId < 0) {
+                                    remove = true;
+                                }
+                            } else {
+                                if (messageObject.getId() == maxId || maxId < 0) {
+                                    remove = true;
+                                }
+                            }
+                        }
+                        if (remove) {
+                            if (isPersonalMessage(messageObject)) {
+                                personalCount--;
+                            }
+                            long did;
+                            if (messageObject.isStoryReactionPush) {
+                                did = messageObject.getDialogId();
+                            } else if (messageObject.messageOwner.peer_id.channel_id != 0) {
+                                did = -messageObject.messageOwner.peer_id.channel_id;
+                            } else {
+                                did = 0;
+                            }
+                            SparseArray<MessageObject> sparseArray = pushMessagesDict.get(did);
+                            if (sparseArray != null) {
+                                sparseArray.remove(messageObject.getId());
+                                if (sparseArray.size() == 0) {
+                                    pushMessagesDict.remove(did);
+                                }
+                            }
+                            pushMessages.remove(a);
+                            delayedPushMessages.remove(messageObject);
+                            popupArrayRemove.add(messageObject);
+                            a--;
+                        }
+                    }
+                }
+            }
+            if (!popupArrayRemove.isEmpty()) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
+                        popupMessages.remove(popupArrayRemove.get(a));
+                    }
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
+                });
+            }
+        });
+    }
+
+    private int addToPopupMessages(ArrayList<MessageObject> popupArrayAdd, MessageObject messageObject, long dialogId, boolean isChannel, SharedPreferences preferences) {
+        if (messageObject.isStoryReactionPush) return 0;
+        int popup = 0;
+        if (!DialogObject.isEncryptedDialog(dialogId)) {
+            if (preferences.getBoolean("custom_" + dialogId, false)) {
+                popup = preferences.getInt("popup_" + dialogId, 0);
+            }
+            if (popup == 0) {
+                if (isChannel) {
+                    popup = preferences.getInt("popupChannel", 0);
+                } else {
+                    popup = preferences.getInt(DialogObject.isChatDialog(dialogId) ? "popupGroup" : "popupAll", 0);
+                }
+            } else if (popup == 1) {
+                popup = 3;
+            } else if (popup == 2) {
+                popup = 0;
+            }
+        }
+        if (popup != 0 && messageObject.messageOwner.peer_id.channel_id != 0 && !messageObject.isSupergroup()) {
+            popup = 0;
+        }
+        if (popup != 0) {
+            popupArrayAdd.add(0, messageObject);
+        }
+        return popup;
+    }
+
+    public void processEditedMessages(LongSparseArray<ArrayList<MessageObject>> editedMessages) {
+        if (editedMessages == null || editedMessages.size() == 0) {
+            return;
+        }
+
+        for (int i = 0; i < editedMessages.size(); ++i) {
+            final ArrayList<MessageObject> messageObjects = editedMessages.valueAt(i);
+            if (messageObjects != null) {
+                for (int j = 0; j < messageObjects.size(); ++j) {
+                    final MessageObject messageObject = messageObjects.get(j);
+                    if (messageObject != null && messageObject.messageOwner != null && messageObject.messageOwner.action instanceof TLRPC.TL_messageActionConferenceCall) {
+                        final TLRPC.TL_messageActionConferenceCall action = (TLRPC.TL_messageActionConferenceCall) messageObject.messageOwner.action;
+                        if (action.active || action.missed) {
+                            VoIPGroupNotification.hide(ApplicationLoader.applicationContext, currentAccount, messageObject.getId());
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<MessageObject> popupArrayAdd = new ArrayList<>(0);
+        notificationsQueue.postRunnable(() -> {
+            boolean updated = false;
+            for (int a = 0, N = editedMessages.size(); a < N; a++) {
+                long dialogId = editedMessages.keyAt(a);
+                ArrayList<MessageObject> messages = editedMessages.valueAt(a);
+                for (int b = 0, N2 = messages.size(); b < N2; b++) {
+                    MessageObject messageObject = messages.get(b);
+                    long did;
+                    if (messageObject.isStoryReactionPush) {
+                        did = messageObject.getDialogId();
+                    } else if (messageObject.messageOwner.peer_id.channel_id != 0) {
+                        did = -messageObject.messageOwner.peer_id.channel_id;
+                    } else {
+                        did = 0;
+                    }
+                    SparseArray<MessageObject> sparseArray = pushMessagesDict.get(did);
+                    if (sparseArray == null) {
+                        break;
+                    }
+                    MessageObject oldMessage = sparseArray.get(messageObject.getId());
+                    if (oldMessage != null && (oldMessage.isReactionPush || oldMessage.isStoryReactionPush)) {
+                        oldMessage = null;
+                    }
+                    if (oldMessage != null) {
+                        updated = true;
+                        sparseArray.put(messageObject.getId(), messageObject);
+                        int idx = pushMessages.indexOf(oldMessage);
+                        if (idx >= 0) {
+                            pushMessages.set(idx, messageObject);
+                        }
+                        idx = delayedPushMessages.indexOf(oldMessage);
+                        if (idx >= 0) {
+                            delayedPushMessages.set(idx, messageObject);
+                        }
+                    }
+                }
+            }
+            if (updated) {
+                showOrUpdateNotification(false);
+            }
+        });
+    }
+
+    public void processNewMessages(ArrayList<MessageObject> messageObjects, boolean isLast, boolean isFcm, CountDownLatch countDownLatch) {
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("NotificationsController: processNewMessages msgs.size()=" + (messageObjects == null ? "null" : messageObjects.size()) + " isLast=" + isLast + " isFcm=" + isFcm + ")");
+        }
+
+        if (messageObjects != null) {
+            for (int i = 0; i < messageObjects.size(); ++i) {
+                final MessageObject messageObject = messageObjects.get(i);
+                if (messageObject != null && messageObject.messageOwner != null&& !messageObject.isOutOwner() && messageObject.messageOwner.action instanceof TLRPC.TL_messageActionConferenceCall) {
+                    final TLRPC.TL_messageActionConferenceCall action = (TLRPC.TL_messageActionConferenceCall) messageObject.messageOwner.action;
+                    if (!action.active && !action.missed && (getConnectionsManager().getCurrentTime() - messageObject.messageOwner.date) < getMessagesController().callRingTimeout / 1000L) {
+                        final HashSet<Long> ids = new HashSet<>();
+                        ids.add(messageObject.getDialogId());
+                        for (final TLRPC.Peer peer : action.other_participants) {
+                            ids.add(DialogObject.getPeerDialogId(peer));
+                        }
+                        final StringBuilder names = new StringBuilder();
+                        for (final long id : ids) {
+                            if (names.length() > 0) names.append(", ");
+                            names.append(DialogObject.getShortName(currentAccount, id));
+                        }
+                        VoIPGroupNotification.request(ApplicationLoader.applicationContext, currentAccount, messageObject.getDialogId(), names.toString(), action.call_id, messageObject.getId(), action.video);
+                        messageObjects.remove(i);
+                        i--;
+                    } else {
+                        VoIPGroupNotification.hide(ApplicationLoader.applicationContext, currentAccount, messageObject.getId());
+                    }
+                }
+            }
+        }
+
+        if (messageObjects.isEmpty()) {
+            if (countDownLatch != null) {
+                countDownLatch.countDown();
+            }
+            return;
+        }
+
+        ArrayList<MessageObject> popupArrayAdd = new ArrayList<>(0);
+        notificationsQueue.postRunnable(() -> {
+            boolean added = false;
+            boolean edited = false;
+            boolean storiesUpdated = false;
+
+            LongSparseArray<Boolean> settingsCache = new LongSparseArray<>();
+            SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
+            boolean allowPinned = preferences.getBoolean("PinnedMessages", true);
+            int popup = 0;
+            boolean hasScheduled = false;
+
+            for (int a = 0; a < messageObjects.size(); a++) {
+                MessageObject messageObject = messageObjects.get(a);
+                if (messageObject.messageOwner != null && (messageObject.isImportedForward() ||
+                        messageObject.messageOwner.action instanceof TLRPC.TL_messageActionSetMessagesTTL ||
+                        messageObject.messageOwner.silent && (messageObject.messageOwner.action instanceof TLRPC.TL_messageActionContactSignUp || messageObject.messageOwner.action instanceof TLRPC.TL_messageActionUserJoined)) ||
+                        MessageObject.isTopicActionMessage(messageObject)) {
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.d("skipped message because 1");
+                    }
+                    continue;
+                }
+                if (messageObject.isStoryPush) {
+                    long date = messageObject.messageOwner == null ? System.currentTimeMillis() : messageObject.messageOwner.date * 1000L;
+                    long dialogId = messageObject.getDialogId();
+                    int id = messageObject.getId();
+                    StoryNotification oldNotification = storyPushMessagesDict.get(dialogId);
+                    StoryNotification notification;
+                    if (oldNotification != null) {
+                        edited = true;
+                        oldNotification.dateByIds.put(id, new Pair<>(date, date + 86400000L));
+                        if (oldNotification.hidden != messageObject.isStoryPushHidden) {
+                            oldNotification.hidden = messageObject.isStoryPushHidden;
+                            storiesUpdated = true;
+                        }
+                        oldNotification.date = oldNotification.getLeastDate();
+                        getMessagesStorage().putStoryPushMessage(oldNotification);
+                    } else {
+                        added = true;
+                        storiesUpdated = true;
+                        notification = new StoryNotification(dialogId, messageObject.localName, id, date);
+                        notification.hidden = messageObject.isStoryPushHidden;
+                        storyPushMessages.add(notification);
+                        storyPushMessagesDict.put(dialogId, notification);
+                        getMessagesStorage().putStoryPushMessage(notification);
+                    }
+
+                    Collections.sort(storyPushMessages, Comparator.comparingLong(n -> n.date));
+                    continue;
+                }
+                if (messageObject != null && messageObject.isOauthPush) {
+                    if (messageObject.messageOwner == null) continue;
+                    int msg_id = messageObject.messageOwner.id;
+                    long date = messageObject.messageOwner.date;
+                    long expire_date = date + 60;
+                    long now = ConnectionsManager.getInstance(currentAccount).getCurrentTime();
+                    if (now > expire_date) continue;
+                    AndroidUtilities.runOnUIThread(() -> {
+                        final LongSparseArray<ArrayList<Integer>> deletedMessages = new LongSparseArray<>();
+                        deletedMessages.put(0, Lists.newArrayList(msg_id));
+                        removeDeletedMessagesFromNotifications(deletedMessages, false);
+                    }, (expire_date - now) * 1000L);
+                }
+                int mid = messageObject.getId();
+                long randomId = messageObject.isFcmMessage() ? messageObject.messageOwner.random_id : 0;
+                long dialogId = messageObject.getDialogId();
+                boolean isChannel;
+                if (messageObject.isFcmMessage()) {
+                    isChannel = messageObject.localChannel;
+                } else if (DialogObject.isChatDialog(dialogId)) {
+                    TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
+                    isChannel = ChatObject.isChannel(chat) && !chat.megagroup;
+                } else {
+                    isChannel = false;
+                }
+                long did;
+                if (messageObject.isStoryReactionPush) {
+                    did = messageObject.getDialogId();
+                } else if (messageObject.messageOwner.peer_id.channel_id != 0) {
+                    did = -messageObject.messageOwner.peer_id.channel_id;
+                } else {
+                    did = 0;
+                }
+                SparseArray<MessageObject> sparseArray = pushMessagesDict.get(did);
+                MessageObject oldMessageObject = sparseArray != null ? sparseArray.get(mid) : null;
+                if (oldMessageObject == null && messageObject.messageOwner.random_id != 0) {
+                    oldMessageObject = fcmRandomMessagesDict.get(messageObject.messageOwner.random_id);
+                    if (oldMessageObject != null) {
+                        fcmRandomMessagesDict.remove(messageObject.messageOwner.random_id);
+                    }
+                }
+                if (oldMessageObject != null) {
+                    if (oldMessageObject.isFcmMessage()) {
+                        if (sparseArray == null) {
+                            sparseArray = new SparseArray<>();
+                            pushMessagesDict.put(did, sparseArray);
+                        }
+                        sparseArray.put(mid, messageObject);
+                        int idxOld = pushMessages.indexOf(oldMessageObject);
+                        if (idxOld >= 0) {
+                            pushMessages.set(idxOld, messageObject);
+                            popup = addToPopupMessages(popupArrayAdd, messageObject, dialogId, isChannel, preferences);
+                        }
+                        if (isFcm && (edited = messageObject.localEdit)) {
+                            getMessagesStorage().putPushMessage(messageObject);
+                        }
+                    }
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.d("skipped message because old message with same dialog and message ids exist: did=" + did + ", mid="+mid);
+                    }
+                    continue;
+                }
+                if (edited) {
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.d("skipped message because edited");
+                    }
+                    continue;
+                }
+                if (isFcm && !messageObject.isOauthPush) {
+                    getMessagesStorage().putPushMessage(messageObject);
+                }
+
+                long originalDialogId = dialogId;
+                long topicId = MessageObject.getTopicId(currentAccount, messageObject.messageOwner, getMessagesController().isForum(messageObject));
+                if (dialogId == openedDialogId && ApplicationLoader.isScreenOn && !messageObject.isStoryReactionPush && !messageObject.isOauthPush) {
+                    if (!isFcm) {
+                        playInChatSound();
+                    }
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.d("skipped message because chat is already opened (openedDialogId = " + openedDialogId + ")");
+                    }
+                    continue;
+                }
+                if (messageObject.messageOwner.mentioned) {
+                    if (!allowPinned && messageObject.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage) {
+                        if (BuildVars.LOGS_ENABLED) {
+                            FileLog.d("skipped message because message is mention of pinned");
+                        }
+                        continue;
+                    }
+                    dialogId = messageObject.getFromChatId();
+                }
+                if (isPersonalMessage(messageObject)) {
+                    personalCount++;
+                }
+                added = true;
+
+                boolean isChat = DialogObject.isChatDialog(dialogId);
+                int index = settingsCache.indexOfKey(dialogId);
+                boolean value;
+                if (index >= 0 && topicId == 0) {
+                    value = settingsCache.valueAt(index);
+                } else {
+                    int notifyOverride = getNotifyOverride(preferences, dialogId, topicId);
+                    if (notifyOverride == -1) {
+                        value = isGlobalNotificationsEnabled(dialogId, isChannel, messageObject.isReactionPush, messageObject.isStoryReactionPush);
+                        if (BuildVars.LOGS_ENABLED) {
+                            FileLog.d("NotificationsController: process new messages, isGlobalNotificationsEnabled("+dialogId+", "+isChannel+", "+messageObject.isReactionPush+", "+messageObject.isStoryReactionPush+") = " + value);
+                        }
+                        /*if (BuildVars.DEBUG_PRIVATE_VERSION && BuildVars.LOGS_ENABLED) {
+                            FileLog.d("global notify settings for " + dialog_id + " = " + value);
+                        }*/
+                    } else {
                         value = notifyOverride != 2;
                     }
 

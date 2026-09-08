@@ -11,7 +11,6 @@ import kotlin.coroutines.jvm.internal.SuspendLambda;
 import kotlin.jvm.functions.Function2;
 import kotlin.jvm.internal.SourceDebugExtension;
 import kotlinx.coroutines.CoroutineScope;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 
 @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u0004\u0018\u00010\u0001*\u00020\u0002H\n"}, d2 = {"<anonymous>", "Lcom/exteragram/messenger/icons/IconPack;", "Lkotlinx/coroutines/CoroutineScope;"}, k = 3, mv = {2, 2, 0}, xi = 48)
 @DebugMetadata(c = "com.exteragram.messenger.icons.IconManager$saveIconPackMetadata$savedPack$1", f = "IconManager.kt", i = {}, l = {}, m = "invokeSuspend", n = {}, s = {}, v = 1)
@@ -20,7 +19,6 @@ public final class IconManager$saveIconPackMetadata$savedPack$1 extends SuspendL
     final /* synthetic */ IconPack $iconPack;
     int label;
 
-    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
     public IconManager$saveIconPackMetadata$savedPack$1(IconPack iconPack, Continuation<? super IconManager$saveIconPackMetadata$savedPack$1> continuation) {
         super(2, continuation);
         this.$iconPack = iconPack;

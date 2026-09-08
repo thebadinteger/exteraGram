@@ -29,7 +29,6 @@ class PySet extends AbstractSet<PyObject> {
     @Override // java.util.AbstractCollection, java.util.Collection, java.lang.Iterable, java.util.Set
     public Iterator<PyObject> iterator() {
         return new PyIterator<PyObject>(this.methods) { // from class: com.chaquo.python.PySet.1
-            /* JADX WARN: Can't rename method to resolve collision */
             @Override // com.chaquo.python.PyIterator
             public PyObject makeNext(PyObject pyObject) {
                 return pyObject;

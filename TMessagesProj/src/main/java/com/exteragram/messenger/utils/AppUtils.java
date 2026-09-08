@@ -7,7 +7,6 @@ import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import androidx.annotation.Keep;
-import c.f$$ExternalSyntheticBUOutline1;
 import com.exteragram.messenger.utils.text.LocaleUtils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;

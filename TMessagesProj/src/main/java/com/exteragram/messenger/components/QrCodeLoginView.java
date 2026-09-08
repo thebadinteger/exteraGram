@@ -339,7 +339,6 @@ public abstract class QrCodeLoginView extends SlideView {
             }
         }
 
-        /* JADX WARN: Code duplicated, block: B:28:0x0115  */
         @Override // android.view.View
         public void onDraw(Canvas canvas) {
             int i;

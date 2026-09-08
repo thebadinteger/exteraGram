@@ -1,3 +1,63 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.telegram.messenger.time;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * <p>FastDateParser is a fast and thread-safe version of
+ * {@link java.text.SimpleDateFormat}.</p>
+ *
+ * <p>This class can be used as a direct replacement for
+ * <code>SimpleDateFormat</code> in most parsing situations.
+ * This class is especially useful in multi-threaded server environments.
+ * <code>SimpleDateFormat</code> is not thread-safe in any JDK version,
+ * nor will it be as Sun has closed the
+ * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4228335">bug</a>/RFE.
+ * </p>
+ *
+ * <p>Only parsing is supported, but all patterns are compatible with
+ * SimpleDateFormat.</p>
+ *
+ * <p>Timing tests indicate this class is as about as fast as SimpleDateFormat
+ * in single thread applications and about 25% faster in multi-thread applications.</p>
+ *
+ * @version $Id: FastDateParser.java 1572877 2014-02-28 08:42:25Z britter $
+ * @since 3.2
+ */
 public class FastDateParser implements DateParser, Serializable {
     /**
      * Required for serialization support.

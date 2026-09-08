@@ -17,7 +17,7 @@ public final class CachedRemoteSet {
 
     public CachedRemoteSet(String str, Set<Long> set) {
         this.remoteKey = str;
-        this.defaultSet = CachedRemoteSet$$ExternalSyntheticBackport0.m(set);
+        this.defaultSet = java.util.Collections.unmodifiableSet(set);
         initializeListener();
     }
 

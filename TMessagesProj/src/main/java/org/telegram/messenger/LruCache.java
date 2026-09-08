@@ -1,3 +1,27 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Static library version of {@link android.util.LruCache}. Used to write apps
+ * that run on API levels prior to 12. When running on API level 12 or above,
+ * this implementation is still used; it does not try to switch to the
+ * framework's implementation. See the framework SDK documentation for a class
+ * overview.
+ */
 public class LruCache<T> {
     private final LinkedHashMap<String, T> map;
     private final LinkedHashMap<String, ArrayList<String>> mapFilters;

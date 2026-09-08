@@ -48,7 +48,6 @@ public abstract class FolderIcons {
         folderIcons.put("📋", Integer.valueOf(R.drawable.filter_setup));
     }
 
-    /* JADX WARN: Code duplicated, block: B:41:0x009b  */
     public static Pair<String, String> getEmoticonFromFlags(int i) {
         String string;
         String str;

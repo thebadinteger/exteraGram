@@ -1,4 +1,81 @@
-public ExtendedDefaultDataSource(Context context, String userAgent, boolean allowCrossProtocolRedirects) {
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger.secretmedia;
+
+import android.content.Context;
+import android.net.Uri;
+import android.util.LongSparseArray;
+
+import androidx.annotation.Nullable;
+
+import com.google.android.exoplayer2.upstream.AssetDataSource;
+import com.google.android.exoplayer2.upstream.ContentDataSource;
+import com.google.android.exoplayer2.upstream.DataSchemeDataSource;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.FileDataSource;
+import com.google.android.exoplayer2.upstream.RawResourceDataSource;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.CacheSpan;
+import com.google.android.exoplayer2.upstream.cache.ContentMetadata;
+import com.google.android.exoplayer2.upstream.cache.ContentMetadataMutations;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Log;
+import com.google.android.exoplayer2.util.Util;
+
+import org.telegram.messenger.FileStreamLoadOperation;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Set;
+
+public final class ExtendedDefaultDataSource implements DataSource {
+
+    private static final String TAG = "ExtendedDefaultDataSource";
+
+    private static final String SCHEME_ASSET = "asset";
+    private static final String SCHEME_CONTENT = "content";
+    private static final String SCHEME_RTMP = "rtmp";
+    private static final String SCHEME_RAW = RawResourceDataSource.RAW_RESOURCE_SCHEME;
+
+    private final Context context;
+    private final List<TransferListener> transferListeners;
+    private final DataSource baseDataSource;
+
+    // Lazily initialized.
+    private @Nullable
+    DataSource fileDataSource;
+    private @Nullable DataSource assetDataSource;
+    private @Nullable DataSource contentDataSource;
+    private @Nullable DataSource encryptedFileDataSource;
+    private @Nullable DataSource rtmpDataSource;
+    private @Nullable DataSource dataSchemeDataSource;
+    private @Nullable DataSource rawResourceDataSource;
+
+    private @Nullable DataSource dataSource;
+
+    /**
+     * Constructs a new instance, optionally configured to follow cross-protocol redirects.
+     *
+     * @param context A context.
+     * @param userAgent The User-Agent to use when requesting remote data.
+     * @param allowCrossProtocolRedirects Whether cross-protocol redirects (i.e. redirects from HTTP
+     *     to HTTPS and vice versa) are enabled when fetching remote data.
+     */
+    public ExtendedDefaultDataSource(Context context, String userAgent, boolean allowCrossProtocolRedirects) {
         this(
                 context,
                 userAgent,

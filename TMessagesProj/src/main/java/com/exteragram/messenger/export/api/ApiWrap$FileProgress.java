@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 
 public final class ApiWrap$FileProgress extends RecordTag {
     private final long ready;
@@ -29,7 +28,7 @@ public final class ApiWrap$FileProgress extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$FileProgress$$ExternalSyntheticRecord0.m(this.ready, this.total);
+        return java.util.Objects.hash(this.ready, this.total);
     }
 
     public long ready() {
@@ -37,7 +36,7 @@ public final class ApiWrap$FileProgress extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$FileProgress.class, "ready;total");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$FileProgress.class, "ready;total");
     }
 
     public long total() {

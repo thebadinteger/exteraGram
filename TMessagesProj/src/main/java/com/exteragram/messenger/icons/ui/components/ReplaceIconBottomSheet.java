@@ -265,10 +265,6 @@ public class ReplaceIconBottomSheet extends BottomSheet {
         });
     }
 
-    /* JADX WARN: Code duplicated, block: B:165:0x020f A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Code duplicated, block: B:181:? A[Catch: all -> 0x00b3, Exception -> 0x00b8, SYNTHETIC, TRY_LEAVE, TryCatch #4 {Exception -> 0x00b8, blocks: (B:31:0x007c, B:53:0x00af, B:99:0x013d, B:101:0x0156, B:103:0x015e, B:104:0x0162, B:105:0x0174, B:108:0x01a2, B:120:0x01db, B:129:0x0200, B:127:0x01ec, B:126:0x01e9, B:128:0x01ed, B:89:0x0110, B:91:0x011c, B:94:0x0129, B:86:0x0108, B:139:0x0218, B:138:0x0215), top: B:158:0x007c }] */
-    /* JADX WARN: Code duplicated, block: B:24:0x0040  */
-    /* JADX WARN: Code duplicated, block: B:74:0x00f6  */
     public /* synthetic */ void lambda$processSelectedImage$11(Context context, Uri uri) throws Throwable {
         Throwable th;
         Exception exc;

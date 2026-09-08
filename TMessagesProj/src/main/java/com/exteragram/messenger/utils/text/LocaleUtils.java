@@ -435,13 +435,6 @@ public abstract class LocaleUtils {
         return spannableString;
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    /* JADX WARN: Type inference failed for: r0v7, types: [java.util.regex.Pattern] */
-    /* JADX WARN: Type inference failed for: r5v0, types: [java.lang.CharSequence] */
-    /* JADX WARN: Type inference failed for: r5v1, types: [java.lang.CharSequence] */
-    /* JADX WARN: Type inference failed for: r5v2 */
-    /* JADX WARN: Type inference failed for: r5v3, types: [android.text.Spannable, android.text.Spanned, java.lang.CharSequence] */
-    /* JADX WARN: Type inference failed for: r5v5 */
     public static CharSequence insertHexColorsPreview(CharSequence charSequence) {
         if (!TextUtils.isEmpty(charSequence) && containsHash(charSequence)) {
             charSequence = charSequence instanceof Spannable ? (Spannable) charSequence : new SpannableString(charSequence);

@@ -1,6 +1,5 @@
 package com.exteragram.messenger.plugins.hooks;
 
-import androidx.camera.camera2.config.UseCaseGraphContext$$ExternalSyntheticAutoCloseableDispatcher0;
 import com.sun.jna.Callback;
 import de.robv.android.xposed.XC_MethodHook;
 import java.util.Collections;
@@ -12,7 +11,6 @@ import kotlin.Unit;
 import kotlin.jvm.internal.DefaultConstructorMarker;
 import kotlin.jvm.internal.Intrinsics;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.FileLog;
 
 @Metadata(d1 = {"\u00008\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0010\u000b\n\u0000\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\b\n\u0002\b\u0002\b\u0007\u0018\u0000 \u00132\u00020\u0001:\u0001\u0013B\u0015\u0012\f\u0010\u0002\u001a\b\u0018\u00010\u0003R\u00020\u0004¢\u0006\u0004\b\u0005\u0010\u0006J\b\u0010\t\u001a\u00020\nH\u0016J\u0012\u0010\u000b\u001a\u00020\f2\b\u0010\r\u001a\u0004\u0018\u00010\u000eH\u0016J\u0013\u0010\u000f\u001a\u00020\f2\b\u0010\u0010\u001a\u0004\u0018\u00010\u000eH\u0096\u0002J\b\u0010\u0011\u001a\u00020\u0012H\u0016R\u0014\u0010\u0002\u001a\b\u0018\u00010\u0003R\u00020\u0004X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\bX\u0082\u0004¢\u0006\u0002\n\u0000¨\u0006\u0014"}, d2 = {"Lcom/exteragram/messenger/plugins/hooks/XposedHookRecord;", "Lcom/exteragram/messenger/plugins/hooks/HookRecord;", "unhookObject", "Lde/robv/android/xposed/XC_MethodHook$Unhook;", "Lde/robv/android/xposed/XC_MethodHook;", "<init>", "(Lde/robv/android/xposed/XC_MethodHook$Unhook;)V", "cleanedUp", "Ljava/util/concurrent/atomic/AtomicBoolean;", "cleanup", _UrlKt.FRAGMENT_ENCODE_SET, "matches", _UrlKt.FRAGMENT_ENCODE_SET, "criteria", _UrlKt.FRAGMENT_ENCODE_SET, "equals", "other", "hashCode", _UrlKt.FRAGMENT_ENCODE_SET, "Companion", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
@@ -33,8 +31,7 @@ public final class XposedHookRecord implements HookRecord {
     @Override 
     public void cleanup() {
         XC_MethodHook.Unhook unhook;
-        long j;
-        if (this.cleanedUp.compareAndSet(false, true) && (unhook = this.unhookObject) != null) {
+                if (this.cleanedUp.compareAndSet(false, true) && (unhook = this.unhookObject) != null) {
             try {
                 unhook.unhook();
                 try {
@@ -43,8 +40,7 @@ public final class XposedHookRecord implements HookRecord {
                     companion.releaseCallback(callback instanceof AutoCloseable ? (AutoCloseable) callback : null);
                 } catch (Throwable th) {
                     th = th;
-                    j = -67557557290543L;
-                    FileLog.e(Deobfuscator$exteraGramDev$TMessagesProj.getString(j), th);
+                                        FileLog.e("Error during Xposed hook callback cleanup", th);
                 }
             } catch (Throwable th2) {
                 try {
@@ -55,8 +51,7 @@ public final class XposedHookRecord implements HookRecord {
                         companion2.releaseCallback(callback2 instanceof AutoCloseable ? (AutoCloseable) callback2 : null);
                     } catch (Throwable th3) {
                         th = th3;
-                        j = -67948399314479L;
-                        FileLog.e(Deobfuscator$exteraGramDev$TMessagesProj.getString(j), th);
+                                                FileLog.e("Error during Xposed hook callback cleanup", th);
                     }
                 } catch (Throwable th4) {
                     try {

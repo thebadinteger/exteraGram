@@ -16,7 +16,6 @@ import org.telegram.messenger.Utilities;
 public final class UniversalView extends View {
     private UniversalViewDelegate delegate;
 
-    /* JADX WARN: Multi-variable type inference failed */
     @JvmOverloads
     public UniversalView(Context context) {
         this(context, null, 2, 0 == true ? 1 : 0);

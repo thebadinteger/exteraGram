@@ -1,4 +1,40 @@
-if (input.getTagHeader().getVersion() == 2) { // $xx xx xx (three characters)
+/*
+ * Copyright 2013-2014 Odysseus Software GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.telegram.messenger.audioinfo.mp3;
+
+import java.io.IOException;
+
+public class ID3v2FrameHeader {
+	private String frameId;
+	private int headerSize;
+	private int bodySize;
+	private boolean unsynchronization;
+	private boolean compression;
+	private boolean encryption;
+	private int dataLengthIndicator;
+
+	public ID3v2FrameHeader(ID3v2TagBody input) throws IOException, ID3v2Exception {
+		long startPosition = input.getPosition();
+
+		ID3v2DataInput data = input.getData();
+		
+		/*
+		 * Frame Id
+		 */
+		if (input.getTagHeader().getVersion() == 2) { // $xx xx xx (three characters)
 			frameId = new String(data.readFully(3), "ISO-8859-1");
 		} else { // $xx xx xx xx (four characters)
 			frameId = new String(data.readFully(4), "ISO-8859-1");

@@ -2928,7 +2928,77 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                 chatAttachAlert.dismiss(true);
             }
 
-            *");
+            /*
+            @Override
+            public View getRevealView() {
+                return chatActivityEnterView.getAttachButton();
+            }
+            */
+
+            @Override
+            public void didSelectBot(TLRPC.User user) {
+            }
+
+            @Override
+            public void onCameraOpened() {
+            }
+
+            @Override
+            public boolean needEnterComment() {
+                return false;
+            }
+
+            @Override
+            public void doOnIdle(Runnable runnable) {
+                NotificationCenter.getInstance(fragment.getCurrentAccount()).doOnIdle(runnable);
+            }
+        });
+        chatAttachAlert.setEmojiViewDelegate(new EmojiView.EmojiViewDelegate() {
+            @Override
+            public void onCustomEmojiSelected(long documentId, TLRPC.Document document, String emoticon, boolean isRecent) {
+                callback.run(new PollAttachedMediaSticker(document, null));
+                chatAttachAlert.dismiss(true);
+            }
+
+            @Override
+            public void onStickerSelected(View view, TLRPC.Document sticker, String query, Object parent, MessageObject.SendAnimationData sendAnimationData, boolean notify, int scheduleDate, int scheduleRepeatPeriod) {
+                callback.run(new PollAttachedMediaSticker(sticker, parent));
+                chatAttachAlert.dismiss(true);
+            }
+        });
+
+        chatAttachAlert.getPhotoLayout().loadGalleryPhotos();
+        if (Build.VERSION.SDK_INT == 21 || Build.VERSION.SDK_INT == 22) {
+            // chatActivityEnterView.closeKeyboard();
+        }
+
+        chatAttachAlert.setMaxSelectedPhotos(1, true);
+        chatAttachAlert.enablePollAttachMode(allowedLayouts);
+        chatAttachAlert.setLocationActivityDelegate((location, live, notify, scheduleDate, payStars) -> {
+            callback.run(new PollAttachedMediaLocation(location));
+        });
+        chatAttachAlert.setDocumentsDelegate(new ChatAttachAlertDocumentLayout.DocumentSelectActivityDelegate() {
+            @Override
+            public void didSelectFiles(ArrayList<String> files, String caption, ArrayList<TLRPC.MessageEntity> captionEntities, ArrayList<MessageObject> fmessages, boolean notify, int scheduleDate, int scheduleRepeatPeriod, long effectId, boolean invertMedia, long payStars) {
+                if (files != null && !files.isEmpty()) {
+                    callback.run(new PollAttachedMediaFile(files.get(0)));
+                }
+                chatAttachAlert.dismiss(true);
+            }
+
+            @Override
+            public void didSelectPhotos(ArrayList<SendMessagesHelper.SendingMediaInfo> photos, boolean notify, int scheduleDate, int scheduleRepeatPeriod, long payStars) {
+                if (photos != null && !photos.isEmpty()) {
+                    callback.run(new PollAttachedMediaGallery(photos.get(0)));
+                }
+                chatAttachAlert.dismiss(true);
+            }
+
+            @Override
+            public void startDocumentSelectActivity() {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("*/*");
                     fragment.getParentActivity().startActivityForResult(intent, 28);
                 } catch (Exception e) {
                     FileLog.e(e);

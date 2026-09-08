@@ -263,6 +263,218 @@ public class BotForumHelper extends BaseController {
     }
 
 
+    /** Send message interceptors **/
+
+    public boolean beforeSendingFinalRequest(TLObject req, MessageObject msg, Runnable send) {
+        return beforeSendingFinalRequest(req, Collections.singletonList(msg), send);
+    }
+
+    public boolean beforeSendingFinalRequest(TLObject req, List<MessageObject> messages, Runnable send) {
+        if (messages == null || messages.isEmpty()) return true;
+
+        final TLRPC.InputPeer inputPeer = TlUtils.getInputPeerFromSendMessageRequest(req);
+        final long dialogId = DialogObject.getPeerDialogId(inputPeer);
+
+        if (inputPeer == null || dialogId <= 0) {
+            return true;
+        }
+
+        final TLRPC.User user = getMessagesController().getUser(dialogId);
+        if (!UserObject.isBotForumWithEditableTopics(user)) {
+            return true;
+        }
+
+        final long[] messageIds = new long[messages.size()];
+        for (int a = 0; a < messages.size(); a++) {
+            messageIds[a] = messages.get(a).getId();
+        }
+
+        final long messageRandomId = TlUtils.getOrCalculateRandomIdFromSendMessageRequest(req);
+
+        final TLRPC.InputReplyTo inputReplyTo = TlUtils.getInputReplyToFromSendMessageRequest(req);
+        if (inputReplyTo instanceof TLRPC.TL_inputReplyToMessage) {
+            return true;
+        }
+
+        if (req instanceof TLRPC.TL_messages_forwardMessages) {
+            if (((TLRPC.TL_messages_forwardMessages) req).top_msg_id != 0) {
+                return true;
+            }
+        }
+
+        final String messageText = TlUtils.getMessageFromSendMessageRequest(req);
+        final long randomId = messageRandomId != 0 ? (~messageRandomId) : (getSendMessagesHelper().getNextRandomId());
+
+        final String topicName;
+        if (!TextUtils.isEmpty(messageText)) {
+            if (messageText.length() > 16) {
+                topicName = messageText.substring(0, 16) + "...";
+            } else {
+                topicName = messageText;
+            }
+        } else {
+            topicName = LocaleController.getString(R.string.TopicsTitleMedia);
+        }
+
+        performSendBotTopicCreate(inputPeer, topicName, randomId, topicId -> {
+            if (req instanceof TLRPC.TL_messages_forwardMessages) {
+                TLRPC.TL_messages_forwardMessages request = (TLRPC.TL_messages_forwardMessages) req;
+                request.top_msg_id = topicId;
+                request.flags |= 512;
+            } else {
+                final TLRPC.TL_inputReplyToMessage fixedReplyTo = new TLRPC.TL_inputReplyToMessage();
+                fixedReplyTo.reply_to_msg_id = topicId;
+                TlUtils.setInputReplyToFromSendMessageRequest(req, fixedReplyTo);
+            }
+
+            getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                for (long messageId : messageIds) {
+                    getMessagesStorage().updateMessageTopicId(dialogId, messageId, topicId);
+                }
+                AndroidUtilities.runOnUIThread(send);
+            });
+        });
+
+        return false;
+    }
+
+
+
+    //  userId -> topicId
+    private final LongSparseArray<List<MessagesStorage.IntCallback>> pendingBotTopics = new LongSparseArray<>();
+
+    private void performSendBotTopicCreate(final TLRPC.InputPeer inputPeer,
+                                           final String title,
+                                           final long randomId,
+                                           final MessagesStorage.IntCallback onCreateTopic
+    ) {
+        final long dialogId = DialogObject.getPeerDialogId(inputPeer);
+
+        List<MessagesStorage.IntCallback> callbacks = pendingBotTopics.get(dialogId);
+        if (callbacks != null) {
+            callbacks.add(onCreateTopic);
+            return;
+        }
+
+        callbacks = new ArrayList<>(1);
+        callbacks.add(onCreateTopic);
+        pendingBotTopics.put(dialogId, callbacks);
+
+        final TL_forum.TL_messages_createForumTopic req = new TL_forum.TL_messages_createForumTopic();
+        final boolean titleMissing = TextUtils.isEmpty(title);
+        req.title = titleMissing ? "#New Chat" : title;
+        req.title_missing = true;
+        req.peer = inputPeer;
+        req.random_id = randomId;
+
+        getConnectionsManager().sendRequestTyped(req, AndroidUtilities::runOnUIThread, (updates, err) -> {
+            if (updates == null) {
+                performSendBotTopicCreateComplete(dialogId, -1);
+                return;
+            }
+
+            getMessagesController().processUpdates(updates, false);
+
+            TL_update.TL_updateMessageID updateMessageID = null;
+            for (TLRPC.Update update: updates.updates) {
+                if (update instanceof TL_update.TL_updateMessageID) {
+                    updateMessageID = (TL_update.TL_updateMessageID) update;
+                    break;
+                }
+            }
+
+            if (updateMessageID == null) {
+                performSendBotTopicCreateComplete(dialogId, -1);
+                return;
+            }
+
+            final TLRPC.TL_forumTopic forumTopic = new TLRPC.TL_forumTopic();
+            final TLRPC.TL_messageService message = new TLRPC.TL_messageService();
+
+            final TLRPC.TL_messageActionTopicCreate actionMessage = new TLRPC.TL_messageActionTopicCreate();
+            actionMessage.title = title;
+
+            message.action = actionMessage;
+            message.peer_id = getMessagesController().getPeer(dialogId);
+            message.dialog_id = dialogId;
+            message.id = updateMessageID.id;
+            message.date = (int) (System.currentTimeMillis() / 1000);
+
+            forumTopic.id = updateMessageID.id;
+            forumTopic.my = true;
+            forumTopic.flags |= 2;
+            forumTopic.topicStartMessage = message;
+            forumTopic.title = title;
+            forumTopic.top_message = updateMessageID.id;
+            forumTopic.topMessage = message;
+            forumTopic.from_id = getMessagesController().getPeer(getUserConfig().clientUserId);
+            forumTopic.notify_settings = new TLRPC.TL_peerNotifySettings();
+            forumTopic.icon_color = 0;
+            forumTopic.title_missing = true;
+
+            getMessagesController().getTopicsController().onTopicCreated(dialogId, forumTopic, true);
+
+            performSendBotTopicCreateComplete(dialogId, updateMessageID.id);
+            getNotificationCenter().postNotificationName(
+                NotificationCenter.botForumTopicDidCreate,
+                new BotForumTopicCreateNotification(dialogId, updateMessageID.id)
+            );
+        });
+    }
+
+    private void performSendBotTopicCreateComplete(final long dialogId, final int topicId) {
+        final List<MessagesStorage.IntCallback> doneCallbacks = pendingBotTopics.get(dialogId);
+        if (doneCallbacks != null) {
+            pendingBotTopics.remove(dialogId);
+            for (MessagesStorage.IntCallback onDone : doneCallbacks) {
+                onDone.run(topicId);
+            }
+        }
+    }
+
+
+
+    /** Notification classes **/
+
+    public static class BotForumTopicCreateNotification {
+        public final long dialogId;
+        public final int topicId;
+
+        public BotForumTopicCreateNotification(long dialogId, int topicId) {
+            this.dialogId = dialogId;
+            this.topicId = topicId;
+        }
+    }
+
+    public static class BotForumTextDraftUpdateNotification {
+        public final long botUserId;
+        public final long botTopicId;
+        public final MessageObject messageObject;
+        public final boolean isNew;
+
+        public BotForumTextDraftUpdateNotification(long botUserId, long botTopicId, MessageObject messageObject, boolean isNew) {
+            this.botUserId = botUserId;
+            this.botTopicId = botTopicId;
+            this.messageObject = messageObject;
+            this.isNew = isNew;
+        }
+    }
+
+    public static class BotForumTextDraftDeleteNotification {
+        public final long botUserId;
+        public final long botTopicId;
+        public final int messageId;
+
+        public BotForumTextDraftDeleteNotification(long botUserId, long botTopicId, int messageId) {
+            this.botUserId = botUserId;
+            this.botTopicId = botTopicId;
+            this.messageId = messageId;
+        }
+    }
+
+
+    /** Helper Utils **/
+
     public static boolean isBotForum(int currentAccount, long dialogId) {
         if (dialogId > 0) {
             return UserObject.isBotForum(MessagesController.getInstance(currentAccount).getUser(dialogId));

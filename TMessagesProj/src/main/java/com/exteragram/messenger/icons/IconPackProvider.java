@@ -135,9 +135,6 @@ public final class IconPackProvider extends ContentProvider {
         return pathSegments.size() == 3 && Intrinsics.areEqual(pathSegments.get(0), "icon");
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Code duplicated, block: B:25:0x0066 A[RETURN] */
-    /* JADX WARN: Code duplicated, block: B:26:0x0067 A[RETURN] */
     private final File resolveSource(Uri uri) {
         File fileResolveIconFile;
         List<String> pathSegments = uri.getPathSegments();

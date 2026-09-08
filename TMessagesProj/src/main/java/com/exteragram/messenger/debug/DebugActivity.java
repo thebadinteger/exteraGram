@@ -12,7 +12,6 @@ import com.exteragram.messenger.api.db.ExteraDatabase;
 import com.exteragram.messenger.preferences.BasePreferencesActivity;
 import com.google.android.exoplayer2.util.Consumer;
 import java.util.ArrayList;
-import kotlin.LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0;
 import kotlin.Metadata;
 import kotlin.enums.EnumEntries;
 import kotlin.enums.EnumEntriesKt;

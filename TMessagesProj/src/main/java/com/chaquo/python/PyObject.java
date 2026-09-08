@@ -257,7 +257,6 @@ public class PyObject extends AbstractMap<String, PyObject> implements AutoClose
                         return this.key;
                     }
 
-                    /* JADX WARN: Can't rename method to resolve collision */
                     @Override // java.util.Map.Entry
                     public PyObject getValue() {
                         return PyObject.this.get((Object) this.key);

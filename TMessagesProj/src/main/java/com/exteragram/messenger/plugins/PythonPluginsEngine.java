@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.view.View;
 import androidx.core.content.FileProvider;
 import androidx.mediarouter.media.MediaRouteProviderProtocol;
-import com.android.dx.rop.code.RegisterSpec;
 import com.chaquo.python.PyException;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
@@ -76,15 +75,11 @@ import kotlin.jvm.internal.DefaultConstructorMarker;
 import kotlin.jvm.internal.Intrinsics;
 import kotlin.jvm.internal.SourceDebugExtension;
 import kotlin.jvm.internal.StringCompanionObject;
-import kotlin.random.RandomKt$$ExternalSyntheticBUOutline0;
 import kotlin.ranges.RangesKt;
 import kotlin.text.Regex;
 import kotlin.text.StringsKt;
 import kotlin.time.DurationKt;
-import okhttp3.HttpUrl$$ExternalSyntheticBUOutline0;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
-import org.mvel2.util.Make$Map$$ExternalSyntheticBUOutline0;
 import org.simplifiles.SimpliFiles;
 import org.simplifiles.archive.ArchiveExtractionOptions;
 import org.simplifiles.archive.ExtractionTargetPolicy;
@@ -185,9 +180,9 @@ public final class PythonPluginsEngine implements PluginsController.PluginsEngin
                 if (sdk_version == null) {
                     return "SDK not unpacked";
                 }
-                StringBuilder sb = new StringBuilder(RegisterSpec.PREFIX);
+                StringBuilder sb = new StringBuilder("v");
                 sb.append(sdk_version);
-                sb.append(Deobfuscator$exteraGramDev$TMessagesProj.getString(sdk_beta ? "-beta" : "");
+                sb.append(sdk_beta ? "-beta" : "");
                 return sb.toString();
             }
 
@@ -538,7 +533,7 @@ public final class PythonPluginsEngine implements PluginsController.PluginsEngin
                                         String string = StringsKt.trim((CharSequence) it2.next()).toString();
                                         if (!TextUtils.isEmpty(string) || !z) {
                                             if (StringsKt.startsWith$default(string, "python_sdk_", false, 2, (Object) null)) {
-                                                pythonSdkUpdateInfo.setChannel(Deobfuscator$exteraGramDev$TMessagesProj.getString(zContains$default2 ? "beta" : "stable");
+                                                pythonSdkUpdateInfo.setChannel(zContains$default2 ? "beta" : "stable");
                                                 z = true;
                                             } else if (z) {
                                                 Matcher matcher = Updater.PYTHON_SDK_APP_VERSION_PATTERN.matcher(string);

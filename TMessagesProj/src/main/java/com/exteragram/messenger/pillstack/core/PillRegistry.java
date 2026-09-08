@@ -3,7 +3,6 @@ package com.exteragram.messenger.pillstack.core;
 import android.content.Context;
 import androidx.annotation.Keep;
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.pillstack.ui.pills.BasePill;
 import com.exteragram.messenger.pillstack.ui.pills.crypto.BtcPill;
 import com.exteragram.messenger.pillstack.ui.pills.crypto.GramPill;
@@ -68,7 +67,7 @@ public class PillRegistry {
         }
 
         public final int hashCode() {
-            return PillRegistry$PillInfo$$ExternalSyntheticRecord0.m(this.id, this.iconRes, this.iconColorTop, this.iconColorBottom, this.name, this.creator);
+            return java.util.Objects.hash(this.id, this.iconRes, this.iconColorTop, this.iconColorBottom, this.name, this.creator);
         }
 
         public int iconColorBottom() {
@@ -92,7 +91,7 @@ public class PillRegistry {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), PillInfo.class, "id;name;iconRes;iconColorTop;iconColorBottom;creator");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), PillInfo.class, "id;name;iconRes;iconColorTop;iconColorBottom;creator");
         }
     }
 

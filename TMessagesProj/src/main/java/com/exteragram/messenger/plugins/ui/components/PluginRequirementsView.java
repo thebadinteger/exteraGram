@@ -28,7 +28,6 @@ public final class PluginRequirementsView extends ViewGroup {
     private final int lineSpacing;
     private final Theme.ResourcesProvider resourcesProvider;
 
-    /* JADX WARN: Multi-variable type inference failed */
     @JvmOverloads
     public PluginRequirementsView(Context context) {
         this(context, null, 2, 0 == true ? 1 : 0);

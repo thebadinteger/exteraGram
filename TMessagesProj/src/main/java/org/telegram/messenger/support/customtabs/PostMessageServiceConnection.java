@@ -1,3 +1,25 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger.support.customtabs;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
+
+/**
+ * A {@link ServiceConnection} for Custom Tabs providers to use while connecting to a
+ * {@link PostMessageService} on the client side.
+ */
 public abstract class PostMessageServiceConnection implements ServiceConnection {
     private final Object mLock = new Object();
     private final ICustomTabsCallback mSessionBinder;

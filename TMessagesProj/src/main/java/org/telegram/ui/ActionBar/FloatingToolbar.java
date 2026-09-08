@@ -1,4 +1,377 @@
-private int mLineHeight;
+/*
+ * Copyright (C) 2015 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.telegram.ui.ActionBar;
+
+import static org.telegram.messenger.AndroidUtilities.allGlobalViews;
+import static org.telegram.messenger.AndroidUtilities.dp;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Outline;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.Region;
+import android.graphics.Shader;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
+import android.util.Log;
+import android.util.Size;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.MeasureSpec;
+import android.view.View.OnLayoutChangeListener;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
+import android.view.animation.Transformation;
+import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
+import android.widget.Space;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.view.menu.MenuItemImpl;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BotWebViewVibrationEffect;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.TranslateController;
+import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.Utilities;
+import org.telegram.messenger.utils.GradientProtectionDrawable;
+import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.ScaleStateListAnimator;
+import org.telegram.ui.Components.TextStyleSpan;
+import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
+import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
+@RequiresApi(23)
+public final class FloatingToolbar {
+
+    private static final MenuItem.OnMenuItemClickListener NO_OP_MENUITEM_CLICK_LISTENER = item -> false;
+    private final View mWindowView;
+    private final FloatingToolbarPopup mPopup;
+    private final Rect mContentRect = new Rect();
+    private final Rect mPreviousContentRect = new Rect();
+    private Menu mMenu;
+    private List<MenuItem> mShowingMenuItems = new ArrayList<>();
+    private MenuItem.OnMenuItemClickListener mMenuItemClickListener = NO_OP_MENUITEM_CLICK_LISTENER;
+    private int mSuggestedWidth;
+    private boolean mWidthChanged = true;
+
+    private int currentStyle;
+
+    public static final int STYLE_DIALOG = 0;
+    public static final int STYLE_THEME = 1;
+    public static final int STYLE_BLACK = 2;
+
+    private Runnable premiumLockClickListener;
+    public void setOnPremiumLockClick(Runnable listener) {
+        premiumLockClickListener = listener;
+    }
+
+    public interface StyleDelegate {
+        int getCurrentStyle(int start, int end);
+        void addStyle(int flag, int start, int end);
+        void removeStyle(int flag, int start, int end);
+    }
+
+    private Utilities.Callback0Return<Boolean> quoteShowCallback;
+    public void setQuoteShowVisible(Utilities.Callback0Return<Boolean> callback) {
+        quoteShowCallback = callback;
+    }
+
+    private final OnLayoutChangeListener mOrientationChangeHandler = new OnLayoutChangeListener() {
+        private final Rect mNewRect = new Rect();
+        private final Rect mOldRect = new Rect();
+
+        @Override
+        public void onLayoutChange(View view, int newLeft, int newRight, int newTop, int newBottom, int oldLeft, int oldRight, int oldTop, int oldBottom) {
+            mNewRect.set(newLeft, newRight, newTop, newBottom);
+            mOldRect.set(oldLeft, oldRight, oldTop, oldBottom);
+            if (mPopup.isShowing() && !mNewRect.equals(mOldRect)) {
+                mWidthChanged = true;
+                updateLayout();
+            }
+        }
+    };
+
+    private final Comparator<MenuItem> mMenuItemComparator = (menuItem1, menuItem2) -> menuItem1.getOrder() - menuItem2.getOrder();
+    
+    private final Theme.ResourcesProvider resourcesProvider;
+
+    BlurredBackgroundDrawableViewFactory blurredBackgroundDrawableViewFactory;
+
+    public FloatingToolbar(Context context, View windowView, int style, Theme.ResourcesProvider resourcesProvider) {
+        this(context, windowView, style, resourcesProvider, null);
+    }
+
+    public FloatingToolbar(Context context, View windowView, int style, Theme.ResourcesProvider resourcesProvider, BlurredBackgroundDrawableViewFactory factory) {
+        mWindowView = windowView;
+        currentStyle = style;
+        blurredBackgroundDrawableViewFactory = factory;
+        this.resourcesProvider = resourcesProvider;
+        mPopup = new FloatingToolbarPopup(context, windowView);
+    }
+
+    public FloatingToolbar setMenu(Menu menu) {
+        mMenu = menu;
+        return this;
+    }
+
+    public FloatingToolbar setOnMenuItemClickListener(MenuItem.OnMenuItemClickListener menuItemClickListener) {
+        if (menuItemClickListener != null) {
+            mMenuItemClickListener = menuItemClickListener;
+        } else {
+            mMenuItemClickListener = NO_OP_MENUITEM_CLICK_LISTENER;
+        }
+        return this;
+    }
+
+    public FloatingToolbar setContentRect(Rect rect) {
+        mContentRect.set(rect);
+        return this;
+    }
+
+    public FloatingToolbar setSuggestedWidth(int suggestedWidth) {
+        int difference = Math.abs(suggestedWidth - mSuggestedWidth);
+        mWidthChanged = difference > (mSuggestedWidth * 0.2);
+        mSuggestedWidth = suggestedWidth;
+        return this;
+    }
+
+    public FloatingToolbar show() {
+        registerOrientationHandler();
+        doShow();
+        return this;
+    }
+
+    public FloatingToolbar updateLayout() {
+        if (mPopup.isShowing()) {
+            doShow();
+        }
+        return this;
+    }
+
+    public void dismiss() {
+        unregisterOrientationHandler();
+        mPopup.dismiss();
+    }
+
+    public void hide() {
+        mPopup.hide();
+    }
+
+    public boolean isShowing() {
+        return mPopup.isShowing();
+    }
+
+    public boolean isHidden() {
+        return mPopup.isHidden();
+    }
+
+    public void setOutsideTouchable(boolean outsideTouchable, PopupWindow.OnDismissListener onDismiss) {
+        if (mPopup.setOutsideTouchable(outsideTouchable, onDismiss) && isShowing()) {
+            dismiss();
+            doShow();
+        }
+    }
+
+    private static final int TRANSLATE = 16908353; // android.R.id.textAssist;
+    private static final int TRANSLATE2 = 16909808;
+    private void doShow() {
+        List<MenuItem> menuItems = getVisibleAndEnabledMenuItems(mMenu);
+        Collections.sort(menuItems, mMenuItemComparator);
+        if (!isCurrentlyShowing(menuItems) || mWidthChanged) {
+            mPopup.dismiss();
+            mPopup.layoutMenuItems(menuItems, mMenuItemClickListener, mSuggestedWidth);
+            mShowingMenuItems = menuItems;
+        }
+        if (!mPopup.isShowing()) {
+            mPopup.show(mContentRect);
+        } else if (!mPreviousContentRect.equals(mContentRect)) {
+            mPopup.updateCoordinates(mContentRect);
+        }
+        mWidthChanged = false;
+        mPreviousContentRect.set(mContentRect);
+    }
+
+    private boolean isCurrentlyShowing(List<MenuItem> menuItems) {
+        if (mShowingMenuItems == null || menuItems.size() != mShowingMenuItems.size()) {
+            return false;
+        }
+        final int size = menuItems.size();
+        for (int i = 0; i < size; i++) {
+            final MenuItem menuItem = menuItems.get(i);
+            final MenuItem showingItem = mShowingMenuItems.get(i);
+            if (menuItem.getItemId() != showingItem.getItemId() || !TextUtils.equals(menuItem.getTitle(), showingItem.getTitle()) || !Objects.equals(menuItem.getIcon(), showingItem.getIcon()) || menuItem.getGroupId() != showingItem.getGroupId()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<MenuItem> getVisibleAndEnabledMenuItems(Menu menu) {
+        final List<MenuItem> menuItems = new ArrayList<>();
+        for (int i = 0; (menu != null) && (i < menu.size()); i++) {
+            final MenuItem menuItem = menu.getItem(i);
+            if (menuItem.isVisible() && menuItem.isEnabled()) {
+                Menu subMenu = menuItem.getSubMenu();
+                if (subMenu != null) {
+                    menuItems.addAll(getVisibleAndEnabledMenuItems(subMenu));
+                } else if (menuItem.getItemId() == R.id.menu_quote && (quoteShowCallback != null && !quoteShowCallback.run())) {
+                    continue;
+                } else {
+                    if (
+                        !(
+                            (menuItem.getItemId() == TRANSLATE || menuItem.getItemId() == TRANSLATE2)
+                        ) &&
+                        (
+                            menuItem.getItemId() != R.id.menu_regular || premiumLockClickListener == null
+                        )
+                    ) {
+                        menuItems.add(menuItem);
+                    }
+                }
+            }
+        }
+        return menuItems;
+    }
+
+    private void registerOrientationHandler() {
+        unregisterOrientationHandler();
+        mWindowView.addOnLayoutChangeListener(mOrientationChangeHandler);
+    }
+
+    private void unregisterOrientationHandler() {
+        mWindowView.removeOnLayoutChangeListener(mOrientationChangeHandler);
+    }
+
+    public static final List<Integer> STYLE_BUTTONS = Arrays.asList(
+        R.id.menu_regular,
+        R.id.menu_bold,
+        R.id.menu_italic,
+        R.id.menu_strike,
+        R.id.menu_mono,
+        R.id.menu_underline,
+        R.id.menu_spoiler,
+        R.id.menu_link,
+        R.id.menu_quote,
+        R.id.menu_date
+    );
+    public static final List<Integer> premiumOptions = Arrays.asList(
+        R.id.menu_bold,
+        R.id.menu_italic,
+        R.id.menu_strike,
+        R.id.menu_link,
+        R.id.menu_mono,
+        R.id.menu_underline,
+        R.id.menu_spoiler,
+        R.id.menu_quote
+    );
+
+    private final class FloatingToolbarPopup {
+
+        private static final int MIN_OVERFLOW_SIZE = 2;
+        private static final int MAX_OVERFLOW_SIZE = 4;
+        private final Context mContext;
+        private final View mParent;
+        private final PopupWindow mPopupWindow;
+
+        private final int mMarginHorizontal;
+        private final int mMarginVertical;
+
+        private final ViewGroup mContentContainer;
+        private final LinearLayout mMainPanel;
+        private LinearLayout mMainPanelButtons;
+        private final OverflowPanel mOverflowPanel;
+        private final FrameLayout mOverflowButton;
+        private final View mOverflowButtonShadow;
+        private final ImageView mOverflowButtonIcon;
+        private final TextView mOverflowButtonText;
+
+        private final Drawable mArrow;
+        private final Drawable mOverflow;
+        private final AnimatedVectorDrawable mToArrow;
+        private final AnimatedVectorDrawable mToOverflow;
+        private final OverflowPanelViewHelper mOverflowPanelViewHelper;
+
+        private final Interpolator mLogAccelerateInterpolator;
+        private final Interpolator mFastOutSlowInInterpolator;
+        private final Interpolator mLinearOutSlowInInterpolator;
+        private final Interpolator mFastOutLinearInInterpolator;
+
+        private final AnimatorSet mShowAnimation;
+        private final AnimatorSet mDismissAnimation;
+        private final AnimatorSet mHideAnimation;
+        private final AnimationSet mOpenOverflowAnimation;
+        private final AnimationSet mCloseOverflowAnimation;
+        private final Rect mViewPortOnScreen = new Rect();
+        private final Point mCoordsOnWindow = new Point();
+
+        private final int[] mTmpCoords = new int[2];
+        private final Region mTouchableRegion = new Region();
+        /*private final ViewTreeObserver.OnComputeInternalInsetsListener mInsetsComputer = info -> { TODO
+            info.contentInsets.setEmpty();
+            info.visibleInsets.setEmpty();
+            info.touchableRegion.set(mTouchableRegion);
+            info.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
+        };*/
+        private int mLineHeight;
         private final int mIconTextSpacing;
 
         private final Runnable mPreparePopupContentRTLHelper = new Runnable() {

@@ -1,7 +1,5 @@
 package com.exteragram.messenger.export.api;
 
-import com.android.dx.dex.code.CstInsn$$ExternalSyntheticBUOutline0;
-import okio.Buffer$$ExternalSyntheticBUOutline4;
 import org.telegram.messenger.BuildVars;
 import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;

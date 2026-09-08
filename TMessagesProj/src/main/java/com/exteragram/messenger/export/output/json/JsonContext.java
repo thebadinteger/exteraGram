@@ -1,9 +1,7 @@
 package com.exteragram.messenger.export.output.json;
 
-import android.support.v4.media.session.MediaSessionCompat$$ExternalSyntheticThrowCCEIfNotNull0;
 import android.util.Base64;
 import android.util.Pair;
-import com.android.dx.dex.code.CstInsn$$ExternalSyntheticBUOutline0;
 import com.exteragram.messenger.export.api.ApiWrap$ActionChatEditPhoto;
 import com.exteragram.messenger.export.api.ApiWrap$ActionSuggestProfilePhoto;
 import com.exteragram.messenger.export.api.ApiWrap$DialogInfo;
@@ -30,7 +28,6 @@ import com.exteragram.messenger.export.api.ApiWrap$Venue;
 import com.exteragram.messenger.export.api.DataTypesUtils;
 import com.exteragram.messenger.export.output.AbstractWriter;
 import com.exteragram.messenger.export.output.OutputFile;
-import com.exteragram.messenger.export.output.html.HtmlContext$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.export.output.html.HtmlWriter;
 import com.exteragram.messenger.utils.chats.ChatUtils;
 import com.google.android.gms.cast.MediaTrack;
@@ -423,7 +420,7 @@ public class JsonContext {
     }
 
     public static String Indentation(int i) {
-        return HtmlContext$$ExternalSyntheticBackport1.m(" ", i);
+        return com.exteragram.messenger.utils.RecordUtils.repeat(" ", i);
     }
 
     public static String SerializeArray(JsonContext jsonContext, ArrayList<String> arrayList) {

@@ -1,4 +1,49 @@
-String id = new String(data.readFully(3), "ISO-8859-1");
+/*
+ * Copyright 2013-2014 Odysseus Software GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.telegram.messenger.audioinfo.mp3;
+
+import org.telegram.messenger.audioinfo.util.PositionInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class ID3v2TagHeader {
+	private int version = 0;
+	private int revision = 0;
+	private int headerSize = 0; // size of header, including extended header (with attachments)
+	private int totalTagSize = 0; // everything, i.e. inluding tag header, extended header, footer & padding
+	private int paddingSize = 0; // size of zero padding after frames
+	private int footerSize = 0; // size of footer (version 4 only)
+	private boolean unsynchronization;
+	private boolean compression;
+
+	public ID3v2TagHeader(InputStream input) throws IOException, ID3v2Exception {
+		this(new PositionInputStream(input));
+	}
+
+	ID3v2TagHeader(PositionInputStream input) throws IOException, ID3v2Exception {
+		long startPosition = input.getPosition();
+
+		ID3v2DataInput data = new ID3v2DataInput(input);
+		
+		/*
+		 * Identifier: "ID3"
+		 */
+		String id = new String(data.readFully(3), "ISO-8859-1");
 		if (!"ID3".equals(id)) {
 			throw new ID3v2Exception("Invalid ID3 identifier: " + id);
 		}

@@ -58,7 +58,6 @@ public abstract class AiConfig {
         public static final /* synthetic */ EnumEntries<Suggestions> entries$0 = EnumEntriesKt.enumEntries(Suggestions.values());
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
     static {
         boolean z = true;
         int i = 2;

@@ -1,6 +1,5 @@
 package com.exteragram.messenger.translators;
 
-import com.exteragram.messenger.backup.PreferencesUtils$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.utils.network.ExteraHttpClient;
 import com.exteragram.messenger.utils.text.TranslatorUtils;
 import java.io.IOException;
@@ -27,7 +26,7 @@ public class YandexTranslator extends BaseTranslator {
     private static YandexTranslator instance;
     private static final OkHttpClient client = ExteraHttpClient.INSTANCE.getClient();
     private static final String uuid = UUID.randomUUID().toString().replace("-", _UrlKt.FRAGMENT_ENCODE_SET);
-    private static final Set<String> SUPPORTED_LANGUAGES = new HashSet(PreferencesUtils$$ExternalSyntheticBackport1.m(new String[]{"az", "sq", "am", "en", "ar", "hy", "af", "eu", "ba", "be", "bn", "my", "bg", "bs", "cv", "cy", "hu", "vi", "ht", ImageLoader.AUTOPLAY_FILTER_NONLOOP, "nl", "mrj", "el", "ka", "gu", "da", "he", "yi", "id", "ga", "it", "is", "es", "kk", "kn", "ca", "ky", "zh", "ko", "xh", "km", "lo", "la", "lv", "lt", "lb", "mg", "ms", "ml", "mt", "mk", "mi", "mr", "mhr", "mn", "de", "ne", "no", "pa", "pap", "fa", "pl", "pt", "ro", "ru", "ceb", "sr", "si", "sk", "sl", "sw", "su", "tg", "th", "tl", "ta", "tt", "te", "tr", "udm", "uz", "uk", "ur", "fi", "fr", "hi", "hr", "cs", "sv", "gd", "et", "eo", "jv", "ja"}));
+    private static final Set<String> SUPPORTED_LANGUAGES = new HashSet(new java.util.HashSet<>(java.util.Arrays.asList("az", "sq", "am", "en", "ar", "hy", "af", "eu", "ba", "be", "bn", "my", "bg", "bs", "cv", "cy", "hu", "vi", "ht", ImageLoader.AUTOPLAY_FILTER_NONLOOP, "nl", "mrj", "el", "ka", "gu", "da", "he", "yi", "id", "ga", "it", "is", "es", "kk", "kn", "ca", "ky", "zh", "ko", "xh", "km", "lo", "la", "lv", "lt", "lb", "mg", "ms", "ml", "mt", "mk", "mi", "mr", "mhr", "mn", "de", "ne", "no", "pa", "pap", "fa", "pl", "pt", "ro", "ru", "ceb", "sr", "si", "sk", "sl", "sw", "su", "tg", "th", "tl", "ta", "tt", "te", "tr", "udm", "uz", "uk", "ur", "fi", "fr", "hi", "hr", "cs", "sv", "gd", "et", "eo", "jv", "ja")));
 
     public static YandexTranslator getInstance() {
         if (instance == null) {

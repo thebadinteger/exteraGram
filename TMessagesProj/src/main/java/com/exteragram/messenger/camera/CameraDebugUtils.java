@@ -155,7 +155,6 @@ public abstract class CameraDebugUtils {
         return sb.toString();
     }
 
-    /* JADX WARN: Code duplicated, block: B:25:0x0045  */
     public static String getCameraXSupportedFpsRanges(CameraXSession cameraXSession) {
         CameraInfo cameraInfo;
         if (cameraXSession == null) {

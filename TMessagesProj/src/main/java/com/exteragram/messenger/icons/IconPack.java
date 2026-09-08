@@ -20,7 +20,6 @@ public final /* data */ class IconPack {
     private final SparseIntArray preinstalledMap;
     private final String version;
 
-    /* JADX WARN: Multi-variable type inference failed */
     public static /* synthetic */ IconPack copy$default(IconPack iconPack, String str, String str2, String str3, String str4, Map map, SparseIntArray sparseIntArray, File file, int i, Object obj) {
         if ((i & 1) != 0) {
             str = iconPack.id;

@@ -1,4 +1,166 @@
-outRect.top = 1;
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui;
+
+import static org.telegram.messenger.LocaleController.formatString;
+import static org.telegram.messenger.LocaleController.getString;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
+import android.util.TypedValue;
+import android.view.ActionMode;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.FrameLayout;
+import android.widget.ScrollView;
+
+import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
+import androidx.collection.LongSparseArray;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ChatObject;
+import org.telegram.messenger.ContactsController;
+import org.telegram.messenger.DialogObject;
+import org.telegram.messenger.Emoji;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.R;
+import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
+import org.telegram.tgnet.TLObject;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeDescription;
+import org.telegram.ui.Adapters.SearchAdapterHelper;
+import org.telegram.ui.Business.BusinessRecipientsHelper;
+import org.telegram.ui.Cells.GraySectionCell;
+import org.telegram.ui.Cells.GroupCreateUserCell;
+import org.telegram.ui.Components.AnimatedAvatarContainer;
+import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.Components.ColoredImageSpan;
+import org.telegram.ui.Components.EditTextBoldCursor;
+import org.telegram.ui.Components.FlickerLoadingView;
+import org.telegram.ui.Components.FragmentFloatingButton;
+import org.telegram.ui.Components.GroupCreateSpan;
+import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.Premium.LimitReachedBottomSheet;
+import org.telegram.ui.Components.RecyclerListView;
+import org.telegram.ui.Components.StickerEmptyView;
+
+import java.util.ArrayList;
+
+public class UsersSelectActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate, View.OnClickListener {
+
+    public final static int TYPE_FILTER = 0;
+    public final static int TYPE_AUTO_DELETE_EXISTING_CHATS = 1;
+    public final static int TYPE_PRIVATE = 2;
+
+    private ScrollView scrollView;
+    private SpansContainer spansContainer;
+    private EditTextBoldCursor editText;
+    private RecyclerListView listView;
+    private FlickerLoadingView progressView;
+    private StickerEmptyView emptyView;
+    private GroupCreateAdapter adapter;
+    private FilterUsersActivityDelegate delegate;
+    private FragmentFloatingButton floatingButton;
+    private FrameLayout.LayoutParams floatingButtonLp;
+    private boolean ignoreScrollEvent;
+    private int selectedCount;
+
+    private int type;
+    private int containerHeight;
+
+    AnimatedAvatarContainer animatedAvatarContainer;
+
+    public boolean noChatTypes;
+    public boolean allowSelf;
+    public boolean doNotNewChats;
+    private boolean isInclude;
+    private int filterFlags;
+    private ArrayList<Long> initialIds;
+
+    private boolean searchWas;
+    private boolean searching;
+    private LongSparseArray<GroupCreateSpan> selectedContacts = new LongSparseArray<>();
+    private ArrayList<GroupCreateSpan> allSpans = new ArrayList<>();
+    private GroupCreateSpan currentDeletingSpan;
+
+    private int fieldY;
+    private int ttlPeriod;
+
+    private final static int done_button = 1;
+
+    public void setTtlPeriod(int selectedTime) {
+        ttlPeriod = selectedTime;
+    }
+
+    private static class ItemDecoration extends RecyclerView.ItemDecoration {
+
+        private boolean single;
+        private int skipRows;
+
+        public void setSingle(boolean value) {
+            single = value;
+        }
+
+        @Override
+        public void onDraw(@NonNull Canvas canvas, RecyclerView parent, @NonNull RecyclerView.State state) {
+            int width = parent.getWidth();
+            int top;
+            int childCount = parent.getChildCount() - (single ? 0 : 1);
+            for (int i = 0; i < childCount; i++) {
+                View child = parent.getChildAt(i);
+                View nextChild = i < childCount - 1 ? parent.getChildAt(i + 1) : null;
+                int position = parent.getChildAdapterPosition(child);
+                if (position < skipRows || child instanceof GraySectionCell || nextChild instanceof GraySectionCell) {
+                    continue;
+                }
+                top = child.getBottom();
+                canvas.drawLine(LocaleController.isRTL ? 0 : AndroidUtilities.dp(72), top, width - (LocaleController.isRTL ? AndroidUtilities.dp(72) : 0), top, Theme.dividerPaint);
+            }
+        }
+
+        @Override
+        public void getItemOffsets(@NonNull android.graphics.Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+            super.getItemOffsets(outRect, view, parent, state);
+            /*int position = parent.getChildAdapterPosition(view);
+            if (position == 0 || !searching && position == 1) {
+                return;
+            }*/
+            outRect.top = 1;
         }
     }
 

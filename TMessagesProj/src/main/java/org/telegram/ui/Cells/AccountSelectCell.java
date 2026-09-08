@@ -1,15 +1,26 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+
 package org.telegram.ui.Cells;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.text.TextUtils;
-import android.view.View;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.exteragram.messenger.ExteraConfig;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.LocaleController;
@@ -24,110 +35,111 @@ import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class AccountSelectCell extends FrameLayout {
-    private int accountNumber;
-    private AvatarDrawable avatarDrawable;
-    private ImageView checkImageView;
-    private BackupImageView imageView;
-    private TextView infoTextView;
-    private SimpleTextView textView;
 
-    public AccountSelectCell(Context context, boolean z) {
+    private SimpleTextView textView;
+    private TextView infoTextView;
+    private BackupImageView imageView;
+    private ImageView checkImageView;
+    private AvatarDrawable avatarDrawable;
+
+    private int accountNumber;
+
+    public AccountSelectCell(Context context, boolean hasInfo) {
         super(context);
-        setMinimumWidth(AndroidUtilities.dp(196.0f));
-        AvatarDrawable avatarDrawable = new AvatarDrawable();
-        this.avatarDrawable = avatarDrawable;
-        avatarDrawable.setTextSize(AndroidUtilities.dp(12.0f));
-        BackupImageView backupImageView = new BackupImageView(context);
-        this.imageView = backupImageView;
-        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(36.0f));
-        addView(this.imageView, LayoutHelper.createFrame(36, 36.0f, 51, 10.0f, 10.0f, 0.0f, 0.0f));
-        SimpleTextView simpleTextView = new SimpleTextView(context);
-        this.textView = simpleTextView;
-        simpleTextView.setTextSize(15);
-        this.textView.setTypeface(AndroidUtilities.bold());
-        this.textView.setEllipsizeByGradient(true);
-        this.textView.setMaxLines(1);
-        this.textView.setGravity(19);
-        SimpleTextView simpleTextView2 = this.textView;
-        if (z) {
-            addView(simpleTextView2, LayoutHelper.createFrame(-2, -2.0f, 51, 61.0f, 7.0f, 8.0f, 0.0f));
-            this.textView.setTextColor(Theme.getColor(Theme.key_voipgroup_nameText));
-            this.textView.setText(LocaleController.getString(R.string.VoipGroupDisplayAs));
-            TextView textView = new TextView(context);
-            this.infoTextView = textView;
-            textView.setTextColor(Theme.getColor(Theme.key_voipgroup_lastSeenText));
-            this.infoTextView.setTextSize(1, 15.0f);
-            this.infoTextView.setLines(1);
-            this.infoTextView.setMaxLines(1);
-            this.infoTextView.setSingleLine(true);
-            this.infoTextView.setMaxWidth(AndroidUtilities.dp(320.0f));
-            this.infoTextView.setGravity(51);
-            this.infoTextView.setEllipsize(TextUtils.TruncateAt.END);
-            addView(this.infoTextView, LayoutHelper.createFrame(-2, -2.0f, 51, 61.0f, 27.0f, 8.0f, 0.0f));
-            return;
+
+        setMinimumWidth(dp(196));
+        avatarDrawable = new AvatarDrawable();
+        avatarDrawable.setTextSize(dp(12));
+
+        imageView = new BackupImageView(context);
+        imageView.setRoundRadius(dp(18));
+        addView(imageView, LayoutHelper.createFrame(36, 36, Gravity.LEFT | Gravity.TOP, 10, 10, 0, 0));
+
+        textView = new SimpleTextView(context);
+        textView.setTextSize(15);
+        textView.setTypeface(AndroidUtilities.bold());
+        textView.setEllipsizeByGradient(true);
+        textView.setMaxLines(1);
+        textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+
+        if (hasInfo) {
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 61, 7, 8, 0));
+            textView.setTextColor(Theme.getColor(Theme.key_voipgroup_nameText));
+            textView.setText(LocaleController.getString(R.string.VoipGroupDisplayAs));
+
+            infoTextView = new TextView(context);
+            infoTextView.setTextColor(Theme.getColor(Theme.key_voipgroup_lastSeenText));
+            infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+            infoTextView.setLines(1);
+            infoTextView.setMaxLines(1);
+            infoTextView.setSingleLine(true);
+            infoTextView.setMaxWidth(dp(320));
+            infoTextView.setGravity(Gravity.LEFT | Gravity.TOP);
+            infoTextView.setEllipsize(TextUtils.TruncateAt.END);
+            addView(infoTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 61, 27, 8, 0));
+        } else {
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 61, 0, 52, 0));
+            textView.setTextColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem));
+
+            checkImageView = new ImageView(context);
+            checkImageView.setImageResource(R.drawable.account_check);
+            checkImageView.setScaleType(ImageView.ScaleType.CENTER);
+            checkImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_menuItemCheck), PorterDuff.Mode.MULTIPLY));
+            addView(checkImageView, LayoutHelper.createFrame(40, LayoutHelper.MATCH_PARENT, Gravity.RIGHT | Gravity.TOP, 0, 0, 6, 0));
         }
-        addView(simpleTextView2, LayoutHelper.createFrame(-1, -1.0f, 51, 61.0f, 0.0f, 52.0f, 0.0f));
-        this.textView.setTextColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem));
-        ImageView imageView = new ImageView(context);
-        this.checkImageView = imageView;
-        imageView.setImageResource(R.drawable.account_check);
-        this.checkImageView.setScaleType(ImageView.ScaleType.CENTER);
-        this.checkImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_menuItemCheck), PorterDuff.Mode.MULTIPLY));
-        addView(this.checkImageView, LayoutHelper.createFrame(40, -1.0f, 53, 0.0f, 0.0f, 6.0f, 0.0f));
     }
 
     private int width() {
-        float fDp = AndroidUtilities.dp(196.0f);
-        float fDp2 = AndroidUtilities.dp((this.checkImageView != null ? 50 : 0) + 69);
-        float fMeasureText = this.textView.getTextPaint().measureText(this.textView.getText().toString());
-        TextView textView = this.infoTextView;
-        return (int) Math.max(fDp, fDp2 + Math.max(fMeasureText, textView != null ? textView.getPaint().measureText(this.infoTextView.getText().toString()) : 0.0f));
+        return (int) Math.max(dp(196), dp(61 + 8 + (checkImageView != null ? 50 : 0)) + Math.max(
+            textView.getTextPaint().measureText(textView.getText().toString()),
+            (infoTextView != null ? infoTextView.getPaint().measureText(infoTextView.getText().toString()) : 0)
+        ));
     }
 
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        if (this.checkImageView != null || (this.infoTextView != null && getLayoutParams().width != -2)) {
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(56.0f), TLObject.FLAG_30));
-        } else if (View.MeasureSpec.getMode(i) == Integer.MIN_VALUE) {
-            super.onMeasure(View.MeasureSpec.makeMeasureSpec(width(), Integer.MIN_VALUE), View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(56.0f), TLObject.FLAG_30));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (checkImageView != null || infoTextView != null && getLayoutParams().width != LayoutHelper.WRAP_CONTENT) {
+            super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(56), MeasureSpec.EXACTLY));
+        } else if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST) {
+            super.onMeasure(MeasureSpec.makeMeasureSpec(width(), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(56), MeasureSpec.EXACTLY));
         } else {
-            super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(56.0f), TLObject.FLAG_30));
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(56), MeasureSpec.EXACTLY));
         }
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (this.infoTextView == null) {
-            this.textView.setTextColor(Theme.getColor(Theme.key_chats_menuItemText));
+        if (infoTextView == null) {
+            textView.setTextColor(Theme.getColor(Theme.key_chats_menuItemText));
         }
     }
 
-    public void setObject(TLObject tLObject) {
-        if (tLObject instanceof TLRPC.User) {
-            TLRPC.User user = (TLRPC.User) tLObject;
-            this.avatarDrawable.setInfo(user);
-            this.infoTextView.setText(ContactsController.formatName(user.first_name, user.last_name));
-            this.imageView.setForUserOrChat(user, this.avatarDrawable);
-            return;
+    public void setObject(TLObject object) {
+        if (object instanceof TLRPC.User) {
+            TLRPC.User user = (TLRPC.User) object;
+            avatarDrawable.setInfo(user);
+            infoTextView.setText(ContactsController.formatName(user.first_name, user.last_name));
+            imageView.setForUserOrChat(user, avatarDrawable);
+        } else {
+            TLRPC.Chat chat = (TLRPC.Chat) object;
+            avatarDrawable.setInfo(chat);
+            infoTextView.setText(chat == null ? "" : chat.title);
+            imageView.setForUserOrChat(chat, avatarDrawable);
         }
-        TLRPC.Chat chat = (TLRPC.Chat) tLObject;
-        this.avatarDrawable.setInfo(chat);
-        this.infoTextView.setText(chat == null ? _UrlKt.FRAGMENT_ENCODE_SET : chat.title);
-        this.imageView.setForUserOrChat(chat, this.avatarDrawable);
     }
 
-    public void setAccount(int i, boolean z) {
-        this.accountNumber = i;
-        TLRPC.User currentUser = UserConfig.getInstance(i).getCurrentUser();
-        this.avatarDrawable.setInfo(i, currentUser);
-        this.textView.setText(ContactsController.formatName(currentUser.first_name, currentUser.last_name));
-        this.imageView.getImageReceiver().setCurrentAccount(i);
-        this.imageView.setForUserOrChat(currentUser, this.avatarDrawable);
-        this.checkImageView.setVisibility((z && i == UserConfig.selectedAccount) ? 0 : 4);
+    public void setAccount(int account, boolean check) {
+        accountNumber = account;
+        TLRPC.User user = UserConfig.getInstance(accountNumber).getCurrentUser();
+        avatarDrawable.setInfo(account, user);
+        textView.setText(ContactsController.formatName(user.first_name, user.last_name));
+        imageView.getImageReceiver().setCurrentAccount(account);
+        imageView.setForUserOrChat(user, avatarDrawable);
+        checkImageView.setVisibility(check && account == UserConfig.selectedAccount ? VISIBLE : INVISIBLE);
     }
 
     public int getAccountNumber() {
-        return this.accountNumber;
+        return accountNumber;
     }
 }

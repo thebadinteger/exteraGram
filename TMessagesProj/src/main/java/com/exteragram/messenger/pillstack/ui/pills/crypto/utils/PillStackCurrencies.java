@@ -1,8 +1,6 @@
 package com.exteragram.messenger.pillstack.ui.pills.crypto.utils;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
-import com.exteragram.messenger.export.api.ApiWrap$Poll$Answer$$ExternalSyntheticRecord0;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -54,11 +52,11 @@ public abstract class PillStackCurrencies {
         }
 
         public final int hashCode() {
-            return ApiWrap$Poll$Answer$$ExternalSyntheticRecord0.m(this.suffixSymbol, this.nameResId, this.code, this.symbolOverride);
+            return java.util.Objects.hash(this.suffixSymbol, this.nameResId, this.code, this.symbolOverride);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), CurrencyInfo.class, "code;nameResId;symbolOverride;suffixSymbol");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), CurrencyInfo.class, "code;nameResId;symbolOverride;suffixSymbol");
         }
     }
 

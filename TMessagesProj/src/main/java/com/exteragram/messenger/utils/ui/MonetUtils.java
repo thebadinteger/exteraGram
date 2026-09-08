@@ -18,7 +18,6 @@ import kotlin.jvm.JvmStatic;
 import kotlin.jvm.internal.Intrinsics;
 import kotlin.text.StringsKt;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.R;
@@ -61,8 +60,6 @@ public final class MonetUtils {
         }
     }
 
-    /* JADX WARN: Code duplicated, block: B:41:0x00ea A[PHI: r15
-  0x00ea: PHI (r15v2 'colorString' java.lang.String) = (r15v0 'colorString' java.lang.String), (r15v5 'colorString' java.lang.String) binds: [B:6:0x001d, B:16:0x003b] A[DONT_GENERATE, DONT_INLINE]] */
     @JvmStatic
     public static final int getColor(String colorString) {
         int i;

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.icons;
 
 import java.io.File;
-import kotlin.LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0;
 import kotlin.Metadata;
 import kotlin.ResultKt;
 import kotlin.Unit;
@@ -13,7 +12,6 @@ import kotlin.coroutines.jvm.internal.SuspendLambda;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
 import okhttp3.internal.url._UrlKt;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -35,7 +33,6 @@ public final class IconManager$handleIconPack$1$1$bottomSheet$1$1 extends Suspen
         final /* synthetic */ boolean $update;
         int label;
 
-        /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
         public AnonymousClass1(IconPackStorageResult<Unit> iconPackStorageResult, BaseFragment baseFragment, boolean z, IconPack iconPack, boolean z2, Continuation<? super AnonymousClass1> continuation) {
             super(2, continuation);
             this.$installResult = iconPackStorageResult;

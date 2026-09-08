@@ -332,9 +332,6 @@ public class DrawerContainer extends FrameLayout implements NotificationCenter.N
         return false;
     }
 
-    /* JADX WARN: Code duplicated, block: B:26:0x006c  */
-    /* JADX WARN: Code duplicated, block: B:28:0x0070  */
-    /* JADX WARN: Code duplicated, block: B:30:0x0074  */
     @Override // android.view.View
     @SuppressLint({"ClickableViewAccessibility"})
     public boolean onTouchEvent(MotionEvent motionEvent) {

@@ -1,4 +1,56 @@
-false);
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger.secretmedia;
+
+import static java.lang.Math.min;
+
+import android.net.Uri;
+import androidx.annotation.Nullable;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.upstream.BaseDataSource;
+import com.google.android.exoplayer2.upstream.DataSourceException;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Log;
+
+import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.Utilities;
+
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+public final class EncryptedFileDataSource extends BaseDataSource {
+
+    public static class EncryptedFileDataSourceException extends IOException {
+
+        public EncryptedFileDataSourceException(Throwable cause) {
+            super(cause);
+        }
+
+    }
+
+    private Uri uri;
+    private boolean opened;
+    private int bytesRemaining;
+    EncryptedFileInputStream fileInputStream;
+
+    public EncryptedFileDataSource() {
+        super(/* isNetwork= */ false);
     }
 
     @Deprecated

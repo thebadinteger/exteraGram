@@ -1,14 +1,20 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.text.Layout;
 import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.text.TextUtils;
-import android.view.View;
-import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.utils.ui.TextPaint;
-import okhttp3.internal.url._UrlKt;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
@@ -24,318 +30,316 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AvatarDrawable;
 
 public class DialogMeUrlCell extends BaseCell {
-    private AvatarDrawable avatarDrawable;
-    private ImageReceiver avatarImage;
-    private int avatarTop;
-    private int currentAccount;
-    private boolean drawNameLock;
-    private boolean drawVerified;
-    private boolean isSelected;
-    private StaticLayout messageLayout;
-    private int messageLeft;
-    private int messageTop;
-    private StaticLayout nameLayout;
-    private int nameLeft;
-    private int nameLockLeft;
-    private int nameLockTop;
-    private int nameMuteLeft;
+
     private TLRPC.RecentMeUrl recentMeUrl;
+
+    private ImageReceiver avatarImage = new ImageReceiver(this);
+    private AvatarDrawable avatarDrawable = new AvatarDrawable();
+
     public boolean useSeparator;
 
-    @Override // org.telegram.ui.Cells.BaseCell, android.view.View
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
+    private int nameLeft;
+    private StaticLayout nameLayout;
+    private boolean drawNameLock;
+    private int nameMuteLeft;
+    private int nameLockLeft;
+    private int nameLockTop;
+
+    private int messageTop = AndroidUtilities.dp(40);
+    private int messageLeft;
+    private StaticLayout messageLayout;
+
+    private boolean drawVerified;
+
+    private int avatarTop = AndroidUtilities.dp(10);
+
+    private boolean isSelected;
+
+    private int currentAccount = UserConfig.selectedAccount;
 
     public DialogMeUrlCell(Context context) {
         super(context);
-        this.avatarImage = new ImageReceiver(this);
-        this.avatarDrawable = new AvatarDrawable();
-        this.messageTop = AndroidUtilities.dp(40.0f);
-        this.avatarTop = AndroidUtilities.dp(10.0f);
-        this.currentAccount = UserConfig.selectedAccount;
+
         Theme.createDialogsResources(context);
-        this.avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(52.0f));
+        avatarImage.setRoundRadius(AndroidUtilities.dp(26));
     }
 
-    public void setRecentMeUrl(TLRPC.RecentMeUrl recentMeUrl) {
-        this.recentMeUrl = recentMeUrl;
+    public void setRecentMeUrl(TLRPC.RecentMeUrl url) {
+        recentMeUrl = url;
         requestLayout();
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onDetachedFromWindow() {
+    @Override
+    protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        this.avatarImage.onDetachedFromWindow();
+        avatarImage.onDetachedFromWindow();
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onAttachedToWindow() {
+    @Override
+    protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        this.avatarImage.onAttachedToWindow();
+        avatarImage.onAttachedToWindow();
     }
 
-    @Override // android.view.View
-    public void onMeasure(int i, int i2) {
-        setMeasuredDimension(View.MeasureSpec.getSize(i), AndroidUtilities.dp(72.0f) + (this.useSeparator ? 1 : 0));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), AndroidUtilities.dp(72) + (useSeparator ? 1 : 0));
     }
 
-    @Override // android.view.ViewGroup, android.view.View
-    public void onLayout(boolean z, int i, int i2, int i3, int i4) {
-        if (z) {
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        if (changed) {
             buildLayout();
         }
     }
 
     public void buildLayout() {
-        String userName;
-        int measuredWidth;
-        int iDp;
-        int i;
-        int measuredWidth2;
-        TextPaint textPaint = Theme.dialogs_namePaint[0];
-        TextPaint textPaint2 = Theme.dialogs_messagePaint[0];
-        this.drawNameLock = false;
-        this.drawVerified = false;
-        TLRPC.RecentMeUrl recentMeUrl = this.recentMeUrl;
+        String nameString = "";
+        CharSequence messageString;
+        TextPaint currentNamePaint = Theme.dialogs_namePaint[0];
+        TextPaint currentMessagePaint = Theme.dialogs_messagePaint[0];
+
+        drawNameLock = false;
+        drawVerified = false;
+
         if (recentMeUrl instanceof TLRPC.TL_recentMeUrlChat) {
-            TLRPC.Chat chat = MessagesController.getInstance(this.currentAccount).getChat(Long.valueOf(this.recentMeUrl.chat_id));
-            this.drawVerified = chat.verified;
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(recentMeUrl.chat_id);
+            drawVerified = chat.verified;
+
             if (!LocaleController.isRTL) {
-                this.nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
+                nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
             } else {
-                this.nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(14);
             }
-            userName = chat.title;
-            this.avatarDrawable.setInfo(this.currentAccount, chat);
-            this.avatarImage.setForUserOrChat(chat, this.avatarDrawable, this.recentMeUrl);
+            nameString = chat.title;
+            avatarDrawable.setInfo(currentAccount, chat);
+            avatarImage.setForUserOrChat(chat, avatarDrawable, recentMeUrl);
         } else if (recentMeUrl instanceof TLRPC.TL_recentMeUrlUser) {
-            TLRPC.User user = MessagesController.getInstance(this.currentAccount).getUser(Long.valueOf(this.recentMeUrl.user_id));
+            TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(recentMeUrl.user_id);
             if (!LocaleController.isRTL) {
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
             } else {
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLeft = AndroidUtilities.dp(14);
             }
             if (user != null) {
                 if (user.bot) {
-                    this.nameLockTop = AndroidUtilities.dp(16.5f);
+                    nameLockTop = AndroidUtilities.dp(16.5f);
                     if (!LocaleController.isRTL) {
-                        this.nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                        this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
+                        nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                        nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
                     } else {
-                        this.nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                        this.nameLeft = AndroidUtilities.dp(14.0f);
+                        nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                        nameLeft = AndroidUtilities.dp(14);
                     }
                 }
-                this.drawVerified = user.verified;
+                drawVerified = user.verified;
             }
-            userName = UserObject.getUserName(user);
-            this.avatarDrawable.setInfo(this.currentAccount, user);
-            this.avatarImage.setForUserOrChat(user, this.avatarDrawable, this.recentMeUrl);
+            nameString = UserObject.getUserName(user);
+            avatarDrawable.setInfo(currentAccount, user);
+            avatarImage.setForUserOrChat(user, avatarDrawable, recentMeUrl);
         } else if (recentMeUrl instanceof TLRPC.TL_recentMeUrlStickerSet) {
             if (!LocaleController.isRTL) {
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
             } else {
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLeft = AndroidUtilities.dp(14);
             }
-            userName = this.recentMeUrl.set.set.title;
-            this.avatarDrawable.setInfo(5L, userName, null);
-            this.avatarImage.setImage(ImageLocation.getForDocument(this.recentMeUrl.set.cover), null, this.avatarDrawable, null, this.recentMeUrl, 0);
+            nameString = recentMeUrl.set.set.title;
+            avatarDrawable.setInfo(5, recentMeUrl.set.set.title, null);
+            avatarImage.setImage(ImageLocation.getForDocument(recentMeUrl.set.cover), null, avatarDrawable, null, recentMeUrl, 0);
         } else if (recentMeUrl instanceof TLRPC.TL_recentMeUrlChatInvite) {
             if (!LocaleController.isRTL) {
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
             } else {
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLeft = AndroidUtilities.dp(14);
             }
-            TLRPC.ChatInvite chatInvite = this.recentMeUrl.chat_invite;
-            TLRPC.Chat chat2 = chatInvite.chat;
-            if (chat2 != null) {
-                this.avatarDrawable.setInfo(this.currentAccount, chat2);
-                TLRPC.RecentMeUrl recentMeUrl2 = this.recentMeUrl;
-                TLRPC.Chat chat3 = recentMeUrl2.chat_invite.chat;
-                String str = chat3.title;
-                this.drawVerified = chat3.verified;
-                this.avatarImage.setForUserOrChat(chat3, this.avatarDrawable, recentMeUrl2);
-                userName = str;
+            if (recentMeUrl.chat_invite.chat != null) {
+                avatarDrawable.setInfo(currentAccount, recentMeUrl.chat_invite.chat);
+                nameString = recentMeUrl.chat_invite.chat.title;
+                drawVerified = recentMeUrl.chat_invite.chat.verified;
+                avatarImage.setForUserOrChat(recentMeUrl.chat_invite.chat, avatarDrawable, recentMeUrl);
             } else {
-                String str2 = chatInvite.title;
-                this.avatarDrawable.setInfo(5L, str2, null);
-                this.avatarImage.setImage(ImageLocation.getForPhoto(FileLoader.getClosestPhotoSizeWithSize(this.recentMeUrl.chat_invite.photo.sizes, 50), this.recentMeUrl.chat_invite.photo), "50_50", this.avatarDrawable, null, this.recentMeUrl, 0);
-                userName = str2;
+                nameString = recentMeUrl.chat_invite.title;
+                avatarDrawable.setInfo(5, recentMeUrl.chat_invite.title, null);
+                TLRPC.PhotoSize size = FileLoader.getClosestPhotoSizeWithSize(recentMeUrl.chat_invite.photo.sizes, 50);
+                avatarImage.setImage(ImageLocation.getForPhoto(size, recentMeUrl.chat_invite.photo), "50_50", avatarDrawable, null, recentMeUrl, 0);
             }
             if (!LocaleController.isRTL) {
-                this.nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
+                nameLockLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline + 4);
             } else {
-                this.nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLockLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(14);
             }
         } else if (recentMeUrl instanceof TLRPC.TL_recentMeUrlUnknown) {
             if (!LocaleController.isRTL) {
-                this.nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+                nameLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
             } else {
-                this.nameLeft = AndroidUtilities.dp(14.0f);
+                nameLeft = AndroidUtilities.dp(14);
             }
-            this.avatarImage.setImage(null, null, this.avatarDrawable, null, this.recentMeUrl, 0);
-            userName = "Url";
+            nameString = "Url";
+            avatarImage.setImage(null, null, avatarDrawable, null, recentMeUrl, 0);
         } else {
-            this.avatarImage.setImage(null, null, this.avatarDrawable, null, recentMeUrl, 0);
-            userName = _UrlKt.FRAGMENT_ENCODE_SET;
+            avatarImage.setImage(null, null, avatarDrawable, null, recentMeUrl, 0);
         }
-        String str3 = MessagesController.getInstance(this.currentAccount).linkPrefix + "/" + this.recentMeUrl.url;
-        if (TextUtils.isEmpty(userName)) {
-            userName = LocaleController.getString(R.string.HiddenName);
+        messageString = MessagesController.getInstance(currentAccount).linkPrefix + "/" + recentMeUrl.url;
+
+        if (TextUtils.isEmpty(nameString)) {
+            nameString = LocaleController.getString(R.string.HiddenName);
         }
+
+        int nameWidth;
+
         if (!LocaleController.isRTL) {
-            measuredWidth = getMeasuredWidth() - this.nameLeft;
-            iDp = AndroidUtilities.dp(14.0f);
+            nameWidth = getMeasuredWidth() - nameLeft - AndroidUtilities.dp(14);
         } else {
-            measuredWidth = getMeasuredWidth() - this.nameLeft;
-            iDp = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+            nameWidth = getMeasuredWidth() - nameLeft - AndroidUtilities.dp(AndroidUtilities.leftBaseline);
         }
-        int iDp2 = measuredWidth - iDp;
-        if (this.drawNameLock) {
-            iDp2 -= AndroidUtilities.dp(4.0f) + Theme.dialogs_lockDrawable.getIntrinsicWidth();
+        if (drawNameLock) {
+            nameWidth -= AndroidUtilities.dp(4) + Theme.dialogs_lockDrawable.getIntrinsicWidth();
         }
-        if (this.drawVerified) {
-            int iDp3 = AndroidUtilities.dp(6.0f) + Theme.dialogs_verifiedDrawable.getIntrinsicWidth();
-            iDp2 -= iDp3;
+
+        if (drawVerified) {
+            int w = AndroidUtilities.dp(6) + Theme.dialogs_verifiedDrawable.getIntrinsicWidth();
+            nameWidth -= w;
             if (LocaleController.isRTL) {
-                this.nameLeft += iDp3;
+                nameLeft += w;
             }
         }
-        int iMax = Math.max(AndroidUtilities.dp(12.0f), iDp2);
+
+        nameWidth = Math.max(AndroidUtilities.dp(12), nameWidth);
         try {
-            StaticLayout staticLayout = new StaticLayout(TextUtils.ellipsize(userName.replace('\n', ' '), textPaint, iMax - AndroidUtilities.dp(12.0f), TextUtils.TruncateAt.END), textPaint, iMax, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-            i = iMax;
-            try {
-                this.nameLayout = staticLayout;
-            } catch (Exception e) {
-                e = e;
-                FileLog.e(e);
-            }
-        } catch (Exception e2) {
-            e = e2;
-            i = iMax;
+            CharSequence nameStringFinal = TextUtils.ellipsize(nameString.replace('\n', ' '), currentNamePaint, nameWidth - AndroidUtilities.dp(12), TextUtils.TruncateAt.END);
+            nameLayout = new StaticLayout(nameStringFinal, currentNamePaint, nameWidth, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        } catch (Exception e) {
+            FileLog.e(e);
         }
-        int measuredWidth3 = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline + 16);
+
+        int messageWidth = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline + 16);
+        int avatarLeft;
         if (!LocaleController.isRTL) {
-            this.messageLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
-            measuredWidth2 = AndroidUtilities.dp(AndroidUtilities.isTablet() ? 13.0f : 9.0f);
+            messageLeft = AndroidUtilities.dp(AndroidUtilities.leftBaseline);
+            avatarLeft = AndroidUtilities.dp(AndroidUtilities.isTablet() ? 13 : 9);
         } else {
-            this.messageLeft = AndroidUtilities.dp(16.0f);
-            measuredWidth2 = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.isTablet() ? 65.0f : 61.0f);
+            messageLeft = AndroidUtilities.dp(16);
+            avatarLeft = getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.isTablet() ? 65 : 61);
         }
-        this.avatarImage.setImageCoords(measuredWidth2, this.avatarTop, AndroidUtilities.dp(52.0f), AndroidUtilities.dp(52.0f));
-        int iMax2 = Math.max(AndroidUtilities.dp(12.0f), measuredWidth3);
+        avatarImage.setImageCoords(avatarLeft, avatarTop, AndroidUtilities.dp(52), AndroidUtilities.dp(52));
+
+        messageWidth = Math.max(AndroidUtilities.dp(12), messageWidth);
+        CharSequence messageStringFinal = TextUtils.ellipsize(messageString, currentMessagePaint, messageWidth - AndroidUtilities.dp(12), TextUtils.TruncateAt.END);
         try {
-            this.messageLayout = new StaticLayout(TextUtils.ellipsize(str3, textPaint2, iMax2 - AndroidUtilities.dp(12.0f), TextUtils.TruncateAt.END), textPaint2, iMax2, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-        } catch (Exception e3) {
-            FileLog.e(e3);
+            messageLayout = new StaticLayout(messageStringFinal, currentMessagePaint, messageWidth, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        } catch (Exception e) {
+            FileLog.e(e);
         }
-        boolean z = LocaleController.isRTL;
-        StaticLayout staticLayout2 = this.nameLayout;
-        if (z) {
-            if (staticLayout2 != null && staticLayout2.getLineCount() > 0) {
-                float lineLeft = this.nameLayout.getLineLeft(0);
-                double dCeil = Math.ceil(this.nameLayout.getLineWidth(0));
-                if (this.drawVerified) {
-                    this.nameMuteLeft = (int) (((((double) this.nameLeft) + (((double) i) - dCeil)) - ((double) AndroidUtilities.dp(6.0f))) - ((double) Theme.dialogs_verifiedDrawable.getIntrinsicWidth()));
+
+        double widthpx;
+        float left;
+        if (LocaleController.isRTL) {
+            if (nameLayout != null && nameLayout.getLineCount() > 0) {
+                left = nameLayout.getLineLeft(0);
+                widthpx = Math.ceil(nameLayout.getLineWidth(0));
+                if (drawVerified) {
+                    nameMuteLeft = (int) (nameLeft + (nameWidth - widthpx) - AndroidUtilities.dp(6) - Theme.dialogs_verifiedDrawable.getIntrinsicWidth());
                 }
-                if (lineLeft == 0.0f) {
-                    double d = i;
-                    if (dCeil < d) {
-                        this.nameLeft = (int) (((double) this.nameLeft) + (d - dCeil));
+                if (left == 0) {
+                    if (widthpx < nameWidth) {
+                        nameLeft += (nameWidth - widthpx);
                     }
                 }
             }
-            StaticLayout staticLayout3 = this.messageLayout;
-            if (staticLayout3 == null || staticLayout3.getLineCount() <= 0 || this.messageLayout.getLineLeft(0) != 0.0f) {
-                return;
-            }
-            double dCeil2 = Math.ceil(this.messageLayout.getLineWidth(0));
-            double d2 = iMax2;
-            if (dCeil2 < d2) {
-                this.messageLeft = (int) (((double) this.messageLeft) + (d2 - dCeil2));
-                return;
-            }
-            return;
-        }
-        if (staticLayout2 != null && staticLayout2.getLineCount() > 0) {
-            float lineRight = this.nameLayout.getLineRight(0);
-            if (lineRight == i) {
-                double dCeil3 = Math.ceil(this.nameLayout.getLineWidth(0));
-                double d3 = i;
-                if (dCeil3 < d3) {
-                    this.nameLeft = (int) (((double) this.nameLeft) - (d3 - dCeil3));
+            if (messageLayout != null && messageLayout.getLineCount() > 0) {
+                left = messageLayout.getLineLeft(0);
+                if (left == 0) {
+                    widthpx = Math.ceil(messageLayout.getLineWidth(0));
+                    if (widthpx < messageWidth) {
+                        messageLeft += (messageWidth - widthpx);
+                    }
                 }
             }
-            if (this.drawVerified) {
-                this.nameMuteLeft = (int) (this.nameLeft + lineRight + AndroidUtilities.dp(6.0f));
+        } else {
+            if (nameLayout != null && nameLayout.getLineCount() > 0) {
+                left = nameLayout.getLineRight(0);
+                if (left == nameWidth) {
+                    widthpx = Math.ceil(nameLayout.getLineWidth(0));
+                    if (widthpx < nameWidth) {
+                        nameLeft -= (nameWidth - widthpx);
+                    }
+                }
+                if (drawVerified) {
+                    nameMuteLeft = (int) (nameLeft + left + AndroidUtilities.dp(6));
+                }
+            }
+            if (messageLayout != null && messageLayout.getLineCount() > 0) {
+                left = messageLayout.getLineRight(0);
+                if (left == messageWidth) {
+                    widthpx = Math.ceil(messageLayout.getLineWidth(0));
+                    if (widthpx < messageWidth) {
+                        messageLeft -= (messageWidth - widthpx);
+                    }
+                }
             }
         }
-        StaticLayout staticLayout4 = this.messageLayout;
-        if (staticLayout4 == null || staticLayout4.getLineCount() <= 0 || this.messageLayout.getLineRight(0) != iMax2) {
-            return;
-        }
-        double dCeil4 = Math.ceil(this.messageLayout.getLineWidth(0));
-        double d4 = iMax2;
-        if (dCeil4 < d4) {
-            this.messageLeft = (int) (((double) this.messageLeft) - (d4 - dCeil4));
-        }
     }
 
-    public void setDialogSelected(boolean z) {
-        if (this.isSelected != z) {
+    public void setDialogSelected(boolean value) {
+        if (isSelected != value) {
             invalidate();
         }
-        this.isSelected = z;
+        isSelected = value;
     }
 
-    @Override // android.view.View
-    public void onDraw(Canvas canvas) {
-        Canvas canvas2;
-        if (this.isSelected) {
-            canvas.drawRect(0.0f, 0.0f, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_tabletSeletedPaint);
-            canvas2 = canvas;
-        } else {
-            canvas2 = canvas;
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (isSelected) {
+            canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_tabletSeletedPaint);
         }
-        if (this.drawNameLock) {
-            BaseCell.setDrawableBounds(Theme.dialogs_lockDrawable, this.nameLockLeft, this.nameLockTop);
-            Theme.dialogs_lockDrawable.draw(canvas2);
+
+        if (drawNameLock) {
+            setDrawableBounds(Theme.dialogs_lockDrawable, nameLockLeft, nameLockTop);
+            Theme.dialogs_lockDrawable.draw(canvas);
         }
-        if (this.nameLayout != null) {
-            canvas2.save();
-            canvas2.translate(this.nameLeft, AndroidUtilities.dp(13.0f));
-            this.nameLayout.draw(canvas2);
-            canvas2.restore();
+
+        if (nameLayout != null) {
+            canvas.save();
+            canvas.translate(nameLeft, AndroidUtilities.dp(13));
+            nameLayout.draw(canvas);
+            canvas.restore();
         }
-        if (this.messageLayout != null) {
-            canvas2.save();
-            canvas2.translate(this.messageLeft, this.messageTop);
+
+        if (messageLayout != null) {
+            canvas.save();
+            canvas.translate(messageLeft, messageTop);
             try {
-                this.messageLayout.draw(canvas2);
+                messageLayout.draw(canvas);
             } catch (Exception e) {
                 FileLog.e(e);
             }
-            canvas2.restore();
+            canvas.restore();
         }
-        if (this.drawVerified) {
-            BaseCell.setDrawableBounds(Theme.dialogs_verifiedDrawable, this.nameMuteLeft, AndroidUtilities.dp(16.5f));
-            BaseCell.setDrawableBounds(Theme.dialogs_verifiedCheckDrawable, this.nameMuteLeft, AndroidUtilities.dp(16.5f));
-            Theme.dialogs_verifiedDrawable.draw(canvas2);
-            Theme.dialogs_verifiedCheckDrawable.draw(canvas2);
+
+        if (drawVerified) {
+            setDrawableBounds(Theme.dialogs_verifiedDrawable, nameMuteLeft, AndroidUtilities.dp(16.5f));
+            setDrawableBounds(Theme.dialogs_verifiedCheckDrawable, nameMuteLeft, AndroidUtilities.dp(16.5f));
+            Theme.dialogs_verifiedDrawable.draw(canvas);
+            Theme.dialogs_verifiedCheckDrawable.draw(canvas);
         }
-        if (this.useSeparator) {
+
+        if (useSeparator) {
             if (LocaleController.isRTL) {
-                canvas2.drawLine(0.0f, getMeasuredHeight() - 1, getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline), getMeasuredHeight() - 1, Theme.dividerPaint);
+                canvas.drawLine(0, getMeasuredHeight() - 1, getMeasuredWidth() - AndroidUtilities.dp(AndroidUtilities.leftBaseline), getMeasuredHeight() - 1, Theme.dividerPaint);
             } else {
-                canvas2.drawLine(AndroidUtilities.dp(AndroidUtilities.leftBaseline), getMeasuredHeight() - 1, getMeasuredWidth(), getMeasuredHeight() - 1, Theme.dividerPaint);
+                canvas.drawLine(AndroidUtilities.dp(AndroidUtilities.leftBaseline), getMeasuredHeight() - 1, getMeasuredWidth(), getMeasuredHeight() - 1, Theme.dividerPaint);
             }
         }
-        this.avatarImage.draw(canvas2);
+
+        avatarImage.draw(canvas);
+    }
+
+    @Override
+    public boolean hasOverlappingRendering() {
+        return false;
     }
 }

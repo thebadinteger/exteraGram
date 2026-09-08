@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import kotlin.UByte;
-import org.vosk.Model$$ExternalSyntheticBUOutline0;
 
 public abstract class FormatConverter {
     public static int getSampleRate(String str) {

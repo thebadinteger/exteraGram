@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import kotlin.Metadata;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.scilab.forge.jlatexmath.TeXSymbolParser;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
@@ -86,7 +85,6 @@ public class PluginsMenuWrapper {
             private Drawable topShadowDrawable;
             private boolean wasCanScrollVertically;
 
-            /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
             {
                 super(context);
                 this.$context = context;

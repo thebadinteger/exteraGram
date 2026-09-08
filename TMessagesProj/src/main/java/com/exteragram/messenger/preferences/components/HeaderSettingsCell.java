@@ -16,7 +16,6 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 import com.exteragram.messenger.preferences.utils.IconShapeHelper;
 import com.exteragram.messenger.utils.ui.MonetUtils;
-import okhttp3.HttpUrl$$ExternalSyntheticBUOutline0;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;

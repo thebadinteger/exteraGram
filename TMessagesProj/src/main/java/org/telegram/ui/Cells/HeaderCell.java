@@ -1,246 +1,227 @@
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
 package org.telegram.ui.Cells;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Property;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
 import androidx.core.view.ViewCompat;
-import com.exteragram.messenger.ExteraConfig;
-import java.util.ArrayList;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
-import org.telegram.tgnet.TLObject;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.LayoutHelper;
 
+import java.util.ArrayList;
+
 public class HeaderCell extends FrameLayout {
-    private final boolean animated;
-    private AnimatedTextView animatedTextView;
-    protected int bottomMargin;
-    private int height;
+
     public int id;
+
     protected int padding;
-    private final Theme.ResourcesProvider resourcesProvider;
+    protected int bottomMargin;
+
     private TextView textView;
+    private AnimatedTextView animatedTextView;
     private SimpleTextView textView2;
+    private int height = 40;
+    private final Theme.ResourcesProvider resourcesProvider;
+    private final boolean animated;
 
     public HeaderCell(Context context) {
-        this(context, Theme.key_windowBackgroundWhiteBlueHeader, 18, 6, false, null);
+        this(context, Theme.key_windowBackgroundWhiteBlueHeader, 18, 7, false, null);
     }
 
     public HeaderCell(Context context, Theme.ResourcesProvider resourcesProvider) {
-        this(context, Theme.key_windowBackgroundWhiteBlueHeader, 18, 6, false, resourcesProvider);
+        this(context, Theme.key_windowBackgroundWhiteBlueHeader, 18, 7, false, resourcesProvider);
     }
 
-    public HeaderCell(Context context, int i) {
-        this(context, Theme.key_windowBackgroundWhiteBlueHeader, i, 6, false, null);
+    public HeaderCell(Context context, int padding) {
+        this(context, Theme.key_windowBackgroundWhiteBlueHeader, padding, 7, false, null);
     }
 
-    public HeaderCell(Context context, int i, Theme.ResourcesProvider resourcesProvider) {
-        this(context, Theme.key_windowBackgroundWhiteBlueHeader, i, 6, false, resourcesProvider);
+    public HeaderCell(Context context, int padding, Theme.ResourcesProvider resourcesProvider) {
+        this(context, Theme.key_windowBackgroundWhiteBlueHeader, padding, 7, false, resourcesProvider);
     }
 
-    public HeaderCell(Context context, int i, int i2, int i3, boolean z) {
-        this(context, i, i2, i3, z, null);
+    public HeaderCell(Context context, int textColorKey, int padding, int topMargin, boolean text2) {
+        this(context, textColorKey, padding, topMargin, text2, null);
     }
 
-    public HeaderCell(Context context, int i, int i2, int i3, boolean z, Theme.ResourcesProvider resourcesProvider) {
-        this(context, i, i2, i3, 0, z, resourcesProvider);
+    public HeaderCell(Context context, int textColorKey, int padding, int topMargin, boolean text2, Theme.ResourcesProvider resourcesProvider) {
+        this(context, textColorKey, padding, topMargin, 0, text2, resourcesProvider);
     }
 
-    public HeaderCell(Context context, int i, int i2, int i3, int i4, boolean z, Theme.ResourcesProvider resourcesProvider) {
-        this(context, i, i2, i3, i4, z, false, resourcesProvider);
+    public HeaderCell(Context context, int textColorKey, int padding, int topMargin, int bottomMargin, boolean text2, Theme.ResourcesProvider resourcesProvider) {
+        this(context, textColorKey, padding, topMargin, bottomMargin, text2, false, resourcesProvider);
     }
 
-    public HeaderCell(Context context, int i, int i2, int i3, int i4, boolean z, boolean z2, Theme.ResourcesProvider resourcesProvider) {
+    public HeaderCell(Context context, int textColorKey, int padding, int topMargin, int bottomMargin, boolean text2, boolean animated, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-        this.height = 40;
         this.resourcesProvider = resourcesProvider;
-        int i5 = ExteraConfig.getSectionsSeparatedHeaders() ? 24 : i2;
-        this.padding = i5;
-        int i6 = ExteraConfig.getSectionsSeparatedHeaders() ? 3 : i4;
-        this.bottomMargin = i6;
-        this.animated = z2;
-        if (z2) {
-            AnimatedTextView animatedTextView = new AnimatedTextView(getContext());
-            this.animatedTextView = animatedTextView;
-            animatedTextView.setTextSize(AndroidUtilities.dp(14.0f));
-            this.animatedTextView.setTypeface(AndroidUtilities.bold());
-            this.animatedTextView.setGravity((LocaleController.isRTL ? 5 : 3) | 16);
-            this.animatedTextView.setTextColor(getThemedColor(i));
-            this.animatedTextView.setTag(Integer.valueOf(i));
-            this.animatedTextView.getDrawable().setHacks(true, true, false);
-            float f = i5;
-            addView(this.animatedTextView, LayoutHelper.createFrame(-1, this.height - i3, (LocaleController.isRTL ? 5 : 3) | 48, f, i3, f, z ? 0.0f : i6));
+        this.padding = padding;
+        this.bottomMargin = bottomMargin;
+        this.animated = animated;
+
+        if (animated) {
+            animatedTextView = new AnimatedTextView(getContext());
+            animatedTextView.setTextSize(AndroidUtilities.dp(14));
+            animatedTextView.setTypeface(AndroidUtilities.bold());
+            animatedTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+            animatedTextView.setTextColor(getThemedColor(textColorKey));
+            animatedTextView.setTag(textColorKey);
+            animatedTextView.getDrawable().setHacks(true, true, false);
+            addView(animatedTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, height - topMargin, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, padding, topMargin, padding, text2 ? 0 : bottomMargin));
         } else {
-            TextView textView = new TextView(getContext());
-            this.textView = textView;
-            textView.setTextSize(1, 14.0f);
-            this.textView.setTypeface(AndroidUtilities.bold());
-            this.textView.setEllipsize(TextUtils.TruncateAt.END);
-            this.textView.setGravity((LocaleController.isRTL ? 5 : 3) | 16);
-            this.textView.setMinHeight(AndroidUtilities.dp(this.height - i3));
-            this.textView.setTextColor(getThemedColor(i));
-            this.textView.setTag(Integer.valueOf(i));
-            float f2 = i5;
-            addView(this.textView, LayoutHelper.createFrame(-1, -1.0f, (LocaleController.isRTL ? 5 : 3) | 48, f2, i3, f2, z ? 0.0f : i6));
+            textView = new TextView(getContext());
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            textView.setTypeface(AndroidUtilities.bold());
+            textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+            textView.setMinHeight(AndroidUtilities.dp(height - topMargin));
+            textView.setTextColor(getThemedColor(textColorKey));
+            textView.setTag(textColorKey);
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, padding, topMargin, padding, text2 ? 0 : bottomMargin));
         }
-        if (z) {
-            SimpleTextView simpleTextView = new SimpleTextView(getContext());
-            this.textView2 = simpleTextView;
-            simpleTextView.setTextSize(13);
-            this.textView2.setGravity((LocaleController.isRTL ? 3 : 5) | 48);
-            float f3 = i5;
-            addView(this.textView2, LayoutHelper.createFrame(-1, -1.0f, (LocaleController.isRTL ? 3 : 5) | 48, f3, 21.0f, f3, i6));
+
+        if (text2) {
+            textView2 = new SimpleTextView(getContext());
+            textView2.setTextSize(13);
+            textView2.setGravity((LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP);
+            addView(textView2, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, padding, 21, padding, bottomMargin));
         }
+
         ViewCompat.setAccessibilityHeading(this, true);
     }
 
-    public void setOnWidthUpdateListener(Runnable runnable) {
-        this.animatedTextView.setOnWidthUpdatedListener(runnable);
+    public void setOnWidthUpdateListener(Runnable listener) {
+        animatedTextView.setOnWidthUpdatedListener(listener);
     }
 
     public float getAnimatedWidth() {
-        return this.animatedTextView.getDrawable().getCurrentWidth();
+        return animatedTextView.getDrawable().getCurrentWidth();
     }
 
-    public void setHeight(int i) {
-        if (ExteraConfig.getSectionsSeparatedHeaders()) {
-            return;
-        }
-        this.height = i;
-        int iDp = AndroidUtilities.dp(i) - ((FrameLayout.LayoutParams) this.textView.getLayoutParams()).topMargin;
-        if (this.textView.getMinHeight() != iDp) {
-            this.textView.setMinHeight(iDp);
+    public void setHeight(int value) {
+        int newMinHeight = AndroidUtilities.dp(height = value) - ((LayoutParams) textView.getLayoutParams()).topMargin;
+        if (textView.getMinHeight() != newMinHeight) {
+            textView.setMinHeight(newMinHeight);
             requestLayout();
         }
     }
 
-    public void setTopMargin(int i) {
-        if (ExteraConfig.getSectionsSeparatedHeaders()) {
-            return;
-        }
-        ((FrameLayout.LayoutParams) this.textView.getLayoutParams()).topMargin = AndroidUtilities.dp(i);
-        setHeight(this.height);
+    public void setTopMargin(int topMargin) {
+        ((LayoutParams) textView.getLayoutParams()).topMargin = AndroidUtilities.dp(topMargin);
+        setHeight(height);
     }
 
-    public void setBottomMargin(int i) {
-        if (ExteraConfig.getSectionsSeparatedHeaders()) {
-            return;
-        }
-        float f = i;
-        ((FrameLayout.LayoutParams) this.textView.getLayoutParams()).bottomMargin = AndroidUtilities.dp(f);
-        SimpleTextView simpleTextView = this.textView2;
-        if (simpleTextView != null) {
-            ((FrameLayout.LayoutParams) simpleTextView.getLayoutParams()).bottomMargin = AndroidUtilities.dp(f);
+    public void setBottomMargin(int bottomMargin) {
+        ((LayoutParams) textView.getLayoutParams()).bottomMargin = AndroidUtilities.dp(bottomMargin);
+        if (textView2 != null) {
+            ((LayoutParams) textView2.getLayoutParams()).bottomMargin = AndroidUtilities.dp(bottomMargin);
         }
     }
 
-    public void setEnabled(boolean z, boolean z2) {
-        super.setEnabled(z);
-        TextView textView = this.textView;
-        if (z2) {
-            textView.animate().alpha(z ? 1.0f : 0.5f).start();
+    public void setEnabled(boolean value, boolean animated) {
+        super.setEnabled(value);
+        if (animated) {
+            textView.animate().alpha(value ? 1.0f : 0.5f).start();
         } else {
-            textView.setAlpha(z ? 1.0f : 0.5f);
+            textView.setAlpha(value ? 1.0f : 0.5f);
         }
     }
 
-    public void setEnabled(boolean z, ArrayList<Animator> arrayList) {
-        TextView textView = this.textView;
-        if (arrayList != null) {
-            arrayList.add(ObjectAnimator.ofFloat(textView, (Property<TextView, Float>) View.ALPHA, z ? 1.0f : 0.5f));
+    public void setEnabled(boolean value, ArrayList<Animator> animators) {
+        if (animators != null) {
+            animators.add(ObjectAnimator.ofFloat(textView, View.ALPHA, value ? 1.0f : 0.5f));
         } else {
-            textView.setAlpha(z ? 1.0f : 0.5f);
+            textView.setAlpha(value ? 1.0f : 0.5f);
         }
     }
 
-    @Override // android.widget.FrameLayout, android.view.View
-    public void onMeasure(int i, int i2) {
-        super.onMeasure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec(0, 0));
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
     }
 
-    public void setTextSize(float f) {
-        if (this.animated) {
-            this.animatedTextView.setTextSize(AndroidUtilities.dp(f));
+    public void setTextSize(float dip) {
+        if (animated) {
+            animatedTextView.setTextSize(AndroidUtilities.dp(dip));
         } else {
-            this.textView.setTextSize(1, f);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, dip);
         }
     }
 
-    public void setTextColor(int i) {
-        TextView textView = this.textView;
+    public void setTextColor(int color) {
         if (textView != null) {
-            textView.setTextColor(i);
+            textView.setTextColor(color);
         }
-        AnimatedTextView animatedTextView = this.animatedTextView;
         if (animatedTextView != null) {
-            animatedTextView.setTextColor(i);
+            animatedTextView.setTextColor(color);
         }
     }
 
-    public void setText(CharSequence charSequence) {
-        setText(charSequence, false);
+    public void setText(CharSequence text) {
+        setText(text, false);
     }
 
-    public void setText(CharSequence charSequence, boolean z) {
+    public void setText(CharSequence text, boolean animate) {
         if (this.animated) {
-            this.animatedTextView.setGravity((LocaleController.isRTL ? 5 : 3) | 16);
-            this.animatedTextView.setText(charSequence, z);
+            animatedTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+            animatedTextView.setText(text, animate);
         } else {
-            this.textView.setGravity((LocaleController.isRTL ? 5 : 3) | 16);
-            this.textView.setText(charSequence);
+            textView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+            textView.setText(text);
         }
     }
 
-    public void setText2(CharSequence charSequence) {
-        SimpleTextView simpleTextView = this.textView2;
-        if (simpleTextView == null) {
+    public void setText2(CharSequence text) {
+        if (textView2 == null) {
             return;
         }
-        simpleTextView.setText(charSequence);
+        textView2.setText(text);
     }
 
     public TextView getTextView() {
-        return this.textView;
+        return textView;
     }
 
     public SimpleTextView getTextView2() {
-        return this.textView2;
+        return textView2;
     }
 
-    @Override // android.view.View
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo accessibilityNodeInfo) {
-        super.onInitializeAccessibilityNodeInfo(accessibilityNodeInfo);
-        if (Build.VERSION.SDK_INT >= 28) {
-            accessibilityNodeInfo.setHeading(true);
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.setHeading(true);
         } else {
-            AccessibilityNodeInfo.CollectionItemInfo collectionItemInfo = accessibilityNodeInfo.getCollectionItemInfo();
-            if (collectionItemInfo != null) {
-                accessibilityNodeInfo.setCollectionItemInfo(AccessibilityNodeInfo.CollectionItemInfo.obtain(collectionItemInfo.getRowIndex(), collectionItemInfo.getRowSpan(), collectionItemInfo.getColumnIndex(), collectionItemInfo.getColumnSpan(), true));
+            AccessibilityNodeInfo.CollectionItemInfo collection = info.getCollectionItemInfo();
+            if (collection != null) {
+                info.setCollectionItemInfo(AccessibilityNodeInfo.CollectionItemInfo.obtain(collection.getRowIndex(), collection.getRowSpan(), collection.getColumnIndex(), collection.getColumnSpan(), true));
             }
         }
-        accessibilityNodeInfo.setEnabled(true);
+        info.setEnabled(true);
     }
 
-    private int getThemedColor(int i) {
-        return Theme.getColor(i, this.resourcesProvider);
-    }
-
-    @Override // android.view.View
-    public void setBackground(Drawable drawable) {
-        if (ExteraConfig.getSectionsSeparatedHeaders()) {
-            return;
-        }
-        super.setBackground(drawable);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 }

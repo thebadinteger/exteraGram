@@ -53,7 +53,7 @@ import org.telegram.ui.Components.ShareAlert;
 public class PreferencesUtils {
     private static PreferencesUtils instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Set<String> excludedExteraKeys = PreferencesUtils$$ExternalSyntheticBackport1.m(new Object[]{"editingIconPackId", "iconPacksLayout", "iconPacksHidden", "updateScheduleTimestamp", "sdkUpdateScheduleTimestamp", "selectedService", "lastActivePillId", "debugCameraMetrics", "forceCompactSavedMusic", "debugSectionRadiusOption"});
+    private static final Set<String> excludedExteraKeys = new java.util.HashSet<>(java.util.Arrays.asList("editingIconPackId", "iconPacksLayout", "iconPacksHidden", "updateScheduleTimestamp", "sdkUpdateScheduleTimestamp", "selectedService", "lastActivePillId", "debugCameraMetrics", "forceCompactSavedMusic", "debugSectionRadiusOption"));
     private static final BackupItem[] extraExteraKeys = {new BackupItem("bottomNavigationBarMode", Integer.class), new BackupItem("mainMenuLayout", String.class), new BackupItem("mainMenuHiddenItems", String.class), new BackupItem("targetLangSend", String.class), new BackupItem("pluginsEngine", Boolean.class), new BackupItem("pinnedPlugins", Set.class), new BackupItem("saveHistory", Boolean.class), new BackupItem("responseStreaming", Boolean.class), new BackupItem("temperature", Integer.class), new BackupItem("showResponseOnly", Boolean.class), new BackupItem("insertAsQuote", Boolean.class), new BackupItem("selectedRole", String.class), new BackupItem("infiniteScrolling", Boolean.class), new BackupItem("gramTargetCurrency", String.class), new BackupItem("btcTargetCurrency", String.class), new BackupItem("usdTargetCurrency", String.class)};
     private static final BackupItem[] aiConfigKeys = {new BackupItem("roles", String.class)};
     private static final BackupItem[] pillStackConfigKeys = {new BackupItem("activePills", String.class), new BackupItem("hiddenPills", String.class)};
@@ -386,7 +386,6 @@ public class PreferencesUtils {
     public class AnonymousClass1 extends ShareAlert {
         final /* synthetic */ BaseFragment val$fragment;
 
-        /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
         public AnonymousClass1(Context context, ChatActivity chatActivity, ArrayList arrayList, String str, String str2, String str3, boolean z, String str4, String str5, boolean z2, boolean z3, boolean z4, Integer num, Theme.ResourcesProvider resourcesProvider, BaseFragment baseFragment) {
             super(context, chatActivity, arrayList, str, str2, str3, z, str4, str5, z2, z3, z4, num, resourcesProvider);
             this.val$fragment = baseFragment;

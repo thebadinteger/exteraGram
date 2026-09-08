@@ -392,7 +392,6 @@ public class XposedBridge {
         return JniBridgeBindings.invokeConstructor0(t, constructor, objArr);
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
     public static Object invokeOriginalMethod(Member member, Object obj, Object[] objArr) {
         HookInfo hookInfo;
         if (objArr == null) {

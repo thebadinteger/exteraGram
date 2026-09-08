@@ -1,6 +1,5 @@
 package com.exteragram.messenger.export.api;
 
-import org.mvel2.math.MathProcessor$$ExternalSyntheticBUOutline0;
 import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
 import org.telegram.tgnet.TLObject;

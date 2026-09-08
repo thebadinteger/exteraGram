@@ -18,7 +18,6 @@ public final /* data */ class NowPlayingDTO {
     private final String songUrl;
     private final String trackName;
 
-    /* JADX WARN: Multi-variable type inference failed */
     public static /* synthetic */ NowPlayingDTO copy$default(NowPlayingDTO nowPlayingDTO, String str, List list, String str2, String str3, String str4, String str5, boolean z, String str6, String str7, Long l, int i, Object obj) {
         if ((i & 1) != 0) {
             str = nowPlayingDTO.trackName;

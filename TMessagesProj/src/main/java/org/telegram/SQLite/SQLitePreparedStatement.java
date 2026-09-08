@@ -1,4 +1,48 @@
-}
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.SQLite;
+
+import android.os.SystemClock;
+
+import com.google.android.exoplayer2.util.Log;
+
+import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.FileLog;
+import org.telegram.tgnet.NativeByteBuffer;
+import org.telegram.tgnet.TLObject;
+
+import java.nio.ByteBuffer;
+
+public class SQLitePreparedStatement {
+
+    private boolean isFinalized = false;
+    private long sqliteStatementHandle;
+
+    private long startTime;
+    private String query;
+
+    public long getStatementHandle() {
+        return sqliteStatementHandle;
+    }
+
+    public SQLitePreparedStatement(SQLiteDatabase db, String sql) throws SQLiteException {
+        sqliteStatementHandle = prepare(db.getSQLiteHandle(), sql);
+        if (BuildVars.LOGS_ENABLED) {
+            query = sql;
+            startTime = SystemClock.elapsedRealtime();
+            /*if (BuildVars.DEBUG_PRIVATE_VERSION) {
+                if (hashMap == null) {
+                    hashMap = new HashMap<>();
+                }
+                hashMap.put(this, sql);
+            }*/
+        }
     }
 
 

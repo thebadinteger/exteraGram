@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.sun.jna.Callback;
 import java.util.Objects;
 
@@ -69,7 +68,7 @@ public final class ApiWrap$HistoryMessageMarkupButton extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$HistoryMessageMarkupButton$$ExternalSyntheticRecord0.m(this.buttonId, this.type, this.text, this.data, this.forwardText);
+        return java.util.Objects.hash(this.buttonId, this.type, this.text, this.data, this.forwardText);
     }
 
     public String text() {
@@ -77,7 +76,7 @@ public final class ApiWrap$HistoryMessageMarkupButton extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$HistoryMessageMarkupButton.class, "type;text;data;forwardText;buttonId");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$HistoryMessageMarkupButton.class, "type;text;data;forwardText;buttonId");
     }
 
     public Type type() {

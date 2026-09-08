@@ -1,4 +1,49 @@
-public DrawerLayoutContainer(Context context) {
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui.ActionBar;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.os.Build;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.DisplayCutoutCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.FileLog;
+
+public class DrawerLayoutContainer extends FrameLayout {
+
+    private INavigationLayout parentActionBarLayout;
+
+    private boolean hasCutout;
+
+    private boolean inLayout;
+
+    private boolean firstLayout = true;
+
+    private boolean keyboardVisibility;
+    private int imeHeight;
+
+    /** @noinspection deprecation*/
+    public DrawerLayoutContainer(Context context) {
         super(context);
 
         ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {

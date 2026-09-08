@@ -18,7 +18,6 @@ import org.telegram.messenger.Utilities;
 public final class UniversalFrameLayout extends FrameLayout {
     private UniversalFrameLayoutListener universalFrameLayoutListener;
 
-    /* JADX WARN: Multi-variable type inference failed */
     @JvmOverloads
     public UniversalFrameLayout(Context context) {
         this(context, null, 2, 0 == true ? 1 : 0);

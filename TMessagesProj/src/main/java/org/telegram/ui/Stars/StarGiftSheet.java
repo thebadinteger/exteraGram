@@ -6037,7 +6037,7 @@ public class StarGiftSheet extends BottomSheetWithRecyclerListView implements No
         if (updates.update instanceof TL_update.TL_updateNewMessage) {
             message = ((TL_update.TL_updateNewMessage) updates.update).message;
 //        } else if (updates.update instanceof TLRPC.TL_updateEditMessage) {
-
+//            message = ((TLRPC.TL_updateEditMessage) updates.update).message;
         } else if (updates.updates != null) {
             for (int i = 0; i < updates.updates.size(); ++i) {
                 final TLRPC.Update update = updates.updates.get(i);
@@ -6045,7 +6045,7 @@ public class StarGiftSheet extends BottomSheetWithRecyclerListView implements No
                     message = ((TL_update.TL_updateNewMessage) update).message;
                     break;
                 }// else if (update instanceof TLRPC.TL_updateEditMessage) {
-
+//                    message = ((TLRPC.TL_updateEditMessage) update).message;
 //                    break;
 //                }
             }
@@ -8326,13 +8326,13 @@ public class StarGiftSheet extends BottomSheetWithRecyclerListView implements No
 //                if (selfId == fromId) {
 //                    set(AndroidUtilities.replaceTags(formatString(
 //                        R.string.GiftSelfTopAction,
-
+//                        LocaleController.formatDate(messageObject.messageOwner.date)
 //                    )));
 //                } else {
 //                    set(AndroidUtilities.replaceTags(formatString(
 //                        R.string.GiftTopAction,
 //                        DialogObject.getShortName(currentAccount, fromId),
-
+//                        LocaleController.formatDate(messageObject.messageOwner.date)
 //                    )));
 //                }
 //                setVisibility(View.VISIBLE);

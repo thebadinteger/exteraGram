@@ -5,7 +5,6 @@ import android.text.style.URLSpan;
 import com.chaquo.python.internal.Common;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.translators.BaseTranslator;
-import com.exteragram.messenger.translators.BaseTranslator$$ExternalSyntheticLambda0;
 import com.exteragram.messenger.translators.DeepLTranslator;
 import com.exteragram.messenger.translators.GoogleTranslator;
 import com.exteragram.messenger.translators.TelegramTranslator;

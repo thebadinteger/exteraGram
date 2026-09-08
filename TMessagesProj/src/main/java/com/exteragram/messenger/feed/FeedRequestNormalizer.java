@@ -1,7 +1,6 @@
 package com.exteragram.messenger.feed;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -278,11 +277,11 @@ public abstract class FeedRequestNormalizer {
         }
 
         public final int hashCode() {
-            return FeedRequestNormalizer$ClassMetadata$$ExternalSyntheticRecord0.m(this.requestPeerField, this.peerField, this.channelField, this.invoiceField, this.messageIdFields);
+            return java.util.Objects.hash(this.requestPeerField, this.peerField, this.channelField, this.invoiceField, this.messageIdFields);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ClassMetadata.class, "requestPeerField;peerField;channelField;invoiceField;messageIdFields");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ClassMetadata.class, "requestPeerField;peerField;channelField;invoiceField;messageIdFields");
         }
     }
 }

@@ -1,4 +1,60 @@
-public static boolean bindCustomTabsService(Context context,
+/*
+ * Copyright (C) 2015 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.telegram.messenger.support.customtabs;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.RemoteException;
+import androidx.annotation.Nullable;
+import android.text.TextUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CustomTabsClient {
+    private final ICustomTabsService mService;
+    private final ComponentName mServiceComponentName;
+
+    CustomTabsClient(ICustomTabsService service, ComponentName componentName) {
+        mService = service;
+        mServiceComponentName = componentName;
+    }
+
+    /**
+     * Bind to a {@link CustomTabsService} using the given package name and
+     * {@link ServiceConnection}.
+     * @param context     {@link Context} to use while calling
+     *                    {@link Context#bindService(Intent, ServiceConnection, int)}
+     * @param packageName Package name to set on the {@link Intent} for binding.
+     * @param connection  {@link CustomTabsServiceConnection} to use when binding. This will
+     *                    return a {@link CustomTabsClient} on
+     *                    {@link CustomTabsServiceConnection
+     *                    #onCustomTabsServiceConnected(ComponentName, CustomTabsClient)}
+     * @return Whether the binding was successful.
+     */
+    public static boolean bindCustomTabsService(Context context,
                                                 String packageName, CustomTabsServiceConnection connection) {
         Intent intent = new Intent(CustomTabsService.ACTION_CUSTOM_TABS_CONNECTION);
         if (!TextUtils.isEmpty(packageName)) intent.setPackage(packageName);

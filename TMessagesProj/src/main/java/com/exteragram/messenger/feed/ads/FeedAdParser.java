@@ -62,7 +62,6 @@ abstract class FeedAdParser {
         return arrayList;
     }
 
-    /* JADX WARN: Failed to restore switch over string. Please report as a decompilation issue */
     private static FeedAd parseManifest(String str) {
         try {
             FeedAd feedAd = new FeedAd();

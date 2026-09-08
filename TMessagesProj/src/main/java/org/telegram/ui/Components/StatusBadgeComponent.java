@@ -2,8 +2,7 @@ package org.telegram.ui.Components;
 
 import android.graphics.drawable.Drawable;
 import android.view.View;
-import com.exteragram.messenger.api.dto.BadgeDTO;
-import com.exteragram.messenger.badges.BadgesController;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
 import org.telegram.tgnet.TLObject;
@@ -12,75 +11,59 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.Premium.PremiumGradient;
 
 public class StatusBadgeComponent {
+
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable statusDrawable;
     private Drawable verifiedDrawable;
 
-    public StatusBadgeComponent(View view) {
-        this(view, 18);
+    public StatusBadgeComponent(View parentView) {
+        this(parentView, 18);
     }
 
-    public StatusBadgeComponent(View view, int i) {
-        this.statusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(view, AndroidUtilities.dp(i));
+    public StatusBadgeComponent(View parentView, int sizeDp) {
+        statusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(parentView, AndroidUtilities.dp(sizeDp));
     }
 
-    public Drawable updateDrawable(TLObject tLObject, int i, boolean z) {
-        if (tLObject instanceof TLRPC.User) {
-            return updateDrawable((TLRPC.User) tLObject, null, i, z);
+    public Drawable updateDrawable(TLObject object, int colorFilter, boolean animated) {
+        if (object instanceof TLRPC.User) {
+            return updateDrawable((TLRPC.User) object, null, colorFilter, animated);
+        } else if (object instanceof TLRPC.Chat) {
+            return updateDrawable(null, (TLRPC.Chat) object, colorFilter, animated);
         }
-        if (tLObject instanceof TLRPC.Chat) {
-            return updateDrawable(null, (TLRPC.Chat) tLObject, i, z);
-        }
-        return updateDrawable(null, null, i, z);
+        return updateDrawable(null, null, colorFilter, animated);
     }
 
-    public Drawable updateDrawable(TLRPC.User user, TLRPC.Chat chat, int i, boolean z) {
-        BadgeDTO badge = BadgesController.INSTANCE.getBadge(user == null ? chat : user);
+    public Drawable updateDrawable(TLRPC.User user, TLRPC.Chat chat, int colorFilter, boolean animated) {
         if (chat != null && chat.verified) {
-            AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable = this.statusDrawable;
-            Drawable combinedDrawable = this.verifiedDrawable;
-            if (combinedDrawable == null) {
-                combinedDrawable = new CombinedDrawable(Theme.dialogs_verifiedDrawable, Theme.dialogs_verifiedCheckDrawable);
-            }
-            this.verifiedDrawable = combinedDrawable;
-            swapAnimatedEmojiDrawable.set(combinedDrawable, z);
-            this.statusDrawable.setColor(null);
+            statusDrawable.set(verifiedDrawable = (verifiedDrawable == null ? new CombinedDrawable(Theme.dialogs_verifiedDrawable, Theme.dialogs_verifiedCheckDrawable) : verifiedDrawable), animated);
+            statusDrawable.setColor(null);
         } else if (chat != null && DialogObject.getEmojiStatusDocumentId(chat.emoji_status) != 0) {
-            this.statusDrawable.set(DialogObject.getEmojiStatusDocumentId(chat.emoji_status), z);
-            this.statusDrawable.setColor(Integer.valueOf(i));
+            statusDrawable.set(DialogObject.getEmojiStatusDocumentId(chat.emoji_status), animated);
+            statusDrawable.setColor(colorFilter);
         } else if (user != null && user.verified) {
-            AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable2 = this.statusDrawable;
-            Drawable combinedDrawable2 = this.verifiedDrawable;
-            if (combinedDrawable2 == null) {
-                combinedDrawable2 = new CombinedDrawable(Theme.dialogs_verifiedDrawable, Theme.dialogs_verifiedCheckDrawable);
-            }
-            this.verifiedDrawable = combinedDrawable2;
-            swapAnimatedEmojiDrawable2.set(combinedDrawable2, z);
-            this.statusDrawable.setColor(null);
+            statusDrawable.set(verifiedDrawable = (verifiedDrawable == null ? new CombinedDrawable(Theme.dialogs_verifiedDrawable, Theme.dialogs_verifiedCheckDrawable) : verifiedDrawable), animated);
+            statusDrawable.setColor(null);
         } else if (user != null && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {
-            this.statusDrawable.set(DialogObject.getEmojiStatusDocumentId(user.emoji_status), z);
-            this.statusDrawable.setColor(Integer.valueOf(i));
-        } else if (badge != null) {
-            this.statusDrawable.set(badge.getDocumentId(), z);
-            this.statusDrawable.setColor(Integer.valueOf(i));
+            statusDrawable.set(DialogObject.getEmojiStatusDocumentId(user.emoji_status), animated);
+            statusDrawable.setColor(colorFilter);
         } else if (user != null && user.premium) {
-            this.statusDrawable.set(PremiumGradient.getInstance().premiumStarDrawableMini, z);
-            this.statusDrawable.setColor(Integer.valueOf(i));
+            statusDrawable.set(PremiumGradient.getInstance().premiumStarDrawableMini, animated);
+            statusDrawable.setColor(colorFilter);
         } else {
-            this.statusDrawable.set((Drawable) null, z);
-            this.statusDrawable.setColor(null);
+            statusDrawable.set((Drawable) null, animated);
+            statusDrawable.setColor(null);
         }
-        return this.statusDrawable;
+        return statusDrawable;
     }
 
     public Drawable getDrawable() {
-        return this.statusDrawable;
+        return statusDrawable;
     }
 
     public void onAttachedToWindow() {
-        this.statusDrawable.attach();
+        statusDrawable.attach();
     }
 
     public void onDetachedFromWindow() {
-        this.statusDrawable.detach();
+        statusDrawable.detach();
     }
 }

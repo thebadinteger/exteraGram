@@ -1,4 +1,57 @@
-private static final int LEAK_THRESHOLD = 5;
+/*
+ * LeakDetector — singleton memory leak detector based on ReferenceMap/ReferenceList from X-Core.
+ *
+ * Usage:
+ *   1. Start the detector (e.g. in Application.onCreate()):
+ *        LeakDetector.getInstance().start();
+ *
+ *   2. In constructor of any object you want to track:
+ *        LeakDetector.getInstance().add(this);
+ *
+ *   3. Subscribe to leak notifications via NotificationCenter:
+ *        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.memoryLeakFoundException);
+ *
+ *      In didReceivedNotification():
+ *        if (id == NotificationCenter.memoryLeakFoundException) {
+ *            Class<?> leakedClass = (Class<?>) args[0];
+ *            int count            = (int)     args[1];
+ *            Log.e("LeakDetector", "Leak: " + leakedClass.getSimpleName() + " x" + count);
+ *        }
+ *
+ * Notes:
+ *   - All public methods must be called on the main thread.
+ *   - Each class is reported at most once — no repeated notifications for the same leak.
+ *   - Notification is posted on the main thread.
+ *   - When a potential leak is detected, GC is requested and the class is re-checked after
+ *     GC_RECHECK_DELAY_MS before a notification is posted. This eliminates false positives
+ *     caused by objects that are reachable but already eligible for collection.
+ */
+
+package org.telegram.messenger.utils;
+
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.NotificationCenter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import me.vkryl.core.reference.ReferenceMap;
+
+public final class LeakDetector {
+
+    // -------------------------------------------------------------------------
+    // Configuration
+    // -------------------------------------------------------------------------
+
+    /** How many live instances of a single class trigger a suspicious-leak check. */
+    private static final int LEAK_THRESHOLD = 5;
 
     /** How often (in ms) the detector scans for leaks. */
     private static final long CHECK_INTERVAL_MS = 1_000L;

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.util.Objects;
 
 public final class ApiWrap$WebSession extends RecordTag {
@@ -58,7 +57,7 @@ public final class ApiWrap$WebSession extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$WebSession$$ExternalSyntheticRecord0.m(this.created, this.lastActive, this.botUsername, this.domain, this.browser, this.platform, this.ip, this.region);
+        return java.util.Objects.hash(this.created, this.lastActive, this.botUsername, this.domain, this.browser, this.platform, this.ip, this.region);
     }
 
     public String ip() {
@@ -78,6 +77,6 @@ public final class ApiWrap$WebSession extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$WebSession.class, "botUsername;domain;browser;platform;created;lastActive;ip;region");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$WebSession.class, "botUsername;domain;browser;platform;created;lastActive;ip;region");
     }
 }

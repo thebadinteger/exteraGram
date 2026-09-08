@@ -17,7 +17,6 @@ import kotlin.enums.EnumEntries;
 import kotlin.enums.EnumEntriesKt;
 import kotlin.jvm.internal.SourceDebugExtension;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -222,7 +221,7 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
         }
         PreferenceItem preferenceItem2 = PreferenceItem.DOCUMENTATION;
         if (preferenceItem == preferenceItem2 || preferenceItem == PreferenceItem.TRUSTED_PLUGINS) {
-            Browser.openUrl(getParentActivity(), Deobfuscator$exteraGramDev$TMessagesProj.getString(preferenceItem == preferenceItem2 ? "https://plugins.exteragram.app/" : "https://t.me/addlist/pPhOtEq00KhjYTc6");
+            Browser.openUrl(getParentActivity(), preferenceItem == preferenceItem2 ? "https://plugins.exteragram.app/" : "https://t.me/addlist/pPhOtEq00KhjYTc6");
             return;
         }
         if (preferenceItem == PreferenceItem.CHECK_SDK_UPDATES) {

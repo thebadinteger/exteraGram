@@ -1,4 +1,468 @@
-*;q=0.8");
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui.Components;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.SurfaceTexture;
+import android.media.AudioManager;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
+import android.text.TextUtils;
+import android.util.Base64;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.TextureView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import androidx.annotation.Keep;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.Bitmaps;
+import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.ImageLocation;
+import org.telegram.messenger.ImageReceiver;
+import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
+import org.telegram.tgnet.TLRPC;
+
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+
+public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerDelegate, AudioManager.OnAudioFocusChangeListener {
+
+    public interface WebPlayerViewDelegate {
+        void onInitFailed();
+        TextureView onSwitchToFullscreen(View controlsView, boolean fullscreen, float aspectRatio, int rotation, boolean byButton);
+        TextureView onSwitchInlineMode(View controlsView, boolean inline, int width, int height, int rotation, boolean animated);
+        void onInlineSurfaceTextureReady();
+        void prepareToSwitchInlineMode(boolean inline, Runnable switchInlineModeRunnable, float aspectRatio, boolean animated);
+        void onSharePressed();
+        void onPlayStateChanged(WebPlayerView playerView, boolean playing);
+        void onVideoSizeChanged(float aspectRatio, int rotation);
+        ViewGroup getTextureViewContainer();
+        boolean checkInlinePermissions();
+    }
+
+    private static int lastContainerId = 4001;
+    private int fragment_container_id = lastContainerId++;
+
+    private VideoPlayer videoPlayer;
+    private WebView webView;
+    private String interfaceName;
+    private AspectRatioFrameLayout aspectRatioFrameLayout;
+    private TextureView textureView;
+    private ImageView textureImageView;
+    private ViewGroup textureViewContainer;
+    private Bitmap currentBitmap;
+    private TextureView changedTextureView;
+    private int waitingForFirstTextureUpload;
+    private boolean isAutoplay;
+    private WebPlayerViewDelegate delegate;
+    private boolean initFailed;
+    private boolean initied;
+    private String playVideoUrl;
+    private String playVideoType;
+    private String playAudioUrl;
+    private String playAudioType;
+    private String currentYoutubeId;
+
+    private boolean isStream;
+
+    private boolean allowInlineAnimation = Build.VERSION.SDK_INT >= 21;
+
+    private static final int AUDIO_NO_FOCUS_NO_DUCK = 0;
+    private static final int AUDIO_NO_FOCUS_CAN_DUCK = 1;
+    private static final int AUDIO_FOCUSED  = 2;
+    private boolean hasAudioFocus;
+    private int audioFocus;
+    private boolean resumeAudioOnFocusGain;
+
+    private long lastUpdateTime;
+    private boolean firstFrameRendered;
+    private float currentAlpha;
+
+    private int seekToTime;
+
+    private boolean drawImage;
+
+    private Paint backgroundPaint = new Paint();
+
+    private AsyncTask currentTask;
+
+    private boolean changingTextureView;
+    private boolean inFullscreen;
+    private boolean isInline;
+    private boolean isCompleted;
+    private boolean isLoading;
+    private boolean switchingInlineMode;
+
+    private RadialProgressView progressView;
+    private ImageView fullscreenButton;
+    private ImageView playButton;
+    private ImageView inlineButton;
+    private ImageView shareButton;
+    private AnimatorSet progressAnimation;
+
+    private ControlsView controlsView;
+
+    private int videoWidth, videoHeight;
+
+    private Runnable progressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (videoPlayer == null || !videoPlayer.isPlaying()) {
+                return;
+            }
+            controlsView.setProgress((int) (videoPlayer.getCurrentPosition() / 1000));
+            controlsView.setBufferedProgress((int) (videoPlayer.getBufferedPosition() / 1000));
+
+            AndroidUtilities.runOnUIThread(progressRunnable, 1000);
+        }
+    };
+
+    private static final Pattern youtubeIdRegex = Pattern.compile("(?:youtube(?:-nocookie)?\\.com/(?:[^/\\n\\s]+/\\S+/|(?:v|e(?:mbed)?)/|\\S*?[?&]v=)|youtu\\.be/)([a-zA-Z0-9_-]{11})");
+    private static final Pattern vimeoIdRegex = Pattern.compile("https?://(?:(?:www|(player))\\.)?vimeo(pro)?\\.com/(?!(?:channels|album)/[^/?#]+/?(?:$|[?#])|[^/]+/review/|ondemand/)(?:.*?/)?(?:(?:play_redirect_hls|moogaloop\\.swf)\\?clip_id=)?(?:videos?/)?([0-9]+)(?:/[\\da-f]+)?/?(?:[?&].*)?(?:[#].*)?$");
+    private static final Pattern coubIdRegex = Pattern.compile("(?:coub:|https?://(?:coub\\.com/(?:view|embed|coubs)/|c-cdn\\.coub\\.com/fb-player\\.swf\\?.*\\bcoub(?:ID|id)=))([\\da-z]+)");
+    private static final Pattern aparatIdRegex = Pattern.compile("^https?://(?:www\\.)?aparat\\.com/(?:v/|video/video/embed/videohash/)([a-zA-Z0-9]+)");
+    private static final Pattern twitchClipIdRegex = Pattern.compile("https?://clips\\.twitch\\.tv/(?:[^/]+/)*([^/?#&]+)");
+    private static final Pattern twitchStreamIdRegex = Pattern.compile("https?://(?:(?:www\\.)?twitch\\.tv/|player\\.twitch\\.tv/\\?.*?\\bchannel=)([^/#?]+)");
+
+    private static final Pattern aparatFileListPattern = Pattern.compile("fileList\\s*=\\s*JSON\\.parse\\('([^']+)'\\)");
+
+    private static final Pattern twitchClipFilePattern = Pattern.compile("clipInfo\\s*=\\s*(\\{[^']+\\});");
+
+    private static final Pattern stsPattern = Pattern.compile("\"sts\"\\s*:\\s*(\\d+)");
+    private static final Pattern jsPattern = Pattern.compile("\"assets\":.+?\"js\":\\s*(\"[^\"]+\")");
+    private static final Pattern sigPattern = Pattern.compile("\\.sig\\|\\|([a-zA-Z0-9$]+)\\(");
+    private static final Pattern sigPattern2 = Pattern.compile("[\"']signature[\"']\\s*,\\s*([a-zA-Z0-9$]+)\\(");
+    private static final Pattern stmtVarPattern = Pattern.compile("var\\s");
+    private static final Pattern stmtReturnPattern = Pattern.compile("return(?:\\s+|$)");
+    private static final Pattern exprParensPattern = Pattern.compile("[()]");
+    private static final Pattern playerIdPattern = Pattern.compile(".*?-([a-zA-Z0-9_-]+)(?:/watch_as3|/html5player(?:-new)?|(?:/[a-z]{2}_[A-Z]{2})?/base)?\\.([a-z]+)$");
+    private static final String exprName = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+
+    private static abstract class function {
+        public abstract Object run(Object[] args);
+    }
+
+    private static class JSExtractor {
+
+        ArrayList<String> codeLines = new ArrayList<>();
+
+        private String jsCode;
+        private String[] operators = {"|", "^", "&", ">>", "<<", "-", "+", "%", "/", "*"};
+        private String[] assign_operators = {"|=", "^=", "&=", ">>=", "<<=", "-=", "+=", "%=", "/=", "*=", "="};
+
+        public JSExtractor(String js) {
+            jsCode = js;
+        }
+
+        private void interpretExpression(String expr, HashMap<String, String> localVars, int allowRecursion) throws Exception {
+            expr = expr.trim();
+            if (TextUtils.isEmpty(expr)) {
+                return;
+            }
+            if (expr.charAt(0) == '(') {
+                int parens_count = 0;
+                Matcher matcher = exprParensPattern.matcher(expr);
+                while (matcher.find()) {
+                    String group = matcher.group(0);
+                    if (group.indexOf('0') == '(') {
+                        parens_count++;
+                    } else {
+                        parens_count--;
+                        if (parens_count == 0) {
+                            String sub_expr = expr.substring(1, matcher.start());
+                            interpretExpression(sub_expr, localVars, allowRecursion);
+                            String remaining_expr = expr.substring(matcher.end()).trim();
+                            if (TextUtils.isEmpty(remaining_expr)) {
+                                return;
+                            } else {
+                                expr = remaining_expr;
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (parens_count != 0) {
+                    throw new Exception(String.format("Premature end of parens in %s", expr));
+                }
+            }
+            for (int a = 0; a < assign_operators.length; a++) {
+                String func = assign_operators[a];
+                Matcher matcher = Pattern.compile(String.format(Locale.US, "(?x)(%s)(?:\\[([^\\]]+?)\\])?\\s*%s(.*)$", exprName, Pattern.quote(func))).matcher(expr);
+                if (!matcher.find()) {
+                    continue;
+                }
+                interpretExpression(matcher.group(3), localVars, allowRecursion - 1);
+                String index = matcher.group(2);
+                if (!TextUtils.isEmpty(index)) {
+                    interpretExpression(index, localVars, allowRecursion);
+                } else {
+                    localVars.put(matcher.group(1), "");
+                }
+                return;
+            }
+
+            try {
+                Integer.parseInt(expr);
+                return;
+            } catch (Exception e) {
+                //ignore
+            }
+
+            Matcher matcher = Pattern.compile(String.format(Locale.US, "(?!if|return|true|false)(%s)$", exprName)).matcher(expr);
+            if (matcher.find()) {
+                return;
+            }
+
+            if (expr.charAt(0) == '"' && expr.charAt(expr.length() - 1) == '"') {
+                return;
+            }
+            try {
+                new JSONObject(expr).toString();
+                return;
+            } catch (Exception e) {
+                //ignore
+            }
+
+            matcher = Pattern.compile(String.format(Locale.US, "(%s)\\[(.+)\\]$", exprName)).matcher(expr);
+            if (matcher.find()) {
+                String val = matcher.group(1);
+                interpretExpression(matcher.group(2), localVars, allowRecursion - 1);
+                return;
+            }
+
+            matcher = Pattern.compile(String.format(Locale.US, "(%s)(?:\\.([^(]+)|\\[([^]]+)\\])\\s*(?:\\(+([^()]*)\\))?$", exprName)).matcher(expr);
+            if (matcher.find()) {
+                String variable = matcher.group(1);
+                String m1 = matcher.group(2);
+                String m2 = matcher.group(3);
+                String member = (TextUtils.isEmpty(m1) ? m2 : m1).replace("\"", "");
+                String arg_str = matcher.group(4);
+                if (localVars.get(variable) == null) {
+                    extractObject(variable);
+                }
+                if (arg_str == null) {
+                    return;
+                }
+                if (expr.charAt(expr.length() - 1) != ')') {
+                    throw new Exception("last char not ')'");
+                }
+                String[] argvals;
+                if (arg_str.length() != 0) {
+                    String[] args = arg_str.split(",");
+                    for (int a = 0; a < args.length; a++) {
+                        interpretExpression(args[a], localVars, allowRecursion);
+                    }
+                }
+                return;
+            }
+
+            matcher = Pattern.compile(String.format(Locale.US, "(%s)\\[(.+)\\]$", exprName)).matcher(expr);
+            if (matcher.find()) {
+                Object val = localVars.get(matcher.group(1));
+                interpretExpression(matcher.group(2), localVars, allowRecursion - 1);
+                return;
+            }
+
+            for (int a = 0; a < operators.length; a++) {
+                String func = operators[a];
+                matcher = Pattern.compile(String.format(Locale.US, "(.+?)%s(.+)", Pattern.quote(func))).matcher(expr);
+                if (!matcher.find()) {
+                    continue;
+                }
+                boolean[] abort = new boolean[1];
+                interpretStatement(matcher.group(1), localVars, abort, allowRecursion - 1);
+                if (abort[0]) {
+                    throw new Exception(String.format("Premature left-side return of %s in %s", func, expr));
+                }
+                interpretStatement(matcher.group(2), localVars, abort, allowRecursion - 1);
+                if (abort[0]) {
+                    throw new Exception(String.format("Premature right-side return of %s in %s", func, expr));
+                }
+            }
+
+            matcher = Pattern.compile(String.format(Locale.US, "^(%s)\\(([a-zA-Z0-9_$,]*)\\)$", exprName)).matcher(expr);
+            if (matcher.find()) {
+                String fname = matcher.group(1);
+                extractFunction(fname);
+            }
+            throw new Exception(String.format("Unsupported JS expression %s", expr));
+        }
+
+        private void interpretStatement(String stmt, HashMap<String, String> localVars, boolean[] abort, int allowRecursion) throws Exception {
+            if (allowRecursion < 0) {
+                throw new Exception("recursion limit reached");
+            }
+            abort[0] = false;
+            stmt = stmt.trim();
+            Matcher matcher = stmtVarPattern.matcher(stmt);
+            String expr;
+            if (matcher.find()) {
+                expr = stmt.substring(matcher.group(0).length());
+            } else {
+                matcher = stmtReturnPattern.matcher(stmt);
+                if (matcher.find()) {
+                    expr = stmt.substring(matcher.group(0).length());
+                    abort[0] = true;
+                } else {
+                    expr = stmt;
+                }
+            }
+            interpretExpression(expr, localVars, allowRecursion);
+        }
+
+        private HashMap<String, Object> extractObject(String objname) throws Exception {
+            String funcName =  "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
+            HashMap<String, Object> obj = new HashMap<>();
+            //                                                                                         ?P<fields>
+            Matcher matcher = Pattern.compile(String.format(Locale.US, "(?:var\\s+)?%s\\s*=\\s*\\{\\s*((%s\\s*:\\s*function\\(.*?\\)\\s*\\{.*?\\}(?:,\\s*)?)*)\\}\\s*;", Pattern.quote(objname), funcName)).matcher(jsCode);
+            String fields = null;
+            while (matcher.find()) {
+                String code = matcher.group();
+                fields = matcher.group(2);
+                if (TextUtils.isEmpty(fields)) {
+                    continue;
+                }
+                if (!codeLines.contains(code)) {
+                    codeLines.add(matcher.group());
+                }
+                break;
+            }
+            //                          ?P<key>                            ?P<args>     ?P<code>
+            matcher = Pattern.compile(String.format("(%s)\\s*:\\s*function\\(([a-z,]+)\\)\\{([^}]+)\\}", funcName)).matcher(fields);
+            while (matcher.find()) {
+                String[] argnames = matcher.group(2).split(",");
+                buildFunction(argnames, matcher.group(3));
+            }
+            return obj;
+        }
+
+        private void buildFunction(String[] argNames, String funcCode) throws Exception {
+            HashMap<String, String> localVars = new HashMap<>();
+            for (int a = 0; a < argNames.length; a++) {
+                localVars.put(argNames[a], "");
+            }
+            String[] stmts = funcCode.split(";");
+            boolean[] abort = new boolean[1];
+            for (int a = 0; a < stmts.length; a++) {
+                interpretStatement(stmts[a], localVars, abort, 100);
+                if (abort[0]) {
+                    return;
+                }
+            }
+        }
+
+        private String extractFunction(String funcName) {
+            try {
+                String quote = Pattern.quote(funcName);
+                Pattern funcPattern = Pattern.compile(String.format(Locale.US, "(?x)(?:function\\s+%s|[{;,]\\s*%s\\s*=\\s*function|var\\s+%s\\s*=\\s*function)\\s*\\(([^)]*)\\)\\s*\\{([^}]+)\\}", quote, quote, quote));
+                Matcher matcher = funcPattern.matcher(jsCode);
+                if (matcher.find()) {
+                    String group = matcher.group();
+                    if (!codeLines.contains(group)) {
+                        codeLines.add(group + ";");
+                    }
+                    buildFunction(matcher.group(1).split(","), matcher.group(2));
+                }
+            } catch (Exception e) {
+                codeLines.clear();
+                FileLog.e(e);
+            }
+            return TextUtils.join("", codeLines);
+        }
+    }
+
+    public interface CallJavaResultInterface {
+        void jsCallFinished(String value);
+    }
+
+    public static class JavaScriptInterface {
+        private final CallJavaResultInterface callJavaResultInterface;
+
+        public JavaScriptInterface(CallJavaResultInterface callJavaResult) {
+            callJavaResultInterface = callJavaResult;
+        }
+
+        @Keep
+        @JavascriptInterface
+        public void returnResultToJava(String value) {
+            callJavaResultInterface.jsCallFinished(value);
+        }
+    }
+
+    protected String downloadUrlContent(AsyncTask parentTask, String url) {
+        return downloadUrlContent(parentTask, url, null, true);
+    }
+
+    protected String downloadUrlContent(AsyncTask parentTask, String url, HashMap<String, String> headers, boolean tryGzip) {
+        boolean canRetry = true;
+        InputStream httpConnectionStream = null;
+        boolean done = false;
+        StringBuilder result = null;
+        URLConnection httpConnection = null;
+        try {
+            URL downloadUrl = new URL(url);
+            httpConnection = downloadUrl.openConnection();
+            httpConnection.addRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20150101 Firefox/47.0 (Chrome)");
+            if (tryGzip) {
+                httpConnection.addRequestProperty("Accept-Encoding", "gzip, deflate");
+            }
+            httpConnection.addRequestProperty("Accept-Language", "en-us,en;q=0.5");
+            httpConnection.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             httpConnection.addRequestProperty("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
             if (headers != null) {
                 for (HashMap.Entry<String, String> entry : headers.entrySet()) {

@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -42,7 +41,7 @@ public class ApiWrap$Poll {
         }
 
         public final int hashCode() {
-            return ApiWrap$Poll$Answer$$ExternalSyntheticRecord0.m(this.my, this.votes, this.text, this.option);
+            return java.util.Objects.hash(this.my, this.votes, this.text, this.option);
         }
 
         public boolean my() {
@@ -54,7 +53,7 @@ public class ApiWrap$Poll {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), Answer.class, "text;option;votes;my");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), Answer.class, "text;option;votes;my");
         }
 
         public int votes() {

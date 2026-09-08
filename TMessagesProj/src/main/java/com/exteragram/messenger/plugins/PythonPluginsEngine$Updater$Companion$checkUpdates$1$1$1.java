@@ -12,7 +12,6 @@ import java.io.IOException;
 import kotlin.Metadata;
 import kotlin.Unit;
 import okhttp3.internal.url._UrlKt;
-import org.lsposed.lsparanoid.Deobfuscator$exteraGramDev$TMessagesProj;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
@@ -33,7 +32,6 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
         super.setLastVisible(z);
     }
 
-    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
     public PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1(PythonPluginsEngine.Updater.Companion.PythonSdkUpdateInfo pythonSdkUpdateInfo, Activity activity, int i) {
         super(activity, pythonSdkUpdateInfo, i);
         this.$update = pythonSdkUpdateInfo;

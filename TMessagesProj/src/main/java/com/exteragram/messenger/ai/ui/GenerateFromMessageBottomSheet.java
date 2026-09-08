@@ -12,7 +12,6 @@ import android.widget.TextView;
 import com.android.tools.r8.RecordTag;
 import com.exteragram.messenger.ai.AiConfig;
 import com.exteragram.messenger.ai.AiController;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.utils.chats.ChatUtils;
 import java.util.Objects;
 import okhttp3.internal.url._UrlKt;
@@ -273,7 +272,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         }
 
         public final int hashCode() {
-            return GenerateFromMessageBottomSheet$GenerationData$$ExternalSyntheticRecord0.m(this.useHistory, this.prompt, this.imagePath);
+            return java.util.Objects.hash(this.useHistory, this.prompt, this.imagePath);
         }
 
         public String imagePath() {
@@ -285,7 +284,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), GenerationData.class, "prompt;useHistory;imagePath");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), GenerationData.class, "prompt;useHistory;imagePath");
         }
 
         public boolean useHistory() {

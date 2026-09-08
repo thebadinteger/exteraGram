@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.output.html;
 
 import android.util.Pair;
-import androidx.camera.core.ImageCapture$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.export.ExportSettings;
 import com.exteragram.messenger.export.api.ApiWrap$ContactInfo;
 import com.exteragram.messenger.export.api.ApiWrap$ContactsList;
@@ -39,7 +38,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import okhttp3.internal.url._UrlKt;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;

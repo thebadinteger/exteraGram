@@ -2,10 +2,8 @@ package com.exteragram.messenger.preferences.utils;
 
 import android.text.TextUtils;
 import android.view.View;
-import androidx.camera.core.ImageCapture$$ExternalSyntheticBackport1;
 import com.android.tools.r8.RecordTag;
 import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.ai.ui.activities.AiPreferencesActivity;
 import com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity;
 import com.exteragram.messenger.plugins.PluginsController;
@@ -14,7 +12,6 @@ import com.exteragram.messenger.preferences.BasePreferencesActivity;
 import com.exteragram.messenger.preferences.GeneralPreferencesActivity;
 import com.exteragram.messenger.preferences.MainPreferencesActivity;
 import com.exteragram.messenger.preferences.OtherPreferencesActivity;
-import com.exteragram.messenger.preferences.OtherPreferencesActivity$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.preferences.appearance.AppNavigationPreferencesActivity;
 import com.exteragram.messenger.preferences.appearance.AppearancePreferencesActivity;
 import com.exteragram.messenger.preferences.chats.ChatsPreferencesActivity;
@@ -41,8 +38,8 @@ import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.ProfileActivity;
 
 public class SettingsRegistry {
-    private static final Map<Class<? extends BaseFragment>, Integer> categoriesIcons = OtherPreferencesActivity$$ExternalSyntheticBackport1.m(new Map.Entry[]{new AbstractMap.SimpleEntry(MainPreferencesActivity.class, Integer.valueOf(R.drawable.extera_outline)), new AbstractMap.SimpleEntry(GeneralPreferencesActivity.class, Integer.valueOf(R.drawable.msg_media)), new AbstractMap.SimpleEntry(AppearancePreferencesActivity.class, Integer.valueOf(R.drawable.msg_theme)), new AbstractMap.SimpleEntry(ChatsPreferencesActivity.class, Integer.valueOf(R.drawable.msg_discussion)), new AbstractMap.SimpleEntry(PluginsInfoActivity.class, Integer.valueOf(R.drawable.msg_plugins)), new AbstractMap.SimpleEntry(OtherPreferencesActivity.class, Integer.valueOf(R.drawable.msg_fave)), new AbstractMap.SimpleEntry(AiPreferencesActivity.class, Integer.valueOf(R.drawable.msg_bot)), new AbstractMap.SimpleEntry(AppNavigationPreferencesActivity.class, Integer.valueOf(R.drawable.msg_list)), new AbstractMap.SimpleEntry(PillStackPreferencesActivity.class, Integer.valueOf(R.drawable.outline_header_search))});
-    public static List<String> newFeatures = ImageCapture$$ExternalSyntheticBackport1.m(new String[]{"customSavePath", "Camera-ExtendedSettings-StartWithWideAngle", "zoomSlider", "aiFeatures", "hideDialogsSearchBar", "Appearance-M3Styles-ChatHeader", "Appearance-M3Styles-NavigationBar", "Appearance-Sections", "glassOutlineStyle", "glassMessageMenu", "Feed-BottomTab", "aiTemperature", "AI-Service-Reasoning"});
+    private static final Map<Class<? extends BaseFragment>, Integer> categoriesIcons = com.exteragram.messenger.utils.RecordUtils.mapOf(new Map.Entry[]{new AbstractMap.SimpleEntry(MainPreferencesActivity.class, Integer.valueOf(R.drawable.extera_outline)), new AbstractMap.SimpleEntry(GeneralPreferencesActivity.class, Integer.valueOf(R.drawable.msg_media)), new AbstractMap.SimpleEntry(AppearancePreferencesActivity.class, Integer.valueOf(R.drawable.msg_theme)), new AbstractMap.SimpleEntry(ChatsPreferencesActivity.class, Integer.valueOf(R.drawable.msg_discussion)), new AbstractMap.SimpleEntry(PluginsInfoActivity.class, Integer.valueOf(R.drawable.msg_plugins)), new AbstractMap.SimpleEntry(OtherPreferencesActivity.class, Integer.valueOf(R.drawable.msg_fave)), new AbstractMap.SimpleEntry(AiPreferencesActivity.class, Integer.valueOf(R.drawable.msg_bot)), new AbstractMap.SimpleEntry(AppNavigationPreferencesActivity.class, Integer.valueOf(R.drawable.msg_list)), new AbstractMap.SimpleEntry(PillStackPreferencesActivity.class, Integer.valueOf(R.drawable.outline_header_search))});
+    public static List<String> newFeatures = java.util.Arrays.asList("customSavePath", "Camera-ExtendedSettings-StartWithWideAngle", "zoomSlider", "aiFeatures", "hideDialogsSearchBar", "Appearance-M3Styles-ChatHeader", "Appearance-M3Styles-NavigationBar", "Appearance-Sections", "glassOutlineStyle", "glassMessageMenu", "Feed-BottomTab", "aiTemperature", "AI-Service-Reasoning");
     private boolean entriesFetched;
     private String entriesLangCode;
     private final ConcurrentHashMap<Integer, Entry> preparedEntries = new ConcurrentHashMap<>();
@@ -172,7 +169,7 @@ public class SettingsRegistry {
     }
 
     public int getCategoryIcon(Class<? extends BaseFragment> cls) {
-        return ((Integer) SettingsRegistry$$ExternalSyntheticBackport1.m(categoriesIcons.get(cls), 0)).intValue();
+        return ((Integer) java.util.Objects.requireNonNullElse(categoriesIcons.get(cls), 0)).intValue();
     }
 
     public BaseFragment initiateFragment(Class<? extends BaseFragment> cls) {

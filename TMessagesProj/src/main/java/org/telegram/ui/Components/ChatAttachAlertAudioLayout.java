@@ -1,4 +1,252 @@
-(0, padding, 0, listPaddingBottom);
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui.Components;
+
+import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.loadVCardFromStream;
+import static org.telegram.messenger.LocaleController.formatString;
+import static org.telegram.messenger.LocaleController.getString;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.util.LongSparseArray;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.ImageLoader;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.Utilities;
+import org.telegram.messenger.audioinfo.AudioInfo;
+import org.telegram.messenger.utils.TextWatcherImpl;
+import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeDescription;
+import org.telegram.ui.Adapters.MessagesSearchAdapter;
+import org.telegram.ui.Cells.SharedAudioCell;
+import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
+import org.telegram.ui.Components.blur3.ViewGroupPartRenderer;
+import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
+import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+
+import androidx.recyclerview.widget.RecyclerView;
+
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
+
+@SuppressLint("ViewConstructor")
+public class ChatAttachAlertAudioLayout extends ChatAttachAlert.AttachAlertLayout implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
+    private static final int ANIMATOR_ID_FADE_VISIBLE = 0;
+
+    private final BoolAnimator animatorFadeVisible = new BoolAnimator(ANIMATOR_ID_FADE_VISIBLE, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+
+    private final FrameLayout frameLayout;
+    private final FragmentSearchField searchField;
+    private UniversalRecyclerView listView;
+    private final View fadeView;
+
+    private DialogsActivityTopPanelLayout topPanelLayout;
+    private FrameLayout fragmentContextViewWrapper;
+    private FragmentContextView fragmentContextView;
+
+    private String query;
+
+    private int maxSelectedFiles = -1;
+
+    private boolean sendPressed;
+
+    private boolean loadingAudio;
+
+    private ArrayList<MediaController.AudioEntry> audioEntries = new ArrayList<>();
+    private final HashSet<MediaController.AudioEntry> selectedAudios = new HashSet<>();
+
+    private MessagesController.SavedMusicList savedMusicList;
+    private ArrayList<MediaController.AudioEntry> profileEntries = new ArrayList<>();
+    private ArrayList<MediaController.AudioEntry> foundInChats = new ArrayList<>();
+    private ArrayList<MediaController.AudioEntry> foundGlobal = new ArrayList<>();
+
+    private AudioSelectDelegate delegate;
+
+    private MessageObject playingAudio;
+    private float currentPanTranslationProgress;
+
+    public interface AudioSelectDelegate {
+        void didSelectAudio(ArrayList<MessageObject> audios, CharSequence caption, boolean notify, int scheduleDate, int scheduleRepeatPeriod, long effectId, boolean invertMedia, long payStars);
+    }
+
+    public ChatAttachAlertAudioLayout(ChatAttachAlert alert, Context context, Theme.ResourcesProvider resourcesProvider) {
+        super(alert, context, resourcesProvider);
+
+        NotificationCenter.getInstance(parentAlert.currentAccount).addObserver(this, NotificationCenter.messagePlayingDidReset);
+        NotificationCenter.getInstance(parentAlert.currentAccount).addObserver(this, NotificationCenter.messagePlayingDidStart);
+        NotificationCenter.getInstance(parentAlert.currentAccount).addObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
+        NotificationCenter.getInstance(parentAlert.currentAccount).addObserver(this, NotificationCenter.musicListLoaded);
+        loadAudio();
+
+        fadeView = new ChatAttachAlert.SearchFadeView(context, Theme.key_windowBackgroundWhite, resourcesProvider);
+        fadeView.setVisibility(INVISIBLE);
+
+        frameLayout = new FrameLayout(context);
+        searchField = new ChatAttachAlert.AttachSearchField(context, parentAlert, resourcesProvider);
+        searchField.setPadding(dp(4), dp(4), dp(4), dp(4));
+        searchField.editText.addTextChangedListener(new TextWatcherImpl() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                final boolean wasEmpty = TextUtils.isEmpty(query);
+                query = s.toString().trim();
+
+                AndroidUtilities.cancelRunOnUIThread(searchChatsRunnable);
+                if (!TextUtils.isEmpty(query)) {
+                    loadingSearchChats = query != null && query.length() >= 0;
+                    if (!TextUtils.equals(lastSearchChatsQuery, query)) {
+                        foundInChats.clear();
+                        searchChatsNextRate = 0;
+                        searchChatsHasMore = false;
+                    }
+                    AndroidUtilities.runOnUIThread(searchChatsRunnable, 1500);
+                }
+
+                AndroidUtilities.cancelRunOnUIThread(searchGlobalRunnable);
+                if (!TextUtils.isEmpty(query)) {
+                    loadingSearchGlobal = query != null && query.length() >= 3 && !TextUtils.isEmpty(MessagesController.getInstance(parentAlert.currentAccount).config.musicSearchUsername.get());
+                    if (!TextUtils.equals(lastSearchGlobalQuery, query)) {
+                        foundGlobal.clear();
+                        searchGlobalHasMore = false;
+                    }
+                    AndroidUtilities.runOnUIThread(searchGlobalRunnable, 1500);
+                }
+
+                updateWithSavingScroll();
+            }
+        });
+        searchField.editText.setHint(LocaleController.getString(R.string.SearchMusic));
+        frameLayout.addView(fadeView, LayoutHelper.createFrameMatchParent());
+        MarginLayoutParams lp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 7, 8, 7, 4);
+        lp.topMargin += AndroidUtilities.statusBarHeight;
+        frameLayout.addView(searchField, lp);
+
+        topPanelLayout = new DialogsActivityTopPanelLayout(context);
+        topPanelLayout.setPadding(dp(11), dp(21), dp(11), dp(21));
+        topPanelLayout.setOnAnimatedHeightChangedListener(() -> {
+            alert.blur3_InvalidateBlur();
+            checkUi_listViewPadding();
+
+            parentAlert.updateLayout(ChatAttachAlertAudioLayout.this, true, 0);
+        });
+
+        fragmentContextViewWrapper = new FrameLayout(context);
+        topPanelLayout.addView(fragmentContextViewWrapper);
+        topPanelLayout.setViewVisible(fragmentContextViewWrapper, true, false);
+        fragmentContextView = new FragmentContextView(context, alert.baseFragment, frameLayout, false, resourcesProvider) {
+            @Override
+            public void setVisibility(int visibility) {
+                topPanelLayout.setViewVisible(fragmentContextViewWrapper, visibility == VISIBLE);
+            }
+        };
+        fragmentContextView.isInsideBubble = true;
+        fragmentContextViewWrapper.addView(fragmentContextView);
+        lp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 0, 8, 0, 4);
+        lp.topMargin += AndroidUtilities.statusBarHeight + dp(48 - 21);
+        frameLayout.addView(topPanelLayout, lp);
+
+        listView = new UniversalRecyclerView(context, alert.currentAccount, 0, this::fillItems, this::onItemClick, this::onItemLongClick, resourcesProvider) {
+            @Override
+            protected boolean allowSelectChildAtPosition(float x, float y) {
+                return y >= parentAlert.scrollOffsetY[0] + AndroidUtilities.dp(30) + (!parentAlert.inBubbleMode ? AndroidUtilities.statusBarHeight : 0);
+            }
+            @Override
+            protected void onLayout(boolean changed, int l, int t, int r, int b) {
+                super.onLayout(changed, l, t, r, b);
+                parentAlert.updateLayout(ChatAttachAlertAudioLayout.this, true, 0);
+            }
+            @Override
+            protected void onLayoutUpdate() {
+                parentAlert.updateLayout(ChatAttachAlertAudioLayout.this, true, 0);
+            }
+        };
+        listView.adapter.setApplyBackground(false);
+        listView.setSections();
+        iBlur3Capture = listView;
+        iBlur3CaptureView = listView;
+        occupyStatusBar = true;
+        occupyNavigationBar = true;
+        listView.setClipToPadding(false);
+        listView.setHorizontalScrollBarEnabled(false);
+        listView.setVerticalScrollBarEnabled(false);
+        addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
+        listView.setGlowColor(getThemedColor(Theme.key_dialogScrollGlow));
+        listView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                parentAlert.updateLayout(ChatAttachAlertAudioLayout.this, true, dy);
+//                if (listView.scrollingByUser) {
+//                    AndroidUtilities.hideKeyboard(searchField.editText);
+//                }
+            }
+        });
+
+        lp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 200, Gravity.LEFT | Gravity.TOP);
+        addView(frameLayout, lp);
+
+        listView.adapter.update(false);
+        checkUi_listViewPadding();
+
+        savedMusicList = new MessagesController.SavedMusicList(parentAlert.currentAccount, UserConfig.getInstance(parentAlert.currentAccount).getClientUserId());
+    }
+
+    private void checkUi_listViewPadding() {
+        int padding;
+        if (parentAlert.sizeNotifierFrameLayout.measureKeyboardHeight() > AndroidUtilities.dp(20)) {
+            padding = AndroidUtilities.dp(8);
+            parentAlert.setAllowNestedScroll(false);
+        } else {
+            if (!AndroidUtilities.isTablet() && AndroidUtilities.displaySize.x > AndroidUtilities.displaySize.y) {
+                padding = (int) (preMeasuredAvailableHeight / 3.5f);
+            } else {
+                padding = (preMeasuredAvailableHeight / 5 * 2);
+            }
+            parentAlert.setAllowNestedScroll(true);
+        }
+        padding += AndroidUtilities.statusBarHeight;
+        padding += dp(56);
+        padding += topPanelLayout.getAnimatedHeightWithPadding(0);
+        listView.setPadding/*WithoutRequestLayout*/(0, padding, 0, listPaddingBottom);
     }
 
     private void convertProfileMusicToEntries() {

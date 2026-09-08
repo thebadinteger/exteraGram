@@ -1,4 +1,180 @@
-) {
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.ui.Components;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Outline;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
+import android.os.Build;
+import androidx.annotation.Keep;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.TextureView;
+import android.view.View;
+import android.view.ViewOutlineProvider;
+import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.Bitmaps;
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.UserConfig;
+import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.Theme;
+
+import java.util.ArrayList;
+
+public class PipRoundVideoView implements NotificationCenter.NotificationCenterDelegate {
+
+    private FrameLayout windowView;
+    private Activity parentActivity;
+    private int currentAccount;
+    private TextureView textureView;
+    private ImageView imageView;
+    private AspectRatioFrameLayout aspectRatioFrameLayout;
+    private Bitmap bitmap;
+    private int videoWidth;
+    private int videoHeight;
+    private AnimatorSet hideShowAnimation;
+    private Runnable onCloseRunnable;
+
+    private WindowManager.LayoutParams windowLayoutParams;
+    private WindowManager windowManager;
+    private SharedPreferences preferences;
+    private DecelerateInterpolator decelerateInterpolator;
+
+    private RectF rect = new RectF();
+
+    @SuppressLint("StaticFieldLeak")
+    private static PipRoundVideoView instance;
+
+    public class PipFrameLayout extends FrameLayout {
+        public PipFrameLayout(Context context) {
+            super(context);
+        }
+    }
+
+    public void show(Activity activity, Runnable closeRunnable) {
+        if (activity == null) {
+            return;
+        }
+        instance = this;
+        onCloseRunnable = closeRunnable;
+        windowView = new PipFrameLayout(activity) {
+
+            private float startX;
+            private float startY;
+            private boolean dragging;
+            private boolean startDragging;
+
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    startX = event.getRawX();
+                    startY = event.getRawY();
+                    startDragging = true;
+                }
+                return true;
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+                super.requestDisallowInterceptTouchEvent(disallowIntercept);
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                if (!startDragging && !dragging) {
+                    return false;
+                }
+                float x = event.getRawX();
+                float y = event.getRawY();
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    float dx = (x - startX);
+                    float dy = (y - startY);
+                    if (startDragging) {
+                        if (Math.abs(dx) >= AndroidUtilities.getPixelsInCM(0.3f, true) || Math.abs(dy) >= AndroidUtilities.getPixelsInCM(0.3f, false)) {
+                            dragging = true;
+                            startDragging = false;
+                        }
+                    } else if (dragging) {
+                        windowLayoutParams.x += dx;
+                        windowLayoutParams.y += dy;
+                        int maxDiff = videoWidth / 2;
+                        if (windowLayoutParams.x < -maxDiff) {
+                            windowLayoutParams.x = -maxDiff;
+                        } else if (windowLayoutParams.x > AndroidUtilities.displaySize.x - windowLayoutParams.width + maxDiff) {
+                            windowLayoutParams.x = AndroidUtilities.displaySize.x - windowLayoutParams.width + maxDiff;
+                        }
+                        float alpha = 1.0f;
+                        if (windowLayoutParams.x < 0) {
+                            alpha = 1.0f + windowLayoutParams.x / (float) maxDiff * 0.5f;
+                        } else if (windowLayoutParams.x > AndroidUtilities.displaySize.x - windowLayoutParams.width) {
+                            alpha = 1.0f - (windowLayoutParams.x - AndroidUtilities.displaySize.x + windowLayoutParams.width) / (float) maxDiff * 0.5f;
+                        }
+                        if (windowView.getAlpha() != alpha) {
+                            windowView.setAlpha(alpha);
+                        }
+                        maxDiff = 0;
+                        if (windowLayoutParams.y < -maxDiff) {
+                            windowLayoutParams.y = -maxDiff;
+                        } else if (windowLayoutParams.y > AndroidUtilities.displaySize.y - windowLayoutParams.height + maxDiff) {
+                            windowLayoutParams.y = AndroidUtilities.displaySize.y - windowLayoutParams.height + maxDiff;
+                        }
+                        windowManager.updateViewLayout(windowView, windowLayoutParams);
+                        startX = x;
+                        startY = y;
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (startDragging && !dragging) {
+                        MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
+                        if (messageObject != null) {
+                            if (MediaController.getInstance().isMessagePaused()) {
+                                MediaController.getInstance().playMessage(messageObject);
+                            } else {
+                                MediaController.getInstance().pauseMessage(messageObject);
+                            }
+                        }
+                    }
+                    dragging = false;
+                    startDragging = false;
+                    animateToBoundsMaybe();
+                }
+                return true;
+            }
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                if (Theme.chat_roundVideoShadow != null/* && aspectRatioFrameLayout.isDrawingReady()*/) {
                     Theme.chat_roundVideoShadow.setAlpha((int) (getAlpha() * 255));
                     Theme.chat_roundVideoShadow.setBounds(AndroidUtilities.dp(1), AndroidUtilities.dp(2), AndroidUtilities.dp(125), AndroidUtilities.dp(125));
                     Theme.chat_roundVideoShadow.draw(canvas);

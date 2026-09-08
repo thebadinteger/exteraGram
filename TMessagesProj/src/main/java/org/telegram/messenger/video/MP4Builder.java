@@ -1,4 +1,148 @@
-mdat.setContentSize(mdat.getContentSize() + bufferInfo.size);
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger.video;
+
+import android.media.MediaCodec;
+import android.media.MediaFormat;
+import android.util.Log;
+
+import com.coremedia.iso.BoxParser;
+import com.coremedia.iso.IsoFile;
+import com.coremedia.iso.IsoTypeWriter;
+import com.coremedia.iso.boxes.Box;
+import com.coremedia.iso.boxes.CompositionTimeToSample;
+import com.coremedia.iso.boxes.Container;
+import com.coremedia.iso.boxes.DataEntryUrlBox;
+import com.coremedia.iso.boxes.DataInformationBox;
+import com.coremedia.iso.boxes.DataReferenceBox;
+import com.coremedia.iso.boxes.FileTypeBox;
+import com.coremedia.iso.boxes.HandlerBox;
+import com.coremedia.iso.boxes.MediaBox;
+import com.coremedia.iso.boxes.MediaHeaderBox;
+import com.coremedia.iso.boxes.MediaInformationBox;
+import com.coremedia.iso.boxes.MovieBox;
+import com.coremedia.iso.boxes.MovieHeaderBox;
+import com.coremedia.iso.boxes.SampleSizeBox;
+import com.coremedia.iso.boxes.SampleTableBox;
+import com.coremedia.iso.boxes.SampleToChunkBox;
+import com.coremedia.iso.boxes.StaticChunkOffsetBox;
+import com.coremedia.iso.boxes.SyncSampleBox;
+import com.coremedia.iso.boxes.TimeToSampleBox;
+import com.coremedia.iso.boxes.TrackBox;
+import com.coremedia.iso.boxes.TrackHeaderBox;
+import com.googlecode.mp4parser.DataSource;
+import com.googlecode.mp4parser.util.Matrix;
+
+import org.telegram.messenger.AndroidUtilities;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
+public class MP4Builder {
+
+    private InterleaveChunkMdat mdat = null;
+    private Mp4Movie currentMp4Movie = null;
+    private FileOutputStream fos = null;
+    private FileChannel fc = null;
+    private long dataOffset = 0;
+    private long wroteSinceLastMdat = 0;
+    private boolean writeNewMdat = true;
+    private HashMap<Track, long[]> track2SampleSizes = new HashMap<>();
+    private ByteBuffer sizeBuffer = null;
+    private boolean splitMdat;
+    private boolean wasFirstVideoFrame;
+    private boolean allowSyncFiles = true;
+
+    public MP4Builder createMovie(Mp4Movie mp4Movie, boolean split, boolean hevc) throws Exception {
+        currentMp4Movie = mp4Movie;
+
+        fos = new FileOutputStream(mp4Movie.getCacheFile());
+        fc = fos.getChannel();
+
+        FileTypeBox fileTypeBox = createFileTypeBox(hevc);
+        fileTypeBox.getBox(fc);
+        dataOffset += fileTypeBox.getSize();
+        wroteSinceLastMdat += dataOffset;
+        splitMdat = split;
+
+        mdat = new InterleaveChunkMdat();
+
+        sizeBuffer = ByteBuffer.allocateDirect(4);
+
+        return this;
+    }
+
+    private void flushCurrentMdat() throws Exception {
+        long oldPosition = fc.position();
+        fc.position(mdat.getOffset());
+        mdat.getBox(fc);
+        fc.position(oldPosition);
+        mdat.setDataOffset(0);
+        mdat.setContentSize(0);
+        fos.flush();
+        if (allowSyncFiles) {
+            fos.getFD().sync();
+        }
+    }
+
+    public long writeSampleData(int trackIndex, ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo, boolean writeLength) throws Exception {
+        if (writeNewMdat) {
+            mdat.setContentSize(0);
+            mdat.getBox(fc);
+            mdat.setDataOffset(dataOffset);
+            dataOffset += 16;
+            wroteSinceLastMdat += 16;
+            writeNewMdat = false;
+        }
+
+        /*if (writeLength && !wasFirstVideoFrame) {
+            wasFirstVideoFrame = true;
+            byte[] buff = new byte[bufferInfo.size];
+            byteBuf.position(bufferInfo.offset);
+            byteBuf.limit(bufferInfo.offset + bufferInfo.size);
+            byteBuf.get(buff);
+
+            ByteBuffer nativeBuffer = ByteBuffer.allocateDirect(bufferInfo.size);
+            nativeBuffer.position(4);
+            int indexOfNal = -1;
+            int totalLen = 0;
+            for (int a = 0, N = buff.length - 3; a < N; a++) {
+                if (buff[a] == 0 && buff[a + 1] == 0 && buff[a + 2] == 0 && buff[a + 3] == 1 || a == N - 1) {
+                    if (indexOfNal != -1) {
+                        int len = a - indexOfNal - 4;
+                        nativeBuffer.put(buff, indexOfNal, len);
+                        totalLen += len;
+                    }
+                    indexOfNal = a;
+                }
+            }
+            nativeBuffer.position(0);
+            nativeBuffer.putInt(totalLen);
+            bufferInfo.offset = 0;
+            bufferInfo.size = totalLen + 4;
+            byteBuf = nativeBuffer;
+        }*/
+
+        mdat.setContentSize(mdat.getContentSize() + bufferInfo.size);
         wroteSinceLastMdat += bufferInfo.size;
 
         boolean flush = false;

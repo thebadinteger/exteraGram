@@ -1,7 +1,6 @@
 package com.exteragram.messenger.export.api;
 
 import com.android.tools.r8.RecordTag;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.util.Objects;
 import okhttp3.internal.url._UrlKt;
 
@@ -37,7 +36,7 @@ public final class ApiWrap$DownloadProgress extends RecordTag {
     }
 
     public final int hashCode() {
-        return ApiWrap$DownloadProgress$$ExternalSyntheticRecord0.m(this.itemIndex, this.randomId, this.ready, this.total, this.path);
+        return java.util.Objects.hash(this.itemIndex, this.randomId, this.ready, this.total, this.path);
     }
 
     public int itemIndex() {
@@ -57,7 +56,7 @@ public final class ApiWrap$DownloadProgress extends RecordTag {
     }
 
     public final String toString() {
-        return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ApiWrap$DownloadProgress.class, "randomId;path;itemIndex;ready;total");
+        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$DownloadProgress.class, "randomId;path;itemIndex;ready;total");
     }
 
     public long total() {

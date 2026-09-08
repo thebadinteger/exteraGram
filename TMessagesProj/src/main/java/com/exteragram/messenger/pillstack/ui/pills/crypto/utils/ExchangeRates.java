@@ -3,7 +3,6 @@ package com.exteragram.messenger.pillstack.ui.pills.crypto.utils;
 import android.text.TextUtils;
 import com.android.tools.r8.RecordTag;
 import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.pillstack.core.PillStackConfig;
 import com.exteragram.messenger.pillstack.core.PillType;
 import com.exteragram.messenger.utils.network.ExteraHttpClient;

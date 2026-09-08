@@ -1,4 +1,58 @@
-true);
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger;
+
+import android.net.Uri;
+
+import androidx.annotation.Nullable;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.upstream.BaseDataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Log;
+
+import org.telegram.tgnet.TLRPC;
+
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+
+public class FileStreamLoadOperation extends BaseDataSource implements FileLoadOperationStream {
+
+    public static final ConcurrentHashMap<Long, FileStreamLoadOperation> allStreams = new ConcurrentHashMap<>();
+
+    private FileLoadOperation loadOperation;
+
+    private Uri uri;
+    private long bytesRemaining;
+    private long bytesTransferred;
+    private long requestedLength;
+    private boolean opened;
+    private long currentOffset;
+    private CountDownLatch countDownLatch;
+    private RandomAccessFile file;
+    private TLRPC.Document document;
+    private Object parentObject;
+    private int currentAccount;
+    File currentFile;
+
+    private static final ConcurrentHashMap<Long, Integer> priorityMap = new ConcurrentHashMap<>();
+
+    public FileStreamLoadOperation() {
+        super(/* isNetwork= */ true);
     }
 
     @Deprecated

@@ -1,11 +1,7 @@
 package com.exteragram.messenger.export.controllers;
 
-import android.support.v4.media.session.MediaSessionCompat$$ExternalSyntheticThrowCCEIfNotNull0;
 import android.util.Log;
-import androidx.camera.core.ImageCapture$$ExternalSyntheticBackport1;
-import c.f$$ExternalSyntheticBUOutline1;
 import com.android.dx.AppDataDirGuesser;
-import com.android.dx.DexMaker$$ExternalSyntheticBUOutline0;
 import com.android.dx.io.Opcodes;
 import com.exteragram.messenger.export.ExportSettings;
 import com.exteragram.messenger.export.api.ApiWrap$Chat;
@@ -61,10 +57,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Set;
-import okhttp3.OkHttpClient$Builder$$ExternalSyntheticBUOutline0;
 import okhttp3.internal.url._UrlKt;
-import okio.Buffer$$ExternalSyntheticBUOutline4;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.SaveToGallerySettingsHelper;
@@ -836,7 +829,7 @@ public class ExportRequestsController {
         }
         if (inputPeer instanceof TLRPC.TL_inputPeerChat) {
             TLRPC.TL_messages_getChats tL_messages_getChats = new TLRPC.TL_messages_getChats();
-            tL_messages_getChats.id = new ArrayList<>(ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{Long.valueOf(((TLRPC.TL_inputPeerChat) inputPeer).chat_id)}));
+            tL_messages_getChats.id = new ArrayList<>(java.util.Arrays.asList(Long.valueOf(((TLRPC.TL_inputPeerChat) inputPeer).chat_id)));
             mainRequest(tL_messages_getChats, new Utilities.Callback2() { 
                 @Override 
                 public final void run(Object obj, Object obj2) {
@@ -860,7 +853,7 @@ public class ExportRequestsController {
 
     public void lambda$requestSinglePeerDialog$33(final Utilities.Callback callback, TLRPC.InputUser inputUser) {
         TLRPC.TL_users_getUsers tL_users_getUsers = new TLRPC.TL_users_getUsers();
-        tL_users_getUsers.id = new ArrayList<>(ImageCapture$$ExternalSyntheticBackport1.m(new Object[]{inputUser}));
+        tL_users_getUsers.id = new ArrayList<>(java.util.Arrays.asList(inputUser));
         mainRequest(tL_users_getUsers, new Utilities.Callback2() { 
             @Override 
             public final void run(Object obj, Object obj2) {

@@ -152,7 +152,7 @@ public class GroupMedia {
 //            }
 //        }
 //        for (int i = 0; i < paidMedia.extended_media.size(); ++i) {
-
+//            final TLRPC.MessageExtendedMedia media = paidMedia.extended_media.get(i);
 //            final GroupedMessagePosition pos = layout.getPosition(media);
 //            boolean found = false;
 //            for (int j = 0; j < holders.size(); ++j) {
@@ -168,7 +168,7 @@ public class GroupMedia {
 //                if (media.attachPath != null) {
 //                    holder.attachPath = media.attachPath;
 //                } else if (paidMedia.extended_media.size() == 1) {
-
+//                    holder.attachPath = messageObject.messageOwner != null ? messageObject.messageOwner.attachPath : null;
 //                }
 //                if (!TextUtils.isEmpty(holder.attachPath)) {
 //                    DownloadController.getInstance(cell.currentAccount).addLoadingFileObserver(holder.attachPath, messageObject, holder);
@@ -401,7 +401,7 @@ public class GroupMedia {
         if (layout == null) return;
         float hiddenAlpha = animatedHidden.set(hidden);
 
-
+//        Theme.MessageDrawable backgroundDrawable = cell.currentBackgroundDrawable;
 //        if (backgroundDrawable != null && hiddenAlpha > 0) {
 //            canvas.save();
 //            canvas.clipRect(x - dp(20), y - dp(2), x + width + dp(20), y + height + dp(3));

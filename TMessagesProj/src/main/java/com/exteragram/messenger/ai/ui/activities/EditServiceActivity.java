@@ -14,7 +14,6 @@ import com.exteragram.messenger.ai.AiController;
 import com.exteragram.messenger.ai.data.Service;
 import com.exteragram.messenger.ai.data.Suggestions;
 import com.exteragram.messenger.ai.network.Client;
-import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import com.exteragram.messenger.ai.network.GenerationCallback;
 import com.exteragram.messenger.preferences.BasePreferencesActivity;
 import com.exteragram.messenger.preferences.utils.SettingsRegistry;
@@ -257,11 +256,11 @@ public class EditServiceActivity extends BasePreferencesActivity {
         }
 
         public final int hashCode() {
-            return EditServiceActivity$ParsedServiceInput$$ExternalSyntheticRecord0.m(this.name, this.url, this.model);
+            return java.util.Objects.hash(this.name, this.url, this.model);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ServicePreset.class, "name;url;model");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ServicePreset.class, "name;url;model");
         }
     }
 
@@ -293,11 +292,11 @@ public class EditServiceActivity extends BasePreferencesActivity {
         }
 
         public final int hashCode() {
-            return EditServiceActivity$ParsedServiceInput$$ExternalSyntheticRecord0.m(this.url, this.model, this.key);
+            return java.util.Objects.hash(this.url, this.model, this.key);
         }
 
         public final String toString() {
-            return Client$ImagePayload$$ExternalSyntheticRecord1.m($record$getFieldsAsObjects(), ParsedServiceInput.class, "url;model;key");
+            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ParsedServiceInput.class, "url;model;key");
         }
 
         public boolean hasServiceFields() {

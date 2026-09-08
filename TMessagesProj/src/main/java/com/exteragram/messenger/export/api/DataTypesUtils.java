@@ -2,7 +2,6 @@ package com.exteragram.messenger.export.api;
 
 import android.text.TextUtils;
 import android.util.Base64;
-import c.f$$ExternalSyntheticBUOutline1;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.export.ExportSettings;
 import com.exteragram.messenger.export.output.FileManager;
@@ -20,7 +19,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import kotlin.text.Typography;
 import okhttp3.internal.url._UrlKt;
-import okio.Buffer$$ExternalSyntheticBUOutline4;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
@@ -30,7 +28,6 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.Vector;
 import org.telegram.tgnet.tl.TL_account;
 import org.telegram.tgnet.tl.TL_stories;
-import org.webrtc.GlShader$$ExternalSyntheticBUOutline1;
 import org.webrtc.MediaStreamTrack;
 
 public abstract class DataTypesUtils {

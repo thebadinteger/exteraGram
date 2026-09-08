@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Pair;
 import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticBackport1;
 import com.exteragram.messenger.utils.network.RemoteUtils;
 import com.exteragram.messenger.utils.system.SystemUtils;
 import com.google.android.exoplayer2.util.Consumer;

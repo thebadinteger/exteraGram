@@ -123,12 +123,6 @@ public class UpdateLayout extends IUpdateLayout {
         }
     }
 
-    /* JADX WARN: Code duplicated, block: B:21:0x008e  */
-    /* JADX WARN: Code duplicated, block: B:22:0x0099  */
-    /* JADX WARN: Code duplicated, block: B:26:0x00a7  */
-    /* JADX WARN: Code duplicated, block: B:28:0x00b9  */
-    /* JADX WARN: Code duplicated, block: B:30:0x00d3  */
-    /* JADX WARN: Code duplicated, block: B:45:? A[RETURN, SYNTHETIC] */
     @Override // org.telegram.ui.IUpdateLayout
     public void updateAppUpdateViews(int i, boolean z) {
         boolean z2;

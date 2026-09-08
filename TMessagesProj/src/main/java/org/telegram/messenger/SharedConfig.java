@@ -1,4 +1,60 @@
-private final static int PROXY_SCHEMA_V2 = 2;
+/*
+ * This is the source code of Telegram for Android v. 5.x.x.
+ * It is licensed under GNU GPL v. 2 or later.
+ * You should have received a copy of the license in this archive (see LICENSE).
+ *
+ * Copyright Nikolai Kudashov, 2013-2018.
+ */
+
+package org.telegram.messenger;
+
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
+import android.os.Build;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.text.TextUtils;
+import android.util.Base64;
+import android.webkit.WebView;
+
+import androidx.annotation.IntDef;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.pm.ShortcutManagerCompat;
+
+import org.json.JSONObject;
+import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.SerializedData;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.Components.SwipeGestureSettingsView;
+import org.telegram.ui.LaunchActivity;
+
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+
+public class SharedConfig {
+    /**
+     * V2: Ping and check time serialized
+     */
+    private final static int PROXY_SCHEMA_V2 = 2;
     private final static int PROXY_CURRENT_SCHEMA_VERSION = PROXY_SCHEMA_V2;
 
     public final static int PASSCODE_TYPE_PIN = 0,

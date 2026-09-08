@@ -12,7 +12,6 @@ import kotlin.coroutines.jvm.internal.DebugMetadata;
 import kotlin.coroutines.jvm.internal.SuspendLambda;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
-import okio.Segment$$ExternalSyntheticBUOutline1;
 import org.telegram.messenger.FileLog;
 import retrofit2.Response;
 
@@ -23,7 +22,6 @@ public final class NowPlayingController$getCurrentPlayingTrack$1$liveTrackDeferr
     final /* synthetic */ long $userId;
     int label;
 
-    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
     public NowPlayingController$getCurrentPlayingTrack$1$liveTrackDeferred$1(boolean z, long j, Continuation<? super NowPlayingController$getCurrentPlayingTrack$1$liveTrackDeferred$1> continuation) {
         super(2, continuation);
         this.$checkApi = z;

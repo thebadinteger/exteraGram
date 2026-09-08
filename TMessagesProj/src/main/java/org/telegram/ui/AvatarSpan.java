@@ -1,13 +1,19 @@
 package org.telegram.ui;
 
+
+import static org.telegram.messenger.AndroidUtilities.dp;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.style.ReplacementSpan;
+import android.util.Log;
 import android.view.View;
-import com.exteragram.messenger.ExteraConfig;
-import org.telegram.messenger.AndroidUtilities;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.MessagesController;
 import org.telegram.tgnet.TLObject;
@@ -16,140 +22,135 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AvatarDrawable;
 
 public class AvatarSpan extends ReplacementSpan {
-    private final AvatarDrawable avatarDrawable;
-    private final int currentAccount;
-    private final ImageReceiver imageReceiver;
-    public boolean needDrawShadow;
-    private View parent;
-    private final View.OnAttachStateChangeListener parentAttachListener;
-    private final Paint shadowPaint;
-    private int shadowPaintAlpha;
-    private float sz;
-    private float translateX;
-    private float translateY;
-    public boolean usePaintAlpha;
 
-    public AvatarSpan(View view, int i) {
-        this(view, i, 18.0f);
+    private final Paint shadowPaint;
+    private final ImageReceiver imageReceiver;
+    private final AvatarDrawable avatarDrawable;
+    private float sz;
+    private final int currentAccount;
+
+    private View parent;
+
+    public AvatarSpan(View parent, int currentAccount) {
+        this(parent, currentAccount, 18);
     }
 
-    public AvatarSpan(View view, int i, float f) {
-        this.needDrawShadow = true;
-        this.parentAttachListener = new View.OnAttachStateChangeListener() { // from class: org.telegram.ui.AvatarSpan.1
-            @Override // android.view.View.OnAttachStateChangeListener
-            public void onViewAttachedToWindow(View view2) {
-                AvatarSpan.this.imageReceiver.onAttachedToWindow();
-            }
-
-            @Override // android.view.View.OnAttachStateChangeListener
-            public void onViewDetachedFromWindow(View view2) {
-                AvatarSpan.this.imageReceiver.onDetachedFromWindow();
-            }
-        };
-        this.shadowPaintAlpha = 255;
-        this.usePaintAlpha = true;
-        this.currentAccount = i;
-        ImageReceiver imageReceiver = new ImageReceiver(view);
-        this.imageReceiver = imageReceiver;
+    public AvatarSpan(View parent, int currentAccount, float sz) {
+        this.currentAccount = currentAccount;
+        this.imageReceiver = new ImageReceiver(parent);
         imageReceiver.setInvalidateAll(true);
         this.avatarDrawable = new AvatarDrawable();
-        setSize(f);
-        Paint paint = new Paint(1);
-        this.shadowPaint = paint;
-        paint.setShadowLayer(AndroidUtilities.dp(1.0f), 0.0f, AndroidUtilities.dp(0.66f), 855638016);
-        setParent(view);
+        setSize(sz);
+
+        this.shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        shadowPaint.setShadowLayer(dp(1), 0, dp(.66f), 0x33000000);
+
+        setParent(parent);
     }
 
-    public void setSize(float f) {
-        this.avatarDrawable.setTextSize(AndroidUtilities.dp(5.0f + f));
-        this.imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(f));
-        this.sz = f;
+    public boolean needDrawShadow = true;
+
+    public void setSize(float sz) {
+        imageReceiver.setRoundRadius(dp(sz));
+        this.sz = sz;
     }
 
-    public void setParent(View view) {
-        View view2 = this.parent;
-        if (view2 == view) {
-            return;
+    public void setParent(View parent) {
+        if (this.parent == parent) return;
+        if (this.parent != null) {
+           this.parent.removeOnAttachStateChangeListener(parentAttachListener);
+           if (this.parent.isAttachedToWindow() && !parent.isAttachedToWindow()) {
+               imageReceiver.onDetachedFromWindow();
+           }
         }
-        if (view2 != null) {
-            view2.removeOnAttachStateChangeListener(this.parentAttachListener);
-            if (this.parent.isAttachedToWindow() && !view.isAttachedToWindow()) {
-                this.imageReceiver.onDetachedFromWindow();
-            }
+        if ((this.parent == null || !this.parent.isAttachedToWindow()) && parent != null && parent.isAttachedToWindow()) {
+            imageReceiver.onAttachedToWindow();
         }
-        View view3 = this.parent;
-        if ((view3 == null || !view3.isAttachedToWindow()) && view != null && view.isAttachedToWindow()) {
-            this.imageReceiver.onAttachedToWindow();
-        }
-        this.parent = view;
-        this.imageReceiver.setParentView(view);
-        if (view != null) {
-            view.addOnAttachStateChangeListener(this.parentAttachListener);
-        }
-    }
-
-    public static void checkSpansParent(CharSequence charSequence, View view) {
-        if (charSequence != null && (charSequence instanceof Spannable)) {
-            Spannable spannable = (Spannable) charSequence;
-            for (AvatarSpan avatarSpan : (AvatarSpan[]) spannable.getSpans(0, spannable.length(), AvatarSpan.class)) {
-                avatarSpan.setParent(view);
-            }
+        this.parent = parent;
+        imageReceiver.setParentView(parent);
+        if (parent != null) {
+            parent.addOnAttachStateChangeListener(parentAttachListener);
         }
     }
 
-    public void setDialogId(long j) {
-        int i = this.currentAccount;
-        if (j >= 0) {
-            setUser(MessagesController.getInstance(i).getUser(Long.valueOf(j)));
+    public static void checkSpansParent(CharSequence cs, View parent) {
+        if (cs == null) return;
+        if (!(cs instanceof Spannable)) return;
+        Spannable spannable = (Spannable) cs;
+        AvatarSpan[] spans = spannable.getSpans(0, spannable.length(), AvatarSpan.class);
+        for (AvatarSpan span : spans) {
+            span.setParent(parent);
+        }
+    }
+
+    private final View.OnAttachStateChangeListener parentAttachListener = new View.OnAttachStateChangeListener() {
+        @Override
+        public void onViewAttachedToWindow(@NonNull View v) {
+            imageReceiver.onAttachedToWindow();
+        }
+        @Override
+        public void onViewDetachedFromWindow(@NonNull View v) {
+            imageReceiver.onDetachedFromWindow();
+        }
+    };
+
+    public void setDialogId(long dialogId) {
+        if (dialogId >= 0) {
+            setUser(MessagesController.getInstance(currentAccount).getUser(dialogId));
         } else {
-            setChat(MessagesController.getInstance(i).getChat(Long.valueOf(-j)));
+            setChat(MessagesController.getInstance(currentAccount).getChat(-dialogId));
         }
     }
 
     public void setChat(TLRPC.Chat chat) {
-        this.avatarDrawable.setInfo(this.currentAccount, chat);
-        this.imageReceiver.setForUserOrChat(chat, this.avatarDrawable);
+        avatarDrawable.setInfo(currentAccount, chat);
+        imageReceiver.setForUserOrChat(chat, avatarDrawable);
     }
 
     public void setUser(TLRPC.User user) {
-        this.avatarDrawable.setInfo(this.currentAccount, user);
-        this.imageReceiver.setForUserOrChat(user, this.avatarDrawable);
+        avatarDrawable.setInfo(currentAccount, user);
+        imageReceiver.setForUserOrChat(user, avatarDrawable);
     }
 
-    public void setObject(TLObject tLObject) {
-        this.avatarDrawable.setInfo(this.currentAccount, tLObject);
-        this.imageReceiver.setForUserOrChat(tLObject, this.avatarDrawable);
+    public void setObject(TLObject obj) {
+        avatarDrawable.setInfo(currentAccount, obj);
+        imageReceiver.setForUserOrChat(obj, avatarDrawable);
+    }
+
+    public void setName(String name) {
+        avatarDrawable.setInfo(0, name, null, null, null, null);
+        imageReceiver.setForUserOrChat(null, avatarDrawable);
     }
 
     public void setImageDrawable(Drawable drawable) {
-        this.imageReceiver.setImageBitmap(drawable);
+        imageReceiver.setImageBitmap(drawable);
     }
 
-    @Override // android.text.style.ReplacementSpan
-    public int getSize(Paint paint, CharSequence charSequence, int i, int i2, Paint.FontMetricsInt fontMetricsInt) {
-        return AndroidUtilities.dp(this.sz);
+    @Override
+    public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, @Nullable Paint.FontMetricsInt fm) {
+        return dp(sz);
     }
 
-    @Override // android.text.style.ReplacementSpan
-    public void draw(Canvas canvas, CharSequence charSequence, int i, int i2, float f, int i3, int i4, int i5, Paint paint) {
-        if (this.needDrawShadow) {
-            if (this.shadowPaintAlpha != paint.getAlpha()) {
-                Paint paint2 = this.shadowPaint;
-                int alpha = paint.getAlpha();
-                this.shadowPaintAlpha = alpha;
-                paint2.setAlpha(alpha);
-                this.shadowPaint.setShadowLayer(AndroidUtilities.dp(1.0f), 0.0f, AndroidUtilities.dp(0.66f), Theme.multAlpha(855638016, this.shadowPaintAlpha / 255.0f));
+    private float translateX, translateY;
+    private int shadowPaintAlpha = 0xFF;
+    public boolean usePaintAlpha = true;
+
+    @Override
+    public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
+        if (needDrawShadow) {
+            if (shadowPaintAlpha != paint.getAlpha()) {
+                shadowPaint.setAlpha(shadowPaintAlpha = paint.getAlpha());
+                shadowPaint.setShadowLayer(dp(1), 0, dp(.66f), Theme.multAlpha(0x33000000, shadowPaintAlpha / 255f));
             }
-            float f2 = (i3 + i5) / 2.0f;
-            canvas.drawRoundRect(this.translateX + f, (this.translateY + f2) - (AndroidUtilities.dp(this.sz) / 2.0f), AndroidUtilities.dp(this.sz) + this.translateX + f, ((this.translateY + f2) - (AndroidUtilities.dp(this.sz) / 2.0f)) + AndroidUtilities.dp(this.sz), ExteraConfig.getAvatarCorners(this.sz), ExteraConfig.getAvatarCorners(this.sz), this.shadowPaint);
+            canvas.drawCircle(translateX + x + dp(sz) / 2f, translateY + (top + bottom) / 2f, dp(sz) / 2f, shadowPaint);
         }
-        this.imageReceiver.setImageCoords(this.translateX + f, (this.translateY + ((i3 + i5) / 2.0f)) - (AndroidUtilities.dp(this.sz) / 2.0f), AndroidUtilities.dp(this.sz), AndroidUtilities.dp(this.sz));
-        this.imageReceiver.setAlpha(this.usePaintAlpha ? paint.getAlpha() / 255.0f : 1.0f);
-        this.imageReceiver.draw(canvas);
+        imageReceiver.setImageCoords(translateX + x, translateY + (top + bottom) / 2f - dp(sz) / 2f, dp(sz), dp(sz));
+        imageReceiver.setAlpha(usePaintAlpha ? paint.getAlpha() / 255f : 1.0f);
+        imageReceiver.draw(canvas);
     }
 
-    public void translate(float f, float f2) {
-        this.translateX = f;
-        this.translateY = f2;
+    public void translate(float x, float y) {
+        this.translateX = x;
+        this.translateY = y;
     }
 }

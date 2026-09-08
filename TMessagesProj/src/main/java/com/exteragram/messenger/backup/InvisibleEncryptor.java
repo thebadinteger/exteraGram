@@ -1,7 +1,6 @@
 package com.exteragram.messenger.backup;
 
 import android.text.TextUtils;
-import com.exteragram.messenger.adblock.AdBlockClient$$ExternalSyntheticBackport0;
 import java.nio.charset.StandardCharsets;
 import kotlin.UByte;
 import okhttp3.internal.url._UrlKt;
@@ -33,7 +32,7 @@ public abstract class InvisibleEncryptor {
             for (int i = 0; i < length; i++) {
                 strArr[i] = toStr(bytes[i] & UByte.MAX_VALUE);
             }
-            return "\u2001\u2002" + AdBlockClient$$ExternalSyntheticBackport0.m("\u2000", strArr);
+            return "\u2001\u2002" + android.text.TextUtils.join("\u2000", strArr);
         } catch (Exception e) {
             e.printStackTrace();
             return str;
