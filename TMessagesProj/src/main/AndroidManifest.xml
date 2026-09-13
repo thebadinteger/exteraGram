@@ -890,14 +890,14 @@
             android:name="androidx.credentials.playservices.controllers.identityauth.HiddenActivity"
             android:enabled="true"
             android:exported="false"
-            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:fitsSystemWindows="true"/>
         <activity
             android:theme="@style/Theme.Hidden"
             android:name="androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity"
             android:enabled="true"
             android:exported="false"
-            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:fitsSystemWindows="true"/>
         <activity
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
@@ -1013,12 +1013,12 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:name="com.android.billingclient.api.ProxyBillingActivity"
             android:exported="false"
-            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard"/>
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
         <activity
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:name="com.android.billingclient.api.ProxyBillingActivityV2"
             android:exported="false"
-            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard"/>
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
         <receiver
             android:name="com.google.android.gms.measurement.AppMeasurementReceiver"
             android:enabled="true"
