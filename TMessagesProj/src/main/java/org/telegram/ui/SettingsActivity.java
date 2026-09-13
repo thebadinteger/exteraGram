@@ -38,6 +38,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -63,6 +64,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.common.collect.Lists;
 
 import org.telegram.PhoneFormat.PhoneFormat;
+import com.exteragram.messenger.ExteraConfig;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.AuthTokensHelper;
@@ -160,6 +162,11 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
     private SizeNotifierFrameLayout contentView;
     private UniversalRecyclerView listView;
     private View actionBarBackground;
+    private MainTabsActivityController mainTabsActivityController;
+
+    public void setMainTabsActivityController(MainTabsActivityController mainTabsActivityController) {
+        this.mainTabsActivityController = mainTabsActivityController;
+    }
 
     private ActionBarMenuItem searchItem, otherItem;
     private String query;
@@ -412,7 +419,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         avatarDrawable = new AvatarDrawable();
         avatarView = new BackupImageView(context);
-        avatarView.setRoundRadius(dp(90));
+        avatarView.setRoundRadius(ExteraConfig.getAvatarCorners(90.0f));
         avatarContainer.addView(avatarView, LayoutHelper.createFrame(90, 90, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 15, 0, 0));
 
         avatarProgressView = new RadialProgressView(context) {
@@ -534,7 +541,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         avatarView.setForUserOrChat(user, avatarDrawable);
         titleView.setText(UserObject.getUserName(user));
         final StringBuilder sb = new StringBuilder();
-        if (user != null) {
+        if (user != null && !ExteraConfig.getHidePhoneNumber()) {
             sb.append(PhoneFormat.getInstance().format("+" + user.phone));
         }
         final String username = UserObject.getPublicUsername(user);
@@ -652,8 +659,21 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             ));
             items.add(UItem.asShadow(null));
         } else if (suggestions.contains("VALIDATE_PHONE_NUMBER") && getUserConfig().getCurrentUser() != null) {
+            String str = PhoneFormat.getInstance().format("+" + getUserConfig().getCurrentUser().phone);
+            String string = formatString(R.string.CheckPhoneNumber, str);
+            CharSequence charSequence;
+            int iIndexOf;
+            if (!ExteraConfig.getHidePhoneNumber() || (iIndexOf = string.indexOf(str)) < 0) {
+                charSequence = string;
+            } else {
+                SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(string);
+                org.telegram.ui.Components.TextStyleSpan.TextStyleRun textStyleRun = new org.telegram.ui.Components.TextStyleSpan.TextStyleRun();
+                textStyleRun.flags |= 256;
+                spannableStringBuilder.setSpan(new org.telegram.ui.Components.TextStyleSpan(textStyleRun), iIndexOf, str.length() + iIndexOf, 33);
+                charSequence = spannableStringBuilder;
+            }
             items.add(SuggestionCell.Factory.of(
-                formatString(R.string.CheckPhoneNumber, PhoneFormat.getInstance().format("+" + getUserConfig().getCurrentUser().phone)),
+                charSequence,
                 replaceSingleTag(getString(R.string.CheckPhoneNumberInfo), () -> {
                     Browser.openUrl(getContext(), getString(R.string.CheckPhoneNumberLearnMoreUrl));
                 }),
@@ -686,6 +706,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             }
             items.add(UItem.asShadow(null));
         }
+
+        items.add(SettingCell.Factory.of(-1, 0xFFE83230, 0xFFE83230, Theme.isCurrentThemeMonet() ? R.drawable.ic_foreground_solid : R.drawable.ic_foreground, LocaleController.getString(R.string.Preferences)));
+        items.add(UItem.asShadow(null));
 
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
@@ -808,6 +831,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             return;
         }
         switch (item.id) {
+            case -1:
+                presentSettingFragment(new com.exteragram.messenger.preferences.MainPreferencesActivity());
+                break;
             case 1:
                 presentSettingFragment(new UserInfoActivity());
                 break;
@@ -979,7 +1005,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
             avatarDrawable = new AvatarDrawable();
             avatarView = new BackupImageView(context);
-            avatarView.setRoundRadius(dp(14));
+            avatarView.setRoundRadius(ExteraConfig.getAvatarCorners(28.0f));
 
             textView = new SimpleTextView(context);
             textView.setTextSize(15);
@@ -1239,7 +1265,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
             private boolean border;
             public void setDrawBorder(boolean drawBorder) {
-                this.border = drawBorder;
+                this.border = drawBorder && !Theme.isCurrentThemeMonet() && ExteraConfig.getGlassOutlineStyle() == com.exteragram.messenger.GlassOutlineStyle.GLARE;
             }
 
             @Override

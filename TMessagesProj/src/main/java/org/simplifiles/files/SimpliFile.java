@@ -78,11 +78,19 @@ public final class SimpliFile {
     }
 
     public final InputStream inputStream() {
-        return Files.newInputStream(this.path, new OpenOption[0]);
+        try {
+            return Files.newInputStream(this.path, new OpenOption[0]);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final byte[] readBytes() {
-        return Files.readAllBytes(this.path);
+        try {
+            return Files.readAllBytes(this.path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final byte[] readBytes(long maxBytes) throws FileOperationException {
@@ -90,9 +98,13 @@ public final class SimpliFile {
             f$$ExternalSyntheticBUOutline1.m("maxBytes must not be negative.");
             return null;
         }
-        if (Files.size(this.path) > maxBytes) {
-            SimpliFile$$ExternalSyntheticBUOutline2.m("File exceeds read limit of ", maxBytes, this.path);
-            return null;
+        try {
+            if (Files.size(this.path) > maxBytes) {
+                SimpliFile$$ExternalSyntheticBUOutline2.m("File exceeds read limit of ", maxBytes, this.path);
+                return null;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return readBytes();
     }
@@ -106,7 +118,11 @@ public final class SimpliFile {
 
     @JvmOverloads
     public final String readText(long maxBytes, Charset charset) {
-        return new String(readBytes(maxBytes), charset);
+        try {
+            return new String(readBytes(maxBytes), charset);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static /* synthetic */ void forEachLine$default(SimpliFile simpliFile, long j, Charset charset, Function1 function1, int i, Object obj) {
@@ -151,7 +167,7 @@ public final class SimpliFile {
         }
     }
 
-    public static /* synthetic */ SimpliFile writeFrom$default(SimpliFile simpliFile, InputStream inputStream, long j, int i, Object obj) {
+    public static /* synthetic */ SimpliFile writeFrom$default(SimpliFile simpliFile, InputStream inputStream, long j, int i, Object obj) throws IOException {
         if ((i & 2) != 0) {
             j = LongCompanionObject.MAX_VALUE;
         }
@@ -216,7 +232,7 @@ public final class SimpliFile {
         }
     }
 
-    public static /* synthetic */ SimpliFile writeFromAtomic$default(SimpliFile simpliFile, InputStream inputStream, long j, int i, Object obj) {
+    public static /* synthetic */ SimpliFile writeFromAtomic$default(SimpliFile simpliFile, InputStream inputStream, long j, int i, Object obj) throws IOException {
         if ((i & 2) != 0) {
             j = LongCompanionObject.MAX_VALUE;
         }
@@ -279,7 +295,11 @@ public final class SimpliFile {
     }
 
     public final boolean delete() {
-        return Files.deleteIfExists(this.path);
+        try {
+            return Files.deleteIfExists(this.path);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public final SimpliFile copyTo(Path target, OverwritePolicy overwritePolicy) throws IOException {
@@ -312,7 +332,11 @@ public final class SimpliFile {
     }
 
     public final SimpliFile copyTo(File target, OverwritePolicy overwritePolicy) {
-        return copyTo(Paths.get(target.getPath(), new String[0]), overwritePolicy);
+        try {
+            return copyTo(Paths.get(target.getPath(), new String[0]), overwritePolicy);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliFile moveTo(Path target, OverwritePolicy overwritePolicy) throws IOException {
@@ -345,7 +369,11 @@ public final class SimpliFile {
     }
 
     public final SimpliFile moveTo(File target, OverwritePolicy overwritePolicy) {
-        return moveTo(Paths.get(target.getPath(), new String[0]), overwritePolicy);
+        try {
+            return moveTo(Paths.get(target.getPath(), new String[0]), overwritePolicy);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private final long copyFrom(InputStream input, OutputStream output, long maxBytes) throws IOException {

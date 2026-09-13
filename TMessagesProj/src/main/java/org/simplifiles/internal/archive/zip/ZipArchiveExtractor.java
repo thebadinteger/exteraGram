@@ -161,21 +161,21 @@ public final class ZipArchiveExtractor {
         }
     }
 
-    private final void extractEntries(Path source, Path root, SecurityPolicy policy, ExtractionProgress progress, int bufferSize) {
+    private final void extractEntries(Path source, Path root, SecurityPolicy policy, ExtractionProgress progress, int bufferSize) throws Exception {
         SecurityPolicy securityPolicy = policy;
-        ?? zipFile = new ZipFile(source.toFile());
-        try {
-            LinkedHashSet linkedHashSet = new LinkedHashSet();
+        try (ZipFile zipFile = new ZipFile(source.toFile())) {
+            LinkedHashSet<String> linkedHashSet = new LinkedHashSet<>();
             long jCheckedAddTotal = 0;
-            for (?? r3 : SequencesKt.asSequence(CollectionsKt.iterator(zipFile.entries()))) {
+            java.util.Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
                 progress.checkCanceled();
-                ?? r0 = INSTANCE;
-                String strDestinationPathFor = r0.destinationPathFor(r3, linkedHashSet, securityPolicy);
+                String strDestinationPathFor = destinationPathFor(entry, linkedHashSet, securityPolicy);
                 if (strDestinationPathFor == null) {
-                    progress.entryCompleted(r3.getName());
+                    progress.entryCompleted(entry.getName());
                 } else {
                     Path pathResolve = ArchivePathResolver.INSTANCE.resolve(root, strDestinationPathFor, securityPolicy.getAllowAbsolutePaths());
-                    if (r3.isDirectory()) {
+                    if (entry.isDirectory()) {
                         Files.createDirectories(pathResolve, new FileAttribute[0]);
                         progress.entryCompleted(strDestinationPathFor);
                     } else {
@@ -184,53 +184,15 @@ public final class ZipArchiveExtractor {
                             Files.deleteIfExists(pathResolve);
                         }
                         long j = jCheckedAddTotal;
-                        InputStream inputStream = zipFile.getInputStream(r3);
-                        try {
-                            OutputStream outputStreamNewOutputStream = Files.newOutputStream(pathResolve, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-                            try {
-                                long jCopyWithLimits = r0.copyWithLimits(inputStream, outputStreamNewOutputStream, r3, j, securityPolicy, progress, strDestinationPathFor, bufferSize);
-                                r3 = inputStream;
-                                try {
-                                    CloseableKt.closeFinally(outputStreamNewOutputStream, null);
-                                    CloseableKt.closeFinally(r3, null);
-                                    securityPolicy = policy;
-                                    jCheckedAddTotal = r0.checkedAddTotal(j, jCopyWithLimits, securityPolicy, r3.getName());
-                                    r0.validateRuntimeCompressionRatio(r3, jCopyWithLimits, securityPolicy);
-                                    progress.entryCompleted(strDestinationPathFor);
-                                } catch (Throwable th) {
-                                    th = th;
-                                    Throwable th2 = th;
-                                    try {
-                                        throw th2;
-                                    } catch (Throwable th3) {
-                                        CloseableKt.closeFinally(r3, th2);
-                                        throw th3;
-                                    }
-                                }
-                            } catch (Throwable th4) {
-                                r3 = inputStream;
-                                try {
-                                    throw th4;
-                                } catch (Throwable th5) {
-                                    CloseableKt.closeFinally(outputStreamNewOutputStream, th4);
-                                    throw th5;
-                                }
-                            }
-                        } catch (Throwable th6) {
-                            th = th6;
-                            r3 = inputStream;
+                        try (InputStream inputStream = zipFile.getInputStream(entry);
+                             OutputStream outputStreamNewOutputStream = Files.newOutputStream(pathResolve, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                            long jCopyWithLimits = copyWithLimits(inputStream, outputStreamNewOutputStream, entry, j, securityPolicy, progress, strDestinationPathFor, bufferSize);
+                            jCheckedAddTotal = checkedAddTotal(j, jCopyWithLimits, securityPolicy, entry.getName());
+                            validateRuntimeCompressionRatio(entry, jCopyWithLimits, securityPolicy);
+                            progress.entryCompleted(strDestinationPathFor);
                         }
                     }
                 }
-            }
-            Unit unit = Unit.INSTANCE;
-            CloseableKt.closeFinally(zipFile, null);
-        } catch (Throwable th7) {
-            try {
-                throw th7;
-            } catch (Throwable th8) {
-                CloseableKt.closeFinally(zipFile, th7);
-                throw th8;
             }
         }
     }
@@ -265,16 +227,18 @@ public final class ZipArchiveExtractor {
 
     private final String renamedPath(String path, Set<String> destinationPaths) {
         String str;
-        String strSubstringBeforeLast = StringsKt.substringBeforeLast(path, '/', _UrlKt.FRAGMENT_ENCODE_SET);
-        String strSubstringAfterLast$default = StringsKt.substringAfterLast$default(path, '/', (String) null, 2, (Object) null);
-        String strSubstringBeforeLast2 = StringsKt.substringBeforeLast(strSubstringAfterLast$default, '.', strSubstringAfterLast$default);
-        String strSubstringAfterLast = StringsKt.substringAfterLast(strSubstringAfterLast$default, '.', _UrlKt.FRAGMENT_ENCODE_SET);
+        int lastSlash = path.lastIndexOf('/');
+        String strSubstringBeforeLast = lastSlash >= 0 ? path.substring(0, lastSlash) : "";
+        String strSubstringAfterLast$default = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+        int lastDot = strSubstringAfterLast$default.lastIndexOf('.');
+        String strSubstringBeforeLast2 = lastDot >= 0 ? strSubstringAfterLast$default.substring(0, lastDot) : strSubstringAfterLast$default;
+        String strSubstringAfterLast = lastDot >= 0 ? strSubstringAfterLast$default.substring(lastDot + 1) : "";
         int i = 1;
         while (true) {
             if (strSubstringAfterLast.length() == 0) {
-                str = strSubstringBeforeLast2 + SignatureVisitor.SUPER + i;
+                str = strSubstringBeforeLast2 + '-' + i;
             } else {
-                str = strSubstringBeforeLast2 + SignatureVisitor.SUPER + i + '.' + strSubstringAfterLast;
+                str = strSubstringBeforeLast2 + '-' + i + '.' + strSubstringAfterLast;
             }
             if (strSubstringBeforeLast.length() != 0) {
                 str = strSubstringBeforeLast + '/' + str;

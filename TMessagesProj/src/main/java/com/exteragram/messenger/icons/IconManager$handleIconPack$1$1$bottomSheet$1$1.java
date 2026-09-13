@@ -20,9 +20,67 @@ import org.telegram.ui.Components.BulletinFactory;
 @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u00020\u0001*\u00020\u0002H\n"}, d2 = {"<anonymous>", _UrlKt.FRAGMENT_ENCODE_SET, "Lkotlinx/coroutines/CoroutineScope;"}, k = 3, mv = {2, 2, 0}, xi = 48)
 @DebugMetadata(c = "com.exteragram.messenger.icons.IconManager$handleIconPack$1$1$bottomSheet$1$1", f = "IconManager.kt", i = {1}, l = {775, 776}, m = "invokeSuspend", n = {"installResult"}, s = {"L$0"}, v = 1)
 public final class IconManager$handleIconPack$1$1$bottomSheet$1$1 extends SuspendLambda implements Function2<CoroutineScope, Continuation<? super Unit>, Object> {
-    final throw new UnsupportedOperationException("Method not decompiled: com.exteragram.messenger.icons.IconManager$handleIconPack$1$1$bottomSheet$1$1.invokeSuspend(java.lang.Object):java.lang.Object");
+    final /* synthetic */ BaseFragment $baseFragment;
+    final /* synthetic */ boolean $enable;
+    final /* synthetic */ File $file;
+    final /* synthetic */ IconPack $pack;
+    final /* synthetic */ boolean $update;
+    Object L$0;
+    int label;
+
+    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
+    public IconManager$handleIconPack$1$1$bottomSheet$1$1(File file, BaseFragment baseFragment, boolean z, IconPack iconPack, boolean z2, Continuation continuation) {
+        super(2, continuation);
+        this.$file = file;
+        this.$baseFragment = baseFragment;
+        this.$update = z;
+        this.$pack = iconPack;
+        this.$enable = z2;
     }
 
+    @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+    public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
+        return (Continuation<Unit>) (Continuation<?>) new IconManager$handleIconPack$1$1$bottomSheet$1$1(this.$file, this.$baseFragment, this.$update, this.$pack, this.$enable, continuation);
+    }
+
+    @Override // kotlin.jvm.functions.Function2
+    public final Object invoke(CoroutineScope coroutineScope, Continuation<? super Unit> continuation) {
+        return ((IconManager$handleIconPack$1$1$bottomSheet$1$1) (Object) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+    }
+
+    /* JADX WARN: Code restructure failed: missing block: B:14:0x0052, code lost:
+    
+        if (kotlinx.coroutines.BuildersKt.withContext(r11, r3, r10) == r0) goto L15;
+     */
+    @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+    public final Object invokeSuspend(Object obj) {
+        Object coroutine_suspended = IntrinsicsKt.getCOROUTINE_SUSPENDED();
+        int i = this.label;
+        if (i == 0) {
+            ResultKt.throwOnFailure(obj);
+            this.label = 1;
+            obj = IconPackStorage.INSTANCE.installPack(this.$file, this);
+            if (obj == coroutine_suspended) {
+                return coroutine_suspended;
+            }
+        } else if (i == 1) {
+            ResultKt.throwOnFailure(obj);
+        } else if (i == 2) {
+            ResultKt.throwOnFailure(obj);
+            return Unit.INSTANCE;
+        } else {
+            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+        }
+        IconPackStorageResult iconPackStorageResult = (IconPackStorageResult) obj;
+        this.L$0 = kotlin.coroutines.jvm.internal.SpillingKt.nullOutSpilledVariable(iconPackStorageResult);
+        this.label = 2;
+        if (kotlinx.coroutines.BuildersKt.withContext(kotlinx.coroutines.Dispatchers.getMain(), new AnonymousClass1(iconPackStorageResult, this.$baseFragment, this.$update, this.$pack, this.$enable, null), this) == coroutine_suspended) {
+            return coroutine_suspended;
+        }
+        return Unit.INSTANCE;
+    }
+
+    /* JADX INFO: renamed from: com.exteragram.messenger.icons.IconManager$handleIconPack$1$1$bottomSheet$1$1$1, reason: invalid class name */
     @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u00020\u0001*\u00020\u0002H\n"}, d2 = {"<anonymous>", _UrlKt.FRAGMENT_ENCODE_SET, "Lkotlinx/coroutines/CoroutineScope;"}, k = 3, mv = {2, 2, 0}, xi = 48)
     @DebugMetadata(c = "com.exteragram.messenger.icons.IconManager$handleIconPack$1$1$bottomSheet$1$1$1", f = "IconManager.kt", i = {}, l = {}, m = "invokeSuspend", n = {}, s = {}, v = 1)
     public static final class AnonymousClass1 extends SuspendLambda implements Function2<CoroutineScope, Continuation<? super Unit>, Object> {
@@ -33,7 +91,8 @@ public final class IconManager$handleIconPack$1$1$bottomSheet$1$1 extends Suspen
         final /* synthetic */ boolean $update;
         int label;
 
-        public AnonymousClass1(IconPackStorageResult<Unit> iconPackStorageResult, BaseFragment baseFragment, boolean z, IconPack iconPack, boolean z2, Continuation<? super AnonymousClass1> continuation) {
+        /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
+        public AnonymousClass1(IconPackStorageResult<Unit> iconPackStorageResult, BaseFragment baseFragment, boolean z, IconPack iconPack, boolean z2, Continuation continuation) {
             super(2, continuation);
             this.$installResult = iconPackStorageResult;
             this.$baseFragment = baseFragment;
@@ -44,20 +103,19 @@ public final class IconManager$handleIconPack$1$1$bottomSheet$1$1 extends Suspen
 
         @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
         public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
-            return new AnonymousClass1(this.$installResult, this.$baseFragment, this.$update, this.$pack, this.$enable, continuation);
+            return (Continuation) new AnonymousClass1(this.$installResult, this.$baseFragment, this.$update, this.$pack, this.$enable, continuation);
         }
 
         @Override // kotlin.jvm.functions.Function2
         public final Object invoke(CoroutineScope coroutineScope, Continuation<? super Unit> continuation) {
-            return ((AnonymousClass1) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+            return ((AnonymousClass1) (Object) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
         }
 
         @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
         public final Object invokeSuspend(Object obj) {
             IntrinsicsKt.getCOROUTINE_SUSPENDED();
             if (this.label != 0) {
-                Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-                return null;
+                throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
             ResultKt.throwOnFailure(obj);
             IconPackStorageResult<Unit> iconPackStorageResult = this.$installResult;
@@ -73,8 +131,7 @@ public final class IconManager$handleIconPack$1$1$bottomSheet$1$1 extends Suspen
             } else if (iconPackStorageResult instanceof IconPackStorageResult.Failure) {
                 IconManager.INSTANCE.showIconPackError(this.$baseFragment, ((IconPackStorageResult.Failure) iconPackStorageResult).getError());
             } else {
-                LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0.m();
-                return null;
+                throw new kotlin.NoWhenBranchMatchedException();
             }
             return Unit.INSTANCE;
         }

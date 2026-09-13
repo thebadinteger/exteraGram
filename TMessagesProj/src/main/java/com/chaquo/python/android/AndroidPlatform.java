@@ -110,19 +110,14 @@ public class AndroidPlatform extends Python.Platform {
         Iterator<String> itKeys = jSONObject.keys();
         while (itKeys.hasNext()) {
             String next = itKeys.next();
-            Iterator<String> it = list.iterator();
-            while (true) {
-                if (it.hasNext()) {
-                    String next2 = it.next();
-                    if (!next.equals(next2)) {
-                        if (next.startsWith(next2 + "/")) {
-                        }
-                    }
+            for (String next2 : list) {
+                if (next.equals(next2) || next.startsWith(next2 + "/")) {
                     extractAsset(jSONObject, editorEdit, next);
                     hashSet.remove(next2);
                     if (next.startsWith(next2 + "/")) {
                         hashSet2.add(next2);
                     }
+                    break;
                 }
             }
         }
@@ -225,7 +220,11 @@ public class AndroidPlatform extends Python.Platform {
             System.loadLibrary("ssl_" + str);
             System.loadLibrary("sqlite3_" + str);
         }
-        System.loadLibrary("python" + this.buildJson.getString("python_version"));
+        try {
+            System.loadLibrary("python" + this.buildJson.getString("python_version"));
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
         System.loadLibrary("chaquopy_java");
     }
 }

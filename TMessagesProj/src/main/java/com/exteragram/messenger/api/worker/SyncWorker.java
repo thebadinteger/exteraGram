@@ -17,12 +17,12 @@ public final class SyncWorker extends CoroutineWorker {
 
     @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
     @DebugMetadata(c = "com.exteragram.messenger.api.worker.SyncWorker", f = "SyncWorker.kt", i = {}, l = {14}, m = "doWork", n = {}, s = {}, v = 1)
-    public static final class AnonymousClass1 extends ContinuationImpl {
+    public final class AnonymousClass1 extends ContinuationImpl {
         int label;
         /* synthetic */ Object result;
 
-        public AnonymousClass1(Continuation<? super AnonymousClass1> continuation) {
-            super(continuation);
+        public AnonymousClass1(Continuation continuation) {
+            super((Continuation) continuation);
         }
 
         @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
@@ -65,8 +65,7 @@ public final class SyncWorker extends CoroutineWorker {
             }
         } else {
             if (i2 != 1) {
-                Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-                return null;
+                throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
             ResultKt.throwOnFailure(objPerformSync$default);
         }

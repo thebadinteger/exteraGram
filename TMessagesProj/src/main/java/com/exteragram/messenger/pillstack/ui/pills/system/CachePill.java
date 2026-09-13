@@ -44,7 +44,7 @@ public class CachePill extends BasePill implements NotificationCenter.Notificati
     private final StorageProgressDrawable progressDrawable;
     private final AnimatedTextView textView;
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public long getRefreshInterval() {
         return 180000L;
     }
@@ -85,12 +85,12 @@ public class CachePill extends BasePill implements NotificationCenter.Notificati
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public int getPillId() {
         return PillType.CACHE.getId();
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public void onUpdateData(boolean z) {
         boolean z2 = lastKnownCacheSize.get() == -1;
         if ((z || z2 || isRefreshDue()) && this.calculating.compareAndSet(false, true)) {
@@ -98,29 +98,114 @@ public class CachePill extends BasePill implements NotificationCenter.Notificati
                 CacheControlActivity.resetCalculatedTotalSIze();
             }
             startLoading();
-            ImageLoader.getInstance().checkMediaPaths(new Runnable() { 
+            ImageLoader.getInstance().checkMediaPaths(new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda0
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$onUpdateData$2();
+                    CachePill.this.lambda$onUpdateData$2();
                 }
             });
         }
     }
 
-    public void lambda$onUpdateData$1(final Long l) {
-        lastKnownCacheSize.set(l.longValue());
-        CacheControlActivity.getDeviceTotalSize(new Utilities.Callback2() { 
-            @Override 
-            public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$onUpdateData$0(l, (Long) obj, (Long) obj2);
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$2() {
+        CacheControlActivity.calculateTotalSize(new Utilities.Callback() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda1
+            @Override // org.telegram.messenger.Utilities.Callback
+            public final void run(Object obj) {
+                CachePill.this.lambda$onUpdateData$1((Long) obj);
             }
         });
     }
 
-    public void lambda$onPillLongClicked$3() {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$1(final Long l) {
+        lastKnownCacheSize.set(l.longValue());
+        CacheControlActivity.getDeviceTotalSize(new Utilities.Callback2() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda5
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                CachePill.this.lambda$onUpdateData$0(l, (Long) obj, (Long) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$0(Long l, Long l2, Long l3) {
+        float fLongValue = l2.longValue() > 0 ? (l2.longValue() - l3.longValue()) / l2.longValue() : 0.0f;
+        lastKnownProgress = fLongValue;
+        this.calculating.set(false);
+        setData(l.longValue(), fLongValue, true);
+    }
+
+    private void setData(long j, float f, boolean z) {
+        stopLoading();
+        String fileSize = AndroidUtilities.formatFileSize(j);
+        if (z && (this.textView.getText() == null || !TextUtils.equals(this.textView.getText(), fileSize) || this.textView.getVisibility() == 8)) {
+            animateSizeChange();
+        }
+        this.textView.setText(fileSize, z);
+        this.progressDrawable.setProgress(f, z);
+        this.iconView.setVisibility(0);
+        this.textView.setVisibility(0);
+        markDataUpdated();
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill, android.view.ViewGroup, android.view.View
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        onUpdateData(PillStackConfig.checkAndClearPendingUpdate(getPillId()));
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.pillStackSettingsChanged);
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill, android.view.ViewGroup, android.view.View
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.pillStackSettingsChanged);
+    }
+
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
+    public void didReceivedNotification(int i, int i2, Object... objArr) {
+        if (i == NotificationCenter.pillStackSettingsChanged && PillStackConfig.shouldUpdatePill(objArr, getPillId())) {
+            PillStackConfig.checkAndClearPendingUpdate(getPillId());
+            onUpdateData(true);
+        }
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
+    public void onPillClicked() {
+        openCacheSettings();
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
+    public boolean onPillLongClicked() {
+        final BaseFragment safeLastFragment = LaunchActivity.getSafeLastFragment();
+        if (safeLastFragment == null) {
+            return false;
+        }
+        ItemOptions.makeOptions(safeLastFragment, this).add(R.drawable.msg2_data, LocaleController.getString(R.string.StorageUsage), new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda2
+            @Override // java.lang.Runnable
+            public final void run() {
+                CachePill.this.openCacheSettings();
+            }
+        }).addGap().add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda3
+            @Override // java.lang.Runnable
+            public final void run() {
+                CachePill.this.lambda$onPillLongClicked$3();
+            }
+        }).add(R.drawable.msg_settings, LocaleController.getString(R.string.Settings), new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.system.CachePill$$ExternalSyntheticLambda4
+            @Override // java.lang.Runnable
+            public final void run() {
+                safeLastFragment.presentFragment(new PillStackPreferencesActivity());
+            }
+        }).setDrawScrim(false).setDimAlpha(0).show();
+        return true;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onPillLongClicked$3() {
         onUpdateData(true);
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void openCacheSettings() {
         BaseFragment safeLastFragment = LaunchActivity.getSafeLastFragment();
         if (safeLastFragment != null) {
@@ -128,7 +213,7 @@ public class CachePill extends BasePill implements NotificationCenter.Notificati
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public void updateColors() {
         int themedColor = getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.75f);
         this.layout.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(14.0f), Theme.isCurrentThemeDark() ? getThemedColor(Theme.key_windowBackgroundWhite) : Theme.multAlpha(themedColor, 0.09f), Theme.multAlpha(themedColor, 0.1f)));

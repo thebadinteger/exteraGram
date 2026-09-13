@@ -50,7 +50,7 @@ public abstract class FormatConverter {
         }
     }
 
-    public static InputStream extractAndConvertToPcm(String str, boolean z) {
+    public static InputStream extractAndConvertToPcm(String str, boolean z) throws IOException {
         return new LazyPcmInputStream(str, z);
     }
 
@@ -74,8 +74,7 @@ public abstract class FormatConverter {
             MediaFormat trackFormat = mediaExtractor.getTrackFormat(0);
             String string = trackFormat.getString("mime");
             if (!string.startsWith("audio/")) {
-                Model$$ExternalSyntheticBUOutline0.m("Not an audio file");
-                throw null;
+                throw new IOException("Not an audio file");
             }
             MediaCodec mediaCodecCreateDecoderByType = MediaCodec.createDecoderByType(string);
             this.codec = mediaCodecCreateDecoderByType;

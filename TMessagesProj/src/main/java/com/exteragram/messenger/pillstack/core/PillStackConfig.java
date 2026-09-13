@@ -29,10 +29,9 @@ import okhttp3.internal.url._UrlKt;
 import org.telegram.messenger.NotificationCenter;
 
 @Metadata(d1 = {"\u0000b\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0002\u0010\b\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010 \n\u0002\b\u0005\n\u0002\u0010\u0002\n\u0002\b\b\n\u0002\u0010\u0015\n\u0002\b\u0004\n\u0002\u0010\u000b\n\u0002\b\u0002\n\u0002\u0010\u0011\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\u0004\n\u0002\u0018\u0002\n\u0002\b1\n\u0002\u0010!\n\u0002\b\t\n\u0002\u0018\u0002\n\u0002\b\u0006\u001a)\u0010\u0005\u001a\u0012\u0012\u0004\u0012\u00020\u00030\u0002j\b\u0012\u0004\u0012\u00020\u0003`\u00042\b\u0010\u0001\u001a\u0004\u0018\u00010\u0000H\u0002¢\u0006\u0004\b\u0005\u0010\u0006\u001a\u001d\u0010\t\u001a\u00020\u00002\f\u0010\b\u001a\b\u0012\u0004\u0012\u00020\u00030\u0007H\u0002¢\u0006\u0004\b\t\u0010\n\u001a\u001d\u0010\u000b\u001a\u0012\u0012\u0004\u0012\u00020\u00030\u0002j\b\u0012\u0004\u0012\u00020\u0003`\u0004¢\u0006\u0004\b\u000b\u0010\f\u001a\r\u0010\u000e\u001a\u00020\r¢\u0006\u0004\b\u000e\u0010\u000f\u001a\r\u0010\u0010\u001a\u00020\r¢\u0006\u0004\b\u0010\u0010\u000f\u001a\r\u0010\u0011\u001a\u00020\r¢\u0006\u0004\b\u0011\u0010\u000f\u001a\r\u0010\u0012\u001a\u00020\r¢\u0006\u0004\b\u0012\u0010\u000f\u001a\u0015\u0010\u0014\u001a\u00020\r2\u0006\u0010\u0013\u001a\u00020\u0003¢\u0006\u0004\b\u0014\u0010\u0015\u001a\u0019\u0010\u0018\u001a\u00020\r2\n\u0010\u0017\u001a\u00020\u0016\"\u00020\u0003¢\u0006\u0004\b\u0018\u0010\u0019\u001a\u0015\u0010\u001c\u001a\u00020\u001b2\u0006\u0010\u001a\u001a\u00020\u0003¢\u0006\u0004\b\u001c\u0010\u001d\u001a+\u0010!\u001a\u00020\u001b2\u0010\u0010 \u001a\f\u0012\u0006\b\u0001\u0012\u00020\u001f\u0018\u00010\u001e2\n\u0010\u0017\u001a\u00020\u0016\"\u00020\u0003¢\u0006\u0004\b!\u0010\"\"\u0017\u0010$\u001a\u00020#8\u0006¢\u0006\f\n\u0004\b$\u0010%\u001a\u0004\b&\u0010'\"\u0017\u0010)\u001a\u00020(8\u0006¢\u0006\f\n\u0004\b)\u0010*\u001a\u0004\b+\u0010,\"\u0014\u0010-\u001a\u00020\u001f8\u0002X\u0082\u0004¢\u0006\u0006\n\u0004\b-\u0010.\"\"\u0010/\u001a\u00020\u001b8\u0006@\u0006X\u0086\u000e¢\u0006\u0012\n\u0004\b/\u00100\u001a\u0004\b1\u00102\"\u0004\b3\u00104\"+\u0010:\u001a\u00020\u001b2\u0006\u00105\u001a\u00020\u001b8F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\b6\u00107\u001a\u0004\b8\u00102\"\u0004\b9\u00104\"/\u0010@\u001a\u0004\u0018\u00010\u00002\b\u00105\u001a\u0004\u0018\u00010\u00008F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\b;\u00107\u001a\u0004\b<\u0010=\"\u0004\b>\u0010?\"/\u0010D\u001a\u0004\u0018\u00010\u00002\b\u00105\u001a\u0004\u0018\u00010\u00008F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bA\u00107\u001a\u0004\bB\u0010=\"\u0004\bC\u0010?\"+\u0010H\u001a\u00020\u001b2\u0006\u00105\u001a\u00020\u001b8F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bE\u00107\u001a\u0004\bF\u00102\"\u0004\bG\u00104\"+\u0010L\u001a\u00020\u00002\u0006\u00105\u001a\u00020\u00008F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bI\u00107\u001a\u0004\bJ\u0010=\"\u0004\bK\u0010?\"+\u0010P\u001a\u00020\u00002\u0006\u00105\u001a\u00020\u00008F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bM\u00107\u001a\u0004\bN\u0010=\"\u0004\bO\u0010?\"+\u0010T\u001a\u00020\u00002\u0006\u00105\u001a\u00020\u00008F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bQ\u00107\u001a\u0004\bR\u0010=\"\u0004\bS\u0010?\"+\u0010Y\u001a\u00020\u00032\u0006\u00105\u001a\u00020\u00038F@FX\u0086\u008e\u0002¢\u0006\u0012\n\u0004\bU\u00107\u001a\u0004\bV\u0010W\"\u0004\bX\u0010\u0015\"(\u0010[\u001a\b\u0012\u0004\u0012\u00020\u00030Z8\u0006@\u0006X\u0086\u000e¢\u0006\u0012\n\u0004\b[\u0010\\\u001a\u0004\b]\u0010^\"\u0004\b_\u0010`\"(\u0010a\u001a\b\u0012\u0004\u0012\u00020\u00030Z8\u0006@\u0006X\u0086\u000e¢\u0006\u0012\n\u0004\ba\u0010\\\u001a\u0004\bb\u0010^\"\u0004\bc\u0010`\"\u001a\u0010e\u001a\b\u0012\u0004\u0012\u00020\u00030d8\u0002X\u0082\u0004¢\u0006\u0006\n\u0004\be\u0010f\"\u001a\u0010g\u001a\u00020\r8\u0002X\u0082\u0004¢\u0006\f\n\u0004\bg\u0010h\u0012\u0004\bi\u0010\u000f¨\u0006j"}, d2 = {_UrlKt.FRAGMENT_ENCODE_SET, "data", "Ljava/util/ArrayList;", _UrlKt.FRAGMENT_ENCODE_SET, "Lkotlin/collections/ArrayList;", "parsePillsList", "(Ljava/lang/String;)Ljava/util/ArrayList;", _UrlKt.FRAGMENT_ENCODE_SET, "list", "serializePillsList", "(Ljava/util/List;)Ljava/lang/String;", "getDefaultActivePills", "()Ljava/util/ArrayList;", _UrlKt.FRAGMENT_ENCODE_SET, "loadConfig", "()V", "reloadConfig", "sanitizePills", "savePillsLayout", "id", "saveLastActivePillId", "(I)V", _UrlKt.FRAGMENT_ENCODE_SET, "pillIds", "notifySettingsChanged", "([I)V", "pillId", _UrlKt.FRAGMENT_ENCODE_SET, "checkAndClearPendingUpdate", "(I)Z", _UrlKt.FRAGMENT_ENCODE_SET, _UrlKt.FRAGMENT_ENCODE_SET, "args", "shouldUpdatePill", "([Ljava/lang/Object;[I)Z", "Landroid/content/SharedPreferences;", "preferences", "Landroid/content/SharedPreferences;", "getPreferences", "()Landroid/content/SharedPreferences;", "Landroid/content/SharedPreferences$Editor;", "editor", "Landroid/content/SharedPreferences$Editor;", "getEditor", "()Landroid/content/SharedPreferences$Editor;", "sync", "Ljava/lang/Object;", "configLoaded", "Z", "getConfigLoaded", "()Z", "setConfigLoaded", "(Z)V", "<set-?>", "useCurrentLocation$delegate", "Lcom/exteragram/messenger/config/BasePref;", "getUseCurrentLocation", "setUseCurrentLocation", "useCurrentLocation", "customWeatherLocation$delegate", "getCustomWeatherLocation", "()Ljava/lang/String;", "setCustomWeatherLocation", "(Ljava/lang/String;)V", "customWeatherLocation", "customWeatherAddress$delegate", "getCustomWeatherAddress", "setCustomWeatherAddress", "customWeatherAddress", "infiniteScrolling$delegate", "getInfiniteScrolling", "setInfiniteScrolling", "infiniteScrolling", "gramTargetCurrency$delegate", "getGramTargetCurrency", "setGramTargetCurrency", "gramTargetCurrency", "btcTargetCurrency$delegate", "getBtcTargetCurrency", "setBtcTargetCurrency", "btcTargetCurrency", "usdTargetCurrency$delegate", "getUsdTargetCurrency", "setUsdTargetCurrency", "usdTargetCurrency", "lastActivePillId$delegate", "getLastActivePillId", "()I", "setLastActivePillId", "lastActivePillId", _UrlKt.FRAGMENT_ENCODE_SET, "activePills", "Ljava/util/List;", "getActivePills", "()Ljava/util/List;", "setActivePills", "(Ljava/util/List;)V", "hiddenPills", "getHiddenPills", "setHiddenPills", "Ljava/util/HashSet;", "pendingUpdates", "Ljava/util/HashSet;", "init", "Lkotlin/Unit;", "getInit$annotations", "TMessagesProj"}, k = 2, mv = {2, 2, 0}, xi = 48)
-@JvmName(name = "PillStackConfig")
 @SourceDebugExtension({"SMAP\nPillStackConfig.kt\nKotlin\n*S Kotlin\n*F\n+ 1 PillStackConfig.kt\ncom/exteragram/messenger/pillstack/core/PillStackConfig\n+ 2 _Collections.kt\nkotlin/collections/CollectionsKt___CollectionsKt\n+ 3 fake.kt\nkotlin/jvm/internal/FakeKt\n+ 4 _Arrays.kt\nkotlin/collections/ArraysKt___ArraysKt\n*L\n1#1,177:1\n1915#2:178\n1916#2:180\n1#3:179\n14069#4,2:181\n*S KotlinDebug\n*F\n+ 1 PillStackConfig.kt\ncom/exteragram/messenger/pillstack/core/PillStackConfig\n*L\n66#1:178\n66#1:180\n150#1:181,2\n*E\n"})
 public abstract class PillStackConfig {
-    static final /* synthetic */ KProperty<Object>[] $$delegatedProperties;
+    static final /* synthetic */ KProperty<?>[] $$delegatedProperties;
     private static List<Integer> activePills;
     private static final BasePref btcTargetCurrency$delegate;
     private static boolean configLoaded;
@@ -159,10 +158,10 @@ public abstract class PillStackConfig {
     private static final ArrayList<Integer> parsePillsList(String str) {
         ArrayList<Integer> arrayList = new ArrayList<>();
         if (str != null && str.length() != 0) {
-            if (StringsKt.startsWith$default(str, "[", false, 2, (Object) null)) {
+            if (str.startsWith("[")) {
                 str = new Regex("[\\[\\]\"]").replace(str, _UrlKt.FRAGMENT_ENCODE_SET);
             }
-            Iterator it = StringsKt.split$default((CharSequence) str, new String[]{","}, false, 0, 6, (Object) null).iterator();
+            Iterator it = StringsKt.split((CharSequence) str, new String[]{","}, false, 0).iterator();
             while (it.hasNext()) {
                 Integer intOrNull = StringsKt.toIntOrNull(StringsKt.trim((CharSequence) it.next()).toString());
                 if (intOrNull != null) {
@@ -174,7 +173,7 @@ public abstract class PillStackConfig {
     }
 
     private static final String serializePillsList(List<Integer> list) {
-        return list.isEmpty() ? _UrlKt.FRAGMENT_ENCODE_SET : CollectionsKt.joinToString$default(list, ",", null, null, 0, null, null, 62, null);
+        return list.isEmpty() ? _UrlKt.FRAGMENT_ENCODE_SET : android.text.TextUtils.join(",", list);
     }
 
     public static final ArrayList<Integer> getDefaultActivePills() {
@@ -272,14 +271,14 @@ public abstract class PillStackConfig {
             while (it.hasNext()) {
                 pendingUpdates.add(Integer.valueOf(it.next().id()));
             }
-            NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackSettingsChanged, new Object[0]);
+            NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackSettingsChanged, new Object[0]);
             return;
         }
         for (int i : iArr) {
             pendingUpdates.add(Integer.valueOf(i));
         }
         Integer[] typedArray = ArraysKt.toTypedArray(iArr);
-        NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackSettingsChanged, Arrays.copyOf(typedArray, typedArray.length));
+        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackSettingsChanged, Arrays.copyOf(typedArray, typedArray.length));
     }
 
     public static final boolean checkAndClearPendingUpdate(int i) {

@@ -381,13 +381,25 @@ public class SessionBottomSheet extends BottomSheet {
             }
         }
 
-        imageView.setBackground(Theme.createCircleDrawable(dp(42), Theme.getColor(colorKey)));
+        boolean isExtera = session.app_name.toLowerCase().contains("exteragram");
+        if (isExtera) {
+            imageView.setBackground(Theme.createCircleDrawable(AndroidUtilities.dp(42.0f), ContextCompat.getColor(org.telegram.messenger.ApplicationLoader.applicationContext, R.color.ic_background)));
+        } else {
+            imageView.setBackground(Theme.createCircleDrawable(dp(42), Theme.getColor(colorKey)));
+        }
 //        imageView.setBackground(new SessionCell.CircleGradientDrawable(AndroidUtilities.dp(42), Theme.getColor(colorKey), Theme.getColor(colorKey2)));
-        if (animation) {
+        if (animation && !isExtera) {
             int[] colors = new int[]{0x000000, Theme.getColor(colorKey)};
             imageView.setAnimation(iconId, 50, 50, colors);
         } else {
-            imageView.setImageDrawable(ContextCompat.getDrawable(getContext(), iconId));
+            if (isExtera) {
+                iconId = R.drawable.ic_foreground;
+            }
+            Drawable drawable = ContextCompat.getDrawable(getContext(), iconId).mutate();
+            if (isExtera) {
+                drawable = new android.graphics.drawable.BitmapDrawable(org.telegram.messenger.ApplicationLoader.applicationContext.getResources(), com.exteragram.messenger.utils.ui.UIUtil.drawableToBitmap(drawable, AndroidUtilities.dp(70.0f), AndroidUtilities.dp(70.0f)));
+            }
+            imageView.setImageDrawable(drawable);
         }
     }
 

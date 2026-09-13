@@ -665,7 +665,7 @@ public class Emoji {
         }
         ArrayList<EmojiSpanRange> emojis = parseEmojis(s, emojiOnly);
         if (emojis.isEmpty()) {
-            return cs;
+            return com.exteragram.messenger.utils.text.ZalgoFilter.filterSpannable(cs);
         }
 
         AnimatedEmojiSpan[] animatedEmojiSpans = s.getSpans(0, s.length(), AnimatedEmojiSpan.class);
@@ -716,7 +716,7 @@ public class Emoji {
                 break;
             }
         }
-        return s;
+        return com.exteragram.messenger.utils.text.ZalgoFilter.filterSpannable(s);
     }
 
     public static CharSequence replaceWithRestrictedEmoji(CharSequence cs, TextView textView, Runnable update) {

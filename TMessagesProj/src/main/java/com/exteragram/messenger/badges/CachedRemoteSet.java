@@ -30,7 +30,7 @@ public final class CachedRemoteSet {
             SharedPreferences.OnSharedPreferenceChangeListener onSharedPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() { 
                 @Override // android.content.SharedPreferences.OnSharedPreferenceChangeListener
                 public final void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String str) {
-                    this.f$0.lambda$initializeListener$0(sharedPreferences, str);
+                    CachedRemoteSet.this.lambda$initializeListener$0(sharedPreferences, str);
                 }
             };
             this.changeListener = onSharedPreferenceChangeListener;

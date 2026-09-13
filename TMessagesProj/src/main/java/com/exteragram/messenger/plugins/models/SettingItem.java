@@ -15,7 +15,6 @@ public abstract class SettingItem {
     private String type;
 
     public SettingItem(String str, String str2, PyObject pyObject, String str3) {
-        "type";
         this.type = str;
         this.icon = str2;
         this.onLongClickCallback = pyObject;
@@ -31,7 +30,6 @@ public abstract class SettingItem {
     }
 
     public final void setType(String str) {
-        "<set-?>";
         this.type = str;
     }
 

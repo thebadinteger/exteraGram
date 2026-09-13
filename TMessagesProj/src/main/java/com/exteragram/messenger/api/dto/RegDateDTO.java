@@ -31,19 +31,19 @@ public final /* data */ class RegDateDTO {
         return regDateDTO.copy(j2, d2, regDateFlag2, str);
     }
 
-    public final long getTimestamp() {
+    public final long component1() {
         return this.timestamp;
     }
 
-    public final double getAccuracy() {
+    public final double component2() {
         return this.accuracy;
     }
 
-    public final RegDateFlag getFlag() {
+    public final RegDateFlag component3() {
         return this.flag;
     }
 
-    public final String getDate() {
+    public final String component4() {
         return this.date;
     }
 

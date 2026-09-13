@@ -21,6 +21,8 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AvatarDrawable;
 
+import com.exteragram.messenger.ExteraConfig;
+
 public class AvatarSpan extends ReplacementSpan {
 
     private final Paint shadowPaint;
@@ -51,7 +53,8 @@ public class AvatarSpan extends ReplacementSpan {
     public boolean needDrawShadow = true;
 
     public void setSize(float sz) {
-        imageReceiver.setRoundRadius(dp(sz));
+        avatarDrawable.setTextSize(dp(5 + sz));
+        imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(sz));
         this.sz = sz;
     }
 
@@ -142,7 +145,7 @@ public class AvatarSpan extends ReplacementSpan {
                 shadowPaint.setAlpha(shadowPaintAlpha = paint.getAlpha());
                 shadowPaint.setShadowLayer(dp(1), 0, dp(.66f), Theme.multAlpha(0x33000000, shadowPaintAlpha / 255f));
             }
-            canvas.drawCircle(translateX + x + dp(sz) / 2f, translateY + (top + bottom) / 2f, dp(sz) / 2f, shadowPaint);
+            canvas.drawRoundRect(translateX + x, (translateY + (top + bottom) / 2f) - (dp(sz) / 2f), dp(sz) + translateX + x, ((translateY + (top + bottom) / 2f) - (dp(sz) / 2f)) + dp(sz), ExteraConfig.getAvatarCorners(sz), ExteraConfig.getAvatarCorners(sz), shadowPaint);
         }
         imageReceiver.setImageCoords(translateX + x, translateY + (top + bottom) / 2f - dp(sz) / 2f, dp(sz), dp(sz));
         imageReceiver.setAlpha(usePaintAlpha ? paint.getAlpha() / 255f : 1.0f);

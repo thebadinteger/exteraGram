@@ -246,4 +246,11 @@
         <item name="android:textColor">@color/widget_badge</item>
     </style>
 
+    <style name="ThemeOverlay.Material3.Toolbar" parent="" />
+
+    <style name="Base.Theme.Material3Expressive.Dark.Dialog.FixedSize" parent="@style/Base.Theme.Material3.Dark.Dialog.FixedSize" />
+    <style name="Base.Theme.Material3Expressive.Light.Dialog.FixedSize" parent="@style/Base.Theme.Material3.Light.Dialog.FixedSize" />
+
+    <style name="ThemeOverlay.ClockFaceView" parent="" />
+
 </resources>

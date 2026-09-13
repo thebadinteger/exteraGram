@@ -35,7 +35,7 @@ import org.vosk.android.SpeechStreamService;
 public class VoskRecognizer implements VoiceRecognitionController.RecognitionProvider, AutoCloseable {
     private final OkHttpClient client = ExteraHttpClient.INSTANCE.getClient();
     private final File modelsDir = new File(ApplicationLoader.applicationContext.getExternalFilesDir(null), "Vosk Models");
-    private final List<VoiceRecognitionController.RecognitionModel> models = new ArrayList<VoiceRecognitionController.RecognitionModel>() { 
+    private final List<VoiceRecognitionController.RecognitionModel> models = new ArrayList<VoiceRecognitionController.RecognitionModel>() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer.1
         {
             add(new VoiceRecognitionController.RecognitionModel("ca", "https://alphacephei.com/vosk/models/vosk-model-small-ca-0.4.zip", 43405881L));
             add(new VoiceRecognitionController.RecognitionModel("cs", "https://alphacephei.com/vosk/models/vosk-model-small-cs-0.4-rhasspy.zip", 46088666L));
@@ -103,55 +103,138 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
         zipInputStream.close();
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
     public List<VoiceRecognitionController.RecognitionModel> listAvailableModels() {
         return this.models;
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
     public List<VoiceRecognitionController.RecognitionModel> listDownloadedModels() {
-        return (List) this.models.stream().filter(new Predicate() { 
+        return (List) this.models.stream().filter(new Predicate() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer$$ExternalSyntheticLambda0
             @Override // java.util.function.Predicate
             public final boolean test(Object obj) {
-                return this.f$0.lambda$listDownloadedModels$0((VoiceRecognitionController.RecognitionModel) obj);
+                return VoskRecognizer.this.lambda$listDownloadedModels$0((VoiceRecognitionController.RecognitionModel) obj);
             }
         }).collect(Collectors.toList());
     }
 
-    public IllegalArgumentException $r8$lambda$3Xv1azFJtwThwB0jQsW9JYtX44E(String str) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ boolean lambda$listDownloadedModels$0(VoiceRecognitionController.RecognitionModel recognitionModel) {
+        File file = new File(this.modelsDir, recognitionModel.getLanguage());
+        return (!file.exists() || new File(file, "model.zip").exists() || isDirectoryEmpty(file)) ? false : true;
+    }
+
+    private boolean isDirectoryEmpty(File file) {
+        String[] list = file.list();
+        return list == null || list.length == 0;
+    }
+
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
+    public void downloadModel(final String str, VoiceRecognitionController.DownloadModelCallback downloadModelCallback) {
+        VoiceRecognitionController.RecognitionModel recognitionModelOrElseThrow = getModelByLanguage(str);
+        File file = new File(this.modelsDir, recognitionModelOrElseThrow.getLanguage());
+        if (new File(file, "model.zip").exists()) {
+            try {
+                deleteDirectory(file);
+            } catch (IOException e) {
+                downloadModelCallback.onError(new IOException("Failed to delete existing model directory", e));
+                return;
+            }
+        }
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        try {
+            Response responseExecute = this.client.newCall(new Request.Builder().url(recognitionModelOrElseThrow.getUrl()).build()).execute();
+            if (!responseExecute.isSuccessful()) {
+                FileLog.e("Failed to download: " + responseExecute);
+            }
+            File file2 = new File(file, "model.zip");
+            InputStream inputStreamByteStream = responseExecute.body().byteStream();
+            try {
+                FileOutputStream fileOutputStream = new FileOutputStream(file2);
+                try {
+                    long contentLength = responseExecute.body().contentLength();
+                    byte[] bArr = new byte[4096];
+                    while (true) {
+                        int i = inputStreamByteStream.read(bArr);
+                        if (i == -1) {
+                            break;
+                        }
+                        fileOutputStream.write(bArr, 0, i);
+                        downloadModelCallback.onProgress(((float) file2.length()) / ((float) contentLength));
+                    }
+                    fileOutputStream.close();
+                    inputStreamByteStream.close();
+                    unpackZip(file2.getAbsolutePath(), file.getAbsolutePath());
+                    try {
+                        if (!file2.delete()) {
+                            file2.deleteOnExit();
+                        }
+                    } catch (Exception e2) {
+                        FileLog.e(e2);
+                    }
+                    downloadModelCallback.onCompleted();
+                } catch (Throwable th) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (Throwable th2) {
+                        th.addSuppressed(th2);
+                    }
+                    throw th;
+                }
+            } catch (Throwable th3) {
+                if (inputStreamByteStream != null) {
+                    try {
+                        inputStreamByteStream.close();
+                    } catch (Throwable th4) {
+                        th3.addSuppressed(th4);
+                    }
+                }
+                throw th3;
+            }
+        } catch (Exception e3) {
+            downloadModelCallback.onError(e3);
+        }
+    }
+
+    public static /* synthetic */ IllegalArgumentException $r8$lambda$3Xv1azFJtwThwB0jQsW9JYtX44E(String str) {
         return new IllegalArgumentException("Model not found: " + str);
     }
 
-    @Override 
-    public void deleteModel(final String str) throws Throwable {
-        VoiceRecognitionController.RecognitionModel recognitionModelOrElseThrow = this.models.stream().filter(new Predicate() { 
-            @Override // java.util.function.Predicate
-            public final boolean test(Object obj) {
-                return ((VoiceRecognitionController.RecognitionModel) obj).getLanguage().equals(str);
-            }
-        }).findFirst().orElseThrow(new Supplier() { 
-            @Override // java.util.function.Supplier
-            public final Object get() {
-                return VoskRecognizer.$r8$lambda$MtzCrWBshN7rmxoQ9Z8XAbCYDDA(str);
-            }
-        });
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
+    public void deleteModel(final String str) {
+        VoiceRecognitionController.RecognitionModel recognitionModelOrElseThrow = getModelByLanguage(str);
         Model modelRemove = this.loadedModels.remove(recognitionModelOrElseThrow.getLanguage());
         if (modelRemove != null) {
             modelRemove.close();
         }
         File file = new File(this.modelsDir, recognitionModelOrElseThrow.getLanguage());
         if (!file.exists()) {
-            CstInsn$$ExternalSyntheticBUOutline0.m("Model is not downloaded: ", recognitionModelOrElseThrow.getLanguage());
+            throw new IllegalStateException("Model is not downloaded: " + recognitionModelOrElseThrow.getLanguage());
         } else {
-            deleteDirectory(file);
+            try {
+                deleteDirectory(file);
+            } catch (IOException e) {
+                FileLog.e("Failed to delete model directory", e);
+            }
         }
+    }
+
+    private VoiceRecognitionController.RecognitionModel getModelByLanguage(String str) {
+        for (VoiceRecognitionController.RecognitionModel model : this.models) {
+            if (model.getLanguage().equals(str)) {
+                return model;
+            }
+        }
+        throw new IllegalArgumentException("Model not found: " + str);
     }
 
     public static /* synthetic */ IllegalArgumentException $r8$lambda$MtzCrWBshN7rmxoQ9Z8XAbCYDDA(String str) {
         return new IllegalArgumentException("Model not found: " + str);
     }
 
-    private void deleteDirectory(File file) {
+    private void deleteDirectory(File file) throws IOException {
         File[] fileArrListFiles;
         if (file.isDirectory() && (fileArrListFiles = file.listFiles()) != null) {
             for (File file2 : fileArrListFiles) {
@@ -164,9 +247,9 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
         FileLog.e("Failed to delete file or directory: " + file.getAbsolutePath());
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
     public void recognize(String str, final String str2, final VoiceRecognitionController.RecognitionCallback recognitionCallback) {
-        if (this.models.stream().filter(new Predicate() { 
+        if (this.models.stream().filter(new Predicate() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer$$ExternalSyntheticLambda2
             @Override // java.util.function.Predicate
             public final boolean test(Object obj) {
                 return ((VoiceRecognitionController.RecognitionModel) obj).getLanguage().equals(str2);
@@ -175,7 +258,7 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
             recognitionCallback.onLanguageNotSupported(str2);
             return;
         }
-        if (listDownloadedModels().stream().filter(new Predicate() { 
+        if (listDownloadedModels().stream().filter(new Predicate() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer$$ExternalSyntheticLambda3
             @Override // java.util.function.Predicate
             public final boolean test(Object obj) {
                 return ((VoiceRecognitionController.RecognitionModel) obj).getLanguage().equals(str2);
@@ -198,7 +281,7 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
             FileLog.d("Recognizing: " + str);
             float f = (float) sampleRate;
             final Recognizer recognizer = new Recognizer(model, f);
-            new SpeechStreamService(recognizer, inputStreamExtractAndConvertToPcm, f).start(new RecognitionListener() { 
+            new SpeechStreamService(recognizer, inputStreamExtractAndConvertToPcm, f).start(new RecognitionListener() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer.2
                 @Override // org.vosk.android.RecognitionListener
                 public void onPartialResult(String str3) {
                 }
@@ -236,9 +319,9 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
     public void unloadModels() {
-        this.loadedModels.values().forEach(new Consumer() { 
+        this.loadedModels.values().forEach(new Consumer() { // from class: com.exteragram.messenger.speech.recognizers.VoskRecognizer$$ExternalSyntheticLambda1
             @Override // java.util.function.Consumer
             public final void accept(Object obj) {
                 ((Model) obj).close();
@@ -247,7 +330,7 @@ public class VoskRecognizer implements VoiceRecognitionController.RecognitionPro
         this.loadedModels.clear();
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionProvider
     public boolean hasLoadedModels() {
         return !this.loadedModels.isEmpty();
     }

@@ -7,7 +7,6 @@ import android.graphics.Typeface;
 import android.graphics.fonts.Font;
 import android.graphics.fonts.SystemFonts;
 import android.os.Build;
-import com.google.android.gms.cast.MediaError;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -95,7 +94,7 @@ public abstract class FontUtils {
             synchronized (FontUtils.class) {
                 try {
                     if (italicSupported == null) {
-                        italicSupported = Boolean.valueOf(rendersDifferently(createWeightedSansTypeface(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, false), createWeightedSansTypeface(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, true)));
+                        italicSupported = Boolean.valueOf(rendersDifferently(createWeightedSansTypeface(400, false), createWeightedSansTypeface(400, true)));
                         FileLog.d("italicSupported = " + italicSupported);
                     }
                 } catch (Throwable th) {
@@ -129,11 +128,11 @@ public abstract class FontUtils {
     }
 
     private static boolean differsFromRegular(Typeface typeface, boolean z) {
-        return rendersDifferently(createWeightedSansTypeface(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, z), typeface);
+        return rendersDifferently(createWeightedSansTypeface(400, z), typeface);
     }
 
     private static boolean supportsMediumWeight() {
-        if (Build.VERSION.SDK_INT < 28 || !differsFromRegular(createWeightedSansTypeface(MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, false), false)) {
+        if (Build.VERSION.SDK_INT < 28 || !differsFromRegular(createWeightedSansTypeface(500, false), false)) {
             return differsFromRegular(Typeface.create("sans-serif-medium", 0), false);
         }
         return true;
@@ -281,17 +280,17 @@ public abstract class FontUtils {
         str.getClass();
         switch (str) {
             case "fonts/ritalic.ttf":
-                return resolveSansTypeface(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, true);
+                return resolveSansTypeface(400, true);
             case "fonts/rmediumitalic.ttf":
-                return resolveSansTypeface(MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, true);
+                return resolveSansTypeface(500, true);
             case "fonts/rcondensedbold.ttf":
                 return Typeface.create("sans-serif-condensed", 1);
             case "fonts/rmedium.ttf":
-                return resolveSansTypeface(MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, false);
+                return resolveSansTypeface(500, false);
             case "fonts/rmono.ttf":
                 return Typeface.MONOSPACE;
             case "fonts/rregular.ttf":
-                return resolveSansTypeface(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, false);
+                return resolveSansTypeface(400, false);
             case "fonts/rextrabold.ttf":
                 return resolveSansTypeface(800, false);
             default:
@@ -312,7 +311,7 @@ public abstract class FontUtils {
         try {
             Iterator<Font> it = SystemFonts.getAvailableFonts().iterator();
             while (it.hasNext()) {
-                File file = FontUtils$$ExternalSyntheticApiModelOutline2.m(it.next()).getFile();
+                File file = it.next().getFile();
                 if (file != null) {
                     String lowerCase = file.getName().toLowerCase();
                     if (lowerCase.contains("googlesanstext") || lowerCase.contains("google-sans-text") || lowerCase.contains("googlesans") || lowerCase.contains("google-sans")) {
@@ -334,7 +333,7 @@ public abstract class FontUtils {
             Iterator<Font> it = SystemFonts.getAvailableFonts().iterator();
             File file = null;
             while (it.hasNext()) {
-                File file2 = FontUtils$$ExternalSyntheticApiModelOutline2.m(it.next()).getFile();
+                File file2 = it.next().getFile();
                 if (file2 != null) {
                     String lowerCase = file2.getName().toLowerCase();
                     if (lowerCase.contains("samsungcoloremoji")) {
@@ -366,52 +365,38 @@ public abstract class FontUtils {
     }
 
     private static File getFontFromFontsXml() {
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader("/system/etc/fonts.xml"));
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader("/system/etc/fonts.xml"))) {
             while (true) {
                 boolean z = false;
                 while (true) {
-                    try {
-                        String line = bufferedReader.readLine();
-                        if (line == null) {
-                            bufferedReader.close();
-                            return null;
+                    String line = bufferedReader.readLine();
+                    if (line == null) {
+                        return null;
+                    }
+                    String strTrim = line.trim();
+                    if (strTrim.startsWith("<family") && strTrim.contains("ignore=\"true\"")) {
+                        z = true;
+                    } else {
+                        if (strTrim.startsWith("</family>")) {
+                            break;
                         }
-                        String strTrim = line.trim();
-                        if (strTrim.startsWith("<family") && strTrim.contains("ignore=\"true\"")) {
-                            z = true;
-                        } else {
-                            if (strTrim.startsWith("</family>")) {
-                                break;
-                            }
-                            if (strTrim.startsWith("<font") && !z) {
-                                int iIndexOf = strTrim.indexOf(">");
-                                int iIndexOf2 = strTrim.indexOf("<", 1);
-                                if (iIndexOf > 0 && iIndexOf2 > 0) {
-                                    String strSubstring = strTrim.substring(iIndexOf + 1, iIndexOf2);
-                                    if (strSubstring.toLowerCase().contains("emoji")) {
-                                        File file = new File("/system/fonts/" + strSubstring);
-                                        if (file.exists()) {
-                                            FileLog.d("emoji font file fonts.xml = " + strSubstring);
-                                            bufferedReader.close();
-                                            return file;
-                                        }
-                                    } else {
-                                        continue;
+                        if (strTrim.startsWith("<font") && !z) {
+                            int iIndexOf = strTrim.indexOf(">");
+                            int iIndexOf2 = strTrim.indexOf("<", 1);
+                            if (iIndexOf > 0 && iIndexOf2 > 0) {
+                                String strSubstring = strTrim.substring(iIndexOf + 1, iIndexOf2);
+                                if (strSubstring.toLowerCase().contains("emoji")) {
+                                    File file = new File("/system/fonts/" + strSubstring);
+                                    if (file.exists()) {
+                                        FileLog.d("emoji font file fonts.xml = " + strSubstring);
+                                        return file;
                                     }
+                                } else {
+                                    continue;
                                 }
                             }
                         }
-                    } catch (Throwable th) {
-                        try {
-                            bufferedReader.close();
-                        } catch (Throwable th2) {
-                            th.addSuppressed(th2);
-                        }
-                        throw th;
                     }
-                    FileLog.e(e);
-                    return null;
                 }
             }
         } catch (Exception e) {
@@ -435,8 +420,7 @@ public abstract class FontUtils {
 
     public static Typeface getFontFromAssets(String str) {
         if (Build.VERSION.SDK_INT >= 26) {
-            FontUtils$$ExternalSyntheticApiModelOutline1.m();
-            Typeface.Builder builderM = FontUtils$$ExternalSyntheticApiModelOutline0.m(ApplicationLoader.applicationContext.getAssets(), str);
+            Typeface.Builder builderM = new Typeface.Builder(ApplicationLoader.applicationContext.getAssets(), str);
             if (str.contains("medium")) {
                 builderM.setWeight(700);
             }

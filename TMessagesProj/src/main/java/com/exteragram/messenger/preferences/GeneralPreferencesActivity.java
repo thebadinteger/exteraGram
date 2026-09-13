@@ -70,23 +70,23 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void initializeOptionStrings() {
         this.idOptions = new CharSequence[]{LocaleController.getString(R.string.Hide), "Telegram API", "Bot API"};
         this.translationProviders = new CharSequence[]{"Telegram", "Google", "Yandex", "DeepL"};
         this.translationFormalities = new CharSequence[]{LocaleController.getString(R.string.Default), LocaleController.getString(R.string.TranslationFormalityLess), LocaleController.getString(R.string.TranslationFormalityMore)};
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public String getTitle() {
         return LocaleController.getString(R.string.General);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.TranslateMessages)));
         arrayList.add(UItem.asCheck(GeneralItem.SHOW_TRANSLATE_BUTTON.getId(), LocaleController.getString(R.string.ShowTranslateButton)).setChecked(getContextTranslateValue()).setSearchable(this).setLinkAlias("showTranslateButton", this));
-        arrayList.add(UItem.asCheck(GeneralItem.SHOW_TRANSLATE_CHAT_BUTTON.getId(), LocaleController.getString(R.string.ShowTranslateChatButton)).setCheckBoxIcon(!getUserConfig().isPremium() ? R.drawable.permission_locked : 0).setChecked(getChatTranslateValue()).setSearchable(this).setLinkAlias("showTranslateChatButton", this));
+        arrayList.add(UItem.asCheck(GeneralItem.SHOW_TRANSLATE_CHAT_BUTTON.getId(), LocaleController.getString(R.string.ShowTranslateChatButton)).setChecked(getChatTranslateValue()).setSearchable(this).setLinkAlias("showTranslateChatButton", this));
         arrayList.add(UItem.asButton(GeneralItem.TRANSLATION_PROVIDERS.getId(), LocaleController.getString(R.string.TranslationProvider), this.translationProviders[ExteraConfig.getTranslationProvider()]).setSearchable(this).setLinkAlias("translationProvider", this));
         if (ExteraConfig.getTranslationProvider() == 3) {
             arrayList.add(UItem.asButton(GeneralItem.TRANSLATION_FORMALITY.getId(), LocaleController.getString(R.string.TranslationFormality), this.translationFormalities[ExteraConfig.getTranslationFormality().ordinal()]).setSearchable(this).setLinkAlias("translationFormality", this));
@@ -106,8 +106,8 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
             arrayList.add(UItem.asShadow(LocaleUtils.formatWithHtmlURLs(LocaleUtils.fromHtml(LocaleController.getString(R.string.TermsOfUseYandexMaps)))));
         }
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.DownloadSpeedBoost)));
-        arrayList.add(UItem.asSlideView(GeneralItem.DOWNLOAD_SPEED_BOOST.getId(), new String[]{LocaleController.getString(R.string.BlurOff), LocaleController.getString(R.string.SpeedFast), LocaleController.getString(R.string.Ultra)}, ExteraConfig.getDownloadSpeedBoost(), new Utilities.Callback() { 
-            @Override 
+        arrayList.add(UItem.asSlideView(GeneralItem.DOWNLOAD_SPEED_BOOST.getId(), new String[]{LocaleController.getString(R.string.BlurOff), LocaleController.getString(R.string.SpeedFast), LocaleController.getString(R.string.Ultra)}, ExteraConfig.getDownloadSpeedBoost(), new Utilities.Callback() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda0
+            @Override // org.telegram.messenger.Utilities.Callback
             public final void run(Object obj) {
                 ExteraConfig.setDownloadSpeedBoost(((Integer) obj).intValue());
             }
@@ -131,7 +131,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         arrayList.add(UItem.asShadow(LocaleController.getString(R.string.DisableUnarchiveSwipeInfo)));
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void onClick(UItem uItem, View view, int i, float f, float f2) {
         int i2 = uItem.id;
         if (i2 <= 0 || i2 > GeneralItem.values().length) {
@@ -139,10 +139,10 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         }
         switch (AnonymousClass1.$SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.values()[uItem.id - 1].ordinal()]) {
             case 1:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda1
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
-                        this.f$0.lambda$onClick$0((Boolean) obj);
+                        GeneralPreferencesActivity.this.lambda$onClick$0((Boolean) obj);
                     }
                 });
                 handleContextTranslateClick();
@@ -151,18 +151,18 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 handleChatTranslateClick(uItem);
                 break;
             case 3:
-                showListDialog(uItem, this.translationProviders, LocaleController.getString(R.string.TranslationProvider), ExteraConfig.getTranslationProvider(), new PopupUtils.OnItemClickListener() { 
-                    @Override 
+                showListDialog(uItem, this.translationProviders, LocaleController.getString(R.string.TranslationProvider), ExteraConfig.getTranslationProvider(), new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda7
+                    @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
                     public final void onClick(int i3) {
-                        this.f$0.lambda$onClick$1(i3);
+                        GeneralPreferencesActivity.this.lambda$onClick$1(i3);
                     }
                 });
                 break;
             case 4:
-                showListDialog(uItem, this.translationFormalities, LocaleController.getString(R.string.TranslationFormality), ExteraConfig.getTranslationFormality().ordinal(), new PopupUtils.OnItemClickListener() { 
-                    @Override 
+                showListDialog(uItem, this.translationFormalities, LocaleController.getString(R.string.TranslationFormality), ExteraConfig.getTranslationFormality().ordinal(), new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda8
+                    @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
                     public final void onClick(int i3) {
-                        this.f$0.lambda$onClick$2(i3);
+                        GeneralPreferencesActivity.this.lambda$onClick$2(i3);
                     }
                 });
                 break;
@@ -173,7 +173,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 presentFragment(new RestrictedLanguagesSelectActivity());
                 break;
             case 7:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda9
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setDisableNumberRounding(((Boolean) obj).booleanValue());
@@ -181,7 +181,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 8:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda10
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setFormatTimeWithSeconds(((Boolean) obj).booleanValue());
@@ -190,7 +190,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 handleFormatTimeWithSecondsClick();
                 break;
             case 9:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda11
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setRelativeLastSeen(((Boolean) obj).booleanValue());
@@ -198,7 +198,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 10:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda12
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setInAppVibration(((Boolean) obj).booleanValue());
@@ -206,7 +206,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 11:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda13
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setFilterZalgo(((Boolean) obj).booleanValue());
@@ -214,7 +214,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 12:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda14
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setUseYandexMaps(((Boolean) obj).booleanValue());
@@ -223,7 +223,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 ApplicationLoader.updateMapsProvider();
                 break;
             case 13:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda15
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setUploadSpeedBoost(((Boolean) obj).booleanValue());
@@ -234,7 +234,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 showCustomSavePathDialog();
                 break;
             case 15:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda2
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setHidePhoneNumber(((Boolean) obj).booleanValue());
@@ -243,15 +243,15 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 handleHidePhoneNumberClick();
                 break;
             case 16:
-                showListDialog(uItem, this.idOptions, LocaleController.getString(R.string.ShowIdAndDc), ExteraConfig.getShowIdAndDc(), new PopupUtils.OnItemClickListener() { 
-                    @Override 
+                showListDialog(uItem, this.idOptions, LocaleController.getString(R.string.ShowIdAndDc), ExteraConfig.getShowIdAndDc(), new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda3
+                    @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
                     public final void onClick(int i3) {
-                        this.f$0.lambda$onClick$3(i3);
+                        GeneralPreferencesActivity.this.lambda$onClick$3(i3);
                     }
                 });
                 break;
             case 17:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda4
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setHideArchiveFolder(((Boolean) obj).booleanValue());
@@ -260,7 +260,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 MessagesController.getInstance(this.currentAccount).checkArchiveFolder();
                 break;
             case 18:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda5
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setArchiveOnPull(((Boolean) obj).booleanValue());
@@ -268,7 +268,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 19:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda6
                     @Override // com.google.android.exoplayer2.util.Consumer
                     public final void accept(Object obj) {
                         ExteraConfig.setDisableUnarchiveSwipe(((Boolean) obj).booleanValue());
@@ -278,7 +278,157 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         }
     }
 
-    public static void lambda$handleChatTranslateClick$5(Boolean bool) {
+    /* JADX INFO: renamed from: com.exteragram.messenger.preferences.GeneralPreferencesActivity$1, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass1 {
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem;
+
+        static {
+            int[] iArr = new int[GeneralItem.values().length];
+            $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem = iArr;
+            try {
+                iArr[GeneralItem.SHOW_TRANSLATE_BUTTON.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.SHOW_TRANSLATE_CHAT_BUTTON.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.TRANSLATION_PROVIDERS.ordinal()] = 3;
+            } catch (NoSuchFieldError unused3) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.TRANSLATION_FORMALITY.ordinal()] = 4;
+            } catch (NoSuchFieldError unused4) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.TRANSLATION_TARGET_LANGUAGE.ordinal()] = 5;
+            } catch (NoSuchFieldError unused5) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.DO_NOT_TRANSLATE_LANGUAGES.ordinal()] = 6;
+            } catch (NoSuchFieldError unused6) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.DISABLE_NUMBER_ROUNDING.ordinal()] = 7;
+            } catch (NoSuchFieldError unused7) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.FORMAT_TIME_WITH_SECONDS.ordinal()] = 8;
+            } catch (NoSuchFieldError unused8) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.RELATIVE_LAST_SEEN.ordinal()] = 9;
+            } catch (NoSuchFieldError unused9) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.IN_APP_VIBRATION.ordinal()] = 10;
+            } catch (NoSuchFieldError unused10) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.FILTER_ZALGO.ordinal()] = 11;
+            } catch (NoSuchFieldError unused11) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.YANDEX_MAPS.ordinal()] = 12;
+            } catch (NoSuchFieldError unused12) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.UPLOAD_SPEED_BOOST.ordinal()] = 13;
+            } catch (NoSuchFieldError unused13) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.CUSTOM_SAVE_PATH.ordinal()] = 14;
+            } catch (NoSuchFieldError unused14) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.HIDE_PHONE_NUMBER.ordinal()] = 15;
+            } catch (NoSuchFieldError unused15) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.SHOW_ID_AND_DC.ordinal()] = 16;
+            } catch (NoSuchFieldError unused16) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.HIDE_ARCHIVE_FOLDER.ordinal()] = 17;
+            } catch (NoSuchFieldError unused17) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.ARCHIVE_ON_PULL.ordinal()] = 18;
+            } catch (NoSuchFieldError unused18) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$preferences$GeneralPreferencesActivity$GeneralItem[GeneralItem.DISABLE_UNARCHIVE_SWIPE.ordinal()] = 19;
+            } catch (NoSuchFieldError unused19) {
+            }
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onClick$0(Boolean bool) {
+        getMessagesController().getTranslateController().setContextTranslateEnabled(bool.booleanValue());
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onClick$1(int i) {
+        ExteraConfig.setTranslationProvider(i);
+        TranslatorUtils.ensureTargetLanguageCompatibleWithProvider();
+        this.parentLayout.rebuildFragments(0);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onClick$2(int i) {
+        ExteraConfig.setTranslationFormality(TranslationFormality.getEntries().get(i));
+        this.parentLayout.rebuildFragments(0);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onClick$3(int i) {
+        ExteraConfig.setShowIdAndDc(i);
+        this.parentLayout.rebuildFragments(0);
+    }
+
+    private CharSequence getDoNotTranslateValue() {
+        final boolean[] zArr = new boolean[1];
+        return (CharSequence) RestrictedLanguagesSelectActivity.getRestrictedLanguages().stream().map(new Function() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda16
+            @Override // java.util.function.Function
+            public final Object apply(Object obj) {
+                return TranslateAlert2.capitalFirst(TranslateAlert2.languageName((String) obj, zArr));
+            }
+        }).filter(new Predicate() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda17
+            @Override // java.util.function.Predicate
+            public final boolean test(Object obj) {
+                return Objects.nonNull((String) obj);
+            }
+        }).collect(Collectors.joining(", "));
+    }
+
+    private boolean getContextTranslateValue() {
+        return getMessagesController().getTranslateController().isContextTranslateEnabled();
+    }
+
+    private void handleContextTranslateClick() {
+        NotificationCenter.getInstance(this.currentAccount).postNotificationNameOnUIThread(NotificationCenter.updateSearchSettings, new Object[0]);
+        this.parentLayout.rebuildFragments(0);
+    }
+
+    private boolean getChatTranslateValue() {
+        return getMessagesController().getTranslateController().isChatTranslateEnabled();
+    }
+
+    private void handleChatTranslateClick(UItem uItem) {
+        toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda22
+            @Override // com.google.android.exoplayer2.util.Consumer
+            public final void accept(Object obj) {
+                GeneralPreferencesActivity.this.lambda$handleChatTranslateClick$5((Boolean) obj);
+            }
+        });
+        NotificationCenter.getInstance(this.currentAccount).postNotificationNameOnUIThread(NotificationCenter.updateSearchSettings, new Object[0]);
+        this.parentLayout.rebuildFragments(0);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$handleChatTranslateClick$5(Boolean bool) {
         getMessagesController().getTranslateController().setChatTranslateEnabled(bool.booleanValue());
     }
 
@@ -288,7 +438,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
     }
 
     private void handleHidePhoneNumberClick() {
-        getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.mainUserInfoChanged, new Object[0]);
+        getNotificationCenter().postNotificationNameOnUIThread(NotificationCenter.mainUserInfoChanged, new Object[0]);
         this.parentLayout.rebuildFragments(0);
     }
 
@@ -333,26 +483,26 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         builder.makeCustomMaxHeight();
         builder.setView(linearLayout);
         builder.setWidth(AndroidUtilities.dp(292.0f));
-        builder.setPositiveButton(LocaleController.getString(R.string.Done), new AlertDialog.OnButtonClickListener() { 
+        builder.setPositiveButton(LocaleController.getString(R.string.Done), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda18
             @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
             public final void onClick(AlertDialog alertDialog, int i2) {
-                this.f$0.lambda$showCustomSavePathDialog$6(editTextBoldCursor, alertDialog, i2);
+                GeneralPreferencesActivity.this.lambda$showCustomSavePathDialog$6(editTextBoldCursor, alertDialog, i2);
             }
         });
-        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), new AlertDialog.OnButtonClickListener() { 
+        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda19
             @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
             public final void onClick(AlertDialog alertDialog, int i2) {
                 alertDialog.dismiss();
             }
         });
         AlertDialog alertDialogCreate = builder.create();
-        alertDialogCreate.setOnDismissListener(new DialogInterface.OnDismissListener() { 
+        alertDialogCreate.setOnDismissListener(new DialogInterface.OnDismissListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda20
             @Override // android.content.DialogInterface.OnDismissListener
             public final void onDismiss(DialogInterface dialogInterface) {
                 AndroidUtilities.hideKeyboard(editTextBoldCursor);
             }
         });
-        alertDialogCreate.setOnShowListener(new DialogInterface.OnShowListener() { 
+        alertDialogCreate.setOnShowListener(new DialogInterface.OnShowListener() { // from class: com.exteragram.messenger.preferences.GeneralPreferencesActivity$$ExternalSyntheticLambda21
             @Override // android.content.DialogInterface.OnShowListener
             public final void onShow(DialogInterface dialogInterface) {
                 GeneralPreferencesActivity.m1389$r8$lambda$jqZHucz2CB71qU5xtH3wBEzzDE(editTextBoldCursor, dialogInterface);
@@ -362,6 +512,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         showDialog(alertDialogCreate);
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public /* synthetic */ void lambda$showCustomSavePathDialog$6(EditTextBoldCursor editTextBoldCursor, AlertDialog alertDialog, int i) {
         String strTrim = editTextBoldCursor.getText() != null ? editTextBoldCursor.getText().toString().trim() : _UrlKt.FRAGMENT_ENCODE_SET;
         if (!TextUtils.isEmpty(strTrim) && !SAVE_PATH_PATTERN.matcher(strTrim).matches()) {
@@ -373,6 +524,7 @@ public class GeneralPreferencesActivity extends BasePreferencesActivity {
         alertDialog.dismiss();
     }
 
+    /* JADX INFO: renamed from: $r8$lambda$jqZHucz2CB71qU5xtH3wB-EzzDE, reason: not valid java name */
     public static /* synthetic */ void m1389$r8$lambda$jqZHucz2CB71qU5xtH3wBEzzDE(EditTextBoldCursor editTextBoldCursor, DialogInterface dialogInterface) {
         editTextBoldCursor.requestFocus();
         editTextBoldCursor.setSelection(editTextBoldCursor.length());

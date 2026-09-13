@@ -88,7 +88,7 @@ public abstract class NowPlayingCard extends FrameLayout {
         this.audioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() { 
             @Override // android.media.AudioManager.OnAudioFocusChangeListener
             public final void onAudioFocusChange(int i) {
-                NowPlayingCard.m1270$r8$lambda$s9QIjAj9D55Esk_1M7EGE0vK2g(this.f$0, i);
+                NowPlayingCard.m1270$r8$lambda$s9QIjAj9D55Esk_1M7EGE0vK2g(NowPlayingCard.this, i);
             }
         };
         this.currentDocId = -1L;
@@ -99,14 +99,14 @@ public abstract class NowPlayingCard extends FrameLayout {
             public void dispatchDraw(Canvas canvas) {
                 Canvas canvas2;
                 Integer accentColor;
-                if (this.nowPlayingCardData != null) {
-                    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable = this.emoji;
-                    NowPlayingCardData nowPlayingCardData = this.nowPlayingCardData;
+                if (NowPlayingCard.this.nowPlayingCardData != null) {
+                    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable = NowPlayingCard.this.emoji;
+                    NowPlayingCardData nowPlayingCardData = NowPlayingCard.this.nowPlayingCardData;
                     if (nowPlayingCardData == null) {
                         nowPlayingCardData = null;
                     }
                     Integer accentColor2 = nowPlayingCardData.getAccentColor();
-                    NowPlayingCard nowPlayingCard = this;
+                    NowPlayingCard nowPlayingCard = NowPlayingCard.this;
                     if (accentColor2 == null) {
                         accentColor = Integer.valueOf(nowPlayingCard.getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                     } else {
@@ -118,10 +118,10 @@ public abstract class NowPlayingCard extends FrameLayout {
                     }
                     swapAnimatedEmojiDrawable.setColor(accentColor);
                     UIUtil uIUtil = UIUtil.INSTANCE;
-                    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable2 = this.emoji;
+                    AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable swapAnimatedEmojiDrawable2 = NowPlayingCard.this.emoji;
                     float width = getWidth();
                     float height = getHeight();
-                    NowPlayingCardData nowPlayingCardData3 = this.nowPlayingCardData;
+                    NowPlayingCardData nowPlayingCardData3 = NowPlayingCard.this.nowPlayingCardData;
                     canvas2 = canvas;
                     uIUtil.drawNowPlayingPattern(canvas2, swapAnimatedEmojiDrawable2, width, height, (nowPlayingCardData3 != null ? nowPlayingCardData3 : null).getCoverBitmap() == null ? 0.4f : 1.0f);
                 } else {
@@ -201,7 +201,7 @@ public abstract class NowPlayingCard extends FrameLayout {
         imageView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.togglePlayPause();
+                NowPlayingCard.this.togglePlayPause();
             }
         });
         this.playPauseButton = imageView;
@@ -255,7 +255,7 @@ public abstract class NowPlayingCard extends FrameLayout {
         if (list == null || list.isEmpty()) {
             this.artistView.setText(LocaleController.getString(R.string.AudioUnknownArtist));
         } else {
-            this.artistView.setText(CollectionsKt.joinToString$default(artists, ", ", null, null, 0, null, null, 62, null));
+            this.artistView.setText(android.text.TextUtils.join(", ", artists));
         }
         this.nameView.setText(Emoji.replaceEmoji(nowPlayingDTO.getTrackName(), this.nameView.getPaint().getFontMetricsInt(), false));
         TextView textView = this.albumView;
@@ -297,13 +297,13 @@ public abstract class NowPlayingCard extends FrameLayout {
         frameLayout.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                NowPlayingCard.set$lambda$1$0(nowPlayingDTO, this, zHasBadge$default, frameLayout, cardData, view);
+                NowPlayingCard.set$lambda$1$0(nowPlayingDTO, NowPlayingCard.this, zHasBadge$default, frameLayout, cardData, view);
             }
         });
         frameLayout.setOnLongClickListener(new View.OnLongClickListener() { 
             @Override // android.view.View.OnLongClickListener
             public final boolean onLongClick(View view) {
-                return NowPlayingCard.set$lambda$1$1(nowPlayingDTO, this, frameLayout, cardData, view);
+                return NowPlayingCard.set$lambda$1$1(nowPlayingDTO, NowPlayingCard.this, frameLayout, cardData, view);
             }
         });
         if (cardData.getImageLocation() != null) {
@@ -372,18 +372,18 @@ public abstract class NowPlayingCard extends FrameLayout {
         exoPlayerBuild.addListener(new Player.Listener() { 
             @Override // com.google.android.exoplayer2.Player.Listener
             public void onIsPlayingChanged(boolean isPlaying) {
-                this.this$0.isPlaying = isPlaying;
-                this.this$0.updatePlayPauseButton();
+                NowPlayingCard.this.isPlaying = isPlaying;
+                NowPlayingCard.this.updatePlayPauseButton();
                 if (isPlaying) {
                     return;
                 }
-                this.this$0.abandonAudioFocus();
+                NowPlayingCard.this.abandonAudioFocus();
             }
 
             @Override // com.google.android.exoplayer2.Player.Listener
             public void onPlaybackStateChanged(int playbackState) {
                 if (playbackState == 4) {
-                    this.this$0.abandonAudioFocus();
+                    NowPlayingCard.this.abandonAudioFocus();
                 }
             }
         });
@@ -410,7 +410,7 @@ public abstract class NowPlayingCard extends FrameLayout {
         if (Build.VERSION.SDK_INT < 26) {
             return this.audioManager.requestAudioFocus(this.audioFocusChangeListener, 3, 2) == 1;
         }
-        AudioFocusRequest audioFocusRequestBuild = NowPlayingCard$$ExternalSyntheticApiModelOutline0.m(2).setAudioAttributes(new AudioAttributes.Builder().setUsage(1).setContentType(2).build()).setOnAudioFocusChangeListener(this.audioFocusChangeListener).build();
+        AudioFocusRequest audioFocusRequestBuild = new AudioFocusRequest.Builder(2).setAudioAttributes(new AudioAttributes.Builder().setUsage(1).setContentType(2).build()).setOnAudioFocusChangeListener(this.audioFocusChangeListener).build();
         this.audioFocusRequest = audioFocusRequestBuild;
         return this.audioManager.requestAudioFocus(audioFocusRequestBuild) == 1;
     }

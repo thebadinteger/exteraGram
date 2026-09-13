@@ -62,6 +62,8 @@ import androidx.core.view.ViewCompat;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.AnimationNotificationsLocker;
 import org.telegram.messenger.BuildConfig;
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.utils.system.VibratorUtils;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
@@ -2256,6 +2258,11 @@ public class BottomSheet extends Dialog implements BaseFragment.AttachedSheet {
 
         public BottomSheet show() {
             bottomSheet.show();
+            if (!ExteraConfig.getInAppVibration()) {
+                VibratorUtils.disableHapticFeedback(bottomSheet.containerView);
+                VibratorUtils.disableHapticFeedback(bottomSheet.customView);
+                VibratorUtils.disableHapticFeedback(bottomSheet.container);
+            }
             return bottomSheet;
         }
 

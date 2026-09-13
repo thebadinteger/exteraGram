@@ -369,6 +369,9 @@ public class ChatThemeController extends BaseController {
     }
 
     public TLRPC.WallPaper getDialogWallpaper(long dialogId) {
+        if (!com.exteragram.messenger.ExteraConfig.getCustomThemes()) {
+            return null;
+        }
         if (dialogId >= 0) {
             TLRPC.UserFull userFull = getMessagesController().getUserFull(dialogId);
             if (userFull != null) {

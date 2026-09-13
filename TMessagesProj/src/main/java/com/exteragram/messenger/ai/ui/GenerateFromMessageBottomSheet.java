@@ -9,7 +9,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import com.exteragram.messenger.ai.AiConfig;
 import com.exteragram.messenger.ai.AiController;
 import com.exteragram.messenger.utils.chats.ChatUtils;
@@ -52,9 +52,9 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
 
     @SuppressLint({"ClickableViewAccessibility"})
     public GenerateFromMessageBottomSheet(String str, final String str2, BaseFragment baseFragment, Context context, final Utilities.Callback<GenerationData> callback, boolean z) {
+        super(context, true, baseFragment.getResourceProvider());
         boolean z2;
         boolean z3;
-        super(context, true, baseFragment.getResourceProvider());
         fixNavigationBar();
         this.smoothKeyboardAnimationEnabled = true;
         this.parentFragment = baseFragment;
@@ -93,13 +93,13 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         editTextBoldCursor.setOnFocusChangeListener(new View.OnFocusChangeListener() { 
             @Override // android.view.View.OnFocusChangeListener
             public final void onFocusChange(View view, boolean z4) {
-                this.f$0.lambda$new$0(view, z4);
+                GenerateFromMessageBottomSheet.this.lambda$new$0(view, z4);
             }
         });
         editTextBoldCursor.setOnTouchListener(new View.OnTouchListener() { 
             @Override // android.view.View.OnTouchListener
             public final boolean onTouch(View view, MotionEvent motionEvent) {
-                return this.f$0.lambda$new$1(view, motionEvent);
+                return GenerateFromMessageBottomSheet.this.lambda$new$1(view, motionEvent);
             }
         });
         int iDp = AndroidUtilities.dp(16.0f);
@@ -129,7 +129,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         linearLayout2.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$2(checkBox2, view);
+                GenerateFromMessageBottomSheet.this.lambda$new$2(checkBox2, view);
             }
         });
         ScaleStateListAnimator.apply(linearLayout2, 0.05f, 1.2f);
@@ -159,7 +159,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         linearLayout3.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view2) {
-                this.f$0.lambda$new$3(checkBox3, view2);
+                GenerateFromMessageBottomSheet.this.lambda$new$3(checkBox3, view2);
             }
         });
         ScaleStateListAnimator.apply(linearLayout3, 0.05f, 1.2f);
@@ -195,7 +195,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
         buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view2) {
-                this.f$0.lambda$new$4(str2, callback, view2);
+                GenerateFromMessageBottomSheet.this.lambda$new$4(str2, callback, view2);
             }
         });
         linearLayout.addView(buttonWithCounterView, LayoutHelper.createLinear(-1, 48, 0, 0, 16, 0, 16));
@@ -237,7 +237,7 @@ public class GenerateFromMessageBottomSheet extends BottomSheet {
             }
             string = LocaleController.getString(R.string.AttachPhoto);
         }
-        lambda$new$0();
+        dismiss();
         if (!this.includeImage) {
             str = null;
         }

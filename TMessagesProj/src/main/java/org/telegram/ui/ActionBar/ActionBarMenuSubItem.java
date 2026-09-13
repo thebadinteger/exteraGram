@@ -20,6 +20,8 @@ import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 
+import com.exteragram.messenger.utils.ui.UIUtil;
+
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.ui.Components.AnimatedEmojiSpan;
@@ -413,6 +415,7 @@ public class ActionBarMenuSubItem extends FrameLayout {
 
     public void updateBackground() {
         setBackground(Theme.createRadSelectorDrawable(selectorColor, top ? selectorRad : 0, bottom ? selectorRad : 0));
+        UIUtil.applyScaleStateListAnimator(this, selectorRad, top, bottom, 3, 0.04f, 1.5f);
     }
 
     private int getThemedColor(int key) {

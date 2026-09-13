@@ -48,7 +48,7 @@ public class YandexTranslator extends BaseTranslator {
     @Override 
     public void translate(String str, String str2, String str3, final TranslatorUtils.TranslateCallback translateCallback) {
         try {
-            client.newCall(new Request.Builder().url("https:
+            client.newCall(new Request.Builder().url("https://translate.yandex.net/api/v1/tr.json/translate?&srv=android&id=" + uuid + "-0-0").header("User-Agent", "ru.yandex.translate/21.15.4.21402814 (Xiaomi Redmi K20 Pro; Android 11)").post(RequestBody.create("lang=" + str3 + "&text=" + URLEncoder.encode(str, "UTF-8"), MediaType.parse("application/x-www-form-urlencoded"))).build()).enqueue(new Callback() {
                 @Override // okhttp3.Callback
                 public void onFailure(Call call, IOException iOException) {
                     FileLog.e(iOException);
@@ -58,10 +58,10 @@ public class YandexTranslator extends BaseTranslator {
                 }
 
                 @Override // okhttp3.Callback
-                public void onResponse(Call call, Response response) {
+                public void onResponse(Call call, Response response) throws IOException {
                     ResponseBody responseBodyBody = response.body();
                     try {
-                        if (!response.getIsSuccessful()) {
+                        if (!response.isSuccessful()) {
                             TranslatorUtils.TranslateCallback translateCallback2 = translateCallback;
                             Objects.requireNonNull(translateCallback2);
                             AndroidUtilities.runOnUIThread(new BaseTranslator$$ExternalSyntheticLambda0(translateCallback2));

@@ -86,8 +86,9 @@ public class NativeLoader {
                 nativeLoaded = true;
             } catch (Error e) {
                 FileLog.e(e);
+                log.append("loadFromZip Error: ").append(e).append("\n");
             }
-            return true;
+            return nativeLoaded;
         } catch (Exception e) {
             FileLog.e(e);
         } finally {
@@ -117,7 +118,7 @@ public class NativeLoader {
 
         try {
             try {
-                System.loadLibrary(LIB_NAME);
+                dev.exterahook.runtime.bridge.JniBridgeBindings.loadLibrary(LIB_NAME);
                 nativeLoaded = true;
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("loaded normal lib");
@@ -159,8 +160,17 @@ public class NativeLoader {
                 } catch (Error e) {
                     log.append(e).append("\n");
                     FileLog.e(e);
+                    destLocalFile.delete();
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.e("Library not found, arch = " + folder);
+                        log.append("Library not found, arch = " + folder).append("\n");
+                    }
+                    if (loadFromZip(context, destDir, destLocalFile, folder)) {
+                        return;
+                    }
+                    dev.exterahook.runtime.bridge.JniBridgeBindings.loadLibrary(LIB_NAME);
+                    nativeLoaded = true;
                 }
-                destLocalFile.delete();
             }
 
             if (BuildVars.LOGS_ENABLED) {
@@ -171,17 +181,23 @@ public class NativeLoader {
             if (loadFromZip(context, destDir, destLocalFile, folder)) {
                 return;
             }
+
+            try {
+                dev.exterahook.runtime.bridge.JniBridgeBindings.loadLibrary(LIB_NAME);
+                nativeLoaded = true;
+            } catch (Error e) {
+                FileLog.e(e);
+                log.append("184: ").append(e).append("\n");
+            }
         } catch (Throwable e) {
             e.printStackTrace();
             log.append("176: ").append(e).append("\n");
-        }
-
-        try {
-            System.loadLibrary(LIB_NAME);
-            nativeLoaded = true;
-        } catch (Error e) {
-            FileLog.e(e);
-            log.append("184: ").append(e).append("\n");
+            try {
+                dev.exterahook.runtime.bridge.JniBridgeBindings.loadLibrary(LIB_NAME);
+                nativeLoaded = true;
+            } catch (Error e2) {
+                FileLog.e(e2);
+            }
         }
     }
 

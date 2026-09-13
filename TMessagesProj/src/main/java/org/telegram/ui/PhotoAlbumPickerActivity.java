@@ -415,7 +415,11 @@ public class PhotoAlbumPickerActivity extends BaseFragment implements Notificati
                 @SuppressLint("NewApi")
                 @Override
                 public void getOutline(View view, Outline outline) {
-                    outline.setOval(0, 0, AndroidUtilities.dp(56), AndroidUtilities.dp(56));
+                    if (com.exteragram.messenger.ExteraConfig.getSquareFab()) {
+                        outline.setRoundRect(0, 0, AndroidUtilities.dp(56.0f), AndroidUtilities.dp(56.0f), AndroidUtilities.dp(16.0f));
+                    } else {
+                        outline.setOval(0, 0, AndroidUtilities.dp(56), AndroidUtilities.dp(56));
+                    }
                 }
             });
         }

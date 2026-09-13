@@ -21,6 +21,15 @@ public class ViewOutlineProviderImpl {
         }
     };
 
+    public static ViewOutlineProvider boundsWithRoundRect(float radius) {
+        return new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+            }
+        };
+    }
+
     public static ViewOutlineProvider fromDrawable(Drawable drawable) {
         return new ViewOutlineProvider() {
             @Override

@@ -2252,6 +2252,11 @@ public class FilterCreateActivity extends BaseFragment {
             this.color = color;
         }
 
+        private int textColor;
+        public void setTextColor(int textColor) {
+            this.textColor = textColor;
+        }
+
         private CharSequence text = "NEW";
         public void setText(CharSequence text) {
             this.text = text;
@@ -2284,14 +2289,18 @@ public class FilterCreateActivity extends BaseFragment {
             final float alpha = usePaintAlpha ? paint.getAlpha() / 255.0f : 1.0f;
 
             int color = this.color;
+            int textColor = this.textColor;
             if (color == 0) {
                 color = paint.getColor();
+            }
+            if (textColor == 0) {
+                textColor = AndroidUtilities.computePerceivedBrightness(color) > .721f ? Color.BLACK : Color.WHITE;
             }
             bgPaint.setColor(color);
             if (outline) {
                 textPaint.setColor(color);
             } else {
-                textPaint.setColor(AndroidUtilities.computePerceivedBrightness(color) > .721f ? Color.BLACK : Color.WHITE);
+                textPaint.setColor(textColor);
             }
             bgPaint.setAlpha((int) (bgPaint.getAlpha() * alpha));
             textPaint.setAlpha((int) (textPaint.getAlpha() * alpha));

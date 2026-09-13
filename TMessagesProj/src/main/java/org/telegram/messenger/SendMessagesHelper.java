@@ -956,6 +956,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return localInstance;
     }
 
+    private final com.exteragram.messenger.plugins.hooks.PluginsHooks hooks = com.exteragram.messenger.plugins.PluginsController.getInstance();
+
     public SendMessagesHelper(int instance) {
         super(instance);
 
@@ -4185,7 +4187,17 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         });
     }
 
-    public void sendMessage(SendMessageParams sendMessageParams) {
+    public void sendMessage(final SendMessageParams sendMessageParams) {
+        if (this.hooks != null) {
+            SendMessageParams hooked = this.hooks.executeSendMessageHook(this.currentAccount, sendMessageParams);
+            if (hooked == null) {
+                return;
+            }
+            if (hooked != sendMessageParams) {
+                sendMessage(hooked);
+                return;
+            }
+        }
         String message = sendMessageParams.message;
         String caption = sendMessageParams.caption;
         TLRPC.MessageMedia location = sendMessageParams.location;

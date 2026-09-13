@@ -20,26 +20,20 @@ public abstract class MaterialSliderUiHelper {
     }
 
     public static void applyContinuousStyle(Slider slider) {
-        if (slider.getTickVisibilityMode() != 2) {
-            slider.setTickVisibilityMode(2);
-        }
-        if (slider.getContinuousModeTickCount() != 0) {
-            slider.setContinuousModeTickCount(0);
+        if (slider.isTickVisible()) {
+            slider.setTickVisible(false);
         }
     }
 
     public static void applyDiscreteStyle(Slider slider, int i) {
-        if (slider.getTickVisibilityMode() != 0) {
-            slider.setTickVisibilityMode(0);
+        if (!slider.isTickVisible()) {
+            slider.setTickVisible(true);
         }
         if (slider.getTickActiveRadius() != AndroidUtilities.dp(2.0f)) {
             slider.setTickActiveRadius(AndroidUtilities.dp(2.0f));
         }
         if (slider.getTickInactiveRadius() != AndroidUtilities.dp(2.0f)) {
             slider.setTickInactiveRadius(AndroidUtilities.dp(2.0f));
-        }
-        if (slider.getContinuousModeTickCount() != i) {
-            slider.setContinuousModeTickCount(i);
         }
     }
 

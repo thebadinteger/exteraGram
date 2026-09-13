@@ -3,6 +3,7 @@ package com.exteragram.messenger.icons;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
+import org.telegram.messenger.FileLog;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -83,7 +84,7 @@ public final class IconPackProvider extends ContentProvider {
             sb.append(fileResolveIconFile.lastModified());
             sb.append('_');
             sb.append(fileResolveIconFile.length());
-            return builderAppendPath.appendQueryParameter(RegisterSpec.PREFIX, sb.toString()).build();
+            return builderAppendPath.appendQueryParameter("v", sb.toString()).build();
         }
     }
 
@@ -108,22 +109,22 @@ public final class IconPackProvider extends ContentProvider {
 
     @Override // android.content.ContentProvider
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
-        Object objM2315constructorimpl;
         if (!Intrinsics.areEqual(mode, "r")) {
             throw new SecurityException("Icon pack files are read-only");
         }
         if (!isIconUri(uri)) {
             throw new FileNotFoundException(uri.toString());
         }
+        File rasterizedIcon = null;
         try {
-            Result.Companion companion = Result.INSTANCE;
             File fileResolveSource = resolveSource(uri);
-            objM2315constructorimpl = Result.m2315constructorimpl(fileResolveSource != null ? getRasterizedIcon(fileResolveSource) : null);
+            if (fileResolveSource != null) {
+                rasterizedIcon = getRasterizedIcon(fileResolveSource);
+            }
         } catch (Throwable th) {
-            Result.Companion companion2 = Result.INSTANCE;
-            objM2315constructorimpl = Result.m2315constructorimpl(ResultKt.createFailure(th));
+            FileLog.e(th);
         }
-        File fallbackIcon = (File) (Result.m2321isFailureimpl(objM2315constructorimpl) ? null : objM2315constructorimpl);
+        File fallbackIcon = rasterizedIcon;
         if (fallbackIcon == null && (fallbackIcon = getFallbackIcon()) == null) {
             throw new FileNotFoundException(uri.toString());
         }
@@ -160,11 +161,8 @@ public final class IconPackProvider extends ContentProvider {
         if (context == null || (resources = context.getResources()) == null || (displayMetrics = resources.getDisplayMetrics()) == null) {
             return null;
         }
-        return materializeCacheFile("default_" + displayMetrics.densityDpi + ".png", new Function2() { 
-            @Override // kotlin.jvm.functions.Function2
-            public final Object invoke(Object obj, Object obj2) {
-                return Boolean.valueOf(IconPackProvider.$r8$lambda$SyNGJm9nV6CHnMrynDpJa0DoWpo((Context) obj, (FileOutputStream) obj2));
-            }
+        return materializeCacheFile("default_" + displayMetrics.densityDpi + ".png", (Function2) (Function2<Context, FileOutputStream, Boolean>) (ctx, fos) -> {
+            return Boolean.valueOf(IconPackProvider.$r8$lambda$SyNGJm9nV6CHnMrynDpJa0DoWpo(ctx, fos));
         });
     }
 
@@ -187,16 +185,19 @@ public final class IconPackProvider extends ContentProvider {
         if (context == null || (resources = context.getResources()) == null || (displayMetrics = resources.getDisplayMetrics()) == null) {
             return null;
         }
-        return materializeCacheFile(ArraysKt.joinToString$default(MessageDigest.getInstance("SHA-256").digest((source.getCanonicalPath() + ':' + source.lastModified() + ':' + source.length() + ':' + displayMetrics.densityDpi).getBytes(Charsets.UTF_8)), (CharSequence) _UrlKt.FRAGMENT_ENCODE_SET, (CharSequence) null, (CharSequence) null, 0, (CharSequence) null, new Function1() { 
-            @Override // kotlin.jvm.functions.Function1
-            public final Object invoke(Object obj) {
-                return String.format("%02x", Arrays.copyOf(new Object[]{Integer.valueOf(((Byte) obj).byteValue() & UByte.MAX_VALUE)}, 1));
+        String hexName;
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest((source.getCanonicalPath() + ':' + source.lastModified() + ':' + source.length() + ':' + displayMetrics.densityDpi).getBytes(Charsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b & 0xFF));
             }
-        }, 30, (Object) null) + ".png", new Function2() { 
-            @Override // kotlin.jvm.functions.Function2
-            public final Object invoke(Object obj, Object obj2) {
-                return Boolean.valueOf(IconPackProvider.$r8$lambda$kh6b8SwIq737lJ0bnqOcgLGaQv8(source, (Context) obj, (FileOutputStream) obj2));
-            }
+            hexName = sb.toString() + ".png";
+        } catch (Exception e) {
+            return null;
+        }
+        return materializeCacheFile(hexName, (Function2) (Function2<Context, FileOutputStream, Boolean>) (ctx, fos) -> {
+            return Boolean.valueOf(IconPackProvider.$r8$lambda$kh6b8SwIq737lJ0bnqOcgLGaQv8(source, ctx, fos));
         });
     }
 
@@ -243,7 +244,7 @@ public final class IconPackProvider extends ContentProvider {
                         return null;
                     }
                     if (!file4.renameTo(file3)) {
-                        FilesKt.copyTo$default(file4, file3, true, 0, 4, null);
+                        FilesKt.copyTo(file4, file3, true, 8192);
                         file4.delete();
                     }
                     if (file4.exists()) {
@@ -264,12 +265,12 @@ public final class IconPackProvider extends ContentProvider {
                     file4.delete();
                 }
             } catch (Throwable th3) {
-                if (!file4.exists()) {
-                    throw th3;
+                if (file4.exists()) {
+                    file4.delete();
                 }
-                file4.delete();
                 throw th3;
             }
+            return null;
         }
     }
 }

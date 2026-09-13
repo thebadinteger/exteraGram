@@ -19,6 +19,8 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+
+import com.exteragram.messenger.ExteraConfig;
 import android.text.Layout;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -91,7 +93,7 @@ public class SharingLiveLocationCell extends FrameLayout {
         this.padding = padding;
 
         avatarImageView = new BackupImageView(context);
-        avatarImageView.setRoundRadius(dp(21));
+        avatarImageView.setRoundRadius(ExteraConfig.getAvatarCorners(42.0f));
 
         avatarDrawable = new AvatarDrawable();
 

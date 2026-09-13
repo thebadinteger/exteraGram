@@ -18,7 +18,7 @@ public final class UniversalView extends View {
 
     @JvmOverloads
     public UniversalView(Context context) {
-        this(context, null, 2, 0 == true ? 1 : 0);
+        this(context, null);
     }
 
     @JvmOverloads
@@ -62,7 +62,7 @@ public final class UniversalView extends View {
             universalViewDelegate.onDraw(canvas, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperOnDraw((Canvas) obj);
+                    UniversalView.this.callSuperOnDraw((Canvas) obj);
                 }
             });
         } else {
@@ -86,7 +86,7 @@ public final class UniversalView extends View {
         return universalViewDelegate != null ? universalViewDelegate.onTouchEvent(event, new Utilities.CallbackReturn() { 
             @Override 
             public final Object run(Object obj) {
-                return Boolean.valueOf(this.f$0.callSuperOnTouchEvent((MotionEvent) obj));
+                return Boolean.valueOf(UniversalView.this.callSuperOnTouchEvent((MotionEvent) obj));
             }
         }) : super.onTouchEvent(event);
     }
@@ -98,7 +98,7 @@ public final class UniversalView extends View {
             universalViewDelegate.onMeasure(widthMeasureSpec, heightMeasureSpec, new Utilities.Callback2() { 
                 @Override 
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.callSuperOnMeasure(((Integer) obj).intValue(), ((Integer) obj2).intValue());
+                    UniversalView.this.callSuperOnMeasure(((Integer) obj).intValue(), ((Integer) obj2).intValue());
                 }
             });
         } else {
@@ -122,7 +122,7 @@ public final class UniversalView extends View {
             universalViewDelegate.onInitializeAccessibilityNodeInfo(info, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperOnInitializeAccessibilityNodeInfo((AccessibilityNodeInfo) obj);
+                    UniversalView.this.callSuperOnInitializeAccessibilityNodeInfo((AccessibilityNodeInfo) obj);
                 }
             });
         } else {
@@ -138,38 +138,6 @@ public final class UniversalView extends View {
         default void onDetachedFromWindow() {
         }
 
-        @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
-        public static final class DefaultImpls {
-            @Deprecated
-            public static void onDraw(UniversalViewDelegate universalViewDelegate, Canvas canvas, Utilities.Callback<Canvas> callback) {
-                UniversalViewDelegate.super.onDraw(canvas, callback);
-            }
-
-            @Deprecated
-            public static void onAttachedToWindow(UniversalViewDelegate universalViewDelegate) {
-                UniversalViewDelegate.super.onAttachedToWindow();
-            }
-
-            @Deprecated
-            public static void onDetachedFromWindow(UniversalViewDelegate universalViewDelegate) {
-                UniversalViewDelegate.super.onDetachedFromWindow();
-            }
-
-            @Deprecated
-            public static boolean onTouchEvent(UniversalViewDelegate universalViewDelegate, MotionEvent motionEvent, Utilities.CallbackReturn<MotionEvent, Boolean> callbackReturn) {
-                return UniversalViewDelegate.super.onTouchEvent(motionEvent, callbackReturn);
-            }
-
-            @Deprecated
-            public static void onMeasure(UniversalViewDelegate universalViewDelegate, int i, int i2, Utilities.Callback2<Integer, Integer> callback2) {
-                UniversalViewDelegate.super.onMeasure(i, i2, callback2);
-            }
-
-            @Deprecated
-            public static void onInitializeAccessibilityNodeInfo(UniversalViewDelegate universalViewDelegate, AccessibilityNodeInfo accessibilityNodeInfo, Utilities.Callback<AccessibilityNodeInfo> callback) {
-                UniversalViewDelegate.super.onInitializeAccessibilityNodeInfo(accessibilityNodeInfo, callback);
-            }
-        }
 
         default void onDraw(Canvas canvas, Utilities.Callback<Canvas> originalMethod) {
             originalMethod.run(canvas);

@@ -48,7 +48,7 @@ public abstract class FileManager {
                 AndroidUtilities.copyFile(inputStreamOpen, new FileOutputStream(file));
             } catch (IOException e2) {
                 Log.e("exteraGram", "Failed to copy asset file: " + str2, e2);
-                Make$Map$$ExternalSyntheticBUOutline0.m("exteraGram assets exception: ", e2);
+                FileLog.e(e2);
                 return;
             }
         }

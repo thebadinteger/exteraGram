@@ -47,7 +47,7 @@ public final class EventHookRecord implements HookRecord {
             return false;
         }
         if (this.matchSubstring) {
-            return str.length() > 0 && StringsKt.contains$default((CharSequence) str2, (CharSequence) str, false, 2, (Object) null);
+            return str.length() > 0 && str2.contains(str);
         }
         return Intrinsics.areEqual(str, str2);
     }

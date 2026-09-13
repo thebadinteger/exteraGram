@@ -31,6 +31,8 @@ public interface IMapsProvider {
     IMapStyleOptions loadRawResourceStyle(Context context, int resId);
     String getMapsAppPackageName();
     int getInstallMapsString();
+    default boolean isApplicationRequired() { return false; }
+    default boolean supportsOtherMapTypes() { return false; }
 
     interface IMap {
         void setMapType(int mapType);
@@ -48,6 +50,22 @@ public interface IMapsProvider {
         void setOnMapLoadedCallback(Runnable callback);
         IProjection getProjection();
         void setPadding(int left, int top, int right, int bottom);
+        default void setLogoPadding(int left, int top) {}
+        default Padding getFragmentPadding(int bottom) { return new Padding(0, 0, 0, bottom); }
+
+        public static class Padding {
+            public final int bottom;
+            public final int left;
+            public final int right;
+            public final int top;
+
+            public Padding(int left, int top, int right, int bottom) {
+                this.left = left;
+                this.top = top;
+                this.right = right;
+                this.bottom = bottom;
+            }
+        }
         void setMapStyle(IMapStyleOptions style);
         IMarker addMarker(IMarkerOptions markerOptions);
         void setOnMyLocationChangeListener(Consumer<Location> callback);
@@ -177,7 +195,7 @@ public interface IMapsProvider {
         }
     }
 
-    final class CameraPosition {
+    public static final class CameraPosition {
         public final LatLng target;
         public final float zoom;
 
@@ -187,7 +205,7 @@ public interface IMapsProvider {
         }
     }
 
-    final class LatLng {
+    public static final class LatLng {
         public final double latitude;
         public final double longitude;
 

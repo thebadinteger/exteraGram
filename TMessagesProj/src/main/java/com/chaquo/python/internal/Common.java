@@ -27,7 +27,7 @@ public class Common {
     public static List<String> PYTHON_VERSIONS_SHORT;
 
     static {
-        LinkedHashMap linkedHashMap = new LinkedHashMap();
+        LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<>();
         PYTHON_VERSIONS = linkedHashMap;
         linkedHashMap.put("3.11.10", "1");
         PYTHON_VERSIONS_SHORT = new ArrayList();
@@ -38,8 +38,7 @@ public class Common {
 
     public static List<String> supportedAbis(String str) {
         if (!PYTHON_VERSIONS_SHORT.contains(str)) {
-            Native$$ExternalSyntheticBUOutline0.m("Unknown Python version: '", str, "'");
-            return null;
+            throw new IllegalArgumentException("Unknown Python version: '" + str + "'");
         }
         ArrayList arrayList = new ArrayList();
         arrayList.add("arm64-v8a");

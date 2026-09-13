@@ -119,6 +119,7 @@ public class ConnectionsManager extends BaseController {
     private boolean appPaused = true;
     private boolean isUpdating;
     private int connectionState;
+    private final com.exteragram.messenger.plugins.hooks.PluginsHooks hooks = com.exteragram.messenger.plugins.PluginsController.getInstance();
     private AtomicInteger lastRequestToken = new AtomicInteger(1);
     private int appResumeCount;
 
@@ -393,9 +394,25 @@ public class ConnectionsManager extends BaseController {
             FileLog.d("send request " + object + " with token = " + requestToken);
         }
         try {
-            NativeByteBuffer buffer = new NativeByteBuffer(object.getObjectSize());
-            object.serializeToStream(buffer);
-            object.freeResources();
+            final String requestName = object.getClass().getSimpleName();
+            TLObject hookedObject = this.hooks.executePreRequestHook(requestName, this.currentAccount, object);
+            if (hookedObject == null) {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("Request cancelled by pre-request hook: " + requestName);
+                }
+                Utilities.stageQueue.postRunnable(() -> {
+                    if (onComplete != null) {
+                        onComplete.run(null, null);
+                    } else if (onCompleteTimestamp != null) {
+                        onCompleteTimestamp.run(null, null, 0);
+                    }
+                });
+                return;
+            }
+            final TLObject reqObject = com.exteragram.messenger.feed.FeedRequestNormalizer.normalize(this.currentAccount, hookedObject);
+            NativeByteBuffer buffer = new NativeByteBuffer(reqObject.getObjectSize());
+            reqObject.serializeToStream(buffer);
+            reqObject.freeResources();
 
             long startRequestTime = 0;
             if (BuildVars.DEBUG_PRIVATE_VERSION && BuildVars.LOGS_ENABLED || (connectionType & ConnectionTypeDownload) != 0) {
@@ -414,7 +431,7 @@ public class ConnectionsManager extends BaseController {
                         responseSize = buff.limit();
                         int magic = buff.readInt32(true);
                         try {
-                            resp = object.deserializeResponse(buff, magic, true);
+                            resp = reqObject.deserializeResponse(buff, magic, true);
                         } catch (Exception e2) {
                             if (BuildVars.DEBUG_PRIVATE_VERSION) {
                                 throw e2;
@@ -427,7 +444,7 @@ public class ConnectionsManager extends BaseController {
                         error.code = errorCode;
                         error.text = errorText;
                         if (BuildVars.LOGS_ENABLED && error.code != -2000) {
-                            FileLog.e(object + " got error " + error.code + " " + error.text);
+                            FileLog.e(reqObject + " got error " + error.code + " " + error.text);
                         }
                     }
                     if ((connectionType & ConnectionTypeDownload) != 0 && VideoPlayer.activePlayers.isEmpty()) {
@@ -441,7 +458,7 @@ public class ConnectionsManager extends BaseController {
                             FileLog.d("Cleanup keys for " + currentAccount + " because of CONNECTION_NOT_INITED");
                         }
                         cleanup(true);
-                        sendRequest(object, onComplete, onCompleteTimestamp, onQuickAck, onWriteToSocket, flags, datacenterId, connectionType, immediate);
+                        sendRequest(reqObject, onComplete, onCompleteTimestamp, onQuickAck, onWriteToSocket, flags, datacenterId, connectionType, immediate);
                         return;
                     }
                     if (resp != null) {
@@ -449,10 +466,11 @@ public class ConnectionsManager extends BaseController {
                     }
                     if (BuildVars.LOGS_ENABLED) {
                         FileLog.d("java received " + resp + (error != null ? " error = " + error : "") + " messageId = 0x" + Long.toHexString(requestMsgId));
-                        FileLog.dumpResponseAndRequest(currentAccount, object, resp, error, requestMsgId, finalStartRequestTime, requestToken);
+                        FileLog.dumpResponseAndRequest(currentAccount, reqObject, resp, error, requestMsgId, finalStartRequestTime, requestToken);
                     }
-                    final TLObject finalResponse = resp;
-                    final TLRPC.TL_error finalError = error;
+                    com.exteragram.messenger.plugins.hooks.PluginsHooks.PostRequestResult postResult = this.hooks.executePostRequestHook(requestName, this.currentAccount, resp, error);
+                    final TLObject finalResponse = postResult.getResponse();
+                    final TLRPC.TL_error finalError = postResult.getError();
                     Utilities.stageQueue.postRunnable(() -> {
                         if (onComplete != null) {
                             onComplete.run(finalResponse, finalError);
@@ -1016,6 +1034,52 @@ public class ConnectionsManager extends BaseController {
 
     public static boolean testNativeTlScheme(NativeByteBuffer buffer, INativeTlTest test) {
         return test.test(buffer.address);
+    }
+
+    private static final String DEBUG_DNS_CONFIG_KEY = "ipconfigv3_override";
+    private static final String DEBUG_DNS_PREFS = "debugdnsconfig";
+
+    private static android.content.SharedPreferences getDebugDnsPreferences() {
+        return org.telegram.messenger.ApplicationLoader.applicationContext.getSharedPreferences(DEBUG_DNS_PREFS, 0);
+    }
+
+    public static String getDebugDnsConfigOverride() {
+        return getDebugDnsPreferences().getString(DEBUG_DNS_CONFIG_KEY, "");
+    }
+
+    public static void setDebugDnsConfigOverride(String str) {
+        android.content.SharedPreferences.Editor editorEdit = getDebugDnsPreferences().edit();
+        if (android.text.TextUtils.isEmpty(str)) {
+            editorEdit.remove(DEBUG_DNS_CONFIG_KEY);
+        } else {
+            editorEdit.putString(DEBUG_DNS_CONFIG_KEY, str.trim());
+        }
+        editorEdit.apply();
+    }
+
+    private static boolean applyDnsConfigString(int i, String str, int i2) {
+        if (android.text.TextUtils.isEmpty(str)) {
+            return false;
+        }
+        try {
+            byte[] bArrDecode = android.util.Base64.decode(str, 0);
+            NativeByteBuffer nativeByteBuffer = new NativeByteBuffer(bArrDecode.length);
+            nativeByteBuffer.writeBytes(bArrDecode);
+            native_applyDnsConfig(i, nativeByteBuffer.address, org.telegram.messenger.AccountInstance.getInstance(i).getUserConfig().getClientPhone(), i2);
+            return true;
+        } catch (Throwable th) {
+            org.telegram.messenger.FileLog.e(th);
+            return false;
+        }
+    }
+
+    private static boolean applyStoredDnsConfigOverride(int i) {
+        return applyDnsConfigString(i, getDebugDnsConfigOverride(), 0);
+    }
+
+    public static boolean setAndApplyDebugDnsConfigOverride(int i, String str) {
+        setDebugDnsConfigOverride(str);
+        return applyStoredDnsConfigOverride(i);
     }
 
     public static native boolean native_test_AuthAuthorization(long object);

@@ -148,7 +148,7 @@ public abstract class QrCodeLoginView extends SlideView {
             Utilities.themeQueue.postRunnable(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$setData$0(width, height, str);
+                    QrRenderView.this.lambda$setData$0(width, height, str);
                 }
             });
             invalidate();
@@ -206,7 +206,7 @@ public abstract class QrCodeLoginView extends SlideView {
                 AndroidUtilities.runOnUIThread(new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        this.f$0.lambda$prepareContent$1(str);
+                        QrRenderView.this.lambda$prepareContent$1(str);
                     }
                 });
                 return;
@@ -231,9 +231,40 @@ public abstract class QrCodeLoginView extends SlideView {
             AndroidUtilities.runOnUIThread(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$prepareContent$3(str, bitmap, i, i2);
+                    QrRenderView.this.lambda$prepareContent$3(str, bitmap, i, i2);
                 }
             });
+        }
+
+        public void lambda$prepareContent$1(String str) {
+            if (TextUtils.equals(this.link, str)) {
+                this.firstPrepare = false;
+                Bitmap bitmap = this.contentBitmap;
+                if (bitmap != null) {
+                    this.contentBitmap = null;
+                    this.contentBitmapAlpha.set(0.0f, true);
+                    Bitmap bitmap2 = this.oldContentBitmap;
+                    if (bitmap2 != null) {
+                        bitmap2.recycle();
+                    }
+                    this.oldContentBitmap = bitmap;
+                    invalidate();
+                }
+            }
+        }
+
+        public void lambda$prepareContent$3(String str, final Bitmap bitmap, int i, int i2) {
+            if (!TextUtils.equals(this.link, str)) {
+                if (bitmap == null || bitmap.isRecycled()) {
+                    return;
+                }
+                bitmap.recycle();
+                return;
+            }
+            this.hadWidth = Integer.valueOf(i);
+            this.hadHeight = Integer.valueOf(i2);
+            this.hadLink = str;
+            lambda$prepareContent$2(bitmap);
         }
 
         public void lambda$prepareContent$2(Bitmap bitmap) {
@@ -432,13 +463,13 @@ public abstract class QrCodeLoginView extends SlideView {
                 bitmap = null;
             }
             canvas.restore();
-            if (this.loadingVisible && this.contentBitmap != null && !this.contentBitmapAlpha.isInProgress() && f4 >= 1065353216) {
+            if (this.loadingVisible && this.contentBitmap != null && !this.contentBitmapAlpha.isInProgress() && f4 >= 1.0f) {
                 this.loadingVisible = false;
                 invalidate();
             }
-            if (this.oldContentBitmap != null && this.contentBitmap == null && !this.contentBitmapAlpha.isInProgress() && f4 >= r11) {
+            if (this.oldContentBitmap != null && this.contentBitmap == null && !this.contentBitmapAlpha.isInProgress() && f4 >= 1.0f) {
                 this.oldContentBitmap.recycle();
-                this.oldContentBitmap = bitmap;
+                this.oldContentBitmap = null;
                 invalidate();
             }
             if (!this.loadingVisible && (rLottieDrawable = this.loadingMatrix) != null && rLottieDrawable.isRunning()) {

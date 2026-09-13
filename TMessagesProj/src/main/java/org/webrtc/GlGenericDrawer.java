@@ -1,3 +1,41 @@
+/*
+ *  Copyright 2018 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
+package org.webrtc;
+
+import android.graphics.Bitmap;
+import android.opengl.GLES11Ext;
+import android.opengl.GLES20;
+
+import org.telegram.messenger.FileLog;
+
+import androidx.annotation.Nullable;
+
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
+import javax.microedition.khronos.opengles.GL10;
+
+/**
+ * Helper class to implement an instance of RendererCommon.GlDrawer that can accept multiple input
+ * sources (OES, RGB, or YUV) using a generic fragment shader as input. The generic fragment shader
+ * should sample pixel values from the function "sample" that will be provided by this class and
+ * provides an abstraction for the input source type (OES, RGB, or YUV). The texture coordinate
+ * variable name will be "tc" and the texture matrix in the vertex shader will be "tex_mat". The
+ * simplest possible generic shader that just draws pixel from the frame unmodified looks like:
+ * void main() {
+ *   gl_FragColor = sample(tc);
+ * }
+ * This class covers the cases for most simple shaders and generates the necessary boiler plate.
+ * Advanced shaders can always implement RendererCommon.GlDrawer directly.
+ */
 public class GlGenericDrawer implements RendererCommon.GlDrawer {
   /**
    * The different shader types representing different input sources. YUV here represents three

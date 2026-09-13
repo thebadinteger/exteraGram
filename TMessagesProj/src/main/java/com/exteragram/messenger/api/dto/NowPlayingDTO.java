@@ -58,11 +58,11 @@ public final /* data */ class NowPlayingDTO {
         return nowPlayingDTO.copy(str, list, str2, str3, str10, str11, z2, str9, str8, l2);
     }
 
-    public final String getTrackName() {
+    public final String component1() {
         return this.trackName;
     }
 
-    public final Long getDuration() {
+    public final Long component10() {
         return this.duration;
     }
 
@@ -70,31 +70,31 @@ public final /* data */ class NowPlayingDTO {
         return this.artists;
     }
 
-    public final String getAlbumName() {
+    public final String component3() {
         return this.albumName;
     }
 
-    public final String getCoverUrl() {
+    public final String component4() {
         return this.coverUrl;
     }
 
-    public final String getPreviewUrl() {
+    public final String component5() {
         return this.previewUrl;
     }
 
-    public final String getSongUrl() {
+    public final String component6() {
         return this.songUrl;
     }
 
-    public final boolean getIsPlaying() {
+    public final boolean component7() {
         return this.isPlaying;
     }
 
-    public final String getDeviceName() {
+    public final String component8() {
         return this.deviceName;
     }
 
-    public final String getPlatform() {
+    public final String component9() {
         return this.platform;
     }
 

@@ -30,11 +30,19 @@ public final class ArchiveFile {
     }
 
     public final long getSize() {
-        return Files.size(this.absolutePath);
+        try {
+            return Files.size(this.absolutePath);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final byte[] readBytes() {
-        return Files.readAllBytes(this.absolutePath);
+        try {
+            return Files.readAllBytes(this.absolutePath);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static /* synthetic */ String readText$default(ArchiveFile archiveFile, Charset charset, int i, Object obj) {

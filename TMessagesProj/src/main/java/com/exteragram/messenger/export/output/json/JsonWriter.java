@@ -259,8 +259,7 @@ public class JsonWriter extends AbstractWriter {
                     if (i2 != 5) {
                         throw new IncompatibleClassChangeError();
                     }
-                    Segment$$ExternalSyntheticBUOutline1.m("Skip reason while writing photo path.");
-                    return null;
+                    throw new IllegalStateException("Skip reason while writing photo path.");
                 }
                 str = apiWrap$File.relativePath;
             }
@@ -387,8 +386,7 @@ public class JsonWriter extends AbstractWriter {
                     if (i2 != 5) {
                         throw new IncompatibleClassChangeError();
                     }
-                    Segment$$ExternalSyntheticBUOutline1.m("date limited skip reason while writing story path");
-                    return null;
+                    throw new IllegalStateException("date limited skip reason while writing story path");
                 }
                 str = apiWrap$FileFile.relativePath;
             }

@@ -473,7 +473,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
         avatarContainer.setLayoutParams(layoutParams2);
 
         avatarImageView = new BackupImageView(this);
-        avatarImageView.setRoundRadius(AndroidUtilities.dp(21));
+        avatarImageView.setRoundRadius(com.exteragram.messenger.ExteraConfig.getAvatarCorners(42.0f));
         avatarContainer.addView(avatarImageView);
         layoutParams2 = (FrameLayout.LayoutParams) avatarImageView.getLayoutParams();
         layoutParams2.width = AndroidUtilities.dp(42);
@@ -928,6 +928,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
                     imageView.setVisibility(View.GONE);
                     messageText.setVisibility(View.VISIBLE);
                     messageText.setTextSize(TypedValue.COMPLEX_UNIT_SP, SharedConfig.fontSize);
+                    messageObject.applyEntities();
                     messageText.setText(messageObject.messageText);
                 } else {
                     imageView.setVisibility(View.VISIBLE);
@@ -1007,6 +1008,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
             }
             TextView messageText = view.findViewWithTag(301);
             messageText.setTextSize(TypedValue.COMPLEX_UNIT_SP, SharedConfig.fontSize);
+            messageObject.applyEntities();
             messageText.setText(messageObject.messageText);
         }
         if (view.getParent() == null) {

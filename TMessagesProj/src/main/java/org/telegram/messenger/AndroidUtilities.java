@@ -189,6 +189,10 @@ import org.telegram.ui.Stories.StoryMediaAreasView;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 import org.telegram.ui.ThemePreviewActivity;
 import org.telegram.ui.WallpapersListActivity;
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.DividerStyle;
+import com.exteragram.messenger.proxy.ProxyController;
+import com.exteragram.messenger.utils.ui.FontUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -251,6 +255,10 @@ public class AndroidUtilities {
     public final static String TYPEFACE_ROBOTO_EXTRA_BOLD = "fonts/rextrabold.ttf";
     public final static String TYPEFACE_ROBOTO_MEDIUM_ITALIC = "fonts/rmediumitalic.ttf";
     public final static String TYPEFACE_ROBOTO_MONO = "fonts/rmono.ttf";
+    public final static String TYPEFACE_ROBOTO_REGULAR = "fonts/rregular.ttf";
+    public final static String TYPEFACE_ROBOTO_ITALIC = "fonts/ritalic.ttf";
+    public final static String TYPEFACE_ROBOTO_CONDENSED_BOLD = "fonts/rcondensedbold.ttf";
+    public final static String TYPEFACE_NUNITO_EXTRABOLD = "fonts/nunito_extrabold.ttf";
     public final static String TYPEFACE_MERRIWEATHER_BOLD = "fonts/mw_bold.ttf";
 
     public static Typeface mediumTypeface;
@@ -266,6 +274,14 @@ public class AndroidUtilities {
             }
         }
         return mediumTypeface;
+    }
+
+    public static Typeface regular() {
+        return getTypeface(TYPEFACE_ROBOTO_REGULAR);
+    }
+
+    public static int getTransparentColor(int i, float f) {
+        return Color.argb((int) (Color.alpha(i) * f), Color.red(i), Color.green(i), Color.blue(i));
     }
 
     private static final Hashtable<String, Typeface> typefaceCache = new Hashtable<>();
@@ -2400,21 +2416,12 @@ public class AndroidUtilities {
         synchronized (typefaceCache) {
             if (!typefaceCache.containsKey(assetPath)) {
                 try {
-                    Typeface t;
-                    if (Build.VERSION.SDK_INT >= 26) {
-                        Typeface.Builder builder = new Typeface.Builder(ApplicationLoader.applicationContext.getAssets(), assetPath);
-                        if (assetPath.contains("rextrabold")) {
-                            builder.setWeight(800);
-                        }
-                        if (assetPath.contains("medium") || assetPath.contains("rbold")) {
-                            builder.setWeight(700);
-                        }
-                        if (assetPath.contains("italic")) {
-                            builder.setItalic(true);
-                        }
-                        t = builder.build();
-                    } else {
-                        t = Typeface.createFromAsset(ApplicationLoader.applicationContext.getAssets(), assetPath);
+                    Typeface t = null;
+                    if (ExteraConfig.getUseSystemFonts()) {
+                        t = FontUtils.getSystemTypeface(assetPath);
+                    }
+                    if (t == null) {
+                        t = FontUtils.getFontFromAssets(assetPath);
                     }
                     typefaceCache.put(assetPath, t);
                 } catch (Exception e) {
@@ -2425,6 +2432,13 @@ public class AndroidUtilities {
                 }
             }
             return typefaceCache.get(assetPath);
+        }
+    }
+
+    public static void clearTypefaceCache() {
+        synchronized (typefaceCache) {
+            typefaceCache.clear();
+            mediumTypeface = null;
         }
     }
 
@@ -2456,6 +2470,9 @@ public class AndroidUtilities {
     }
 
     public static int getShadowHeight() {
+        if (ExteraConfig.getDividerStyle() != DividerStyle.LINE) {
+            return 0;
+        }
         if (density >= 4.0f) {
             return 3;
         } else if (density >= 2.0f) {
@@ -2947,7 +2964,11 @@ public class AndroidUtilities {
     }
 
     public static boolean isTabletInternal() {
-        if (isTablet == null) {
+        if (ExteraConfig.getTabletMode() == 1) {
+            isTablet = Boolean.TRUE;
+        } else if (ExteraConfig.getTabletMode() == 2) {
+            isTablet = Boolean.FALSE;
+        } else if (isTablet == null) {
             isTablet = isTabletForce();
         }
         return isTablet;
@@ -4700,6 +4721,21 @@ public class AndroidUtilities {
         final TableView tableView = new TableView(activity, null);
         linearLayout.addView(tableView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.FILL_HORIZONTAL, 14, 18, 14, 0));
 
+        final ProxyController proxyController = ProxyController.getInstance();
+        final SharedConfig.ProxyInfo proxyInfo = new SharedConfig.ProxyInfo(address, Utilities.parseInt(port), user, password, secret);
+        tableView.addRow(getString(R.string.ProxyType), proxyController.getProxyTypeName(proxyInfo));
+        ButtonSpan.TextViewButtons[] countryButtons = new ButtonSpan.TextViewButtons[1];
+        tableView.addRow(getString(R.string.Country), getString(R.string.Loading), countryButtons);
+        final WeakReference<ButtonSpan.TextViewButtons> countryRef = new WeakReference<>(countryButtons[0]);
+        proxyController.requestProxyCountry(proxyInfo, country -> {
+            ButtonSpan.TextViewButtons btn = countryRef.get();
+            if (btn == null) return;
+            if (TextUtils.isEmpty(country)) {
+                country = getString(R.string.Unknown);
+            }
+            btn.setText(country);
+        });
+
         if (!TextUtils.isEmpty(address)) {
             tableView.addRow(getString(R.string.UseProxyAddress), address);
         }
@@ -4778,7 +4814,6 @@ public class AndroidUtilities {
             int p = Utilities.parseInt(port);
             editor.putInt("proxy_port", p);
 
-            SharedConfig.ProxyInfo info;
             if (TextUtils.isEmpty(secret)) {
                 editor.remove("proxy_secret");
                 if (TextUtils.isEmpty(password)) {
@@ -4791,16 +4826,14 @@ public class AndroidUtilities {
                 } else {
                     editor.putString("proxy_user", user);
                 }
-                info = new SharedConfig.ProxyInfo(address, p, user, password, "");
             } else {
                 editor.remove("proxy_pass");
                 editor.remove("proxy_user");
                 editor.putString("proxy_secret", secret);
-                info = new SharedConfig.ProxyInfo(address, p, "", "", secret);
             }
-            editor.commit();
+            editor.apply();
 
-            SharedConfig.currentProxy = SharedConfig.addProxy(info);
+            proxyController.setCurrentProxy(proxyController.saveProxy(proxyInfo, null, null));
 
             ConnectionsManager.setProxySettings(true, address, p, user, password, secret);
             NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
@@ -6542,7 +6575,7 @@ public class AndroidUtilities {
 
     public static void vibrateCursor(View view) {
         try {
-            if (view == null || view.getContext() == null) return;
+            if (view == null || view.getContext() == null || !ExteraConfig.getInAppVibration()) return;
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
             if (!((Vibrator) view.getContext().getSystemService(Context.VIBRATOR_SERVICE)).hasAmplitudeControl()) return;
             view.performHapticFeedback(HapticFeedbackConstants.TEXT_HANDLE_MOVE, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
@@ -6551,7 +6584,7 @@ public class AndroidUtilities {
 
     public static void vibrate(View view) {
         try {
-            if (view == null || view.getContext() == null) return;
+            if (view == null || view.getContext() == null || !ExteraConfig.getInAppVibration()) return;
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
             if (!((Vibrator) view.getContext().getSystemService(Context.VIBRATOR_SERVICE)).hasAmplitudeControl()) return;
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);

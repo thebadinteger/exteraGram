@@ -24,11 +24,72 @@ public final class ApiBadgeSource {
     private final ConcurrentHashMap<Long, BadgeInfo> cache = new ConcurrentHashMap<>();
     private final ProfileDao profileDao;
 
+    /* JADX INFO: renamed from: com.exteragram.messenger.badges.source.ApiBadgeSource$loadToCache$1, reason: invalid class name */
     @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
     @DebugMetadata(c = "com.exteragram.messenger.badges.source.ApiBadgeSource", f = "ApiBadgeSource.kt", i = {}, l = {38}, m = "loadToCache", n = {}, s = {}, v = 1)
-    public static final class AnonymousClass1 extends ContinuationImpl {
+    public final class AnonymousClass1 extends ContinuationImpl {
         int label;
-        public final Object loadToCache(Continuation<? super Unit> continuation) {
+        /* synthetic */ Object result;
+
+        public AnonymousClass1(Continuation continuation) {
+            super((Continuation) continuation);
+        }
+
+        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+        public final Object invokeSuspend(Object obj) {
+            this.result = obj;
+            this.label |= Integer.MIN_VALUE;
+            return ApiBadgeSource.this.loadToCache(this);
+        }
+    }
+
+    public ApiBadgeSource(ProfileDao profileDao) {
+        this.profileDao = profileDao;
+    }
+
+    public BadgeDTO getBadge(long id, boolean isUser) {
+        BadgeInfo badgeInfo = this.cache.get(Long.valueOf(id));
+        if (badgeInfo != null) {
+            return badgeInfo.getBadge();
+        }
+        return null;
+    }
+
+    public final boolean isDeveloper(long id) {
+        BadgeInfo badgeInfo = this.cache.get(Long.valueOf(id));
+        return (badgeInfo != null ? badgeInfo.getStatus() : null) == ProfileStatus.DEVELOPER;
+    }
+
+    public final boolean canChangeBadge(long id) {
+        BadgeInfo badgeInfo = this.cache.get(Long.valueOf(id));
+        return (badgeInfo != null && badgeInfo.getCanChangeBadge()) || isDeveloper(id);
+    }
+
+    public static BadgeInfo $r8$lambda$k56Kf1gLoZpo2cEpNa8MMgWDGfI(Function2 function2, Object obj, Object obj2) {
+        return (BadgeInfo) function2.invoke(obj, obj2);
+    }
+
+    public final Object updateLocalBadge(long j, final BadgeDTO badgeDTO, Continuation<? super Unit> continuation) {
+        ConcurrentHashMap<Long, BadgeInfo> concurrentHashMap = this.cache;
+        Long lBoxLong = Boxing.boxLong(j);
+        final Function2 function2 = new Function2() { // from class: com.exteragram.messenger.badges.source.ApiBadgeSource$$ExternalSyntheticLambda0
+            @Override // kotlin.jvm.functions.Function2
+            public final Object invoke(Object obj, Object obj2) {
+                return BadgeInfo.copy$default((BadgeInfo) obj2, badgeDTO, null, false, 6, null);
+            }
+        };
+        concurrentHashMap.computeIfPresent(lBoxLong, new BiFunction() { // from class: com.exteragram.messenger.badges.source.ApiBadgeSource$$ExternalSyntheticLambda1
+            @Override // java.util.function.BiFunction
+            public final Object apply(Object obj, Object obj2) {
+                return ApiBadgeSource.$r8$lambda$k56Kf1gLoZpo2cEpNa8MMgWDGfI(function2, obj, obj2);
+            }
+        });
+        Object objUpdateBadge = this.profileDao.updateBadge(j, badgeDTO, (Continuation) continuation);
+        return objUpdateBadge == IntrinsicsKt.getCOROUTINE_SUSPENDED() ? objUpdateBadge : Unit.INSTANCE;
+    }
+
+    /* JADX WARN: Code duplicated, block: B:7:0x0013  */
+    public final Object loadToCache(Continuation<? super Unit> continuation) {
         AnonymousClass1 anonymousClass1;
         if (continuation instanceof AnonymousClass1) {
             anonymousClass1 = (AnonymousClass1) continuation;
@@ -54,12 +115,11 @@ public final class ApiBadgeSource {
             }
         } else {
             if (i2 != 1) {
-                Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-                return null;
+                throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
             ResultKt.throwOnFailure(all);
         }
-        for (ProfileDTO profileDTO : (List) all) {
+        for (ProfileDTO profileDTO : (List<ProfileDTO>) all) {
             this.cache.put(Boxing.boxLong(profileDTO.getId()), new BadgeInfo(profileDTO.getBadge(), profileDTO.getStatus(), Intrinsics.areEqual(profileDTO.getCanChangeBadge(), Boxing.boxBoolean(true))));
         }
         return Unit.INSTANCE;

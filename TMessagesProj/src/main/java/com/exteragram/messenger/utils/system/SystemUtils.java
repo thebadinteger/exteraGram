@@ -23,7 +23,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import com.exteragram.messenger.utils.network.RemoteUtils;
 import com.exteragram.messenger.utils.ui.UIUtil;
-import com.google.android.gms.cast.MediaError;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -133,7 +132,7 @@ public abstract class SystemUtils {
     public static boolean hasBiometrics() {
         int i = Build.VERSION.SDK_INT;
         if (i >= 29) {
-            BiometricManager biometricManagerM = SystemUtils$$ExternalSyntheticApiModelOutline1.m(ApplicationLoader.applicationContext.getSystemService(SystemUtils$$ExternalSyntheticApiModelOutline0.m()));
+            BiometricManager biometricManagerM = (BiometricManager) ApplicationLoader.applicationContext.getSystemService(BiometricManager.class);
             if (biometricManagerM == null) {
                 return false;
             }
@@ -218,61 +217,33 @@ public abstract class SystemUtils {
         }
     }
 
-    public static int getRoundVideoResolution() throws Throwable {
+    public static int getRoundVideoResolution() {
         int iIntValue = RemoteUtils.getIntConfigValue("round_video_resolution", 512).intValue();
         int videoEncoderAlignment2 = getVideoEncoderAlignment();
         return (videoEncoderAlignment2 <= 1 || iIntValue % videoEncoderAlignment2 == 0) ? iIntValue : Math.max(videoEncoderAlignment2, (iIntValue / videoEncoderAlignment2) * videoEncoderAlignment2);
     }
 
-    private static int getVideoEncoderAlignment() throws Throwable {
+    private static int getVideoEncoderAlignment() {
         int i = videoEncoderAlignment;
         if (i != 0) {
             return i;
         }
         MediaCodec mediaCodec = null;
-        mediaCodec = null;
         int iMax = 1;
         try {
+            MediaCodec mediaCodecCreateEncoderByType = MediaCodec.createEncoderByType(MediaController.VIDEO_MIME_TYPE);
             try {
-                try {
-                    MediaCodec mediaCodecCreateEncoderByType = MediaCodec.createEncoderByType(MediaController.VIDEO_MIME_TYPE);
-                    try {
-                        MediaCodecInfo.CodecCapabilities capabilitiesForType = mediaCodecCreateEncoderByType.getCodecInfo().getCapabilitiesForType(MediaController.VIDEO_MIME_TYPE);
-                        MediaCodecInfo.VideoCapabilities videoCapabilities = capabilitiesForType != null ? capabilitiesForType.getVideoCapabilities() : null;
-                        iMax = videoCapabilities != null ? Math.max(1, Math.max(videoCapabilities.getWidthAlignment(), videoCapabilities.getHeightAlignment())) : 1;
-                        mediaCodecCreateEncoderByType.release();
-                    } catch (Exception e) {
-                        e = e;
-                        mediaCodec = mediaCodecCreateEncoderByType;
-                        FileLog.e(e);
-                        if (mediaCodec != null) {
-                            mediaCodec.release();
-                        }
-                        videoEncoderAlignment = iMax;
-                        return iMax;
-                    } catch (Throwable th) {
-                        th = th;
-                        mediaCodec = mediaCodecCreateEncoderByType;
-                        if (mediaCodec != null) {
-                            try {
-                                mediaCodec.release();
-                            } catch (Exception e2) {
-                                FileLog.e(e2);
-                            }
-                        }
-                        throw th;
-                    }
-                } catch (Exception e3) {
-                    e = e3;
-                }
-                videoEncoderAlignment = iMax;
-                return iMax;
-            } catch (Throwable th2) {
-                th = th2;
+                MediaCodecInfo.CodecCapabilities capabilitiesForType = mediaCodecCreateEncoderByType.getCodecInfo().getCapabilitiesForType(MediaController.VIDEO_MIME_TYPE);
+                MediaCodecInfo.VideoCapabilities videoCapabilities = capabilitiesForType != null ? capabilitiesForType.getVideoCapabilities() : null;
+                iMax = videoCapabilities != null ? Math.max(1, Math.max(videoCapabilities.getWidthAlignment(), videoCapabilities.getHeightAlignment())) : 1;
+            } finally {
+                mediaCodecCreateEncoderByType.release();
             }
-        } catch (Exception e4) {
-            FileLog.e(e4);
+        } catch (Throwable th) {
+            FileLog.e(th);
         }
+        videoEncoderAlignment = iMax;
+        return iMax;
     }
 
     public static int getRoundVideoBitrate() {
@@ -329,7 +300,7 @@ public abstract class SystemUtils {
             return this.appIcon;
         }
 
-        private String fetchName() throws PackageManager.NameNotFoundException {
+        private String fetchName() {
             String string;
             PackageManager packageManager = ApplicationLoader.applicationContext.getPackageManager();
             ApplicationInfo applicationInfo = null;
@@ -355,7 +326,7 @@ public abstract class SystemUtils {
                 Intent intent = new Intent("android.intent.action.VIEW", Uri.parse("tel:" + str));
                 intent.setClassName(this.packageName, this.activityName);
                 intent.addFlags(268435456);
-                activity.startActivityForResult(intent, MediaError.DetailedErrorCode.SEGMENT_UNKNOWN);
+                activity.startActivityForResult(intent, 500);
             } catch (Exception e) {
                 FileLog.e(e);
             }

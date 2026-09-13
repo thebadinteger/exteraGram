@@ -14,7 +14,7 @@ public final class EnumPref<E extends Enum<E>> extends BasePref<E> {
     }
 
     public /* synthetic */ EnumPref(Enum r1, String str, int i, DefaultConstructorMarker defaultConstructorMarker) {
-        this(r1, (i & 2) != 0 ? null : str);
+        this((E) r1, (i & 2) != 0 ? null : str);
     }
 
     @Override 
@@ -25,6 +25,7 @@ public final class EnumPref<E extends Enum<E>> extends BasePref<E> {
             Enum[] enumArr = (Enum[]) e.getClass().getEnumConstants();
             return (enumArr == null || (e2 = (E) ArraysKt.getOrNull(enumArr, i)) == null) ? e : e2;
         } catch (Exception unused) {
+            return e;
         }
     }
 

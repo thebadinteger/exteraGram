@@ -1,3 +1,74 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.offline;
+
+import static com.google.android.exoplayer2.offline.Download.FAILURE_REASON_NONE;
+import static com.google.android.exoplayer2.offline.Download.FAILURE_REASON_UNKNOWN;
+import static com.google.android.exoplayer2.offline.Download.STATE_COMPLETED;
+import static com.google.android.exoplayer2.offline.Download.STATE_DOWNLOADING;
+import static com.google.android.exoplayer2.offline.Download.STATE_FAILED;
+import static com.google.android.exoplayer2.offline.Download.STATE_QUEUED;
+import static com.google.android.exoplayer2.offline.Download.STATE_REMOVING;
+import static com.google.android.exoplayer2.offline.Download.STATE_RESTARTING;
+import static com.google.android.exoplayer2.offline.Download.STATE_STOPPED;
+import static com.google.android.exoplayer2.offline.Download.STOP_REASON_NONE;
+import static java.lang.Math.min;
+
+import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
+import androidx.annotation.CheckResult;
+import androidx.annotation.IntRange;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.database.DatabaseProvider;
+import com.google.android.exoplayer2.scheduler.Requirements;
+import com.google.android.exoplayer2.scheduler.RequirementsWatcher;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSource.Factory;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
+import com.google.android.exoplayer2.upstream.cache.CacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Log;
+import com.google.android.exoplayer2.util.Util;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
+
+/**
+ * Manages downloads.
+ *
+ * <p>Normally a download manager should be accessed via a {@link DownloadService}. When a download
+ * manager is used directly instead, downloads will be initially paused and so must be resumed by
+ * calling {@link #resumeDownloads()}.
+ *
+ * <p>A download manager instance must be accessed only from the thread that created it, unless that
+ * thread does not have a {@link Looper}. In that case, it must be accessed only from the
+ * application's main thread. Registered listeners will be called on the same thread. In all cases
+ * the `Looper` of the thread from which the manager must be accessed can be queried using {@link
+ * #getApplicationLooper()}.
+ */
 public final class DownloadManager {
 
   /** Listener for {@link DownloadManager} events. */

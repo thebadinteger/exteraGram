@@ -119,7 +119,7 @@ public final class SwitchGroup {
         UItem collapsed = UItem.asExteraExpandableSwitch(this.id, title(), String.format(Locale.US, "%d/%d", Integer.valueOf(iCount), Integer.valueOf(count(false))), new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.onSwitchClick(view);
+                SwitchGroup.this.onSwitchClick(view);
             }
         }).setChecked(iCount > 0).setCollapsed(true ^ this.expanded);
         if (this.searchable) {

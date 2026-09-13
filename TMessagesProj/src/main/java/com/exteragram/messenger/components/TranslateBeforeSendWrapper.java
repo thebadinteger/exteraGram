@@ -21,28 +21,57 @@ public abstract class TranslateBeforeSendWrapper extends ActionBarMenuSubItem {
         setSubtext(TranslatorUtils.getSendTargetLanguageTitle());
         setMinimumWidth(AndroidUtilities.dp(196.0f));
         setItemHeight(56);
-        setOnClickListener(new View.OnClickListener() { 
+        setOnClickListener(new View.OnClickListener() { // from class: com.exteragram.messenger.components.TranslateBeforeSendWrapper$$ExternalSyntheticLambda0
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
+                TranslateBeforeSendWrapper.this.lambda$new$0(view);
             }
         });
-        setOnLongClickListener(new View.OnLongClickListener() { 
+        setOnLongClickListener(new View.OnLongClickListener() { // from class: com.exteragram.messenger.components.TranslateBeforeSendWrapper$$ExternalSyntheticLambda1
             @Override // android.view.View.OnLongClickListener
             public final boolean onLongClick(View view) {
-                return this.f$0.lambda$new$1(context, view);
+                return TranslateBeforeSendWrapper.this.lambda$new$1(context, view);
             }
         });
         setRightIcon(R.drawable.msg_arrowright);
-        getRightIcon().setOnClickListener(new View.OnClickListener() { 
+        getRightIcon().setOnClickListener(new View.OnClickListener() { // from class: com.exteragram.messenger.components.TranslateBeforeSendWrapper$$ExternalSyntheticLambda2
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$2(context, view);
+                TranslateBeforeSendWrapper.this.lambda$new$2(context, view);
             }
         });
     }
 
-    public void lambda$showDialog$3(int i) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$new$0(View view) {
+        onClick();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ boolean lambda$new$1(Context context, View view) {
+        return showDialog(context);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$new$2(Context context, View view) {
+        showDialog(context);
+    }
+
+    private boolean showDialog(Context context) {
+        CharSequence[] targetLanguageTitles = TranslatorUtils.getTargetLanguageTitles();
+        CharSequence[] charSequenceArr = new CharSequence[targetLanguageTitles.length];
+        System.arraycopy(targetLanguageTitles, 0, charSequenceArr, 0, targetLanguageTitles.length);
+        PopupUtils.showDialog(charSequenceArr, LocaleController.getString(R.string.Language), TranslatorUtils.getSendTargetLanguageIndex(), context, new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.components.TranslateBeforeSendWrapper$$ExternalSyntheticLambda3
+            @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
+            public final void onClick(int i) {
+                TranslateBeforeSendWrapper.this.lambda$showDialog$3(i);
+            }
+        });
+        return true;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showDialog$3(int i) {
         TranslatorUtils.setSendTargetLanguage(TranslatorUtils.getTargetLanguageCodeByIndex(i));
         setSubtext(TranslatorUtils.getSendTargetLanguageTitle());
     }

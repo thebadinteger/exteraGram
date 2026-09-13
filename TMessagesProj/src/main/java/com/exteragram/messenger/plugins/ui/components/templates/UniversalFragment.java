@@ -16,7 +16,7 @@ public final class UniversalFragment extends org.telegram.ui.Components.Universa
     private UniversalFragmentDelegate delegate;
 
     public UniversalFragment() {
-        this(null, 1, 0 == true ? 1 : 0);
+        this(null);
     }
 
     public UniversalFragment(UniversalFragmentDelegate universalFragmentDelegate) {
@@ -179,57 +179,5 @@ public final class UniversalFragment extends org.telegram.ui.Components.Universa
         default void onMenuItemClick(int id) {
         }
 
-        @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
-        public static final class DefaultImpls {
-            @Deprecated
-            public static View beforeCreateView(UniversalFragmentDelegate universalFragmentDelegate) {
-                return UniversalFragmentDelegate.super.beforeCreateView();
-            }
-
-            @Deprecated
-            public static View afterCreateView(UniversalFragmentDelegate universalFragmentDelegate, View view) {
-                return UniversalFragmentDelegate.super.afterCreateView(view);
-            }
-
-            @Deprecated
-            public static void onFragmentCreate(UniversalFragmentDelegate universalFragmentDelegate) {
-                UniversalFragmentDelegate.super.onFragmentCreate();
-            }
-
-            @Deprecated
-            public static void onFragmentDestroy(UniversalFragmentDelegate universalFragmentDelegate) {
-                UniversalFragmentDelegate.super.onFragmentDestroy();
-            }
-
-            @Deprecated
-            public static Boolean onBackPressed(UniversalFragmentDelegate universalFragmentDelegate) {
-                return UniversalFragmentDelegate.super.onBackPressed();
-            }
-
-            @Deprecated
-            public static CharSequence getTitle(UniversalFragmentDelegate universalFragmentDelegate) {
-                return UniversalFragmentDelegate.super.getTitle();
-            }
-
-            @Deprecated
-            public static void fillItems(UniversalFragmentDelegate universalFragmentDelegate, ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
-                UniversalFragmentDelegate.super.fillItems(arrayList, universalAdapter);
-            }
-
-            @Deprecated
-            public static void onClick(UniversalFragmentDelegate universalFragmentDelegate, UItem uItem, View view, int i, float f, float f2) {
-                UniversalFragmentDelegate.super.onClick(uItem, view, i, f, f2);
-            }
-
-            @Deprecated
-            public static boolean onLongClick(UniversalFragmentDelegate universalFragmentDelegate, UItem uItem, View view, int i, float f, float f2) {
-                return UniversalFragmentDelegate.super.onLongClick(uItem, view, i, f, f2);
-            }
-
-            @Deprecated
-            public static void onMenuItemClick(UniversalFragmentDelegate universalFragmentDelegate, int i) {
-                UniversalFragmentDelegate.super.onMenuItemClick(i);
-            }
-        }
     }
 }

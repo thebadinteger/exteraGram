@@ -1438,6 +1438,7 @@ public class Bulletin {
     public static class TwoLineLottieLayout extends ButtonLayout {
 
         public final RLottieImageView imageView;
+        public final StickerImageView stickerImageView;
         public final LinkSpanDrawable.LinksTextView titleTextView;
         public final LinkSpanDrawable.LinksTextView subtitleTextView;
         private final LinearLayout linearLayout;
@@ -1448,6 +1449,12 @@ public class Bulletin {
             super(context, resourcesProvider);
             this.textColor = getThemedColor(Theme.key_undo_infoColor);
             setBackground(getThemedColor(Theme.key_undo_background));
+
+            stickerImageView = new StickerImageView(context, UserConfig.selectedAccount);
+            stickerImageView.setStickerPackName("exteraGramPlaceholders");
+            stickerImageView.setVisibility(GONE);
+            stickerImageView.setSize(AndroidUtilities.dp(32.0f), AndroidUtilities.dp(32.0f));
+            addView(stickerImageView, LayoutHelper.createFrameRelatively(56, 48, Gravity.START | Gravity.CENTER_VERTICAL));
 
             imageView = new RLottieImageView(context);
             imageView.setScaleType(ImageView.ScaleType.CENTER);
@@ -1471,9 +1478,15 @@ public class Bulletin {
             subtitleTextView.setPadding(dp(4), 0, dp(4), 0);
             subtitleTextView.setTextColor(undoInfoColor);
             subtitleTextView.setLinkTextColor(undoLinkColor);
-            subtitleTextView.setTypeface(Typeface.SANS_SERIF);
+            subtitleTextView.setTypeface(AndroidUtilities.regular());
             subtitleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
             linearLayout.addView(subtitleTextView);
+        }
+
+        public void setSticker(int i) {
+            this.stickerImageView.setStickerNum(i);
+            this.stickerImageView.setVisibility(VISIBLE);
+            this.imageView.setVisibility(GONE);
         }
 
         @Override

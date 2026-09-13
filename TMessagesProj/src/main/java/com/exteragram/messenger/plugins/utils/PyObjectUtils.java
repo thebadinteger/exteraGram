@@ -24,49 +24,38 @@ public final class PyObjectUtils {
     }
 
     @JvmStatic
-    public static final <T> T toJavaCompat(PyObject pyObject, Class<T> clazz) throws Throwable {
-        PyObject pyObjectCallAttr;
-        "clazz";
-        PyObject pyObject2 = (T) null;
+    public static final <T> T toJavaCompat(PyObject pyObject, Class<T> clazz) {
         if (pyObject == null) {
             return null;
         }
         try {
-            return (T) pyObject.toJava(clazz);
+            return pyObject.toJava(clazz);
         } catch (PyException | ClassCastException unused) {
+            PyObject pyObjectCallAttr = null;
             try {
                 pyObjectCallAttr = pyObject.callAttr("__getattribute__", "java");
                 if (pyObjectCallAttr != null) {
                     try {
-                        pyObject2 = (T) pyObjectCallAttr.toJava(clazz);
+                        return pyObjectCallAttr.toJava(clazz);
                     } catch (PyException | ClassCastException unused2) {
-                    } catch (Throwable th) {
-                        th = th;
-                        pyObject2 = (T) pyObjectCallAttr;
-                        INSTANCE.closeQuietly(pyObject2);
-                        throw th;
                     }
                 }
             } catch (PyException | ClassCastException unused3) {
-                pyObjectCallAttr = null;
-            } catch (Throwable th2) {
-                th = th2;
+            } finally {
+                INSTANCE.closeQuietly(pyObjectCallAttr);
             }
-            INSTANCE.closeQuietly(pyObjectCallAttr);
-            return (T) pyObject2;
+            return null;
         }
     }
 
     @JvmStatic
     public static final String getString(PyObject pyObject, String key, String defaultValue) {
-        "key";
         return getString(pyObject, key, defaultValue, false);
     }
 
     @JvmStatic
     public static final String getString(PyObject pyObject, String key, String defaultValue, boolean fromMap) {
         String string;
-        "key";
         if (pyObject != null && !TextUtils.isEmpty(key)) {
             PyObject pyObjectCallAttr = null;
             try {
@@ -85,31 +74,17 @@ public final class PyObjectUtils {
     }
 
     @JvmStatic
-    public static final boolean getBoolean(PyObject pyObject, String key, boolean defaultValue) throws Throwable {
-        "key";
+    public static final boolean getBoolean(PyObject pyObject, String key, boolean defaultValue) {
         if (pyObject != null && !TextUtils.isEmpty(key)) {
-            PyObject pyObject2 = null;
+            PyObject pyObjectVal = null;
             try {
-                PyObject pyObject3 = (PyObject) pyObject.get((Object) key);
-                if (pyObject3 != null) {
-                    try {
-                        defaultValue = pyObject3.toBoolean();
-                    } catch (PyException | ClassCastException unused) {
-                        pyObject2 = pyObject3;
-                        INSTANCE.closeQuietly(pyObject2);
-                        return defaultValue;
-                    } catch (Throwable th) {
-                        th = th;
-                        pyObject2 = pyObject3;
-                        INSTANCE.closeQuietly(pyObject2);
-                        throw th;
-                    }
+                pyObjectVal = (PyObject) pyObject.get((Object) key);
+                if (pyObjectVal != null) {
+                    return pyObjectVal.toBoolean();
                 }
-                INSTANCE.closeQuietly(pyObject3);
-                return defaultValue;
-            } catch (PyException | ClassCastException unused2) {
-            } catch (Throwable th2) {
-                th = th2;
+            } catch (PyException | ClassCastException unused) {
+            } finally {
+                INSTANCE.closeQuietly(pyObjectVal);
             }
         }
         return defaultValue;
@@ -117,13 +92,11 @@ public final class PyObjectUtils {
 
     @JvmStatic
     public static final int getInt(PyObject pyObject, String key, int defaultValue) {
-        "key";
         return getInt(pyObject, key, defaultValue, false);
     }
 
     @JvmStatic
     public static final int getInt(PyObject pyObject, String key, int defaultValue, boolean fromMap) {
-        "key";
         if (pyObject != null && !TextUtils.isEmpty(key)) {
             PyObject pyObjectCallAttr = null;
             try {
@@ -131,7 +104,6 @@ public final class PyObjectUtils {
                 if (pyObjectCallAttr != null) {
                     defaultValue = pyObjectCallAttr.toInt();
                 }
-                INSTANCE.closeQuietly(pyObjectCallAttr);
                 return defaultValue;
             } catch (PyException | ClassCastException unused) {
             } finally {
@@ -142,34 +114,20 @@ public final class PyObjectUtils {
     }
 
     @JvmStatic
-    public static final String[] getStringArray(PyObject pyObject, String key, String[] defaultValue) throws Throwable {
-        "key";
+    public static final String[] getStringArray(PyObject pyObject, String key, String[] defaultValue) {
         if (pyObject != null && !TextUtils.isEmpty(key)) {
-            PyObject pyObject2 = null;
+            PyObject pyObjectVal = null;
             try {
-                PyObject pyObject3 = (PyObject) pyObject.get((Object) key);
-                if (pyObject3 != null) {
-                    try {
-                        String[] strArr = (String[]) pyObject3.toJava(String[].class);
-                        if (strArr != null && strArr.length != 0) {
-                            defaultValue = strArr;
-                        }
-                    } catch (PyException | ClassCastException unused) {
-                        pyObject2 = pyObject3;
-                        INSTANCE.closeQuietly(pyObject2);
-                        return defaultValue;
-                    } catch (Throwable th) {
-                        th = th;
-                        pyObject2 = pyObject3;
-                        INSTANCE.closeQuietly(pyObject2);
-                        throw th;
+                pyObjectVal = (PyObject) pyObject.get((Object) key);
+                if (pyObjectVal != null) {
+                    String[] strArr = (String[]) pyObjectVal.toJava(String[].class);
+                    if (strArr != null && strArr.length != 0) {
+                        return strArr;
                     }
                 }
-                INSTANCE.closeQuietly(pyObject3);
-                return defaultValue;
-            } catch (PyException | ClassCastException unused2) {
-            } catch (Throwable th2) {
-                th = th2;
+            } catch (PyException | ClassCastException unused) {
+            } finally {
+                INSTANCE.closeQuietly(pyObjectVal);
             }
         }
         return defaultValue;

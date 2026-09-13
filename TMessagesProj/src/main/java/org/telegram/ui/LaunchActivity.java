@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -89,6 +90,17 @@ import com.google.common.primitives.Longs;
 import com.google.firebase.appindexing.Action;
 import com.google.firebase.appindexing.FirebaseUserActions;
 import com.google.firebase.appindexing.builders.AssistActionBuilder;
+
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.icons.ExteraResources;
+import com.exteragram.messenger.icons.ui.picker.IconPickerController;
+import com.exteragram.messenger.pillstack.core.PillStackConfig;
+import com.exteragram.messenger.pillstack.core.PillType;
+import com.exteragram.messenger.plugins.PluginsController;
+import com.exteragram.messenger.updater.UpdaterUtils;
+import com.exteragram.messenger.utils.IntentsController;
+import com.exteragram.messenger.utils.network.RemoteUtils;
+import com.exteragram.messenger.utils.ui.MonetUtils;
 
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AccountInstance;
@@ -267,6 +279,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     public ArrayList<INavigationLayout> sheetFragmentsStack = new ArrayList<>();
 
     private boolean finished;
+    private ExteraResources res = null;
+    private AssetManager assetManager = null;
     private String videoPath;
     private String voicePath;
     private CharSequence sendingText;
@@ -389,6 +403,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     // private RefreshRateController refreshRateController;
 
     @Override
+    public android.content.res.Resources getResources() {
+        if (this.assetManager != super.getResources().getAssets()) {
+            this.res = new ExteraResources(super.getResources());
+            this.assetManager = super.getResources().getAssets();
+        }
+        return this.res;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         isActive = true;
         activeInstanceCount++;
@@ -427,7 +450,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setTheme(R.style.Theme_TMessages);
         try {
-            setTaskDescription(new ActivityManager.TaskDescription(null, null, Theme.getColor(Theme.key_actionBarDefault) | 0xff000000));
+            setTaskDescription(new ActivityManager.TaskDescription(null, null, 0xff000000));
         } catch (Throwable ignore) {
 
         }
@@ -716,6 +739,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MonetUtils.registerReceiver(this);
             getWindow().getDecorView().addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                         @Override
                         public void onViewAttachedToWindow(View v) {
@@ -743,6 +767,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         BackupAgent.requestBackup();
 
         RestrictedLanguagesSelectActivity.checkRestrictedLanguages(false);
+        com.exteragram.messenger.ExteraConfig.loadConfig();
+        com.exteragram.messenger.ExteraConfig.init();
+        syncDrawerContainerEnabled();
         if (Build.VERSION.SDK_INT >= 34) {
             if (onBackAnimationCallback == null) {
                 onBackAnimationCallback =  new OnBackAnimationCallback() {
@@ -1245,6 +1272,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         updateCurrentConnectionState(currentAccount);
 
         switchingAccount = false;
+        AndroidUtilities.runOnUIThread(() -> PillStackConfig.notifySettingsChanged(PillType.GRAM.getId(), PillType.BTC.getId(), PillType.USD.getId()), 150L);
     }
 
     private void switchToAvailableAccountOrLogout() {
@@ -1525,6 +1553,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             return true;
         }
         if (AndroidUtilities.handleProxyIntent(this, intent, true)) {
+            return true;
+        }
+        if (intent != null && IntentsController.INSTANCE.handleIntent(intent)) {
             return true;
         }
         if (intent == null || !Intent.ACTION_MAIN.equals(intent.getAction())) {
@@ -5967,100 +5998,82 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     private boolean firstAppUpdateCheck = true;
-    public void checkAppUpdate(boolean force, Browser.Progress progress) {
-        if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {
-            return;
-        }
-        if (!force && !BuildVars.CHECK_UPDATES) {
-            return;
-        }
-        if (ApplicationLoader.applicationLoaderInstance.isCustomUpdate()) {
-            final BetaUpdate prevUpdate = ApplicationLoader.applicationLoaderInstance.getUpdate();
-            final boolean first = firstAppUpdateCheck;
-            firstAppUpdateCheck = false;
-            ApplicationLoader.applicationLoaderInstance.checkUpdate(force, () -> {
-                final BetaUpdate pendingUpdate = ApplicationLoader.applicationLoaderInstance.getUpdate();
-                if (progress != null) {
-                    progress.end();
-                    if (pendingUpdate == null) {
-                        BaseFragment fragment = getLastFragment();
-                        if (fragment != null) {
-                            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
-                        }
-                    }
-                }
-                if (pendingUpdate != null && !ApplicationLoader.applicationLoaderInstance.isDownloadingUpdate() && (first || prevUpdate == null || pendingUpdate.higherThan(prevUpdate))) {
-                    ApplicationLoader.applicationLoaderInstance.showCustomUpdateAppPopup(LaunchActivity.this, pendingUpdate, currentAccount);
-                }
-            });
-            return;
-        }
-        if (!force && Math.abs(System.currentTimeMillis() - SharedConfig.lastUpdateCheckTime) < MessagesController.getInstance(0).updateCheckDelay * 1000) {
-            return;
-        }
-        final TLRPC.TL_help_getAppUpdate req = new TLRPC.TL_help_getAppUpdate();
-        try {
-            req.source = ApplicationLoader.applicationContext.getPackageManager().getInstallerPackageName(ApplicationLoader.applicationContext.getPackageName());
-        } catch (Exception ignore) {
+    public void checkAppUpdate(boolean z) {
+        checkAppUpdate(z, null);
+    }
 
+    public void checkAppUpdate(final boolean z, final Browser.Progress progress) {
+        if (!z) {
+            long jCurrentTimeMillis = System.currentTimeMillis();
+            if (Math.abs(jCurrentTimeMillis - SharedConfig.lastUpdateCheckTime) < 1800000 || Math.abs(jCurrentTimeMillis - ExteraConfig.getUpdateScheduleTimestamp()) < 3600000) {
+                return;
+            }
         }
-        if (req.source == null) {
-            req.source = "";
-        }
-        final int accountNum = currentAccount;
-        int reqId = ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
-            SharedConfig.lastUpdateCheckTime = System.currentTimeMillis();
-            SharedConfig.saveConfig();
-            if (response instanceof TLRPC.TL_help_appUpdate) {
-                final TLRPC.TL_help_appUpdate res = (TLRPC.TL_help_appUpdate) response;
-                AndroidUtilities.runOnUIThread(() -> {
-                    if (SharedConfig.pendingAppUpdate != null && SharedConfig.pendingAppUpdate.version.equals(res.version)) {
-                        return;
-                    }
-                    final boolean newVersionAvailable = SharedConfig.setNewAppVersionAvailable(res);
-                    if (newVersionAvailable) {
-                        if (res.can_not_skip) {
-                            showUpdateActivity(accountNum, res, false);
-                        } else if (ApplicationLoader.isStandaloneBuild() || BuildVars.DEBUG_VERSION) {
-                            ApplicationLoader.applicationLoaderInstance.showUpdateAppPopup(LaunchActivity.this, res, accountNum);
-                        }
-                        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.appUpdateAvailable);
-                    }
-                    if (progress != null) {
-                        progress.end();
-                        if (!newVersionAvailable) {
-                            BaseFragment fragment = getLastFragment();
-                            if (fragment != null) {
-                                BulletinFactory.of(fragment).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
-                            }
-                        }
-                    }
-                });
-            } else if (response instanceof TLRPC.TL_help_noAppUpdate) {
-                AndroidUtilities.runOnUIThread(() -> {
-                    if (progress != null) {
-                        progress.end();
-                        BaseFragment fragment = getLastFragment();
-                        if (fragment != null) {
-                            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
-                        }
-                    }
-                });
-            } else if (error != null) {
-                AndroidUtilities.runOnUIThread(() -> {
-                    if (progress != null) {
-                        progress.end();
-                        BaseFragment fragment = getLastFragment();
-                        if (fragment != null) {
-                            BulletinFactory.of(fragment).showForError(error);
-                        }
-                    }
-                });
+        SharedConfig.lastUpdateCheckTime = System.currentTimeMillis();
+        SharedConfig.saveConfig();
+        final int i = this.currentAccount;
+        UpdaterUtils.getAppUpdate(new Utilities.Callback2() {
+            @Override
+            public final void run(Object obj, Object obj2) {
+                LaunchActivity.this.lambda$checkAppUpdate$138(z, i, progress, (TLRPC.TL_help_appUpdate) obj, (TLRPC.TL_error) obj2);
             }
         });
         if (progress != null) {
             progress.init();
-            progress.onCancel(() -> ConnectionsManager.getInstance(currentAccount).cancelRequest(reqId, true));
+        }
+    }
+
+    private void lambda$checkAppUpdate$138(final boolean z, final int i, final Browser.Progress progress, final TLRPC.TL_help_appUpdate tL_help_appUpdate, final TLRPC.TL_error tL_error) {
+        if (tL_help_appUpdate != null) {
+            AndroidUtilities.runOnUIThread(new Runnable() {
+                @Override
+                public final void run() {
+                    LaunchActivity.this.lambda$checkAppUpdate$136(tL_help_appUpdate, z, i, progress);
+                }
+            });
+        } else if (tL_error != null) {
+            AndroidUtilities.runOnUIThread(new Runnable() {
+                @Override
+                public final void run() {
+                    BaseFragment lastFragment;
+                    if (progress != null) {
+                        progress.end();
+                    }
+                    if (!BuildVars.DEBUG_PRIVATE_VERSION || (lastFragment = LaunchActivity.getLastFragment()) == null) {
+                        return;
+                    }
+                    BulletinFactory.of(lastFragment).showForError(tL_error);
+                }
+            });
+        }
+    }
+
+    private void lambda$checkAppUpdate$136(TLRPC.TL_help_appUpdate tL_help_appUpdate, boolean z, int i, Browser.Progress progress) {
+        TLRPC.TL_help_appUpdate tL_help_appUpdate2 = SharedConfig.pendingAppUpdate;
+        if (tL_help_appUpdate2 == null || !tL_help_appUpdate2.version.equals(tL_help_appUpdate.version) || z || tL_help_appUpdate.can_not_skip) {
+            if (SharedConfig.setNewAppVersionAvailable(tL_help_appUpdate)) {
+                if (tL_help_appUpdate.can_not_skip) {
+                    showUpdateActivity(i, tL_help_appUpdate, false);
+                    return;
+                } else {
+                    ApplicationLoader.applicationLoaderInstance.showUpdateAppPopup(this, tL_help_appUpdate, i);
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.appUpdateAvailable);
+                    return;
+                }
+            }
+            BaseFragment lastFragment = getLastFragment();
+            if (SharedConfig.pendingAppUpdate != null) {
+                SharedConfig.pendingAppUpdate = null;
+                SharedConfig.saveConfig();
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.appUpdateAvailable);
+            }
+            if (progress != null) {
+                progress.end();
+            }
+            if (lastFragment == null || !z) {
+                return;
+            }
+            BulletinFactory.of(lastFragment).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
         }
     }
 
@@ -6740,6 +6753,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onPause() {
         super.onPause();
+        com.exteragram.messenger.plugins.PluginsController.getInstance().executeOnAppEvent("app_pause");
         isResumed = false;
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
@@ -6862,6 +6876,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         isActive = false;
         activeInstanceCount--;
         unregisterReceiver(batteryReceiver);
+        if (Build.VERSION.SDK_INT >= 31) {
+            MonetUtils.unregisterReceiver(this);
+        }
+        PluginsController.getInstance().executeOnAppEvent("app_stop");
 
         if (activeInstanceCount == 0) {
             onDestroyStaticResources();
@@ -6948,6 +6966,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             editorView.destroy();
         }
         FloatingDebugController.onDestroy();
+        IconPickerController.onDestroy();
         if (BuildConfig.DEBUG_PRIVATE_VERSION) {
             LeakDetector.getInstance().stop();
         }
@@ -6969,6 +6988,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
+        syncDrawerContainerEnabled();
+        com.exteragram.messenger.plugins.PluginsController.getInstance().executeOnAppEvent("app_resume");
         isResumed = true;
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
@@ -7037,6 +7058,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             showUpdateActivity(UserConfig.selectedAccount, SharedConfig.pendingAppUpdate, true);
         }
         checkAppUpdate(false, null);
+        RemoteUtils.init();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ApplicationLoader.canDrawOverlays = Settings.canDrawOverlays(this);
@@ -7050,6 +7072,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         if (ApplicationLoader.applicationLoaderInstance != null) {
             ApplicationLoader.applicationLoaderInstance.onResume();
         }
+        PluginsController.getInstance().executeOnAppEvent("app_resume");
         if (whenResumed != null) {
             whenResumed.run();
             whenResumed = null;
@@ -7059,6 +7082,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             // Re-check if the user updated their email from another client
             MessagesController.getInstance(currentAccount).checkPromoInfo(true);
         }
+        AndroidUtilities.runOnUIThread(() -> checkSystemBarColors(true), 300L);
         //if (refreshRateController != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         //    refreshRateController.start();
         //}
@@ -7344,7 +7368,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             Boolean nightTheme = (Boolean) args[0];
             if (!nightTheme) {
                 try {
-                    setTaskDescription(new ActivityManager.TaskDescription(null, null, Theme.getColor(Theme.key_actionBarDefault) | 0xff000000));
+                    setTaskDescription(new ActivityManager.TaskDescription(null, null, 0xff000000));
                 } catch (Exception ignore) {
 
                 }
@@ -8326,7 +8350,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     public boolean onBackPressed(boolean invoked) {
-        if (FloatingDebugController.onBackPressed(invoked)) {
+        if (FloatingDebugController.onBackPressed(invoked) || IconPickerController.onBackPressed(invoked)) {
             return false;
         }
         if (passcodeDialog != null && passcodeDialog.passcodeView.getVisibility() == View.VISIBLE) {
@@ -8452,7 +8476,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         showVoiceChatTooltip(mute ? UndoView.ACTION_VOIP_SOUND_MUTED : UndoView.ACTION_VOIP_SOUND_UNMUTED);
                     }
                 }
-            } else if (!mainFragmentsStack.isEmpty() && (!PhotoViewer.hasInstance() || !PhotoViewer.getInstance().isVisible()) && event.getRepeatCount() == 0) {
+            } else if (ExteraConfig.getUnmuteWithVolumeButtons() && (!PhotoViewer.hasInstance() || !PhotoViewer.getInstance().isVisible()) && event.getRepeatCount() == 0) {
                 BaseFragment fragment = mainFragmentsStack.get(mainFragmentsStack.size() - 1);
                 if (fragment instanceof ChatActivity && !BaseFragment.hasSheets(fragment)) {
                     if (((ChatActivity) fragment).maybePlayVisibleVideo()) {
@@ -8793,6 +8817,54 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             return instance.getActionBarLayout().getSafeLastFragment();
         }
         return null;
+    }
+
+    public void syncDrawerContainerEnabled() {
+        if (drawerLayoutContainer == null) {
+            return;
+        }
+        boolean navigationDrawer = com.exteragram.messenger.ExteraConfig.getNavigationDrawer();
+        if (navigationDrawer) {
+            if (drawerLayoutContainer.getDrawerContainer() == null) {
+                drawerLayoutContainer.setDrawerContainer(new com.exteragram.messenger.drawer.DrawerContainer(this));
+            }
+        } else if (drawerLayoutContainer.getDrawerContainer() != null) {
+            drawerLayoutContainer.setDrawerContainer(null);
+        }
+    }
+
+    public static List<BaseFragment> getVisibleFragments() {
+        INavigationLayout iNavigationLayout;
+        BaseFragment safeLastFragment;
+        ArrayList<BaseFragment> arrayList = new ArrayList<>();
+        BubbleActivity bubbleActivity = BubbleActivity.instance;
+        if (bubbleActivity != null && (iNavigationLayout = bubbleActivity.actionBarLayout) != null && (safeLastFragment = iNavigationLayout.getSafeLastFragment()) != null) {
+            arrayList.add(safeLastFragment);
+        }
+        LaunchActivity launchActivity = instance;
+        if (launchActivity != null) {
+            if (!launchActivity.sheetFragmentsStack.isEmpty()) {
+                for (int i = 0; i < instance.sheetFragmentsStack.size(); i++) {
+                    BaseFragment safeLastFragment2 = instance.sheetFragmentsStack.get(i).getSafeLastFragment();
+                    if (safeLastFragment2 != null) {
+                        arrayList.add(safeLastFragment2);
+                    }
+                }
+            }
+            if (!instance.layerFragmentsStack.isEmpty()) {
+                ArrayList<BaseFragment> arrayList2 = instance.layerFragmentsStack;
+                arrayList.add(arrayList2.get(arrayList2.size() - 1));
+            }
+            if (!instance.rightFragmentsStack.isEmpty()) {
+                ArrayList<BaseFragment> arrayList3 = instance.rightFragmentsStack;
+                arrayList.add(arrayList3.get(arrayList3.size() - 1));
+            }
+            if (!instance.mainFragmentsStack.isEmpty()) {
+                ArrayList<BaseFragment> arrayList4 = instance.mainFragmentsStack;
+                arrayList.add(arrayList4.get(arrayList4.size() - 1));
+            }
+        }
+        return arrayList;
     }
 
     public int getNavigationBarColor() {

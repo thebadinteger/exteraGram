@@ -20,7 +20,8 @@ public class FeedChannelRegistry implements NotificationCenter.NotificationCente
     private final Runnable rebuildRunnable = new Runnable() { 
         @Override // java.lang.Runnable
         public final void run() {
-            this.f$0.lambda$new$0();
+            FeedChannelRegistry.this.rebuildScheduled = false;
+            FeedChannelRegistry.this.rebuild(true);
         }
     };
 
@@ -32,6 +33,16 @@ public class FeedChannelRegistry implements NotificationCenter.NotificationCente
         for (int i = 0; i < 16; i++) {
             locks[i] = new Object();
         }
+    }
+
+    private FeedChannelRegistry(final int i) {
+        this.currentAccount = i;
+        AndroidUtilities.runOnUIThread(new Runnable() {
+            @Override
+            public void run() {
+                NotificationCenter.getInstance(i).addObserver(FeedChannelRegistry.this, NotificationCenter.dialogsNeedReload);
+            }
+        });
     }
 
     public static FeedChannelRegistry getInstance(int i) {
@@ -53,10 +64,6 @@ public class FeedChannelRegistry implements NotificationCenter.NotificationCente
             }
         }
         return feedChannelRegistry;
-    }
-
-    public void lambda$new$1(int i) {
-        NotificationCenter.getInstance(i).addObserver(this, NotificationCenter.dialogsNeedReload);
     }
 
     public void addListener(Listener listener) {

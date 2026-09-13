@@ -1,6 +1,6 @@
 package com.exteragram.messenger.feed;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -273,15 +273,24 @@ public abstract class FeedRequestNormalizer {
         }
 
         public final boolean equals(Object obj) {
-            return $record$equals(obj);
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            ClassMetadata that = (ClassMetadata) obj;
+            return java.util.Objects.equals(this.requestPeerField, that.requestPeerField) &&
+                   java.util.Objects.equals(this.peerField, that.peerField) &&
+                   java.util.Objects.equals(this.channelField, that.channelField) &&
+                   java.util.Objects.equals(this.invoiceField, that.invoiceField) &&
+                   java.util.Arrays.equals(this.messageIdFields, that.messageIdFields);
         }
 
         public final int hashCode() {
-            return java.util.Objects.hash(this.requestPeerField, this.peerField, this.channelField, this.invoiceField, this.messageIdFields);
+            int result = java.util.Objects.hash(this.requestPeerField, this.peerField, this.channelField, this.invoiceField);
+            result = 31 * result + java.util.Arrays.hashCode(this.messageIdFields);
+            return result;
         }
 
         public final String toString() {
-            return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ClassMetadata.class, "requestPeerField;peerField;channelField;invoiceField;messageIdFields");
+            return "ClassMetadata[requestPeerField=" + this.requestPeerField + ", peerField=" + this.peerField + ", channelField=" + this.channelField + ", invoiceField=" + this.invoiceField + ", messageIdFields=" + java.util.Arrays.toString(this.messageIdFields) + "]";
         }
     }
 }

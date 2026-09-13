@@ -1,4 +1,106 @@
-public static class AudioSamples {
+/*
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
+package org.webrtc.voiceengine;
+
+import android.annotation.TargetApi;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioPlaybackCaptureConfiguration;
+import android.media.AudioRecord;
+import android.media.MediaRecorder.AudioSource;
+import android.media.projection.MediaProjection;
+import android.os.Build;
+import android.os.Process;
+import androidx.annotation.Nullable;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
+import org.telegram.messenger.FileLog;
+import org.telegram.messenger.voip.VideoCapturerDevice;
+import org.webrtc.Logging;
+import org.webrtc.ThreadUtils;
+
+public class WebRtcAudioRecord {
+
+  private static final String TAG = "WebRtcAudioRecord";
+
+  // Default audio data format is PCM 16 bit per sample.
+  // Guaranteed to be supported by all devices.
+  private static final int BITS_PER_SAMPLE = 16;
+
+  // Requested size of each recorded buffer provided to the client.
+  private static final int CALLBACK_BUFFER_SIZE_MS = 10;
+
+  // Average number of callbacks per second.
+  private static final int BUFFERS_PER_SECOND = 1000 / CALLBACK_BUFFER_SIZE_MS;
+
+  // We ask for a native buffer size of BUFFER_SIZE_FACTOR * (minimum required
+  // buffer size). The extra space is allocated to guard against glitches under
+  // high load.
+  private static final int BUFFER_SIZE_FACTOR = 2;
+
+  // The AudioRecordJavaThread is allowed to wait for successful call to join()
+  // but the wait times out afther this amount of time.
+  private static final long AUDIO_RECORD_THREAD_JOIN_TIMEOUT_MS = 2000;
+
+  private static final int DEFAULT_AUDIO_SOURCE = getDefaultAudioSource();
+  private static int audioSource = DEFAULT_AUDIO_SOURCE;
+
+  private final long nativeAudioRecord;
+
+  private @Nullable WebRtcAudioEffects effects;
+
+  private ByteBuffer byteBuffer;
+  private ByteBuffer deviceByteBuffer;
+
+  private @Nullable AudioRecord audioRecord;
+  private @Nullable AudioRecord deviceAudioRecord;
+  private @Nullable AudioRecordThread audioThread;
+
+  private static volatile boolean microphoneMute;
+  private byte[] emptyBytes;
+
+  private int captureType;
+
+  private int requestedSampleRate = 48000;
+  private int requestedChannels = 1;
+
+  public static WebRtcAudioRecord Instance;
+
+  // Audio recording error handler functions.
+  public enum AudioRecordStartErrorCode {
+    AUDIO_RECORD_START_EXCEPTION,
+    AUDIO_RECORD_START_STATE_MISMATCH,
+  }
+
+  public interface WebRtcAudioRecordErrorCallback {
+    void onWebRtcAudioRecordInitError(String errorMessage);
+    void onWebRtcAudioRecordStartError(AudioRecordStartErrorCode errorCode, String errorMessage);
+    void onWebRtcAudioRecordError(String errorMessage);
+  }
+
+  private static @Nullable WebRtcAudioRecordErrorCallback errorCallback;
+
+  public static void setErrorCallback(WebRtcAudioRecordErrorCallback errorCallback) {
+    Logging.d(TAG, "Set error callback");
+    WebRtcAudioRecord.errorCallback = errorCallback;
+  }
+
+  /**
+   * Contains audio sample information. Object is passed using {@link
+   * WebRtcAudioRecord.WebRtcAudioRecordSamplesReadyCallback}
+   */
+  public static class AudioSamples {
     /** See {@link AudioRecord#getAudioFormat()} */
     private final int audioFormat;
     /** See {@link AudioRecord#getChannelCount()} */

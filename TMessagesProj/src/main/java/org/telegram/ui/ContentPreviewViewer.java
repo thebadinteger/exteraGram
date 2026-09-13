@@ -38,6 +38,9 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.badges.BadgesController;
+import com.exteragram.messenger.utils.system.VibratorUtils;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -256,6 +259,9 @@ public class ContentPreviewViewer {
         }
 
         default void setAsEmojiStatus(TLRPC.Document document, Integer until) {
+        }
+
+        default void setAsBadge(TLRPC.Document document) {
         }
 
         default boolean needCopy(TLRPC.Document document) {
@@ -934,6 +940,11 @@ public class ContentPreviewViewer {
                         actions.add(2);
                     }
                 }
+                if (BadgesController.INSTANCE.canChangeBadge()) {
+                    items.add(LocaleController.getString(R.string.SetAsBadge));
+                    icons.add(R.drawable.extera_outline);
+                    actions.add(77);
+                }
                 if (delegate.needCopy(currentDocument)) {
                     items.add(LocaleController.getString(R.string.CopyEmojiPreview));
                     icons.add(R.drawable.msg_copy);
@@ -973,6 +984,8 @@ public class ContentPreviewViewer {
                         delegate.setAsEmojiStatus(currentDocument, null);
                     } else if (action == 2) {
                         delegate.setAsEmojiStatus(null, null);
+                    } else if (action == 77) {
+                        delegate.setAsBadge(currentDocument);
                     } else if (action == 3) {
                         delegate.copyEmoji(currentDocument);
                     } else if (action == 4) {
@@ -1526,15 +1539,27 @@ public class ContentPreviewViewer {
 
     VibrationEffect vibrationEffect;
 
-    protected void runSmoothHaptic() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            final Vibrator vibrator = (Vibrator) containerView.getContext().getSystemService(Context.VIBRATOR_SERVICE);
-            if (vibrationEffect == null) {
-                long[] vibrationWaveFormDurationPattern = {0, 2};
-                vibrationEffect = VibrationEffect.createWaveform(vibrationWaveFormDurationPattern, -1);
+    public void runSmoothHaptic() {
+        if (ExteraConfig.getInAppVibration()) {
+            try {
+                if (Build.VERSION.SDK_INT >= 26) {
+                    if (this.vibrationEffect == null) {
+                        this.vibrationEffect = VibrationEffect.createWaveform(new long[]{0, 2}, -1);
+                    }
+                    VibratorUtils.vibrateEffect(this.vibrationEffect);
+                }
+            } catch (Exception unused) {
             }
-            vibrator.cancel();
-            vibrator.vibrate(vibrationEffect);
+        }
+    }
+
+    public void runLongPressHaptic(View view) {
+        if (!ExteraConfig.getInAppVibration() || view == null) {
+            return;
+        }
+        try {
+            view.performHapticFeedback(VibratorUtils.getType(0), 3);
+        } catch (Exception unused) {
         }
     }
 
@@ -1755,6 +1780,7 @@ public class ContentPreviewViewer {
             }
         };
         containerView.setFocusable(false);
+        this.containerView.setHapticFeedbackEnabled(ExteraConfig.getInAppVibration());
         windowView.addView(containerView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
         containerView.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_POINTER_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {

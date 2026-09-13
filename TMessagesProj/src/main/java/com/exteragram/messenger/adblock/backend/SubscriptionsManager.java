@@ -56,12 +56,30 @@ public class SubscriptionsManager {
         this.queue.postRunnable(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$initialize$1(runnable);
+                SubscriptionsManager.this.lambda$initialize$1(runnable);
             }
         });
     }
 
-    public void $r8$lambda$ex7K0DzJlEYCVNCVLClmUrbS_nY(AtomicInteger atomicInteger, List list, Runnable runnable, boolean z) {
+    public void lambda$initialize$1(final Runnable runnable) {
+        final List<FilterMetadata> subscriptions = getSubscriptions();
+        long jCurrentTimeMillis = System.currentTimeMillis();
+        final AtomicInteger atomicInteger = new AtomicInteger(0);
+        for (FilterMetadata filterMetadata : subscriptions) {
+            if (jCurrentTimeMillis >= filterMetadata.expires) {
+                lambda$subscribe$2(filterMetadata.url, new SubscriptionCallback() { 
+                    @Override // com.exteragram.messenger.adblock.backend.SubscriptionsManager.SubscriptionCallback
+                    public final void onComplete(boolean z) {
+                        SubscriptionsManager.$r8$lambda$ex7K0DzJlEYCVNCVLClmUrbS_nY(atomicInteger, subscriptions, runnable, z);
+                    }
+                });
+            } else if (atomicInteger.incrementAndGet() == subscriptions.size()) {
+                runnable.run();
+            }
+        }
+    }
+
+    public static void $r8$lambda$ex7K0DzJlEYCVNCVLClmUrbS_nY(AtomicInteger atomicInteger, List list, Runnable runnable, boolean z) {
         if (atomicInteger.incrementAndGet() == list.size()) {
             runnable.run();
         }
@@ -71,7 +89,7 @@ public class SubscriptionsManager {
         this.queue.postRunnable(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$subscribe$2(str, subscriptionCallback);
+                SubscriptionsManager.this.lambda$subscribe$2(str, subscriptionCallback);
             }
         });
     }
@@ -122,7 +140,7 @@ public class SubscriptionsManager {
         try {
             Response responseExecute = this.client.newCall(new Request.Builder().url(str).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15").build()).execute();
             try {
-                if (responseExecute.getIsSuccessful()) {
+                if (responseExecute.isSuccessful()) {
                     String strString = responseExecute.body().string();
                     String strExtractRedirect = extractRedirect(strString);
                     if (strExtractRedirect != null) {
@@ -266,7 +284,7 @@ public class SubscriptionsManager {
             this.expires = j;
         }
 
-        public static FilterMetadata fromJson(JSONObject jSONObject) {
+        public static FilterMetadata fromJson(JSONObject jSONObject) throws JSONException {
             return new FilterMetadata(jSONObject.getString("url"), jSONObject.getString("title"), jSONObject.getString("homepage"), jSONObject.getInt("rulesCount"), jSONObject.getLong("expires"));
         }
 

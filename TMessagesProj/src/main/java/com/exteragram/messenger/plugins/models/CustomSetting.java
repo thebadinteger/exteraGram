@@ -124,12 +124,12 @@ public final class CustomSetting extends SettingItem {
         }
 
         @Override // org.telegram.ui.Components.UItem.UItemFactory
-        public boolean getIsShadowValue() {
+        public boolean isShadow() {
             return this.isShadowValue;
         }
 
         @Override // org.telegram.ui.Components.UItem.UItemFactory
-        public boolean getIsClickableValue() {
+        public boolean isClickable() {
             return this.isClickableValue;
         }
     }

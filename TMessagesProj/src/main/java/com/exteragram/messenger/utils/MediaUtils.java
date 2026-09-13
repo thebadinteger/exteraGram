@@ -72,39 +72,12 @@ public abstract class MediaUtils {
     }
 
     private static void copyFile(File file, File file2) throws IOException {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            try {
-                FileOutputStream fileOutputStream = new FileOutputStream(file2);
-                try {
-                    byte[] bArr = new byte[1024];
-                    while (true) {
-                        int i = fileInputStream.read(bArr);
-                        if (i > 0) {
-                            fileOutputStream.write(bArr, 0, i);
-                        } else {
-                            fileOutputStream.close();
-                            fileInputStream.close();
-                            return;
-                        }
-                        try {
-                            fileInputStream.close();
-                        } catch (Throwable th) {
-                            th.addSuppressed(th);
-                        }
-                        throw th;
-                    }
-                } catch (Throwable th2) {
-                    try {
-                        fileOutputStream.close();
-                    } catch (Throwable th3) {
-                        th2.addSuppressed(th3);
-                    }
-                    throw th2;
-                }
-            } catch (Throwable th4) {
-                fileInputStream.close();
-                throw th4;
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             FileOutputStream fileOutputStream = new FileOutputStream(file2)) {
+            byte[] bArr = new byte[1024];
+            int i;
+            while ((i = fileInputStream.read(bArr)) > 0) {
+                fileOutputStream.write(bArr, 0, i);
             }
         } catch (IOException e) {
             file2.delete();

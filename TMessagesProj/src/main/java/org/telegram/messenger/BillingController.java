@@ -141,6 +141,46 @@ public class BillingController implements PurchasesUpdatedListener, BillingClien
         return currencyExpMap.getOrDefault(currency, 0);
     }
 
+    public String getTargetCurrency(int currentAccount, boolean isPremium) {
+        if (isPremium) {
+            return "USD";
+        }
+        return getCurrencyByPhone(UserConfig.getInstance(currentAccount).getClientPhone());
+    }
+
+    private String getCurrencyByPhone(String phone) {
+        if (android.text.TextUtils.isEmpty(phone)) {
+            return null;
+        }
+        String stripped = org.telegram.PhoneFormat.PhoneFormat.stripExceptNumbers(phone);
+        if (!android.text.TextUtils.isEmpty(stripped)) {
+            org.telegram.PhoneFormat.CallingCodeInfo info = org.telegram.PhoneFormat.PhoneFormat.getInstance().findCallingCodeInfo(stripped);
+            if (info != null && info.countries != null && !info.countries.isEmpty()) {
+                String countryCode = info.countries.get(0);
+                String defaultCountry = java.util.Locale.getDefault().getCountry();
+                if (!android.text.TextUtils.isEmpty(defaultCountry)) {
+                    for (String c : info.countries) {
+                        if (defaultCountry.equalsIgnoreCase(c)) {
+                            countryCode = c;
+                            break;
+                        }
+                    }
+                }
+                if (!android.text.TextUtils.isEmpty(countryCode) && countryCode.charAt(0) != '_') {
+                    try {
+                        java.util.Currency currency = java.util.Currency.getInstance(new java.util.Locale("", countryCode.toUpperCase(java.util.Locale.ROOT)));
+                        if (currency != null) {
+                            return currency.getCurrencyCode();
+                        }
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public void startConnection() {
         if (isReady()) {
             return;

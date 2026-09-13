@@ -46,7 +46,7 @@ public final class FeedConfig {
         Set<String> stringSet = sharedPreferences.getStringSet("excludedChannels", null);
         if (stringSet != null) {
             setEmptySet = new HashSet<>();
-            Iterator<T> it = stringSet.iterator();
+            Iterator<String> it = stringSet.iterator();
             while (it.hasNext()) {
                 Long longOrNull = StringsKt.toLongOrNull((String) it.next());
                 if (longOrNull != null) {
@@ -172,7 +172,7 @@ public final class FeedConfig {
         this.generation++;
         SharedPreferences.Editor editorEdit = this.preferences.edit();
         HashSet hashSet = new HashSet();
-        Iterator<T> it = updated.iterator();
+        Iterator<Long> it = updated.iterator();
         while (it.hasNext()) {
             hashSet.add(String.valueOf(((Number) it.next()).longValue()));
         }

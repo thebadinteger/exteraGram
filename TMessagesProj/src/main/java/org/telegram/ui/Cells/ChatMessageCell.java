@@ -4267,7 +4267,18 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 result = true;
             } else {
                 if (documentAttachType == DOCUMENT_ATTACH_TYPE_DOCUMENT) {
-                    if (x >= photoImage.getImageX() && x <= photoImage.getImageX() + backgroundWidth - dp(50) && y >= photoImage.getImageY() && y <= photoImage.getImageY() + photoImage.getImageHeight()) {
+                    float docH = photoImage.getImageHeight();
+                    if (docH <= 0) {
+                        docH = dp(54) + (docTitleLayout != null && docTitleLayout.getLineCount() > 1 ? (docTitleLayout.getLineCount() - 1) * dp(16) + dp(2) : 0);
+                    }
+                    int docLeft = (int) Math.min(photoImage.getImageX(), buttonX - dp(10));
+                    int docRight = (int) Math.max(photoImage.getImageX() + backgroundWidth - dp(20), buttonX + backgroundWidth - dp(20));
+                    int docTop = (int) Math.min(photoImage.getImageY(), buttonY - dp(10));
+                    int docBottom = (int) Math.max(photoImage.getImageY() + docH, buttonY + dp(44));
+                    if (currentMessageObject != null && com.exteragram.messenger.plugins.PluginsController.isPlugin(currentMessageObject) && captionLayout != null) {
+                        docBottom = (int) Math.max(docBottom, captionY + captionLayout.textHeight(transitionParams));
+                    }
+                    if (x >= docLeft && x <= docRight && y >= docTop && y <= docBottom) {
                         imagePressed = true;
                         result = true;
                     }
@@ -4312,23 +4323,26 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     playSoundEffect(SoundEffectConstants.CLICK);
                     didPressButton(true, true);
                     invalidate();
+                    result = true;
                 } else if (buttonPressed == 1) {
                     buttonPressed = 0;
                     playSoundEffect(SoundEffectConstants.CLICK);
-                    if (drawVideoImageButton) {
+                    if (drawVideoImageButton || (currentMessageObject != null && com.exteragram.messenger.plugins.PluginsController.isPlugin(currentMessageObject))) {
                         didClickedImage();
                     } else {
                         didPressButton(true, false);
                     }
                     invalidate();
+                    result = true;
                 } else if (miniButtonPressed == 1) {
                     miniButtonPressed = 0;
                     playSoundEffect(SoundEffectConstants.CLICK);
                     didPressMiniButton(true);
                     invalidate();
+                    result = true;
                 } else if (imagePressed) {
                     imagePressed = false;
-                    if (buttonState == -1 || buttonState == 1 && isRoundVideo || buttonState == 2 || buttonState == 3 || drawVideoImageButton) {
+                    if (buttonState == -1 || buttonState == 1 && isRoundVideo || buttonState == 2 || buttonState == 3 || drawVideoImageButton || (currentMessageObject != null && com.exteragram.messenger.plugins.PluginsController.isPlugin(currentMessageObject))) {
                         playSoundEffect(SoundEffectConstants.CLICK);
                         didClickedImage();
                     } else if (buttonState == 0) {
@@ -4336,6 +4350,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         didPressButton(true, false);
                     }
                     invalidate();
+                    result = true;
                 }
             }
         }
@@ -6035,8 +6050,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         } else if (currentMessageObject.type == MessageObject.TYPE_GEO || currentMessageObject.type == MessageObject.TYPE_POLL || currentMessageObject.type == MessageObject.TYPE_STORY || currentMessageObject.type == MessageObject.TYPE_STORY_MENTION) {
             delegate.didPressImage(this, lastTouchX, lastTouchY, false);
         } else if (documentAttachType == DOCUMENT_ATTACH_TYPE_DOCUMENT) {
-            if (buttonState == -1) {
+            if (buttonState == -1 || (currentMessageObject != null && com.exteragram.messenger.plugins.PluginsController.isPlugin(currentMessageObject))) {
                 delegate.didPressImage(this, lastTouchX, lastTouchY, false);
+            } else if (buttonState == 0 || buttonState == 2) {
+                didPressButton(true, false);
             }
         } else if (currentMessageObject.sponsoredMedia != null) {
             if (delegate != null) {
@@ -13977,7 +13994,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
             buttonY = dp(13) + namesOffset + mediaOffsetY + (captionAbove && captionLayout != null ? captionLayout.textHeight(transitionParams) : 0);
             radialProgress.setProgressRect(buttonX, buttonY, buttonX + dp(44), buttonY + dp(44));
-            photoImage.setImageCoords(buttonX - dp(10), buttonY - dp(10), photoImage.getImageWidth(), photoImage.getImageHeight());
+            int docH = dp(54) + (docTitleLayout != null && docTitleLayout.getLineCount() > 1 ? (docTitleLayout.getLineCount() - 1) * dp(16) + dp(2) : 0);
+            photoImage.setImageCoords(buttonX - dp(10), buttonY - dp(10), backgroundWidth - dp(20), docH);
         } else if (currentMessageObject.type == MessageObject.TYPE_CONTACT) {
             int x;
             if (currentMessageObject.isOutOwner()) {
@@ -18587,6 +18605,28 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
         }
         return messageObject.needDrawShareButton();
+    }
+
+    public boolean shouldHideShareButton(MessageObject messageObject, boolean z) {
+        return com.exteragram.messenger.ExteraConfig.getHideShareButton() || z;
+    }
+
+    public boolean isUserOnline(TLRPC.User user) {
+        if (user != null && !user.self && !user.bot && !MessagesController.isSupportUser(user)) {
+            TLRPC.UserStatus userStatus = user.status;
+            if (userStatus != null && userStatus.expires <= 0 && MessagesController.getInstance(this.currentAccount).onlinePrivacy.containsKey(Long.valueOf(user.id))) {
+                return true;
+            }
+            TLRPC.UserStatus userStatus2 = user.status;
+            if (userStatus2 != null && userStatus2.expires > ConnectionsManager.getInstance(this.currentAccount).getCurrentTime()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void drawAvatarWithOnlineStatus(Canvas canvas, ImageReceiver imageReceiver) {
+        imageReceiver.draw(canvas);
     }
 
     public boolean isInsideBackground(float x, float y) {

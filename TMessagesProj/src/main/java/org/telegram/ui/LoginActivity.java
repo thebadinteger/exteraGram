@@ -178,6 +178,9 @@ import org.telegram.ui.Components.LoadingDrawable;
 import org.telegram.ui.Components.LoginOrView;
 import org.telegram.ui.Components.OutlineTextContainerView;
 import org.telegram.ui.Components.Premium.GLIcon.GLIconRenderer;
+import org.telegram.messenger.utils.ViewOutlineProviderImpl;
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.utils.ui.UIUtil;
 import org.telegram.ui.Components.Premium.GLIcon.GLIconTextureView;
 import org.telegram.ui.Components.Premium.GLIcon.Icon3D;
 import org.telegram.ui.Components.Premium.StarParticlesView;
@@ -3155,8 +3158,8 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 ConnectionsManager.getInstance(currentAccount).cleanup(false);
 
                 TLRPC.TL_auth_sendCode sendCode = new TLRPC.TL_auth_sendCode();
-                sendCode.api_hash = BuildVars.APP_HASH;
-                sendCode.api_id = BuildVars.APP_ID;
+                sendCode.api_hash = BuildVars.getExteraAppHash();
+                sendCode.api_id = BuildVars.getExteraAppId();
                 sendCode.phone_number = phone;
                 sendCode.settings = settings;
                 req = sendCode;
@@ -4060,7 +4063,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                                         body.append("Wi-Fi: ").append(AndroidUtilities.isWifiEnabled(context)).append("\n");
                                         body.append("Airplane Mode: ").append(AndroidUtilities.isInAirplaneMode(context)).append("\n");
                                         body.append("\n");
-                                        body.append("App: ").append(BuildVars.APP_ID).append("\n");
+                                        body.append("App: ").append(BuildVars.getExteraAppId()).append("\n");
                                         final String versionType;
                                         switch (pInfo.versionCode % 10) {
                                             case 1:
@@ -7826,7 +7829,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                     super.invalidate(l, t, r, b);
                 }
             };
-            avatarImage.setRoundRadius(AndroidUtilities.dp(64));
+            avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(78.0f));
             avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_REGISTER);
             avatarDrawable.setInfo(5, null, null);
             avatarImage.setImageDrawable(avatarDrawable);
@@ -7840,7 +7843,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 protected void onDraw(Canvas canvas) {
                     if (avatarImage != null && avatarProgressView.getVisibility() == VISIBLE) {
                         paint.setAlpha((int) (0x55 * avatarImage.getImageReceiver().getCurrentAlpha() * avatarProgressView.getAlpha()));
-                        canvas.drawCircle(getMeasuredWidth() / 2.0f, getMeasuredHeight() / 2.0f, getMeasuredWidth() / 2.0f, paint);
+                        canvas.drawRoundRect(0.0f, 0.0f, getMeasuredWidth(), getMeasuredHeight(), ExteraConfig.getAvatarCorners(getMeasuredWidth(), true), ExteraConfig.getAvatarCorners(getMeasuredWidth(), true), paint);
                     }
                 }
             };
@@ -8473,6 +8476,12 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         radialProgressView.setProgressColor(Theme.getColor(Theme.key_chats_actionBackground));
 
         floatingButton.updateColors();
+        floatingButton.setBackground(UIUtil.createFabBackground(56, Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+        if (ExteraConfig.getSquareFab()) {
+            floatingButton.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(0, AndroidUtilities.dp(16.0f)));
+        } else {
+            floatingButton.setOutlineProvider(ViewOutlineProviderImpl.BOUNDS_OVAL);
+        }
         floatingButtonIcon.setColor(Theme.getColor(Theme.key_chats_actionIcon));
         floatingButtonIcon.setBackgroundColor(Theme.getColor(Theme.key_chats_actionBackground));
 
@@ -9968,7 +9977,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                             body.append("Wi-Fi: ").append(AndroidUtilities.isWifiEnabled(getContext())).append("\n");
                             body.append("Airplane Mode: ").append(AndroidUtilities.isInAirplaneMode(getContext())).append("\n");
                             body.append("\n");
-                            body.append("App: ").append(BuildVars.APP_ID).append("\n");
+                            body.append("App: ").append(BuildVars.getExteraAppId()).append("\n");
                             final String versionType;
                             switch (pInfo.versionCode % 10) {
                                 case 1:

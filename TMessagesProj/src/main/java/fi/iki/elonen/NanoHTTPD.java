@@ -3,7 +3,6 @@ package fi.iki.elonen;
 import android.support.v4.media.session.MediaSessionCompat$$ExternalSyntheticThrowCCEIfNotNull0;
 import com.android.dx.io.Opcodes;
 import com.google.android.gms.cast.MediaError;
-import j$.util.DesugarTimeZone;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -43,8 +42,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLException;
-import okhttp3.internal.http.HttpStatusCodesKt;
 import okhttp3.internal.url._UrlKt;
+
 
 public abstract class NanoHTTPD {
     protected AsyncRunner asyncRunner;
@@ -76,7 +75,7 @@ public abstract class NanoHTTPD {
     }
 
     public interface ServerSocketFactory {
-        ServerSocket create();
+        ServerSocket create() throws IOException;
     }
 
     public interface TempFileManager {
@@ -104,41 +103,25 @@ public abstract class NanoHTTPD {
         }
 
         @Override // java.lang.Runnable
-        public void run() throws Throwable {
+        public void run() {
             OutputStream outputStream = null;
             try {
                 try {
-                    OutputStream outputStream2 = this.acceptSocket.getOutputStream();
-                    try {
-                        HTTPSession hTTPSession = NanoHTTPD.this.new HTTPSession(NanoHTTPD.this.tempFileManagerFactory.create(), this.inputStream, outputStream2, this.acceptSocket.getInetAddress());
-                        while (!this.acceptSocket.isClosed()) {
-                            hTTPSession.execute();
-                        }
-                        NanoHTTPD.safeClose(outputStream2);
-                    } catch (Exception e) {
-                        e = e;
-                        outputStream = outputStream2;
-                        if ((!(e instanceof SocketException) || !"NanoHttpd Shutdown".equals(e.getMessage())) && !(e instanceof SocketTimeoutException)) {
-                            NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", (Throwable) e);
-                        }
-                        NanoHTTPD.safeClose(outputStream);
-                    } catch (Throwable th) {
-                        th = th;
-                        outputStream = outputStream2;
-                        NanoHTTPD.safeClose(outputStream);
-                        NanoHTTPD.safeClose(this.inputStream);
-                        NanoHTTPD.safeClose(this.acceptSocket);
-                        NanoHTTPD.this.asyncRunner.closed(this);
-                        throw th;
+                    outputStream = this.acceptSocket.getOutputStream();
+                    HTTPSession hTTPSession = NanoHTTPD.this.new HTTPSession(NanoHTTPD.this.tempFileManagerFactory.create(), this.inputStream, outputStream, this.acceptSocket.getInetAddress());
+                    while (!this.acceptSocket.isClosed()) {
+                        hTTPSession.execute();
                     }
-                } catch (Exception e2) {
-                    e = e2;
+                } catch (Exception e) {
+                    if ((!(e instanceof SocketException) || !"NanoHttpd Shutdown".equals(e.getMessage())) && !(e instanceof SocketTimeoutException)) {
+                        NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", (Throwable) e);
+                    }
                 }
+            } finally {
+                NanoHTTPD.safeClose(outputStream);
                 NanoHTTPD.safeClose(this.inputStream);
                 NanoHTTPD.safeClose(this.acceptSocket);
                 NanoHTTPD.this.asyncRunner.closed(this);
-            } catch (Throwable th2) {
-                th = th2;
             }
         }
     }
@@ -245,7 +228,7 @@ public abstract class NanoHTTPD {
 
     public static class DefaultServerSocketFactory implements ServerSocketFactory {
         @Override // fi.iki.elonen.NanoHTTPD.ServerSocketFactory
-        public ServerSocket create() {
+        public ServerSocket create() throws IOException {
             return new ServerSocket();
         }
     }
@@ -434,7 +417,7 @@ public abstract class NanoHTTPD {
                                     map.clear();
                                 }
                                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bArr, 0, this.rlen)));
-                                HashMap map2 = new HashMap();
+                                Map<String, String> map2 = new HashMap<>();
                                 decodeHeader(bufferedReader, map2, this.parms, this.headers);
                                 String str = this.remoteIp;
                                 if (str != null) {
@@ -484,8 +467,6 @@ public abstract class NanoHTTPD {
                         }
                     } catch (SocketException e3) {
                         throw e3;
-                    } catch (SocketTimeoutException e4) {
-                        throw e4;
                     }
                 } catch (SSLException e5) {
                     NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "SSL PROTOCOL FAILURE: " + e5.getMessage()).send(this.outputStream);
@@ -604,8 +585,9 @@ public abstract class NanoHTTPD {
             FOUND(302, "Found"),
             REDIRECT_SEE_OTHER(303, "See Other"),
             NOT_MODIFIED(304, "Not Modified"),
-            TEMPORARY_REDIRECT(HttpStatusCodesKt.HTTP_TEMP_REDIRECT, "Temporary Redirect"),
+            TEMPORARY_REDIRECT(307, "Temporary Redirect"),
             BAD_REQUEST(MediaError.DetailedErrorCode.MANIFEST_UNKNOWN, "Bad Request"),
+
             UNAUTHORIZED(401, "Unauthorized"),
             FORBIDDEN(403, "Forbidden"),
             NOT_FOUND(404, "Not Found"),
@@ -660,13 +642,13 @@ public abstract class NanoHTTPD {
                 if (i2 == 0) {
                     return;
                 }
-                ((FilterOutputStream) this).out.write(String.format("%x\r\n", Integer.valueOf(i2)).getBytes());
-                ((FilterOutputStream) this).out.write(bArr, i, i2);
-                ((FilterOutputStream) this).out.write("\r\n".getBytes());
+                out.write(String.format("%x\r\n", Integer.valueOf(i2)).getBytes());
+                out.write(bArr, i, i2);
+                out.write("\r\n".getBytes());
             }
 
             public void finish() throws IOException {
-                ((FilterOutputStream) this).out.write("0\r\n\r\n".getBytes());
+                out.write("0\r\n\r\n".getBytes());
             }
         }
 
@@ -718,7 +700,7 @@ public abstract class NanoHTTPD {
 
         public void send(OutputStream outputStream) {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-            simpleDateFormat.setTimeZone(DesugarTimeZone.getTimeZone("GMT"));
+            simpleDateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
             try {
                 if (this.status == null) {
                     throw new Error("sendResponse(): Status can't be null.");

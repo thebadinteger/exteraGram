@@ -132,7 +132,7 @@ public final /* data */ class SecurityPolicy {
 
         @JvmStatic
         public final Builder builder() {
-            return new Builder(null, 1, 0 == true ? 1 : 0);
+            return new Builder(null, 1, null);
         }
     }
 

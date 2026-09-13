@@ -27,7 +27,7 @@ import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 
 public class RolesActivity extends BasePreferencesActivity implements NotificationCenter.NotificationCenterDelegate {
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public boolean needHideTitle() {
         return true;
     }
@@ -44,18 +44,18 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
         super.onFragmentDestroy();
     }
 
-    @Override 
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
     public void didReceivedNotification(int i, int i2, Object... objArr) {
         if (i == NotificationCenter.rolesUpdated) {
             this.listView.adapter.update(true);
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity, org.telegram.ui.ActionBar.BaseFragment
     public View createView(Context context) {
         View viewCreateView = super.createView(context);
         this.actionBar.createMenu().addItem(0, R.drawable.msg_add);
-        this.actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { 
+        this.actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity.1
             @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
             public void onItemClick(int i) {
                 if (i == -1) {
@@ -69,20 +69,20 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
         return viewCreateView;
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public String getTitle() {
         return LocaleController.getString(R.string.Roles);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
         arrayList.add(UItem.asTopView(getTitle(), LocaleController.getString(R.string.RolesInfo), "exteraGramPlaceholders", "🎭"));
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.Suggestions)));
         for (final Role role : AiController.getInstance().getSuggestedRoles()) {
-            arrayList.add(RoleCell.Factory.asRoleCell(role, new View.OnClickListener() { 
+            arrayList.add(RoleCell.Factory.asRoleCell(role, new View.OnClickListener() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda4
                 @Override // android.view.View.OnClickListener
                 public final void onClick(View view) {
-                    this.f$0.lambda$fillItems$0(role, view);
+                    RolesActivity.this.lambda$fillItems$0(role, view);
                 }
             }));
         }
@@ -93,21 +93,79 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
         }
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.Roles)));
         for (final Role role2 : roles) {
-            arrayList.add(RoleCell.Factory.asRoleCell(role2, new View.OnClickListener() { 
+            arrayList.add(RoleCell.Factory.asRoleCell(role2, new View.OnClickListener() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda5
                 @Override // android.view.View.OnClickListener
                 public final void onClick(View view) {
-                    this.f$0.lambda$fillItems$1(role2, view);
+                    RolesActivity.this.lambda$fillItems$1(role2, view);
                 }
             }));
         }
     }
 
-    public void lambda$onLongClick$3(Role role) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$fillItems$0(Role role, View view) {
+        selectRole(role);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$fillItems$1(Role role, View view) {
+        selectRole(role);
+    }
+
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
+    public void onClick(UItem uItem, View view, int i, float f, float f2) {
+        Object obj = uItem.object;
+        if (obj instanceof Role) {
+            Role role = (Role) obj;
+            if (role.isSuggestion()) {
+                showRolePreview(role);
+            } else {
+                lambda$onLongClick$2(role);
+            }
+        }
+    }
+
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
+    public boolean onLongClick(UItem uItem, View view, int i, float f, float f2) {
+        if (uItem == null) {
+            return false;
+        }
+        Object obj = uItem.object;
+        if (!(obj instanceof Role)) {
+            return false;
+        }
+        final Role role = (Role) obj;
+        if (role.isSuggestion()) {
+            return false;
+        }
+        ItemOptions.makeOptions(this, view).add(R.drawable.msg_edit, LocaleController.getString(R.string.Edit), new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda0
+            @Override // java.lang.Runnable
+            public final void run() {
+                RolesActivity.this.lambda$onLongClick$2(role);
+            }
+        }).add(R.drawable.msg_copy, LocaleController.getString(R.string.Copy), new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda1
+            @Override // java.lang.Runnable
+            public final void run() {
+                RolesActivity.this.lambda$onLongClick$3(role);
+            }
+        }).add(R.drawable.msg_delete, (CharSequence) LocaleController.getString(R.string.Delete), true, new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda2
+            @Override // java.lang.Runnable
+            public final void run() {
+                RolesActivity.this.lambda$onLongClick$4(role);
+            }
+        }).setScrimViewBackground(this.listView.getClipBackground(view)).setGravity(LocaleController.isRTL ? 3 : 5).show();
+        return true;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onLongClick$3(Role role) {
         if (AndroidUtilities.addToClipboard(role.getName() + "\n" + role.getPrompt())) {
             BulletinFactory.of(this).createCopyBulletin(LocaleController.getString(R.string.TextCopied)).show();
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: confirmDeleteRole, reason: merged with bridge method [inline-methods] */
     public void lambda$onLongClick$4(final Role role) {
         if (role == null || getParentActivity() == null) {
             return;
@@ -115,10 +173,10 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
         builder.setTitle(LocaleController.getString(R.string.Delete));
         builder.setMessage(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.DeleteRoleInfo, role.getName())));
-        builder.setPositiveButton(LocaleController.getString(R.string.Delete), new AlertDialog.OnButtonClickListener() { 
+        builder.setPositiveButton(LocaleController.getString(R.string.Delete), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda6
             @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
             public final void onClick(AlertDialog alertDialog, int i) {
-                this.f$0.lambda$confirmDeleteRole$5(role, alertDialog, i);
+                RolesActivity.this.lambda$confirmDeleteRole$5(role, alertDialog, i);
             }
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
@@ -130,7 +188,53 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
         }
     }
 
-    public Boolean lambda$showRoleAlert$6(Role role, String str, String str2, Long l) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$confirmDeleteRole$5(Role role, AlertDialog alertDialog, int i) {
+        deleteRole(role);
+    }
+
+    private void deleteRole(Role role) {
+        boolean z = role != null && role.isSelected();
+        if (role == null || !AiController.getInstance().removeRole(role)) {
+            return;
+        }
+        if (z) {
+            AiConfig.setSelectedAiRole(AiController.getInstance().getSuggestedRoles().get(0));
+        }
+        this.listView.adapter.update(true);
+    }
+
+    private void selectRole(Role role) {
+        if (role.isSelected()) {
+            return;
+        }
+        AiConfig.setSelectedAiRole(role);
+        this.listView.adapter.update(true);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: showRoleAlert, reason: merged with bridge method [inline-methods] */
+    public void lambda$onLongClick$2(final Role role) {
+        Activity parentActivity = getParentActivity();
+        if (parentActivity == null) {
+            return;
+        }
+        AIEditorAlert.CreateAiStyleAlert createAiStyleAlert = new AIEditorAlert.CreateAiStyleAlert(parentActivity, getResourceProvider());
+        String prompt = _UrlKt.FRAGMENT_ENCODE_SET;
+        String name = role != null ? role.getName() : _UrlKt.FRAGMENT_ENCODE_SET;
+        if (role != null) {
+            prompt = role.getPrompt();
+        }
+        createAiStyleAlert.setLocalStyle(name, prompt, role != null ? role.getEmojiId() : 0L, (role == null || role.isSuggestion()) ? false : true, 64, 1024, new Utilities.Callback3Return() { // from class: com.exteragram.messenger.ai.ui.activities.RolesActivity$$ExternalSyntheticLambda3
+            @Override // org.telegram.messenger.Utilities.Callback3Return
+            public final Object run(Object obj, Object obj2, Object obj3) {
+                return RolesActivity.this.lambda$showRoleAlert$6(role, (String) obj, (String) obj2, (Long) obj3);
+            }
+        }).show();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ Boolean lambda$showRoleAlert$6(Role role, String str, String str2, Long l) {
         boolean zAddRole;
         Role emojiId = new Role(str, str2).setEmojiId(l.longValue());
         boolean z = role != null && role.isSelected();
@@ -143,7 +247,7 @@ public class RolesActivity extends BasePreferencesActivity implements Notificati
             if (z) {
                 AiConfig.setSelectedAiRole(emojiId);
             }
-            getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.rolesUpdated, new Object[0]);
+            getNotificationCenter().postNotificationNameOnUIThread(NotificationCenter.rolesUpdated, new Object[0]);
         }
         return Boolean.valueOf(zAddRole);
     }

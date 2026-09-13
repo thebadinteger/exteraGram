@@ -1,3 +1,51 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package androidx.recyclerview.widget;
+
+import android.text.TextUtils;
+import android.util.Log;
+
+import androidx.core.util.Pools;
+
+import org.telegram.messenger.BuildVars;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Helper class that can enqueue and process adapter update operations.
+ * <p>
+ * To support animations, RecyclerView presents an older version the Adapter to best represent
+ * previous state of the layout. Sometimes, this is not trivial when items are removed that were
+ * not laid out, in which case, RecyclerView has no way of providing that item's view for
+ * animations.
+ * <p>
+ * AdapterHelper creates an UpdateOp for each adapter data change then pre-processes them. During
+ * pre processing, AdapterHelper finds out which UpdateOps can be deferred to second layout pass
+ * and which cannot. For the UpdateOps that cannot be deferred, AdapterHelper will change them
+ * according to previously deferred operation and dispatch them before the first layout pass. It
+ * also takes care of updating deferred UpdateOps since order of operations is changed by this
+ * process.
+ * <p>
+ * Although operations may be forwarded to LayoutManager in different orders, resulting data set
+ * is guaranteed to be the consistent.
+ */
 class AdapterHelper implements OpReorderer.Callback {
 
     static final int POSITION_TYPE_INVISIBLE = 0;

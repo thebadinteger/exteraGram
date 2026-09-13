@@ -61,7 +61,7 @@ public class FilesMigrationService extends Service {
         Notification notification = new Notification.Builder(this, NotificationsController.OTHER_NOTIFICATIONS_CHANNEL)
                 .setContentTitle(getText(R.string.MigratingFiles))
                 .setAutoCancel(false)
-                .setSmallIcon(R.drawable.notification)
+                .setSmallIcon(com.exteragram.messenger.icons.IconManager.getNotificationSystemIcon())
                 .build();
 
         isRunning = true;

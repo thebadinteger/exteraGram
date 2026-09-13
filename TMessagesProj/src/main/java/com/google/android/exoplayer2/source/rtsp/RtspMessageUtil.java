@@ -1,4 +1,157 @@
-public static ImmutableList<String> serializeResponse(RtspResponse response) {
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.source.rtsp;
+
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_ANNOUNCE;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_DESCRIBE;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_GET_PARAMETER;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_OPTIONS;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_PAUSE;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_PLAY;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_PLAY_NOTIFY;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_RECORD;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_REDIRECT;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_SETUP;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_SET_PARAMETER;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_TEARDOWN;
+import static com.google.android.exoplayer2.source.rtsp.RtspRequest.METHOD_UNSET;
+import static com.google.android.exoplayer2.util.Assertions.checkArgument;
+import static com.google.android.exoplayer2.util.Assertions.checkNotNull;
+import static com.google.common.base.Strings.nullToEmpty;
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
+
+import android.net.Uri;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ParserException;
+import com.google.android.exoplayer2.util.Util;
+import com.google.common.base.Ascii;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/** Utility methods for RTSP messages. */
+/* package */ final class RtspMessageUtil {
+  /** Represents a RTSP Session header (RFC2326 Section 12.37). */
+  public static final class RtspSessionHeader {
+    /** The session ID. */
+    public final String sessionId;
+    /**
+     * The session timeout, measured in milliseconds, {@link #DEFAULT_RTSP_TIMEOUT_MS} if not
+     * specified in the Session header.
+     */
+    public final long timeoutMs;
+
+    /** Creates a new instance. */
+    public RtspSessionHeader(String sessionId, long timeoutMs) {
+      this.sessionId = sessionId;
+      this.timeoutMs = timeoutMs;
+    }
+  }
+
+  /** Wraps username and password for authentication purposes. */
+  public static final class RtspAuthUserInfo {
+    /** The username. */
+    public final String username;
+    /** The password. */
+    public final String password;
+
+    /** Creates a new instance. */
+    public RtspAuthUserInfo(String username, String password) {
+      this.username = username;
+      this.password = password;
+    }
+  }
+
+  /** The default timeout, in milliseconds, defined for RTSP (RFC2326 Section 12.37). */
+  public static final long DEFAULT_RTSP_TIMEOUT_MS = 60_000;
+
+  // Status line pattern, see RFC2326 Section 6.1.
+  private static final Pattern REQUEST_LINE_PATTERN = Pattern.compile("([A-Z_]+) (.*) RTSP/1\\.0");
+
+  // Status line pattern, see RFC2326 Section 7.1.
+  private static final Pattern STATUS_LINE_PATTERN = Pattern.compile("RTSP/1\\.0 (\\d+) (.+)");
+
+  // Content length header pattern, see RFC2326 Section 12.14.
+  private static final Pattern CONTENT_LENGTH_HEADER_PATTERN =
+      Pattern.compile("Content-Length:\\s?(\\d+)", CASE_INSENSITIVE);
+
+  // Session header pattern, see RFC2326 Sections 3.4 and 12.37.
+  private static final Pattern SESSION_HEADER_PATTERN =
+      Pattern.compile("([\\w$\\-_.+]+)(?:;\\s?timeout=(\\d+))?");
+
+  // WWW-Authenticate header pattern, see RFC2068 Sections 14.46 and RFC2069.
+  private static final Pattern WWW_AUTHENTICATION_HEADER_DIGEST_PATTERN =
+      Pattern.compile(
+          "Digest realm=\"([^\"\\x00-\\x08\\x0A-\\x1f\\x7f]+)\""
+              + ",\\s?(?:domain=\"(.+)\""
+              + ",\\s?)?nonce=\"([^\"\\x00-\\x08\\x0A-\\x1f\\x7f]+)\""
+              + "(?:,\\s?opaque=\"([^\"\\x00-\\x08\\x0A-\\x1f\\x7f]+)\")?");
+  // WWW-Authenticate header pattern, see RFC2068 Section 11.1 and RFC2069.
+  private static final Pattern WWW_AUTHENTICATION_HEADER_BASIC_PATTERN =
+      Pattern.compile("Basic realm=\"([^\"\\x00-\\x08\\x0A-\\x1f\\x7f]+)\"");
+
+  private static final String RTSP_VERSION = "RTSP/1.0";
+  private static final String LF = new String(new byte[] {Ascii.LF});
+  private static final String CRLF = new String(new byte[] {Ascii.CR, Ascii.LF});
+
+  /**
+   * Serializes an {@link RtspRequest} to an {@link ImmutableList} of strings.
+   *
+   * <p>The {@link RtspRequest} must include the {@link RtspHeaders#CSEQ} header, or this method
+   * throws {@link IllegalArgumentException}.
+   *
+   * @param request The {@link RtspRequest}.
+   * @return A list of the lines of the {@link RtspRequest}, without line terminators (CRLF).
+   */
+  public static ImmutableList<String> serializeRequest(RtspRequest request) {
+    checkArgument(request.headers.get(RtspHeaders.CSEQ) != null);
+
+    ImmutableList.Builder<String> builder = new ImmutableList.Builder<>();
+    // Request line.
+    builder.add(
+        Util.formatInvariant(
+            "%s %s %s", toMethodString(request.method), request.uri, RTSP_VERSION));
+
+    ImmutableListMultimap<String, String> headers = request.headers.asMultiMap();
+    for (String headerName : headers.keySet()) {
+      ImmutableList<String> headerValuesForName = headers.get(headerName);
+      for (int i = 0; i < headerValuesForName.size(); i++) {
+        builder.add(Util.formatInvariant("%s: %s", headerName, headerValuesForName.get(i)));
+      }
+    }
+    // Empty line after headers.
+    builder.add("");
+    builder.add(request.messageBody);
+    return builder.build();
+  }
+
+  /**
+   * Serializes an {@link RtspResponse} to an {@link ImmutableList} of strings.
+   *
+   * <p>The {@link RtspResponse} must include the {@link RtspHeaders#CSEQ} header, or this method
+   * throws {@link IllegalArgumentException}.
+   *
+   * @param response The {@link RtspResponse}.
+   * @return A list of the lines of the {@link RtspResponse}, without line terminators (CRLF).
+   */
+  public static ImmutableList<String> serializeResponse(RtspResponse response) {
     checkArgument(response.headers.get(RtspHeaders.CSEQ) != null);
 
     ImmutableList.Builder<String> builder = new ImmutableList.Builder<>();

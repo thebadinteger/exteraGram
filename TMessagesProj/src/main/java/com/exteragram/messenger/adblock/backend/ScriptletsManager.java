@@ -123,7 +123,7 @@ public class ScriptletsManager {
         this.queue.postRunnable(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$download$1(downloadCallback);
+                ScriptletsManager.this.lambda$download$1(downloadCallback);
             }
         });
     }
@@ -131,13 +131,13 @@ public class ScriptletsManager {
     public /* synthetic */ void lambda$download$1(final DownloadCallback downloadCallback) {
         Map<String, ScriptletInfo> map = SCRIPTLETS_MAP;
         final int size = map.size();
-        final int i = 0;
+        int i = 0;
         for (Map.Entry<String, ScriptletInfo> entry : map.entrySet()) {
             String key = entry.getKey();
             try {
                 Response responseExecute = this.client.newCall(new Request.Builder().url("https://raw.githubusercontent.com/gorhill/uBlock/master/src/web_accessible_resources/" + key).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15").build()).execute();
                 try {
-                    if (responseExecute.getIsSuccessful()) {
+                    if (responseExecute.isSuccessful()) {
                         String strEncodeToString = Base64.encodeToString(responseExecute.body().bytes(), 2);
                         synchronized (this.lock) {
                             try {
@@ -165,10 +165,11 @@ public class ScriptletsManager {
                     responseExecute.close();
                     i++;
                     if (downloadCallback != null) {
+                        final int progress = i;
                         AndroidUtilities.runOnUIThread(new Runnable() { 
                             @Override // java.lang.Runnable
                             public final void run() {
-                                downloadCallback.onProgress(i, size);
+                                downloadCallback.onProgress(progress, size);
                             }
                         });
                     }

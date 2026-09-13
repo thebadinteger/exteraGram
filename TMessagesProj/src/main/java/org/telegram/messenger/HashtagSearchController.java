@@ -238,6 +238,9 @@ public class HashtagSearchController {
                 TLRPC.messages_Messages messages = (TLRPC.messages_Messages) res;
                 ArrayList<MessageObject> messageObjects = new ArrayList<>();
                 for (TLRPC.Message msg : messages.messages) {
+                    if (com.exteragram.messenger.utils.chats.ChatUtils.hasRestrictionReason(msg.restriction_reason, "terms")) {
+                        continue;
+                    }
                     MessageObject obj = new MessageObject(currentAccount, msg, null, null, null, null, null, true, true, 0, false, false, false, searchType);
                     if (obj.hasValidGroupId()) {
                         obj.isPrimaryGroupMessage = true;

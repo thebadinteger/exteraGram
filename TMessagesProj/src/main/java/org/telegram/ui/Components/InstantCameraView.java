@@ -67,6 +67,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.graphics.ColorUtils;
 
+import com.exteragram.messenger.camera.InstantCameraZoomSlider;
 import com.google.android.exoplayer2.ExoPlayer;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -182,6 +183,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     private Size aspectRatio = SharedConfig.roundCamera16to9 ? new Size(16, 9) : new Size(4, 3);
     private TextureView textureView;
     private BackupImageView textureOverlayView;
+    private InstantCameraZoomSlider zoomSlider;
     private final boolean useCamera2 = SharedConfig.isUsingCamera2(currentAccount);
     private CameraSession cameraSession;
     private boolean bothCameras;
@@ -427,6 +429,19 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         };
         addView(textureOverlayView, new LayoutParams(AndroidUtilities.roundPlayingMessageSize, AndroidUtilities.roundPlayingMessageSize, Gravity.CENTER));
 
+        zoomSlider = new InstantCameraZoomSlider(getContext(), resourcesProvider);
+        zoomSlider.setOnCameraZoomChangeListener((zoom, isFinal) -> {
+            if (useCamera2) {
+                if (camera2SessionCurrent != null) {
+                    camera2SessionCurrent.setZoom(Utilities.clamp(zoom, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom()));
+                }
+            } else if (cameraSession != null) {
+                cameraSession.setZoom(zoom);
+            }
+        });
+        zoomSlider.setOpenAlpha(0f);
+        addView(zoomSlider, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+
         setVisibilityFromPause = false;
         setVisibility(INVISIBLE);
     }
@@ -593,6 +608,9 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     }
 
     public void destroy(boolean async) {
+        if (zoomSlider != null) {
+            zoomSlider.unbindSession();
+        }
         if (useCamera2) {
             for (int a = 0; a < camera2Sessions.length; ++a) {
                 if (camera2Sessions[a] != null) {
@@ -746,6 +764,13 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
 
         if (!initCamera()) {
             return;
+        }
+        if (zoomSlider != null) {
+            if (useCamera2) {
+                zoomSlider.bindSession(camera2SessionCurrent);
+            } else {
+                zoomSlider.bindSession(cameraSession, 0f);
+            }
         }
         if (MediaController.getInstance().getPlayingMessageObject() != null) {
             if (MediaController.getInstance().getPlayingMessageObject().isVideo() || MediaController.getInstance().getPlayingMessageObject().isRoundVideo()) {

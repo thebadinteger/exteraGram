@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.FrameLayout;
 import androidx.core.content.ContextCompat;
-import androidx.mediarouter.media.MediaRouteProviderProtocol;
 import com.exteragram.messenger.api.dto.NowPlayingInfoDTO;
 import com.exteragram.messenger.api.model.NowPlayingServiceType;
 import com.exteragram.messenger.nowplaying.NowPlayingController;
@@ -39,7 +38,7 @@ import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
 
-@Metadata(d1 = {"\u0000j\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0004\n\u0002\u0010\b\n\u0000\n\u0002\u0010\u0007\n\u0002\b\u0004\n\u0002\u0010\u000b\n\u0002\b\u0004\u0018\u00002\u00020\u0001:\u0001)B\u0007¢\u0006\u0004\b\u0002\u0010\u0003J\u0010\u0010\u000f\u001a\u00020\u00102\u0006\u0010\u0011\u001a\u00020\u0012H\u0016J(\u0010\u0013\u001a\u00020\u00142\u0016\u0010\u0015\u001a\u0012\u0012\u0004\u0012\u00020\u00170\u0016j\b\u0012\u0004\u0012\u00020\u0017`\u00182\u0006\u0010\u0019\u001a\u00020\u001aH\u0002J0\u0010\u001b\u001a\u00020\u00142\u0006\u0010\u001c\u001a\u00020\u00172\u0006\u0010\u001d\u001a\u00020\u00102\u0006\u0010\u001e\u001a\u00020\u001f2\u0006\u0010 \u001a\u00020!2\u0006\u0010\"\u001a\u00020!H\u0002J\u0010\u0010$\u001a\u00020\u00142\u0006\u0010%\u001a\u00020&H\u0002J\u0010\u0010'\u001a\u00020\u00142\u0006\u0010(\u001a\u00020&H\u0002R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082.¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082.¢\u0006\u0002\n\u0000R\u0010\u0010\b\u001a\u0004\u0018\u00010\tX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\tX\u0082\u000e¢\u0006\u0002\n\u0000R\u0010\u0010\u000b\u001a\u0004\u0018\u00010\fX\u0082\u000e¢\u0006\u0002\n\u0000R\u0010\u0010\r\u001a\u0004\u0018\u00010\u000eX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010#\u001a\u00020\u001fX\u0082\u000e¢\u0006\u0002\n\u0000¨\u0006*"}, d2 = {"Lcom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity;", "Lorg/telegram/ui/ActionBar/BaseFragment;", "<init>", "()V", "nowPlayingEdit", "Lorg/telegram/ui/Cells/EditTextCell;", "listView", "Lorg/telegram/ui/Components/UniversalRecyclerView;", "initialState", "Lcom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity$NowPlayingState;", "currentState", "doneButtonDrawable", "Lorg/telegram/ui/Components/CrossfadeDrawable;", "doneButton", "Lorg/telegram/ui/ActionBar/ActionBarMenuItem;", "createView", "Landroid/view/View;", "context", "Landroid/content/Context;", "fillItems", _UrlKt.FRAGMENT_ENCODE_SET, "items", "Ljava/util/ArrayList;", "Lorg/telegram/ui/Components/UItem;", "Lkotlin/collections/ArrayList;", "adapter", "Lorg/telegram/ui/Components/UniversalAdapter;", "onClick", "item", "view", "position", _UrlKt.FRAGMENT_ENCODE_SET, "x", _UrlKt.FRAGMENT_ENCODE_SET, "y", "shiftDp", "processDone", MediaRouteProviderProtocol.SERVICE_DATA_ERROR, _UrlKt.FRAGMENT_ENCODE_SET, "checkDone", "animated", "NowPlayingState", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
+@Metadata(d1 = {"\u0000j\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0004\n\u0002\u0010\b\n\u0000\n\u0002\u0010\u0007\n\u0002\b\u0004\n\u0002\u0010\u000b\n\u0002\b\u0004\u0018\u00002\u00020\u0001:\u0001)B\u0007¢\u0006\u0004\b\u0002\u0010\u0003J\u0010\u0010\u000f\u001a\u00020\u00102\u0006\u0010\u0011\u001a\u00020\u0012H\u0016J(\u0010\u0013\u001a\u00020\u00142\u0016\u0010\u0015\u001a\u0012\u0012\u0004\u0012\u00020\u00170\u0016j\b\u0012\u0004\u0012\u00020\u0017`\u00182\u0006\u0010\u0019\u001a\u00020\u001aH\u0002J0\u0010\u001b\u001a\u00020\u00142\u0006\u0010\u001c\u001a\u00020\u00172\u0006\u0010\u001d\u001a\u00020\u00102\u0006\u0010\u001e\u001a\u00020\u001f2\u0006\u0010 \u001a\u00020!2\u0006\u0010\"\u001a\u00020!H\u0002J\u0010\u0010$\u001a\u00020\u00142\u0006\u0010%\u001a\u00020&H\u0002J\u0010\u0010'\u001a\u00020\u00142\u0006\u0010(\u001a\u00020&H\u0002R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082.¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082.¢\u0006\u0002\n\u0000R\u0010\u0010\b\u001a\u0004\u0018\u00010\tX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\tX\u0082\u000e¢\u0006\u0002\n\u0000R\u0010\u0010\u000b\u001a\u0004\u0018\u00010\fX\u0082\u000e¢\u0006\u0002\n\u0000R\u0010\u0010\r\u001a\u0004\u0018\u00010\u000eX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010#\u001a\u00020\u001fX\u0082\u000e¢\u0006\u0002\n\u0000¨\u0006*"}, d2 = {"Lcom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity;", "Lorg/telegram/ui/ActionBar/BaseFragment;", "<init>", "()V", "nowPlayingEdit", "Lorg/telegram/ui/Cells/EditTextCell;", "listView", "Lorg/telegram/ui/Components/UniversalRecyclerView;", "initialState", "Lcom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity$NowPlayingState;", "currentState", "doneButtonDrawable", "Lorg/telegram/ui/Components/CrossfadeDrawable;", "doneButton", "Lorg/telegram/ui/ActionBar/ActionBarMenuItem;", "createView", "Landroid/view/View;", "context", "Landroid/content/Context;", "fillItems", _UrlKt.FRAGMENT_ENCODE_SET, "items", "Ljava/util/ArrayList;", "Lorg/telegram/ui/Components/UItem;", "Lkotlin/collections/ArrayList;", "adapter", "Lorg/telegram/ui/Components/UniversalAdapter;", "onClick", "item", "view", "position", _UrlKt.FRAGMENT_ENCODE_SET, "x", _UrlKt.FRAGMENT_ENCODE_SET, "y", "shiftDp", "processDone", "", _UrlKt.FRAGMENT_ENCODE_SET, "checkDone", "animated", "NowPlayingState", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
 @SourceDebugExtension({"SMAP\nSetupNowPlayingActivity.kt\nKotlin\n*S Kotlin\n*F\n+ 1 SetupNowPlayingActivity.kt\ncom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity\n+ 2 fake.kt\nkotlin/jvm/internal/FakeKt\n+ 3 ArraysJVM.kt\nkotlin/collections/ArraysKt__ArraysJVMKt\n*L\n1#1,239:1\n1#2:240\n37#3,2:241\n*S KotlinDebug\n*F\n+ 1 SetupNowPlayingActivity.kt\ncom/exteragram/messenger/nowplaying/ui/SetupNowPlayingActivity\n*L\n181#1:241,2\n*E\n"})
 public final class SetupNowPlayingActivity extends BaseFragment {
     private ActionBarMenuItem doneButton;
@@ -127,12 +126,12 @@ public final class SetupNowPlayingActivity extends BaseFragment {
         UniversalRecyclerView universalRecyclerView = new UniversalRecyclerView(this, new Utilities.Callback2() { 
             @Override 
             public final void run(Object obj, Object obj2) {
-                this.f$0.fillItems((ArrayList) obj, (UniversalAdapter) obj2);
+                SetupNowPlayingActivity.this.fillItems((ArrayList) obj, (UniversalAdapter) obj2);
             }
         }, new Utilities.Callback5() { 
             @Override 
             public final void run(Object obj, Object obj2, Object obj3, Object obj4, Object obj5) {
-                this.f$0.onClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue());
+                SetupNowPlayingActivity.this.onClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue());
             }
         }, null);
         this.listView = universalRecyclerView;
@@ -153,13 +152,13 @@ public final class SetupNowPlayingActivity extends BaseFragment {
             universalRecyclerView4 = null;
         }
         frameLayout.addView(universalRecyclerView4, LayoutHelper.createFrame(-1, -1.0f));
-        EditTextCell editTextCell = new EditTextCell(context, LocaleController.getString(R.string.Username), this.resourceProvider) { 
+        EditTextCell editTextCell = new EditTextCell(context, LocaleController.getString(R.string.Username), false) { 
             @Override // org.telegram.ui.Cells.EditTextCell
             public void onTextChanged(CharSequence newText) {
                 super.onTextChanged(newText);
-                SetupNowPlayingActivity setupNowPlayingActivity = this;
+                SetupNowPlayingActivity setupNowPlayingActivity = SetupNowPlayingActivity.this;
                 setupNowPlayingActivity.currentState = NowPlayingState.copy$default(setupNowPlayingActivity.currentState, null, newText.toString(), 1, null);
-                this.checkDone(true);
+                SetupNowPlayingActivity.this.checkDone(true);
             }
         };
         this.nowPlayingEdit = editTextCell;
@@ -172,10 +171,11 @@ public final class SetupNowPlayingActivity extends BaseFragment {
         NowPlayingController.getNowPlayingInfo(new Consumer() { 
             @Override // java.util.function.Consumer
             public final void accept(Object obj) {
+                final NowPlayingInfoDTO nowPlayingInfoDTO = (NowPlayingInfoDTO) obj;
                 AndroidUtilities.runOnUIThread(new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        SetupNowPlayingActivity.createView$lambda$2$0(nowPlayingInfoDTO, setupNowPlayingActivity);
+                        SetupNowPlayingActivity.createView$lambda$2$0(nowPlayingInfoDTO, SetupNowPlayingActivity.this);
                     }
                 });
             }
@@ -235,7 +235,7 @@ public final class SetupNowPlayingActivity extends BaseFragment {
             items.add(UItem.asShadow(AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.EnterUsernameInfo), new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    SetupNowPlayingActivity setupNowPlayingActivity = this.f$0;
+                    SetupNowPlayingActivity setupNowPlayingActivity = SetupNowPlayingActivity.this;
                     Browser.openUrl(setupNowPlayingActivity.getParentActivity(), setupNowPlayingActivity.currentState.getServiceType() == NowPlayingServiceType.LAST_FM ? "https://www.last.fm/" : "https://stats.fm/");
                 }
             })));
@@ -276,10 +276,11 @@ public final class SetupNowPlayingActivity extends BaseFragment {
         NowPlayingController.updateNowPlayingInfo$default(nowPlayingInfoDTO, false, new Consumer() { 
             @Override // java.util.function.Consumer
             public final void accept(Object obj) {
+                final Boolean bool = (Boolean) obj;
                 AndroidUtilities.runOnUIThread(new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        SetupNowPlayingActivity.processDone$lambda$1$0(bool, setupNowPlayingActivity, nowPlayingInfoDTO);
+                        SetupNowPlayingActivity.processDone$lambda$1$0(bool, SetupNowPlayingActivity.this, nowPlayingInfoDTO);
                     }
                 });
             }
@@ -291,7 +292,7 @@ public final class SetupNowPlayingActivity extends BaseFragment {
             setupNowPlayingActivity.doneButtonDrawable.animateToProgress(0.0f);
             BulletinFactory.of(setupNowPlayingActivity).createErrorBulletin(LocaleController.getString(R.string.UnknownError)).show();
         } else {
-            setupNowPlayingActivity.getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.nowPlayingUpdated, nowPlayingInfoDTO.getServiceType());
+            setupNowPlayingActivity.getNotificationCenter().postNotificationNameOnUIThread(NotificationCenter.nowPlayingUpdated, nowPlayingInfoDTO.getServiceType());
             setupNowPlayingActivity.finishFragment();
         }
     }

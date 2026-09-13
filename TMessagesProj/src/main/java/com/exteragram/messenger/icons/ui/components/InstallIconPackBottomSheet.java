@@ -46,29 +46,12 @@ public final class InstallIconPackBottomSheet extends BottomSheet {
         this.iconPack = iconPack;
         this.installDelegate = installDelegate;
         setCustomView(createView(context));
-        setOnDismissListener(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                AndroidUtilities.runOnUIThread(new Runnable() { 
-                    @Override // java.lang.Runnable
-                    public final void run() {
-                        Utilities.globalQueue.postRunnable(new Runnable() { 
-                            @Override // java.lang.Runnable
-                            public final void run() {
-                                InstallIconPackBottomSheet.m1209$r8$lambda$lAHL0JphJT6_nJA9poZvzL8HV0(installIconPackBottomSheet);
-                            }
-                        });
-                    }
-                }, 1000L);
+        setOnDismissListener(() -> AndroidUtilities.runOnUIThread(() -> Utilities.globalQueue.postRunnable(() -> {
+            File location = InstallIconPackBottomSheet.this.iconPack.getLocation();
+            if (location != null) {
+                FilesKt.deleteRecursively(location);
             }
-        });
-    }
-
-    public static void m1209$r8$lambda$lAHL0JphJT6_nJA9poZvzL8HV0(InstallIconPackBottomSheet installIconPackBottomSheet) {
-        File location = installIconPackBottomSheet.iconPack.getLocation();
-        if (location != null) {
-            FilesKt.deleteRecursively(location);
-        }
+        }), 1000L));
     }
 
     private final View createView(Context context) {
@@ -110,11 +93,8 @@ public final class InstallIconPackBottomSheet extends BottomSheet {
             spannableStringBuilderAppend.append((CharSequence) this.iconPack.getVersion());
         }
         if (!TextUtils.isEmpty(this.iconPack.getAuthor())) {
-            spannableStringBuilderAppend.append((CharSequence) " • ").append(LocaleUtils.formatWithUsernames(this.iconPack.getAuthor(), safeLastFragment, new Runnable() { 
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$new$0();
-                }
+            spannableStringBuilderAppend.append((CharSequence) " • ").append(LocaleUtils.formatWithUsernames(this.iconPack.getAuthor(), safeLastFragment, () -> {
+                InstallIconPackBottomSheet.this.dismiss();
             }));
         }
         effectsTextView.setText(spannableStringBuilderAppend);
@@ -147,37 +127,20 @@ public final class InstallIconPackBottomSheet extends BottomSheet {
             linearLayout2.setPadding(AndroidUtilities.dp(8.0f), AndroidUtilities.dp(6.0f), AndroidUtilities.dp(10.0f), AndroidUtilities.dp(6.0f));
             linearLayout2.addView(frameLayout, LayoutHelper.createLinear(24, 24, 16, 0, 0, 6, 0));
             linearLayout2.addView(textView2, LayoutHelper.createLinear(-2, -2, 16));
-            linearLayout2.setOnClickListener(new View.OnClickListener() { 
-                @Override // android.view.View.OnClickListener
-                public final void onClick(View view) {
-                    CheckBox2 checkBox3 = checkBox2;
-                    checkBox3.setChecked(!checkBox3.isChecked(), true);
-                }
+            linearLayout2.setOnClickListener(view -> {
+                CheckBox2 checkBox3 = checkBox2;
+                checkBox3.setChecked(!checkBox3.isChecked(), true);
             });
             ScaleStateListAnimator.apply(linearLayout2, 0.05f, 1.2f);
             linearLayout2.setBackground(Theme.createRadSelectorDrawable(getThemedColor(Theme.key_listSelector), 8, 8));
             linearLayout.addView(linearLayout2, LayoutHelper.createLinear(-2, -2, 1, 0, 0, 0, 8));
         }
-        buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                InstallIconPackBottomSheet.m1208$r8$lambda$BJEv0hgA7mAY3J925oH7h0dwyM(this.f$0, checkBox2, z, view);
-            }
+        buttonWithCounterView.setOnClickListener(view -> {
+            dismiss();
+            AndroidUtilities.runOnUIThread(() -> {
+                installDelegate.onInstall(checkBox2 != null && checkBox2.isChecked(), z);
+            }, 200L);
         });
         return linearLayout;
-    }
-
-    public static void m1208$r8$lambda$BJEv0hgA7mAY3J925oH7h0dwyM(final InstallIconPackBottomSheet installIconPackBottomSheet, final CheckBox2 checkBox2, final boolean z, View view) {
-        installIconPackBottomSheet.lambda$new$0();
-        AndroidUtilities.runOnUIThread(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                InstallIconPackBottomSheet.createView$lambda$1$0(this.f$0, checkBox2, z);
-            }
-        }, 200L);
-    }
-
-    public static final void createView$lambda$1$0(InstallIconPackBottomSheet installIconPackBottomSheet, CheckBox2 checkBox2, boolean z) {
-        installIconPackBottomSheet.installDelegate.onInstall(checkBox2 != null && checkBox2.isChecked(), z);
     }
 }

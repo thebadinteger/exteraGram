@@ -1,4 +1,146 @@
-public void open(Socket socket) throws IOException {
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.source.rtsp;
+
+import static com.google.android.exoplayer2.source.rtsp.RtspMessageUtil.isRtspStartLine;
+import static com.google.android.exoplayer2.util.Assertions.checkArgument;
+import static com.google.android.exoplayer2.util.Assertions.checkState;
+import static com.google.android.exoplayer2.util.Assertions.checkStateNotNull;
+import static java.lang.annotation.ElementType.TYPE_USE;
+
+import android.os.Handler;
+import android.os.HandlerThread;
+import androidx.annotation.IntDef;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ParserException;
+import com.google.android.exoplayer2.upstream.Loader;
+import com.google.android.exoplayer2.upstream.Loader.LoadErrorAction;
+import com.google.android.exoplayer2.upstream.Loader.Loadable;
+import com.google.common.base.Ascii;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.net.Socket;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
+/** Sends and receives RTSP messages. */
+/* package */ final class RtspMessageChannel implements Closeable {
+
+  /** RTSP uses UTF-8 (RFC2326 Section 1.1). */
+  public static final Charset CHARSET = Charsets.UTF_8;
+
+  private static final String TAG = "RtspMessageChannel";
+
+  /** A listener for received RTSP messages and possible failures. */
+  public interface MessageListener {
+
+    /**
+     * Called when an RTSP message is received.
+     *
+     * @param message The non-empty list of received lines, with line terminators removed.
+     */
+    void onRtspMessageReceived(List<String> message);
+
+    /**
+     * Called when failed to send an RTSP message.
+     *
+     * @param message The list of lines making up the RTSP message that is failed to send.
+     * @param e The thrown {@link Exception}.
+     */
+    default void onSendingFailed(List<String> message, Exception e) {}
+
+    /**
+     * Called when failed to receive an RTSP message.
+     *
+     * @param e The thrown {@link Exception}.
+     */
+    default void onReceivingFailed(Exception e) {}
+  }
+
+  /** A listener for received interleaved binary data from RTSP. */
+  public interface InterleavedBinaryDataListener {
+
+    /**
+     * Called when interleaved binary data is received on RTSP.
+     *
+     * @param data The received binary data. The byte array will not be reused by {@link
+     *     RtspMessageChannel}, and will always be full.
+     */
+    void onInterleavedBinaryDataReceived(byte[] data);
+  }
+
+  /**
+   * The IANA-registered default port for RTSP. See <a
+   * href="https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml">here</a>
+   */
+  public static final int DEFAULT_RTSP_PORT = 554;
+
+  private final MessageListener messageListener;
+  private final Loader receiverLoader;
+  private final Map<Integer, InterleavedBinaryDataListener> interleavedBinaryDataListeners;
+  private @MonotonicNonNull Sender sender;
+  private @MonotonicNonNull Socket socket;
+
+  private volatile boolean closed;
+
+  /**
+   * Constructs a new instance.
+   *
+   * <p>A connected {@link Socket} must be provided in {@link #open} in order to send and receive
+   * RTSP messages. {@link #close} must be called when done, which would also close the socket.
+   *
+   * <p>{@link MessageListener} and {@link InterleavedBinaryDataListener} implementations must not
+   * make assumptions about which thread called their listener methods; and must be thread-safe.
+   *
+   * <p>Note: all method invocations must be made from the thread on which this class is created.
+   *
+   * @param messageListener The {@link MessageListener} to receive events.
+   */
+  public RtspMessageChannel(MessageListener messageListener) {
+    this.messageListener = messageListener;
+    this.receiverLoader = new Loader("ExoPlayer:RtspMessageChannel:ReceiverLoader");
+    this.interleavedBinaryDataListeners = Collections.synchronizedMap(new HashMap<>());
+  }
+
+  /**
+   * Opens the message channel to send and receive RTSP messages.
+   *
+   * <p>Note: If an {@link IOException} is thrown, callers must still call {@link #close()} to
+   * ensure that any partial effects of the invocation are cleaned up.
+   *
+   * @param socket A connected {@link Socket}.
+   */
+  public void open(Socket socket) throws IOException {
     this.socket = socket;
     sender = new Sender(socket.getOutputStream());
 

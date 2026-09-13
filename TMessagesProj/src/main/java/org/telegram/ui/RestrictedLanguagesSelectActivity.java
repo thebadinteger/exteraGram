@@ -63,6 +63,16 @@ public class RestrictedLanguagesSelectActivity extends BaseFragment implements N
     private EmptyTextProgressView emptyView;
 
     private int separatorRow = -1;
+    private int type;
+
+    public RestrictedLanguagesSelectActivity() {
+        this(0);
+    }
+
+    public RestrictedLanguagesSelectActivity(int i) {
+        this.type = i;
+    }
+
     private ArrayList<TranslateController.Language> searchResult;
     private ArrayList<TranslateController.Language> allLanguages;
 

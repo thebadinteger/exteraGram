@@ -19,7 +19,6 @@ public final class InstallPluginBottomSheet$buttonView$1$1$4 implements PipContr
 
     @Override 
     public void onProgress(final String text) {
-        "text";
         final InstallPluginBottomSheet installPluginBottomSheet = this.this$0;
         AndroidUtilities.runOnUIThread(new Runnable() { 
             @Override // java.lang.Runnable

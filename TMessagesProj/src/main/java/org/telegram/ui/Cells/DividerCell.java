@@ -16,6 +16,9 @@ import android.view.View;
 
 import androidx.core.graphics.ColorUtils;
 
+import com.exteragram.messenger.DividerStyle;
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 
@@ -48,7 +51,9 @@ public class DividerCell extends View {
             paint.setColor(Theme.getColor(Theme.key_divider, resourcesProvider));
         }
 
-        canvas.drawLine(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getPaddingTop(), paint);
+        if (ExteraConfig.getDividerStyle() == DividerStyle.LINE) {
+            canvas.drawLine(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getPaddingTop(), paint);
+        }
     }
 
     public void setForceDarkTheme(boolean forceDarkTheme) {

@@ -1,6 +1,7 @@
 package com.exteragram.messenger.export.api;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
+import com.exteragram.messenger.ai.network.Client$ImagePayload$$ExternalSyntheticRecord1;
 import java.util.Objects;
 import org.telegram.tgnet.TLRPC;
 
@@ -11,7 +12,15 @@ public final class ApiWrap$FileOrigin extends RecordTag {
     private final int split;
     private final int storyId;
 
-    private Object[] $record$getFieldsAsObjects() {
+    private /* synthetic */ boolean $record$equals(Object obj) {
+        if (!(obj instanceof ApiWrap$FileOrigin)) {
+            return false;
+        }
+        ApiWrap$FileOrigin apiWrap$FileOrigin = (ApiWrap$FileOrigin) obj;
+        return this.split == apiWrap$FileOrigin.split && this.messageId == apiWrap$FileOrigin.messageId && this.storyId == apiWrap$FileOrigin.storyId && this.customEmojiId == apiWrap$FileOrigin.customEmojiId && Objects.equals(this.peer, apiWrap$FileOrigin.peer);
+    }
+
+    private /* synthetic */ Object[] $record$getFieldsAsObjects() {
         return new Object[]{Integer.valueOf(this.split), this.peer, Integer.valueOf(this.messageId), Integer.valueOf(this.storyId), Long.valueOf(this.customEmojiId)};
     }
 
@@ -28,7 +37,7 @@ public final class ApiWrap$FileOrigin extends RecordTag {
     }
 
     public final int hashCode() {
-        return java.util.Objects.hash(this.split, this.messageId, this.storyId, this.customEmojiId, this.peer);
+        return Objects.hash(this.split, this.peer, this.messageId, this.storyId, this.customEmojiId);
     }
 
     public int messageId() {
@@ -48,7 +57,7 @@ public final class ApiWrap$FileOrigin extends RecordTag {
     }
 
     public final String toString() {
-        return com.exteragram.messenger.utils.RecordUtils.recordToString($record$getFieldsAsObjects(), ApiWrap$FileOrigin.class, "split;peer;messageId;storyId;customEmojiId");
+        return "ApiWrap$FileOrigin[split=" + this.split + ", peer=" + this.peer + ", messageId=" + this.messageId + ", storyId=" + this.storyId + ", customEmojiId=" + this.customEmojiId + "]";
     }
 
     public ApiWrap$FileOrigin() {

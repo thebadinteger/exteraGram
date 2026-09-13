@@ -1259,6 +1259,13 @@ public class FilterTabsView extends FrameLayout {
         return title;
     }
 
+    public void setStaticAllChats(boolean z) {
+    }
+
+    public void addTab(int id, int stableId, String text, String emoticon, ArrayList<TLRPC.MessageEntity> entities, boolean noanimate, boolean isDefault, boolean isLocked) {
+        addTab(id, stableId, text, entities, noanimate, isDefault, isLocked);
+    }
+
     public void addTab(int id, int stableId, String text, ArrayList<TLRPC.MessageEntity> entities, boolean noanimate, boolean isDefault, boolean isLocked) {
         int position = tabs.size();
         if (position == 0 && selectedTabId == -1) {

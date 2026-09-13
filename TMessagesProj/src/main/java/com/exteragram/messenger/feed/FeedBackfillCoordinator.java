@@ -58,7 +58,7 @@ final class FeedBackfillCoordinator {
         AndroidUtilities.runOnUIThread(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$startRound$0(i);
+                FeedBackfillCoordinator.this.lambda$startRound$0(i);
             }
         }, 10000L);
     }

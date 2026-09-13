@@ -137,6 +137,11 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 	private HintView2 hideCallTabsHintView;
 	private boolean needFinishFragment = true;
 	private boolean hasMainTabs;
+	private MainTabsActivityController mainTabsActivityController;
+
+	public void setMainTabsActivityController(MainTabsActivityController mainTabsActivityController) {
+		this.mainTabsActivityController = mainTabsActivityController;
+	}
 
 	private @Nullable ImageView actionModeCloseView;
 	private NumberTextView selectedDialogsCountTextView;

@@ -68,7 +68,6 @@ public final class IconShapeHelper {
 
     private final Path getDefaultPath() {
         Path pathCreatePathFromPathData = PathParser.createPathFromPathData("M50,0A50,50,0,0,1,50,100A50,50,0,0,1,50,0");
-        "createPathFromPathData(...)";
         return pathCreatePathFromPathData;
     }
 
@@ -77,12 +76,13 @@ public final class IconShapeHelper {
         int identifier;
         try {
             ColorDrawable colorDrawable = new ColorDrawable(0);
-            IconShapeHelper$$ExternalSyntheticApiModelOutline1.m();
-            Path iconMask = IconShapeHelper$$ExternalSyntheticApiModelOutline0.m(colorDrawable, colorDrawable).getIconMask();
+            Path iconMask = null;
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                iconMask = new android.graphics.drawable.AdaptiveIconDrawable(colorDrawable, colorDrawable).getIconMask();
+            }
             Path path = (iconMask == null || iconMask.isEmpty()) ? null : new Path(iconMask);
             if (path == null && (identifier = (system = Resources.getSystem()).getIdentifier("config_icon_mask", "string", "android")) != 0) {
                 String string = system.getString(identifier);
-                "getString(...)";
                 if (!TextUtils.isEmpty(string)) {
                     path = PathParser.createPathFromPathData(string);
                 }

@@ -91,18 +91,11 @@ public class TranslateController extends BaseController {
     }
 
     public boolean isFeatureAvailable() {
-        return isChatTranslateEnabled() && UserConfig.getInstance(currentAccount).isPremium();
+        return isChatTranslateEnabled();
     }
 
     public boolean isFeatureAvailable(long dialogId) {
-        if (!isChatTranslateEnabled()) {
-            return false;
-        }
-        final TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
-        return (
-            UserConfig.getInstance(currentAccount).isPremium() ||
-            chat != null && chat.autotranslation
-        );
+        return isChatTranslateEnabled();
     }
 
     private Boolean chatTranslateEnabled;
@@ -846,6 +839,31 @@ public class TranslateController extends BaseController {
         hideTranslateDialogs.clear();
         loadingTranslations.clear();
         loadingTranscriptionTranslations.clear();
+    }
+
+    public void clearTranslationCache() {
+        cleanup();
+        getMessagesStorage().clearAllMessageCustomParams();
+    }
+
+    public void clearMessageTranslationState(MessageObject messageObject) {
+        if (messageObject == null || messageObject.messageOwner == null) {
+            return;
+        }
+        MessageObject messageObject2 = messageObject.replyMessageObject;
+        if (messageObject2 != null && messageObject2 != messageObject) {
+            clearMessageTranslationState(messageObject2);
+        }
+        TLRPC.Message message = messageObject.messageOwner;
+        message.originalLanguage = null;
+        message.translatedText = null;
+        message.translatedVoiceTranscription = null;
+        message.translatedPoll = null;
+        message.translatedToLanguage = null;
+        message.summaryText = null;
+        message.translatedSummaryText = null;
+        message.translatedSummaryLanguage = null;
+        messageObject.updateTranslation(false);
     }
 
     public void reset() {

@@ -133,6 +133,8 @@ import org.telegram.ui.RoundVideoProgressShadow;
 import org.telegram.ui.ThemeActivity;
 import org.telegram.ui.ThemePreviewActivity;
 
+import com.exteragram.messenger.utils.ui.MonetUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -162,6 +164,7 @@ public class Theme {
     public static final int MSG_OUT_COLOR_WHITE = 0xffffffff;
     public static final int default_shadow_color = ColorUtils.setAlphaComponent(Color.BLACK, 27);
     public static boolean disallowChangeServiceMessageColor;
+    private static boolean resolvingDividerColor;
 
     public static void applyDefaultShadow(Paint paint) {
         paint.setShadowLayer(dpf2(1), 0, dpf2(0.33f), default_shadow_color);
@@ -762,7 +765,7 @@ public class Theme {
             boolean invalidatePath;
             if (pathDrawCacheParams != null) {
                 path = pathDrawCacheParams.path;
-                invalidatePath = pathDrawCacheParams.invalidatePath(bounds, drawFullBottom, drawFullTop);
+                invalidatePath = pathDrawCacheParams.invalidatePath(bounds, drawFullBottom, drawFullTop, rad, nearRad, smallRad, com.exteragram.messenger.ExteraConfig.getRemoveMessageTail());
             } else {
                 path = this.path;
                 invalidatePath = true;
@@ -815,7 +818,7 @@ public class Theme {
             boolean invalidatePath;
             if (pathDrawCacheParams != null) {
                 path = pathDrawCacheParams.path;
-                invalidatePath = pathDrawCacheParams.invalidatePath(bounds, drawFullBottom, drawFullTop);
+                invalidatePath = pathDrawCacheParams.invalidatePath(bounds, drawFullBottom, drawFullTop, rad, nearRad, smallRad, com.exteragram.messenger.ExteraConfig.getRemoveMessageTail());
             } else {
                 path = this.path;
                 invalidatePath = true;
@@ -836,7 +839,7 @@ public class Theme {
                 // LEFT-BOTTOM <- RIGHT-BOTTOM
                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
                     int radToUse = botButtonsBottom ? nearRad : rad;
-                    if (currentType == TYPE_MEDIA) {
+                    if (currentType == TYPE_MEDIA || com.exteragram.messenger.ExteraConfig.getRemoveMessageTail()) {
                         path.moveTo(bounds.right - dp(8) - radToUse, bounds.bottom - padding);
                     } else {
                         path.moveTo(bounds.right - dp(2.6f), bounds.bottom - padding);
@@ -888,9 +891,16 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
-                        rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
-                        path.arcTo(rect, 180, -83, false);
+                        if (com.exteragram.messenger.ExteraConfig.getRemoveMessageTail()) {
+                            int radToUse = isBottomNear ? nearRad : rad;
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - radToUse);
+                            rect.set(bounds.right - dp(8) - radToUse * 2, bounds.bottom - padding - radToUse * 2, bounds.right - dp(8), bounds.bottom - padding);
+                            path.arcTo(rect, 0, 90, false);
+                        } else {
+                            path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+                            rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+                            path.arcTo(rect, 180, -83, false);
+                        }
                     } else {
                         path.lineTo(bounds.right - dp(8), top - topY + currentBackgroundHeight);
                     }
@@ -899,7 +909,7 @@ public class Theme {
                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
                     int radToUse = botButtonsBottom ? nearRad : rad;
 
-                    if (currentType == TYPE_MEDIA) {
+                    if (currentType == TYPE_MEDIA || com.exteragram.messenger.ExteraConfig.getRemoveMessageTail()) {
                         path.moveTo(bounds.left + dp(8) + radToUse, bounds.bottom - padding);
                     } else {
                         path.moveTo(bounds.left + dp(2.6f), bounds.bottom - padding);
@@ -945,9 +955,16 @@ public class Theme {
                     }
                 } else {
                     if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
-                        rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
-                        path.arcTo(rect, 0, 83, false);
+                        if (com.exteragram.messenger.ExteraConfig.getRemoveMessageTail()) {
+                            int radToUse = (isBottomNear || botButtonsBottom) ? nearRad : rad;
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - radToUse);
+                            rect.set(bounds.left + dp(8), bounds.bottom - padding - radToUse * 2, bounds.left + dp(8) + radToUse * 2, bounds.bottom - padding);
+                            path.arcTo(rect, 180, -90, false);
+                        } else {
+                            path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+                            rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
+                            path.arcTo(rect, 0, 83, false);
+                        }
                     } else {
                         path.lineTo(bounds.left + dp(8), top - topY + currentBackgroundHeight);
                     }
@@ -1013,17 +1030,39 @@ public class Theme {
         }
 
         public static class PathDrawParams {
+            boolean lastDrawFullBottom;
+            boolean lastDrawFullTop;
+            int lastNearRad;
+            int lastRad;
+            boolean lastRemoveMessageTail;
+            int lastSmallRad;
             Path path = new Path();
             Rect lastRect = new Rect();
-            boolean lastDrawFullTop;
-            boolean lastDrawFullBottom;
 
-            public boolean invalidatePath(Rect bounds, boolean drawFullBottom, boolean drawFullTop) {
-                boolean invalidate = lastRect.isEmpty() || lastRect.top != bounds.top || lastRect.bottom != bounds.bottom || lastRect.right != bounds.right || lastRect.left != bounds.left || lastDrawFullTop != drawFullTop || lastDrawFullBottom != drawFullBottom || !drawFullTop || !drawFullBottom;
-                lastDrawFullTop = drawFullTop;
-                lastDrawFullBottom = drawFullBottom;
-                lastRect.set(bounds);
-                return invalidate;
+            public boolean invalidatePath(Rect rect, boolean drawFullBottom, boolean drawFullTop) {
+                return invalidatePath(rect, drawFullBottom, drawFullTop, 0, 0, 0, com.exteragram.messenger.ExteraConfig.getRemoveMessageTail());
+            }
+
+            public boolean invalidatePath(Rect rect, boolean drawFullBottom, boolean drawFullTop, int rad, int nearRad, int smallRad, boolean removeMessageTail) {
+                boolean z4;
+                if (this.lastRect.isEmpty()) {
+                    z4 = true;
+                } else {
+                    Rect rect2 = this.lastRect;
+                    if (rect2.top == rect.top && rect2.bottom == rect.bottom && rect2.right == rect.right && rect2.left == rect.left && this.lastDrawFullTop == drawFullTop && this.lastDrawFullBottom == drawFullBottom && this.lastRad == rad && this.lastNearRad == nearRad && this.lastSmallRad == smallRad && this.lastRemoveMessageTail == removeMessageTail && drawFullTop && drawFullBottom) {
+                        z4 = false;
+                    } else {
+                        z4 = true;
+                    }
+                }
+                this.lastDrawFullTop = drawFullTop;
+                this.lastDrawFullBottom = drawFullBottom;
+                this.lastRad = rad;
+                this.lastNearRad = nearRad;
+                this.lastSmallRad = smallRad;
+                this.lastRemoveMessageTail = removeMessageTail;
+                this.lastRect.set(rect);
+                return z4;
             }
             
             public Path getPath() {
@@ -1074,13 +1113,12 @@ public class Theme {
                 }
                 for (int a = 0, N = info.themeAccents.size(); a < N; a++) {
                     ThemeAccent accent = info.themeAccents.get(a);
-                    if (accent.id == DEFALT_THEME_ACCENT_ID || TextUtils.isEmpty(accent.patternSlug)) {
-                        continue;
+                    if (accent.id != DEFALT_THEME_ACCENT_ID && MonetAccentHelper.hasRemotePatternWallpaper(accent)) {
+                        if (accentsToLoad == null) {
+                            accentsToLoad = new ArrayList<>();
+                        }
+                        accentsToLoad.add(accent);
                     }
-                    if (accentsToLoad == null) {
-                        accentsToLoad = new ArrayList<>();
-                    }
-                    accentsToLoad.add(accent);
                 }
             }
             loader = new PatternsLoader(accentsToLoad);
@@ -1104,10 +1142,9 @@ public class Theme {
                     if (slugs == null) {
                         slugs = new ArrayList<>();
                     }
-                    if (slugs.contains(accent.patternSlug)) {
-                        continue;
+                    if (MonetAccentHelper.hasRemotePatternWallpaper(accent) && !slugs.contains(accent.patternSlug)) {
+                        slugs.add(accent.patternSlug);
                     }
-                    slugs.add(accent.patternSlug);
                 }
                 if (slugs == null) {
                     return;
@@ -2476,13 +2513,17 @@ public class Theme {
             return defaultAccentCount != 0;
         }
 
+        public boolean isMonet() {
+            return "Monet Dark".equals(name) || "Monet Light".equals(name) || "Monet Black".equals(name);
+        }
+
         public boolean isDark() {
             if (isDark != UNKNOWN) {
                 return isDark == DARK;
             }
-            if ("Dark Blue".equals(name) || "Night".equals(name)) {
+            if ("Dark Blue".equals(name) || "Night".equals(name) || "Monet Dark".equals(name) || "Monet Black".equals(name)) {
                 isDark = DARK;
-            } else if ("Blue".equals(name) || "Arctic Blue".equals(name) || "Day".equals(name)) {
+            } else if ("Blue".equals(name) || "Arctic Blue".equals(name) || "Day".equals(name) || "Monet Light".equals(name)) {
                 isDark = LIGHT;
             }
             if (isDark == UNKNOWN) {
@@ -2624,6 +2665,7 @@ public class Theme {
                 themeAccents.add(themeAccent);
             }
             accentBaseColor = themeAccentsMap.get(0).accentColor;
+            MonetAccentHelper.appendAccentOptions(this);
         }
 
         @UiThread
@@ -2978,6 +3020,10 @@ public class Theme {
             return Theme.isCurrentThemeDark();
         }
 
+        default boolean isMonet() {
+            return Theme.isCurrentThemeMonet();
+        }
+
         default void applyServiceShaderMatrix(int w, int h, float translationX, float translationY) {
             Theme.applyServiceShaderMatrix(w, h, translationX, translationY);
         }
@@ -3316,6 +3362,8 @@ public class Theme {
     public static Drawable chat_contextResult_shadowUnderSwitchDrawable;
     public static Drawable chat_shareIconDrawable;
     public static Drawable chat_replyIconDrawable;
+    public static Drawable chat_pencilIconDrawable;
+    public static Drawable chat_channelIconDrawable;
     public static Drawable chat_closeIconDrawable;
     public static Drawable chat_moreIconDrawable;
     public static Drawable chat_goIconDrawable;
@@ -4728,6 +4776,35 @@ public class Theme {
         sortAccents(themeInfo);
         themes.add(themeInfo);
         themesDict.put("Night", themeInfo);
+        if (Build.VERSION.SDK_INT >= 31) {
+            ThemeInfo themeInfo8 = new ThemeInfo();
+            themeInfo8.name = "Monet Light";
+            themeInfo8.assetName = "monet_light.attheme";
+            themeInfo8.previewBackgroundColor = MonetUtils.getColor("n1_10");
+            themeInfo8.previewInColor = MonetUtils.getColor("n1_50");
+            themeInfo8.previewOutColor = MonetUtils.getColor("a1_600");
+            themeInfo8.sortIndex = 6;
+            themes.add(themeInfo8);
+            themesDict.put(themeInfo8.name, themeInfo8);
+            ThemeInfo themeInfo9 = new ThemeInfo();
+            themeInfo9.name = "Monet Dark";
+            themeInfo9.assetName = "monet_dark.attheme";
+            themeInfo9.previewBackgroundColor = MonetUtils.getColor("n1_900");
+            themeInfo9.previewInColor = MonetUtils.getColor("n1_800");
+            themeInfo9.previewOutColor = MonetUtils.getColor("a1_200");
+            themeInfo9.sortIndex = 7;
+            themes.add(themeInfo9);
+            themesDict.put(themeInfo9.name, themeInfo9);
+            ThemeInfo themeInfo10 = new ThemeInfo();
+            themeInfo10.name = "Monet Black";
+            themeInfo10.assetName = "monet_black.attheme";
+            themeInfo10.previewBackgroundColor = MonetUtils.getColor("mBlack");
+            themeInfo10.previewInColor = MonetUtils.getColor("n1_800");
+            themeInfo10.previewOutColor = MonetUtils.getColor("a1_200");
+            themeInfo10.sortIndex = 8;
+            themes.add(themeInfo10);
+            themesDict.put(themeInfo10.name, themeInfo10);
+        }
 
         String themesString = themeConfig.getString("themes2", null);
 
@@ -4775,17 +4852,21 @@ public class Theme {
         sortThemes();
 
         ThemeInfo applyingTheme = null;
+        final ThemeInfo themeDarkBlue = themesDict.get("Dark Blue");
+        final ThemeInfo themeNight = themesDict.get("Night");
+        final ThemeInfo defaultDarkTheme = themeNight != null ? themeNight : themeDarkBlue;
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         try {
-            final ThemeInfo themeDarkBlue = themesDict.get("Dark Blue");
 
             String theme = preferences.getString("theme", null);
             if ("Default".equals(theme)) {
                 applyingTheme = themesDict.get("Blue");
                 applyingTheme.currentAccentId = DEFALT_THEME_ACCENT_ID;
             } else if ("Dark".equals(theme)) {
-                applyingTheme = themeDarkBlue;
-                applyingTheme.currentAccentId = 9;
+                applyingTheme = defaultDarkTheme;
+                if (applyingTheme != null) {
+                    applyingTheme.currentAccentId = 9;
+                }
             } else if (theme != null) {
                 applyingTheme = themesDict.get(theme);
                 if (applyingTheme != null && !themeConfig.contains("lastDayTheme")) {
@@ -4800,13 +4881,17 @@ public class Theme {
                 applyingTheme = themesDict.get("Blue");
                 applyingTheme.currentAccentId = DEFALT_THEME_ACCENT_ID;
             } else if ("Dark".equals(theme)) {
-                currentNightTheme = themeDarkBlue;
-                themeDarkBlue.currentAccentId = 9;
+                currentNightTheme = defaultDarkTheme;
+                if (defaultDarkTheme != null) {
+                    defaultDarkTheme.currentAccentId = 9;
+                }
             } else if (theme != null) {
                 ThemeInfo t = themesDict.get(theme);
                 if (t != null) {
                     currentNightTheme = t;
                 }
+            } else if (currentNightTheme == null || currentNightTheme == themeDarkBlue) {
+                currentNightTheme = defaultDarkTheme;
             }
 
             if (currentNightTheme != null && !themeConfig.contains("lastDarkTheme")) {
@@ -4961,6 +5046,8 @@ public class Theme {
                     if (accent != null) {
                         info.overrideWallpaper = accent.overrideWallpaper;
                     }
+                } else if (info.isMonet()) {
+                    info.loadWallpapers(themeConfig);
                 }
             }
             if (oldEditor != null) {
@@ -4994,7 +5081,7 @@ public class Theme {
             throw new RuntimeException(e);
         }
         if (applyingTheme == null) {
-            applyingTheme = defaultTheme;
+            applyingTheme = defaultDarkTheme != null ? defaultDarkTheme : defaultTheme;
         } else {
             currentDayTheme = applyingTheme;
         }
@@ -5038,38 +5125,38 @@ public class Theme {
     }
 
     private static void sortAccents(ThemeInfo info) {
-        Collections.sort(info.themeAccents, (o1, o2) -> {
-            if (isHome(o1)) {
+        if (info == null || info.themeAccents == null) {
+            return;
+        }
+        Collections.sort(info.themeAccents, (themeAccent, themeAccent2) -> {
+            boolean zIsMonetAccent = MonetAccentHelper.isMonetAccent(themeAccent);
+            if (zIsMonetAccent != MonetAccentHelper.isMonetAccent(themeAccent2)) {
+                return zIsMonetAccent ? -1 : 1;
+            }
+            if (zIsMonetAccent) {
+                return Integer.compare(themeAccent2.id, themeAccent.id);
+            }
+            if (isHome(themeAccent)) {
                 return -1;
             }
-            if (isHome(o2)) {
+            if (isHome(themeAccent2)) {
                 return 1;
             }
-            int i1 = o1.isDefault ? 1 : 0;
-            int i2 = o2.isDefault ? 1 : 0;
-
-            if (i1 == i2) {
-                if (o1.isDefault) {
-                    if (o1.id > o2.id) {
-                        return 1;
-                    } else if (o1.id < o2.id) {
-                        return -1;
-                    }
-                } else {
-                    if (o1.id > o2.id) {
-                        return -1;
-                    } else if (o1.id < o2.id) {
-                        return 1;
-                    }
-                }
-            } else {
-                if (i1 > i2) {
-                    return -1;
-                } else {
+            if (themeAccent.isDefault != themeAccent2.isDefault) {
+                return themeAccent.isDefault ? -1 : 1;
+            }
+            int i = themeAccent.id;
+            int i2 = themeAccent2.id;
+            if (themeAccent.isDefault) {
+                if (i > i2) {
                     return 1;
                 }
+                return i < i2 ? -1 : 0;
             }
-            return 0;
+            if (i > i2) {
+                return -1;
+            }
+            return i < i2 ? 1 : 0;
         });
     }
 
@@ -5167,7 +5254,7 @@ public class Theme {
     }
 
     public static boolean canStartHolidayAnimation() {
-        return canStartHolidayAnimation;
+        return canStartHolidayAnimation || com.exteragram.messenger.ExteraConfig.getForceSnow();
     }
 
     public static int getEventType() {
@@ -5177,6 +5264,17 @@ public class Theme {
         int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
         int minutes = calendar.get(Calendar.MINUTE);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        if (com.exteragram.messenger.ExteraConfig.getEventType() != 0) {
+            int eventType = com.exteragram.messenger.ExteraConfig.getEventType();
+            if (eventType == 2) {
+                return 0;
+            }
+            if (eventType != 3) {
+                return eventType != 4 ? -1 : 2;
+            }
+            return 1;
+        }
 
         int eventType = -1;
         if (monthOfYear == 11 && dayOfMonth >= 24 && dayOfMonth <= 31 || monthOfYear == 0 && dayOfMonth == 1) {
@@ -6007,65 +6105,115 @@ public class Theme {
     }
 
     public static class RippleRadMaskDrawable extends Drawable {
-        private Path path = new Path();
-        private float[] radii = new float[8];
-        boolean invalidatePath = true;
+        boolean invalidatePath;
+        private float paddingBottom;
+        private float paddingLeft;
+        private float paddingRight;
+        private float paddingTop;
+        private Path path;
+        private float[] radii;
 
-        public RippleRadMaskDrawable(float top, float bottom) {
-            radii[0] = radii[1] = radii[2] = radii[3] = dp(top);
-            radii[4] = radii[5] = radii[6] = radii[7] = dp(bottom);
-        }
-        public RippleRadMaskDrawable(float topLeft, float topRight, float bottomRight, float bottomLeft) {
-            radii[0] = radii[1] = dp(topLeft);
-            radii[2] = radii[3] = dp(topRight);
-            radii[4] = radii[5] = dp(bottomRight);
-            radii[6] = radii[7] = dp(bottomLeft);
+        @Override
+        public int getOpacity() {
+            return 0;
         }
 
-        public void setRadius(float top, float bottom) {
-            radii[0] = radii[1] = radii[2] = radii[3] = dp(top);
-            radii[4] = radii[5] = radii[6] = radii[7] = dp(bottom);
-            invalidatePath = true;
+        @Override
+        public void setAlpha(int i) {
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+        }
+
+        public RippleRadMaskDrawable(float f, float f2) {
+            this(f, f2, 0, 0, 0, 0);
+        }
+
+        public RippleRadMaskDrawable(float f, float f2, float f3, float f4) {
+            this(f, f2, f3, f4, 0, 0, 0, 0);
+        }
+
+        public RippleRadMaskDrawable(float f, float f2, int i, int i2, int i3, int i4) {
+            this(f, f, f2, f2, i, i2, i3, i4);
+        }
+
+        public RippleRadMaskDrawable(float f, float f2, float f3, float f4, int i, int i2, int i3, int i4) {
+            this.path = new Path();
+            float[] fArr = new float[8];
+            this.radii = fArr;
+            this.invalidatePath = true;
+            float fDp = AndroidUtilities.dp(f);
+            fArr[1] = fDp;
+            fArr[0] = fDp;
+            float[] fArr2 = this.radii;
+            float fDp2 = AndroidUtilities.dp(f2);
+            fArr2[3] = fDp2;
+            fArr2[2] = fDp2;
+            float[] fArr3 = this.radii;
+            float fDp3 = AndroidUtilities.dp(f3);
+            fArr3[5] = fDp3;
+            fArr3[4] = fDp3;
+            float[] fArr4 = this.radii;
+            float fDp4 = AndroidUtilities.dp(f4);
+            fArr4[7] = fDp4;
+            fArr4[6] = fDp4;
+            this.paddingLeft = AndroidUtilities.dpf2(i);
+            this.paddingTop = AndroidUtilities.dpf2(i2);
+            this.paddingRight = AndroidUtilities.dpf2(i3);
+            this.paddingBottom = AndroidUtilities.dpf2(i4);
+        }
+
+        public void setRadius(float f, float f2) {
+            setRadius(f, f, f2, f2);
+        }
+
+        public void setRadius(float f, float f2, float f3, float f4) {
+            float[] fArr = this.radii;
+            float fDp = AndroidUtilities.dp(f);
+            fArr[1] = fDp;
+            fArr[0] = fDp;
+            float[] fArr2 = this.radii;
+            float fDp2 = AndroidUtilities.dp(f2);
+            fArr2[3] = fDp2;
+            fArr2[2] = fDp2;
+            float[] fArr3 = this.radii;
+            float fDp3 = AndroidUtilities.dp(f3);
+            fArr3[5] = fDp3;
+            fArr3[4] = fDp3;
+            float[] fArr4 = this.radii;
+            float fDp4 = AndroidUtilities.dp(f4);
+            fArr4[7] = fDp4;
+            fArr4[6] = fDp4;
+            this.invalidatePath = true;
             invalidateSelf();
         }
-        public void setRadius(float topLeft, float topRight, float bottomRight, float bottomLeft) {
-            radii[0] = radii[1] = dp(topLeft);
-            radii[2] = radii[3] = dp(topRight);
-            radii[4] = radii[5] = dp(bottomRight);
-            radii[6] = radii[7] = dp(bottomLeft);
-            invalidatePath = true;
+
+        public void setPadding(float f, float f2, float f3, float f4) {
+            this.paddingLeft = AndroidUtilities.dpf2(f);
+            this.paddingTop = AndroidUtilities.dpf2(f2);
+            this.paddingRight = AndroidUtilities.dpf2(f3);
+            this.paddingBottom = AndroidUtilities.dpf2(f4);
+            this.invalidatePath = true;
             invalidateSelf();
         }
 
         @Override
         protected void onBoundsChange(Rect bounds) {
-            invalidatePath = true;
+            this.invalidatePath = true;
         }
 
         @Override
         public void draw(Canvas canvas) {
-            if (invalidatePath) {
-                invalidatePath = false;
-                path.reset();
-                AndroidUtilities.rectTmp.set(getBounds());
-                path.addRoundRect(AndroidUtilities.rectTmp, radii, Path.Direction.CW);
+            if (this.invalidatePath) {
+                this.invalidatePath = false;
+                this.path.reset();
+                RectF rectF = AndroidUtilities.rectTmp;
+                rectF.set(getBounds());
+                rectF.set(getBounds().left + this.paddingLeft, getBounds().top + this.paddingTop, getBounds().right - this.paddingRight, getBounds().bottom - this.paddingBottom);
+                this.path.addRoundRect(rectF, this.radii, Path.Direction.CW);
             }
-            canvas.drawPath(path, maskPaint);
-        }
-
-        @Override
-        public void setAlpha(int alpha) {
-
-        }
-
-        @Override
-        public void setColorFilter(ColorFilter colorFilter) {
-
-        }
-
-        @Override
-        public int getOpacity() {
-            return PixelFormat.UNKNOWN;
+            canvas.drawPath(this.path, Theme.maskPaint);
         }
     }
 
@@ -6994,6 +7142,39 @@ public class Theme {
 
     public static ThemeInfo getCurrentTheme() {
         return currentDayTheme != null ? currentDayTheme : defaultTheme;
+    }
+
+    public static boolean isCurrentThemeMonet() {
+        return currentTheme != null && currentTheme.isMonet();
+    }
+
+    public static boolean isCurrentThemeMonet(ResourcesProvider resourcesProvider) {
+        return resourcesProvider != null ? resourcesProvider.isMonet() : isCurrentThemeMonet();
+    }
+
+    public static boolean isCurrentAccentMonet() {
+        ThemeInfo themeInfo = currentTheme;
+        return MonetAccentHelper.isMonetAccent(themeInfo != null ? themeInfo.getAccent(false) : null);
+    }
+
+
+    public static void refreshMonetColors() {
+        ArrayList<ThemeInfo> arrayList;
+        if (android.os.Build.VERSION.SDK_INT < 31 || (arrayList = themes) == null) {
+            return;
+        }
+        int size = arrayList.size();
+        boolean zRefresh = false;
+        for (int i = 0; i < size; i++) {
+            ThemeInfo themeInfo = themes.get(i);
+            if (themeInfo != null) {
+                zRefresh |= MonetAccentHelper.refresh(themeInfo);
+            }
+        }
+        if (zRefresh) {
+            PatternsLoader.createLoader(true);
+        }
+        org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(org.telegram.messenger.NotificationCenter.themeListUpdated);
     }
 
     public static ThemeInfo getCurrentNightTheme() {
@@ -8165,6 +8346,10 @@ public class Theme {
                             if ((idx = line.indexOf('=')) != -1) {
                                 String key = line.substring(0, idx);
                                 String param = line.substring(idx + 1);
+                                boolean endsWithH = param.trim().endsWith("h");
+                                if (endsWithH) {
+                                    param = param.substring(0, param.length() - 1);
+                                }
                                 int value;
                                 if (param.length() > 0 && param.charAt(0) == '#') {
                                     try {
@@ -8172,8 +8357,13 @@ public class Theme {
                                     } catch (Exception ignore) {
                                         value = Utilities.parseInt(param);
                                     }
+                                } else if (Build.VERSION.SDK_INT >= 31 && (param.startsWith("a") || param.startsWith("n") || param.startsWith("m"))) {
+                                    value = MonetUtils.getColor(param.trim());
                                 } else {
                                     value = Utilities.parseInt(param);
+                                }
+                                if (Build.VERSION.SDK_INT >= 31 && endsWithH) {
+                                    value = MonetUtils.harmonize(value);
                                 }
                                 int keyFromString = ThemeColors.stringKeyToInt(key);
                                 if (keyFromString >= 0) {
@@ -8848,6 +9038,8 @@ public class Theme {
 
             chat_shareIconDrawable = resources.getDrawable(R.drawable.filled_button_share).mutate();
             chat_replyIconDrawable = resources.getDrawable(R.drawable.filled_button_reply);
+            chat_pencilIconDrawable = resources.getDrawable(R.drawable.msg_edit).mutate();
+            chat_channelIconDrawable = resources.getDrawable(R.drawable.msg_channel).mutate();
             chat_closeIconDrawable = resources.getDrawable(R.drawable.msg_voiceclose).mutate();
             chat_moreIconDrawable = resources.getDrawable(R.drawable.media_more).mutate();
             chat_goIconDrawable = resources.getDrawable(R.drawable.filled_open_message);
@@ -9542,11 +9734,49 @@ public class Theme {
         return getColor(key, null, true);
     }
 
+    public static int getNonAnimatedColor(int key, ResourcesProvider resourcesProvider) {
+        if (key == key_divider && !resolvingDividerColor && com.exteragram.messenger.ExteraConfig.getDividerStyle() != com.exteragram.messenger.DividerStyle.LINE) {
+            return 0x00ffffff;
+        }
+        if (resourcesProvider != null) {
+            return resourcesProvider.getColor(key);
+        }
+        return getColor(key, null, true);
+    }
+
     public static int getColor(int key, ResourcesProvider provider) {
+        if (key == key_divider && !resolvingDividerColor && com.exteragram.messenger.ExteraConfig.getDividerStyle() != com.exteragram.messenger.DividerStyle.LINE) {
+            return 0x00ffffff;
+        }
         if (provider != null) {
             return provider.getColor(key);
         }
         return getColor(key);
+    }
+
+    public static int getDividerColor(ResourcesProvider resourcesProvider) {
+        com.exteragram.messenger.DividerStyle dividerStyle = com.exteragram.messenger.ExteraConfig.getDividerStyle();
+        if (dividerStyle == com.exteragram.messenger.DividerStyle.HIDDEN) {
+            return 0x00ffffff;
+        }
+        boolean ignoreAnimation = true;
+        resolvingDividerColor = true;
+        try {
+            if (resourcesProvider != null) {
+                int color = resourcesProvider.getColor(key_divider);
+                resolvingDividerColor = false;
+                return color;
+            }
+            if (dividerStyle == com.exteragram.messenger.DividerStyle.LINE) {
+                ignoreAnimation = false;
+            }
+            int rawColor = getColor(key_divider, null, ignoreAnimation);
+            resolvingDividerColor = false;
+            return rawColor;
+        } catch (Throwable th) {
+            resolvingDividerColor = false;
+            throw th;
+        }
     }
 
     public static int getColor(int key) {
@@ -9558,6 +9788,9 @@ public class Theme {
     }
 
     public static int getColor(int key, boolean[] isDefault, boolean ignoreAnimation) {
+        if (key == key_divider && !resolvingDividerColor && com.exteragram.messenger.ExteraConfig.getDividerStyle() != com.exteragram.messenger.DividerStyle.LINE) {
+            return 0x00ffffff;
+        }
         if (!ignoreAnimation && animatingColors != null) {
             int index = animatingColors.indexOfKey(key);
             if (index >= 0) {
@@ -9969,6 +10202,15 @@ public class Theme {
             int gradientToColor2 = currentColors.get(key_chat_wallpaper_gradient_to2);
             int gradientToColor1 = currentColors.get(key_chat_wallpaper_gradient_to1);
 
+            ThemeAccent accent = currentTheme.getAccent(false);
+            if (backgroundColor != 0 && MonetAccentHelper.isFallbackPattern(accent)) {
+                settings.wallpaper = MonetAccentHelper.createFallbackPatternDrawable(backgroundColor, gradientToColor1, gradientToColor2, gradientToColor3, currentColors.get(key_chat_wallpaper_gradient_rotation, 45), intensity, false, previousPhase);
+                settings.isWallpaperMotion = wallpaperMotion;
+                settings.isPatternWallpaper = true;
+                settings.isCustomTheme = true;
+                return settings;
+            }
+
             boolean bitmapCreated = false;
             if (wallpaperFile != null && wallpaperFile.exists()) {
                 bitmapCreated = true;
@@ -10265,10 +10507,14 @@ public class Theme {
             if (rotation == -1) {
                 rotation = 45;
             }
+            ThemeAccent accent = currentTheme.getAccent(false);
+            int intensity = accent != null ? (int) (accent.patternIntensity * 100.0f) : 34;
             if (gradientToColor1 == 0) {
-                return new ColorDrawable(backgroundColor);
+                return (MonetAccentHelper.isFallbackPattern(accent) && previousTheme == null) ? MonetAccentHelper.createFallbackPatternDrawable(backgroundColor, 0, 0, 0, rotation, intensity, true, 0) : new ColorDrawable(backgroundColor);
             } else {
-                ThemeAccent accent = currentTheme.getAccent(false);
+                if (MonetAccentHelper.isFallbackPattern(accent) && previousTheme == null) {
+                    return MonetAccentHelper.createFallbackPatternDrawable(backgroundColor, gradientToColor1, gradientToColor2, gradientToColor3, rotation, intensity, true, 0);
+                }
                 if (accent != null && !TextUtils.isEmpty(accent.patternSlug) && previousTheme == null) {
                     File wallpaperFile = accent.getPathToWallpaper();
                     if (wallpaperFile != null && wallpaperFile.exists()) {
@@ -10662,3 +10908,4 @@ public class Theme {
         DEBUG_GREEN_STROKE.setStyle(Paint.Style.STROKE);
     }
 }
+

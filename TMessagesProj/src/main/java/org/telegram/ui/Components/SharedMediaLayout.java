@@ -7845,6 +7845,19 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                     SharedDocumentCell cell = (SharedDocumentCell) view;
                     TLRPC.Document document = message.getDocument();
                     if (cell.isLoaded()) {
+                        if (com.exteragram.messenger.backup.PreferencesUtils.getInstance().isBackup(message)) {
+                            new com.exteragram.messenger.backup.BackupBottomSheet(profileActivity, message).showIfPossible();
+                            return;
+                        }
+                        if (com.exteragram.messenger.plugins.PluginsController.isPlugin(message)) {
+                            com.exteragram.messenger.plugins.PluginsController.getInstance().showInstallDialog(profileActivity, message);
+                            return;
+                        }
+                        com.exteragram.messenger.icons.IconManager iconManager = com.exteragram.messenger.icons.IconManager.INSTANCE;
+                        if (iconManager.isIconPack(message)) {
+                            iconManager.handleIconPack(profileActivity, message);
+                            return;
+                        }
                         if (message.canPreviewDocument()) {
                             PhotoViewer.getInstance().setParentActivity(profileActivity);
                             index = sharedMediaData[selectedMode].messages.indexOf(message);

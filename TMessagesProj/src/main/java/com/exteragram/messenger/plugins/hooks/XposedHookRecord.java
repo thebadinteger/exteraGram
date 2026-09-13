@@ -39,8 +39,7 @@ public final class XposedHookRecord implements HookRecord {
                     Object callback = unhook.getCallback();
                     companion.releaseCallback(callback instanceof AutoCloseable ? (AutoCloseable) callback : null);
                 } catch (Throwable th) {
-                    th = th;
-                                        FileLog.e("Error during Xposed hook callback cleanup", th);
+                    FileLog.e("Error during Xposed hook callback cleanup", th);
                 }
             } catch (Throwable th2) {
                 try {
@@ -50,8 +49,7 @@ public final class XposedHookRecord implements HookRecord {
                         Object callback2 = unhook.getCallback();
                         companion2.releaseCallback(callback2 instanceof AutoCloseable ? (AutoCloseable) callback2 : null);
                     } catch (Throwable th3) {
-                        th = th3;
-                                                FileLog.e("Error during Xposed hook callback cleanup", th);
+                        FileLog.e("Error during Xposed hook callback cleanup", th3);
                     }
                 } catch (Throwable th4) {
                     try {
@@ -101,11 +99,9 @@ public final class XposedHookRecord implements HookRecord {
                 return;
             }
             Map map = XposedHookRecord.callbackReferences;
-            "access$getCallbackReferences$cp(...)";
             synchronized (map) {
                 try {
                     Map map2 = XposedHookRecord.callbackReferences;
-                    "access$getCallbackReferences$cp(...)";
                     Integer num = (Integer) XposedHookRecord.callbackReferences.get(callback);
                     map2.put(callback, Integer.valueOf((num != null ? num.intValue() : 0) + 1));
                     Unit unit = Unit.INSTANCE;
@@ -121,7 +117,6 @@ public final class XposedHookRecord implements HookRecord {
                 return;
             }
             Map map = XposedHookRecord.callbackReferences;
-            "access$getCallbackReferences$cp(...)";
             synchronized (map) {
                 try {
                     Integer num = (Integer) XposedHookRecord.callbackReferences.get(callback);
@@ -132,7 +127,6 @@ public final class XposedHookRecord implements HookRecord {
                         z = true;
                     } else {
                         Map map2 = XposedHookRecord.callbackReferences;
-                        "access$getCallbackReferences$cp(...)";
                         map2.put(callback, Integer.valueOf(iIntValue - 1));
                     }
                     Unit unit = Unit.INSTANCE;
@@ -140,8 +134,10 @@ public final class XposedHookRecord implements HookRecord {
                     throw th;
                 }
             }
-            if (z) {
-                UseCaseGraphContext$$ExternalSyntheticAutoCloseableDispatcher0.m(callback);
+            if (z && callback != null) {
+                try {
+                    callback.close();
+                } catch (Exception ignored) {}
             }
         }
     }

@@ -16,7 +16,7 @@ public final class ArchivePathAnalyzer {
         boolean z2;
         boolean z3 = false;
         String string = null;
-        boolean z4 = StringsKt.startsWith$default(path, "/", false, 2, (Object) null) || StringsKt.startsWith$default(path, "\\", false, 2, (Object) null) || isWindowsDriveAbsolute(path);
+        boolean z4 = path.startsWith("/") || path.startsWith("\\") || isWindowsDriveAbsolute(path);
         if (path.length() == 0) {
             return new ArchivePathAnalysis(null, true, z4, false);
         }

@@ -64,7 +64,7 @@ public class BackupBottomSheet extends BottomSheet {
         buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$0(file, baseFragment, view);
+                BackupBottomSheet.this.lambda$new$0(file, baseFragment, view);
             }
         });
         linearLayout.addView(buttonWithCounterView, LayoutHelper.createFrame(-1, 48.0f, 0, 16.0f, 15.0f, 16.0f, 8.0f));
@@ -75,13 +75,36 @@ public class BackupBottomSheet extends BottomSheet {
         buttonWithCounterView2.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$1(view);
+                BackupBottomSheet.this.lambda$new$1(view);
             }
         });
         linearLayout.addView(buttonWithCounterView2, LayoutHelper.createFrame(-1, 48.0f, 0, 16.0f, 0.0f, 16.0f, 0.0f));
         ScrollView scrollView = new ScrollView(parentActivity);
         scrollView.addView(frameLayout);
         setCustomView(scrollView);
+    }
+
+    public void lambda$new$0(File file, BaseFragment baseFragment, View view) {
+        dismiss();
+        PreferencesUtils.getInstance().importSettings(file, baseFragment.getParentActivity(), baseFragment.getParentLayout());
+        BulletinFactory.of(baseFragment).createSimpleBulletin(R.raw.contact_check, LocaleController.getString(R.string.SettingsImported)).show();
+    }
+
+    public void lambda$new$1(View view) {
+        dismiss();
+    }
+
+    public void showIfPossible() {
+        if (this.difference > 0) {
+            show();
+        } else {
+            AndroidUtilities.runOnUIThread(new Runnable() {
+                @Override
+                public final void run() {
+                    BackupBottomSheet.this.lambda$showIfPossible$2();
+                }
+            });
+        }
     }
 
     public void lambda$showIfPossible$2() {

@@ -1292,7 +1292,9 @@ public class LocationActivity extends BaseFragment implements NotificationCenter
         IMapsProvider.IMapView map = mapView;
         new Thread(() -> {
             try {
-                map.onCreate(null);
+                if (!com.exteragram.messenger.ExteraConfig.canUseYandexMaps()) {
+                    map.onCreate(null);
+                }
             } catch (Exception e) {
                 //this will cause exception, but will preload google maps?
             }
@@ -1595,6 +1597,24 @@ public class LocationActivity extends BaseFragment implements NotificationCenter
         } else {
             daddrLat = chatLocation.geo_point.lat;
             daddrLong = chatLocation.geo_point._long;
+        }
+        if (com.exteragram.messenger.ExteraConfig.canUseYandexMaps()) {
+            if (myLocation != null) {
+                try {
+                    getParentActivity().startActivity(new Intent("android.intent.action.VIEW", Uri.parse(String.format(Locale.US, "http://maps.yandex.ru/?rtext=%f,%f~%f,%f", myLocation.getLatitude(), myLocation.getLongitude(), daddrLat, daddrLong))));
+                    return;
+                } catch (Exception e) {
+                    FileLog.e(e);
+                    return;
+                }
+            }
+            try {
+                getParentActivity().startActivity(new Intent("android.intent.action.VIEW", Uri.parse(String.format(Locale.US, "http://maps.yandex.ru/?rtext=%f,%f", daddrLat, daddrLong))));
+                return;
+            } catch (Exception e2) {
+                FileLog.e(e2);
+                return;
+            }
         }
         String domain;
         if (BuildVars.isHuaweiStoreApp()) {

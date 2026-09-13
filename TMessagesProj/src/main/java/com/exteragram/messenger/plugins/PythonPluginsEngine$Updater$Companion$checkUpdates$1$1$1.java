@@ -40,7 +40,6 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
     @Override 
     public String getDoneButtonText() {
         String string = LocaleController.getString(R.string.AppUpdateNow);
-        "getString(...)";
         return string;
     }
 
@@ -51,7 +50,6 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
 
     @Override 
     public void addContentBeforeDoneButton(FrameLayout container) {
-        "container";
         final CheckBox2 checkBox2 = new CheckBox2(getContext(), 21, this.resourcesProvider);
         checkBox2.setColor(Theme.key_radioBackgroundChecked, Theme.key_checkboxDisabled, Theme.key_checkboxCheck);
         checkBox2.setDrawUnchecked(true);
@@ -71,7 +69,7 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
         linearLayout.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.m1322$r8$lambda$pmnr1IP9LzBuJ_MY1EiMd0yh4(checkBox2, this, view);
+                PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.m1322$r8$lambda$pmnr1IP9LzBuJ_MY1EiMd0yh4(checkBox2, PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.this, view);
             }
         });
         ScaleStateListAnimator.apply(linearLayout, 0.05f, 1.2f);
@@ -86,11 +84,10 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
 
     @Override 
     public void addContentAfterDoneButton(FrameLayout container) {
-        "container";
         addRemindLaterButton(container, new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.m1323$r8$lambda$8l3dUB6TjDuyrcg49CEtzm7A(this.f$0);
+                PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.m1323$r8$lambda$8l3dUB6TjDuyrcg49CEtzm7A(PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.this);
             }
         });
     }
@@ -102,7 +99,7 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
         ExteraConfig.setSdkUpdateScheduleTimestamp(jCurrentTimeMillis);
         Unit unit = Unit.INSTANCE;
         editor.putLong(string, jCurrentTimeMillis).apply();
-        pythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.lambda$new$0();
+        pythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1.dismiss();
     }
 
     @Override 
@@ -119,7 +116,7 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
         }
         try {
             PythonPluginsEngine.Updater.INSTANCE.savePythonSdkArchive(this.$update.getMessage(), this.$update.document, true);
-        } catch (IOException e) {
+        } catch (Exception e) {
             StringBuilder sb = new StringBuilder();
             sb.append("Failed to load python-plugins-sdk file (");
             sb.append(this.$update.getChannel());
@@ -129,6 +126,6 @@ public final class PythonPluginsEngine$Updater$Companion$checkUpdates$1$1$1 exte
             sb.append(')');
             FileLog.e(sb.toString(), e);
         }
-        lambda$new$0();
+        dismiss();
     }
 }

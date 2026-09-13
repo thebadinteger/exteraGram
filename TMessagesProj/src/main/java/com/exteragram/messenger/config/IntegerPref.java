@@ -11,7 +11,17 @@ public final class IntegerPref extends BasePref<Integer> {
         super(Integer.valueOf(i), str);
     }
 
-    public /* synthetic */ void save(String str, Integer num) {
+    public /* synthetic */ IntegerPref(int i, String str, int i2, DefaultConstructorMarker defaultConstructorMarker) {
+        this(i, (i2 & 2) != 0 ? null : str);
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ Integer fetch(String str, Integer num) {
+        return fetch(str, num.intValue());
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ void save(String str, Integer num) {
         save(str, num.intValue());
     }
 

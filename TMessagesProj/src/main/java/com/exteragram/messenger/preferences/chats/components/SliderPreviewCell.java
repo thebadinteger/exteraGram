@@ -33,7 +33,7 @@ public class SliderPreviewCell extends FrameLayout implements CustomPreferenceCe
         AltSeekbar altSeekbar = new AltSeekbar(context, new AltSeekbar.OnDrag() { 
             @Override 
             public final void run(float f2) {
-                this.f$0.lambda$new$0(f2);
+                SliderPreviewCell.this.lambda$new$0(f2);
             }
         }, i2, i3, str, str2, str3);
         this.seekBar = altSeekbar;

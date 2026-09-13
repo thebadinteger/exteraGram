@@ -64,7 +64,7 @@ public class UpdateLayout extends IUpdateLayout {
         this.updateLayout.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$createUpdateUI$0(i, view);
+                UpdateLayout.this.lambda$createUpdateUI$0(i, view);
             }
         });
         AnimatedTextView animatedTextView = new AnimatedTextView(this.activity, true, true, true) { 
@@ -125,7 +125,7 @@ public class UpdateLayout extends IUpdateLayout {
 
     @Override // org.telegram.ui.IUpdateLayout
     public void updateAppUpdateViews(int i, boolean z) {
-        boolean z2;
+        boolean z2 = false;
         String fileSize;
         FrameLayout frameLayout;
         if (this.sideMenuContainer == null) {

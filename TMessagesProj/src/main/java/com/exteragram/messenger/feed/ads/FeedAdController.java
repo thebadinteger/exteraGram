@@ -138,15 +138,124 @@ public final class FeedAdController {
             return;
         }
         this.loading = true;
-        fetchHistory(new Utilities.Callback2() { 
-            @Override 
+        fetchHistory(new Utilities.Callback2() { // from class: com.exteragram.messenger.feed.ads.FeedAdController$$ExternalSyntheticLambda0
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$ensureLoaded$0((TLRPC.messages_Messages) obj, (TLRPC.TL_error) obj2);
+                FeedAdController.this.lambda$ensureLoaded$0((TLRPC.messages_Messages) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void m1163$r8$lambda$suri1kpT0eJ8sN4FqCkAUB1c0c(TLRPC.TL_error tL_error, TLObject tLObject, Utilities.Callback2 callback2) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$ensureLoaded$0(TLRPC.messages_Messages messages_messages, TLRPC.TL_error tL_error) {
+        this.loading = false;
+        this.lastLoadTime = SystemClock.elapsedRealtime();
+        if (tL_error == null && messages_messages != null) {
+            ArrayList<FeedAd> arrayList = FeedAdParser.parse(messages_messages);
+            this.allAds.clear();
+            this.allAds.addAll(arrayList);
+            recomputeEligible();
+        }
+        ArrayList arrayList2 = new ArrayList(this.pendingLoadCallbacks);
+        this.pendingLoadCallbacks.clear();
+        for (int i = 0; i < arrayList2.size(); i++) {
+            ((Runnable) arrayList2.get(i)).run();
+        }
+    }
+
+    public void recomputeEligible() {
+        ArrayList<FeedAd> arrayList = new ArrayList<>(this.allAds.size());
+        for (int i = 0; i < this.allAds.size(); i++) {
+            if (isEligible(this.allAds.get(i))) {
+                arrayList.add(this.allAds.get(i));
+            }
+        }
+        boolean z = arrayList.size() == this.eligibleAds.size();
+        for (int i2 = 0; z && i2 < arrayList.size(); i2++) {
+            z = TextUtils.equals(arrayList.get(i2).id, this.eligibleAds.get(i2).id) && arrayList.get(i2).weight == this.eligibleAds.get(i2).weight;
+        }
+        this.eligibleAds = arrayList;
+        ArrayList<FeedAd> arrayList2 = this.rotation;
+        if (!z) {
+            arrayList2.clear();
+            this.rotationIndex = 0;
+            return;
+        }
+        if (arrayList2.isEmpty()) {
+            return;
+        }
+        HashMap map = new HashMap();
+        for (int i3 = 0; i3 < arrayList.size(); i3++) {
+            map.put(arrayList.get(i3).id, arrayList.get(i3));
+        }
+        for (int i4 = 0; i4 < this.rotation.size(); i4++) {
+            FeedAd feedAd = (FeedAd) map.get(this.rotation.get(i4).id);
+            if (feedAd != null) {
+                this.rotation.set(i4, feedAd);
+            }
+        }
+    }
+
+    private boolean isEligible(FeedAd feedAd) {
+        if (!matchesLocale(feedAd.locales)) {
+            return false;
+        }
+        boolean zIsPremium = UserConfig.getInstance(this.currentAccount).isPremium();
+        int i = feedAd.premium;
+        if ((i == 1 && !zIsPremium) || (i == 2 && zIsPremium)) {
+            return false;
+        }
+        boolean zHasBadge = BadgesController.INSTANCE.hasBadge();
+        int i2 = feedAd.badge;
+        return (i2 != 1 || zHasBadge) && !(i2 == 2 && zHasBadge);
+    }
+
+    private boolean matchesLocale(Set<String> set) {
+        LocaleController.LocaleInfo currentLocaleInfo;
+        return set == null || set.isEmpty() || (currentLocaleInfo = LocaleController.getInstance().getCurrentLocaleInfo()) == null || contains(set, currentLocaleInfo.getLangCode()) || contains(set, currentLocaleInfo.shortName) || contains(set, currentLocaleInfo.baseLangCode);
+    }
+
+    private static boolean contains(Set<String> set, String str) {
+        return str != null && set.contains(str.toLowerCase());
+    }
+
+    private void fetchHistory(final Utilities.Callback2<TLRPC.messages_Messages, TLRPC.TL_error> callback2) {
+        final AccountInstance accountInstance = AccountInstance.getInstance(this.currentAccount);
+        final TLRPC.TL_messages_getHistory tL_messages_getHistory = new TLRPC.TL_messages_getHistory();
+        tL_messages_getHistory.peer = accountInstance.getMessagesController().getInputPeer(-3514621311L);
+        tL_messages_getHistory.offset_id = 0;
+        tL_messages_getHistory.limit = 75;
+        final Runnable runnable = new Runnable() { // from class: com.exteragram.messenger.feed.ads.FeedAdController$$ExternalSyntheticLambda1
+            @Override // java.lang.Runnable
+            public final void run() {
+                accountInstance.getConnectionsManager().sendRequest(tL_messages_getHistory, new RequestDelegate() { // from class: com.exteragram.messenger.feed.ads.FeedAdController$$ExternalSyntheticLambda3
+                    @Override // org.telegram.tgnet.RequestDelegate
+                    public final void run(TLObject tLObject, TLRPC.TL_error tL_error) {
+                        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.feed.ads.FeedAdController$$ExternalSyntheticLambda4
+                            @Override // java.lang.Runnable
+                            public final void run() {
+                                FeedAdController.m1163$r8$lambda$suri1kpT0eJ8sN4FqCkAUB1c0c(tL_error, tLObject, callback2);
+                            }
+                        });
+                    }
+                });
+            }
+        };
+        TLRPC.InputPeer inputPeer = tL_messages_getHistory.peer;
+        if (inputPeer != null && inputPeer.access_hash != 0) {
+            runnable.run();
+        } else {
+            ChatUtils.getInstance(this.currentAccount).resolveChannel("exteraFeedAds", new Utilities.Callback() { // from class: com.exteragram.messenger.feed.ads.FeedAdController$$ExternalSyntheticLambda2
+                @Override // org.telegram.messenger.Utilities.Callback
+                public final void run(Object obj) {
+                    FeedAdController.$r8$lambda$F74A0h3yQjwWcCURFdXXPBFC7aY(tL_messages_getHistory, runnable, callback2, (TLRPC.Chat) obj);
+                }
+            });
+        }
+    }
+
+    /* JADX INFO: renamed from: $r8$lambda$suri1kp-T0eJ8sN4FqCkAUB1c0c, reason: not valid java name */
+    public static /* synthetic */ void m1163$r8$lambda$suri1kpT0eJ8sN4FqCkAUB1c0c(TLRPC.TL_error tL_error, TLObject tLObject, Utilities.Callback2 callback2) {
         if (tL_error != null || !(tLObject instanceof TLRPC.messages_Messages)) {
             callback2.run(null, tL_error);
         } else {

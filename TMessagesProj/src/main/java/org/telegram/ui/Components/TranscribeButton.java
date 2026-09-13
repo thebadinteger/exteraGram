@@ -43,6 +43,12 @@ import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.RequestDelegate;
+import org.telegram.tgnet.TLObject;
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.speech.VoiceRecognitionController;
+import com.exteragram.messenger.speech.utils.MediaLoader;
+import com.exteragram.messenger.utils.chats.ChatUtils;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
@@ -213,7 +219,7 @@ public class TranscribeButton {
         boolean processClick, toOpen = !shouldBeOpen;
         if (!shouldBeOpen) {
             processClick = !loading;
-            if ((premium || canTranscribeTrial(parent.getMessageObject())) && parent.getMessageObject().isSent()) {
+            if ((premium || canTranscribeTrial(parent.getMessageObject()) || VoiceRecognitionController.isCustomRecognitionEnabled()) && parent.getMessageObject().isSent()) {
                 setLoading(true, true);
             }
         } else {
@@ -227,7 +233,7 @@ public class TranscribeButton {
         }
         pressed = false;
         if (processClick) {
-            if (!premium && toOpen) {
+            if (!premium && !VoiceRecognitionController.isCustomRecognitionEnabled() && toOpen) {
                 if (canTranscribeTrial(parent.getMessageObject()) || parent.getMessageObject() != null && parent.getMessageObject().messageOwner != null && !TextUtils.isEmpty(parent.getMessageObject().messageOwner.voiceTranscription)) {
                     transcribePressed(parent.getMessageObject(), toOpen, parent.getDelegate());
                 } else {
@@ -657,6 +663,50 @@ public class TranscribeButton {
         );
     }
 
+    private static void transcribeLocally(MessageObject messageObject, RequestDelegate requestDelegate) {
+        String pathToMessage = ChatUtils.getInstance().getPathToMessage(messageObject);
+        if (TextUtils.isEmpty(pathToMessage)) {
+            return;
+        }
+        long peerDialogId = DialogObject.getPeerDialogId(MessagesController.getInstance(messageObject.currentAccount).getInputPeer(messageObject.messageOwner.peer_id));
+        int messageId = messageObject.messageOwner.id;
+        VoiceRecognitionController controller = VoiceRecognitionController.getInstance();
+        String key = controller.key(peerDialogId, messageId);
+        final Long transcriptionId = key.hashCode() != 0 ? (long) key.hashCode() : (long) messageId;
+        controller.startRecognition(key, ExteraConfig.getRecognitionLanguage(), pathToMessage, "vosk", new VoiceRecognitionController.RecognitionCallback() {
+            @Override
+            public void onLanguageNotDownloaded(String language) {}
+
+            @Override
+            public void onLanguageNotSupported(String language) {}
+
+            @Override
+            public void onChunk(String chunk) {
+                TLRPC.TL_messages_transcribedAudio r = new TLRPC.TL_messages_transcribedAudio();
+                r.text = chunk;
+                r.pending = true;
+                r.transcription_id = transcriptionId;
+                requestDelegate.run(r, null);
+            }
+
+            @Override
+            public void onCompleted(String text) {
+                TLRPC.TL_messages_transcribedAudio r = new TLRPC.TL_messages_transcribedAudio();
+                r.text = text;
+                r.pending = false;
+                r.transcription_id = transcriptionId;
+                requestDelegate.run(r, null);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                TLRPC.TL_error error = new TLRPC.TL_error();
+                error.text = "RECOGNIZE_FAILED";
+                requestDelegate.run(null, error);
+            }
+        });
+    }
+
     private static void transcribePressed(MessageObject messageObject, boolean open, ChatMessageCell.ChatMessageCellDelegate delegate) {
         if (messageObject == null || messageObject.messageOwner == null || !messageObject.isSent()) {
             return;
@@ -688,6 +738,50 @@ public class TranscribeButton {
                 int flags = 0;
                 if (!UserConfig.getInstance(account).isPremium()) {
                     flags |= ConnectionsManager.RequestFlagDoNotWaitFloodWait;
+                }
+                if (VoiceRecognitionController.isCustomRecognitionEnabled() && !UserConfig.getInstance(account).isPremium()) {
+                    final ChatMessageCell.ChatMessageCellDelegate delegateLocal = delegate;
+                    RequestDelegate requestDelegate = (res2, err2) -> {
+                        if (res2 instanceof TLRPC.TL_messages_transcribedAudio) {
+                            TLRPC.TL_messages_transcribedAudio r = (TLRPC.TL_messages_transcribedAudio) res2;
+                            String text = r.text;
+                            long id = r.transcription_id;
+                            boolean isFinal = !r.pending;
+                            if (TextUtils.isEmpty(text)) {
+                                text = !isFinal ? null : "";
+                            }
+                            if (transcribeOperationsById == null) {
+                                transcribeOperationsById = new HashMap<>();
+                            }
+                            transcribeOperationsById.put(id, messageObject);
+                            messageObject.messageOwner.voiceTranscriptionId = id;
+                            final String finalText = text;
+                            final long finalId = id;
+                            final long duration = SystemClock.elapsedRealtime() - start;
+                            TranscribeButton.openVideoTranscription(messageObject);
+                            messageObject.messageOwner.voiceTranscriptionOpen = true;
+                            messageObject.messageOwner.voiceTranscriptionFinal = isFinal;
+                            MessagesStorage.getInstance(account).updateMessageVoiceTranscription(dialogId, messageId, finalText, messageObject.messageOwner);
+                            if (isFinal) {
+                                AndroidUtilities.runOnUIThread(() -> finishTranscription(messageObject, finalId, finalText), Math.max(0, minDuration - duration));
+                            }
+                        } else {
+                            if (transcribeOperationsByDialogPosition != null) {
+                                transcribeOperationsByDialogPosition.remove((Integer) reqInfoHash(messageObject));
+                            }
+                            AndroidUtilities.runOnUIThread(() -> {
+                                NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.voiceTranscriptionUpdate, messageObject);
+                            });
+                        }
+                    };
+                    MediaLoader.loadFiles(AccountInstance.getInstance(account), new ArrayList<MessageObject>() {{
+                        add(messageObject);
+                    }}, size -> {
+                        if (size > 0) {
+                            transcribeLocally(messageObject, requestDelegate);
+                        }
+                    });
+                    return;
                 }
                 ConnectionsManager.getInstance(account).sendRequest(req, (res, err) -> {
                     String text;

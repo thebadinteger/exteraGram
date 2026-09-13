@@ -119,6 +119,6 @@ public final /* data */ class IconPack {
     }
 
     public final boolean isBase() {
-        return StringsKt.startsWith$default(this.id, "base.", false, 2, (Object) null);
+        return this.id != null && this.id.startsWith("base.");
     }
 }

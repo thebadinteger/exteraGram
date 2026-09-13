@@ -201,9 +201,15 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     private boolean animationsEnabled;
     private boolean showStickers;
     public boolean forUser;
+    public boolean badgePicker;
+    private long defaultBadgeId;
     private ArrayList<TLRPC.TL_messages_stickerSet> stickerSets = new ArrayList<>();
     private boolean enterAnimationInProgress;
     private BackgroundDelegate backgroundDelegate;
+
+    public void setDefaultBadge(Long l) {
+        this.defaultBadgeId = l == null ? 0L : l.longValue();
+    }
 
     public void putAnimatedEmojiToCache(AnimatedEmojiDrawable animatedEmojiDrawable) {
         emojiGridView.animatedEmojiDrawables.put(animatedEmojiDrawable.getDocumentId(), animatedEmojiDrawable);
@@ -488,7 +494,12 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     }
 
     public SelectAnimatedEmojiDialog(BaseFragment baseFragment, Context context, boolean includeEmpty, Integer emojiX, int type, boolean shouldDrawBackground, Theme.ResourcesProvider resourcesProvider, int topPaddingDp, int accentColor) {
+        this(baseFragment, context, includeEmpty, emojiX, type, shouldDrawBackground, resourcesProvider, topPaddingDp, accentColor, false);
+    }
+
+    public SelectAnimatedEmojiDialog(BaseFragment baseFragment, Context context, boolean includeEmpty, Integer emojiX, int type, boolean shouldDrawBackground, Theme.ResourcesProvider resourcesProvider, int topPaddingDp, int accentColor, boolean badgePicker) {
         super(context);
+        this.badgePicker = badgePicker;
         this.resourcesProvider = resourcesProvider;
         this.type = type;
         this.includeEmpty = includeEmpty;
@@ -3607,6 +3618,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
 
     protected void onEmojiSelected(View view, Long documentId, TLRPC.Document document, TL_stars.TL_starGiftUnique gift, Integer until) {
 
+    }
+
+    public void onEmojiSelected(View view, Long documentId, TLRPC.Document document, TL_stars.TL_starGiftUnique gift, Integer until, String text) {
+        onEmojiSelected(view, documentId, document, gift, until);
     }
 
     public void preload(int type, int account) {

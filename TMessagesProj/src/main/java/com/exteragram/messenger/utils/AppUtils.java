@@ -83,7 +83,7 @@ public class AppUtils {
     public static boolean isAppModified() {
         try {
             PackageInfo packageInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 64);
-            return (BuildConfig.APPLICATION_ID.equals(packageInfo.packageName) && "VdBS+IkXbbu+mQuHS4vyXw==".equals(Base64.encodeToString(MessageDigest.getInstance("MD5").digest(packageInfo.signatures[0].toByteArray()), 0).trim())) ? false : true;
+            return ("com.exteragram.messenger".equals(packageInfo.packageName) && "VdBS+IkXbbu+mQuHS4vyXw==".equals(Base64.encodeToString(MessageDigest.getInstance("MD5").digest(packageInfo.signatures[0].toByteArray()), 0).trim())) ? false : true;
         } catch (Exception e) {
             FileLog.e(e);
             return true;
@@ -181,45 +181,44 @@ public class AppUtils {
 
     @Keep
     public static Object getPrivateStaticField(Class<?> cls, String str) {
-        Class<?> superclass = cls;
-        Field declaredField = null;
-        while (superclass != null) {
-            try {
+        try {
+            Class<?> superclass = cls;
+            Field declaredField = null;
+            while (superclass != null) {
                 try {
                     declaredField = superclass.getDeclaredField(str);
                 } catch (NoSuchFieldException unused) {
                     superclass = superclass.getSuperclass();
                 }
-            } catch (Exception e) {
-                logInternal(cls.getName(), e, 6);
             }
-        }
-        if (declaredField != null) {
-            declaredField.setAccessible(true);
-            return declaredField.get(null);
+            if (declaredField != null) {
+                declaredField.setAccessible(true);
+                return declaredField.get(null);
+            }
+        } catch (Exception e) {
+            logInternal(cls.getName(), e, 6);
         }
         return null;
     }
 
     @Keep
     public static void setPrivateStaticField(Class<?> cls, String str, Object obj) {
-        Class<?> superclass = cls;
-        Field declaredField = null;
-        while (superclass != null) {
-            try {
+        try {
+            Class<?> superclass = cls;
+            Field declaredField = null;
+            while (superclass != null) {
                 try {
                     declaredField = superclass.getDeclaredField(str);
                 } catch (NoSuchFieldException unused) {
                     superclass = superclass.getSuperclass();
                 }
-            } catch (Exception e) {
-                logInternal(cls.getName(), e, 6);
-                return;
             }
-        }
-        if (declaredField != null) {
-            declaredField.setAccessible(true);
-            declaredField.set(null, obj);
+            if (declaredField != null) {
+                declaredField.setAccessible(true);
+                declaredField.set(null, obj);
+            }
+        } catch (Exception e) {
+            logInternal(cls.getName(), e, 6);
         }
     }
 
@@ -266,8 +265,7 @@ public class AppUtils {
             case ">=":
                 return iCompareVersionValues >= 0;
             default:
-                f$$ExternalSyntheticBUOutline1.m("Unsupported operator: ".concat(str));
-                return false;
+                throw new IllegalArgumentException("Unsupported operator: " + str);
         }
     }
 
@@ -286,8 +284,7 @@ public class AppUtils {
             case ">=":
                 return iCompare >= 0;
             default:
-                f$$ExternalSyntheticBUOutline1.m("Unsupported operator: ".concat(str));
-                return false;
+                throw new IllegalArgumentException("Unsupported operator: " + str);
         }
     }
 

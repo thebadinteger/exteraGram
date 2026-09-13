@@ -76,20 +76,4 @@ public final /* data */ class BoostySubscriberDTO {
         this.totalAmountRub = bigDecimal;
         this.totalAmountUsd = bigDecimal2;
     }
-
-    public final long getId() {
-        return this.id;
-    }
-
-    public final String getName() {
-        return this.name;
-    }
-
-    public final BigDecimal getTotalAmountRub() {
-        return this.totalAmountRub;
-    }
-
-    public final BigDecimal getTotalAmountUsd() {
-        return this.totalAmountUsd;
-    }
 }

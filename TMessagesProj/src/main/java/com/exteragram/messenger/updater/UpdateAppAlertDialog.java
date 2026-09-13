@@ -75,7 +75,7 @@ public class UpdateAppAlertDialog extends BottomSheet {
             @Override // android.view.ViewGroup
             public boolean onInterceptTouchEvent(MotionEvent motionEvent) {
                 if (motionEvent.getAction() == 0 && UpdateAppAlertDialog.this.scrollOffsetY != 0 && motionEvent.getY() < UpdateAppAlertDialog.this.scrollOffsetY) {
-                    UpdateAppAlertDialog.this.lambda$new$0();
+                    UpdateAppAlertDialog.this.dismiss();
                     return true;
                 }
                 return super.onInterceptTouchEvent(motionEvent);
@@ -89,7 +89,7 @@ public class UpdateAppAlertDialog extends BottomSheet {
 
             @Override // android.view.View
             public void onDraw(Canvas canvas) {
-                UpdateAppAlertDialog.this.shadowDrawable.setBounds(0, (int) ((UpdateAppAlertDialog.this.scrollOffsetY - ((BottomSheet) UpdateAppAlertDialog.this).backgroundPaddingTop) - getTranslationY()), getMeasuredWidth(), getMeasuredHeight());
+                UpdateAppAlertDialog.this.shadowDrawable.setBounds(0, (int) ((UpdateAppAlertDialog.this.scrollOffsetY - UpdateAppAlertDialog.this.getBackgroundPaddingTop()) - getTranslationY()), getMeasuredWidth(), getMeasuredHeight());
                 UpdateAppAlertDialog.this.shadowDrawable.draw(canvas);
             }
         };
@@ -209,16 +209,21 @@ public class UpdateAppAlertDialog extends BottomSheet {
         buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view2) {
-                this.f$0.lambda$new$0(view2);
+                UpdateAppAlertDialog.this.onDone();
             }
         });
         frameLayout.addView(buttonWithCounterView, LayoutHelper.createFrame(-1, 48.0f, 83, 22.0f, 14.0f, 22.0f, 64.0f));
         addContentAfterDoneButton(frameLayout);
     }
 
-    public void lambda$addContentAfterDoneButton$1() {
-        ExteraConfig.setUpdateScheduleTimestamp(System.currentTimeMillis());
-        lambda$new$0();
+    public void addContentAfterDoneButton(FrameLayout frameLayout) {
+        addRemindLaterButton(frameLayout, new Runnable() {
+            @Override
+            public final void run() {
+                ExteraConfig.setUpdateScheduleTimestamp(System.currentTimeMillis());
+                UpdateAppAlertDialog.this.dismiss();
+            }
+        });
     }
 
     public void addRemindLaterButton(FrameLayout frameLayout, final Runnable runnable) {
@@ -248,7 +253,7 @@ public class UpdateAppAlertDialog extends BottomSheet {
         } else {
             FileLoader.getInstance(this.accountNum).loadFile(this.appUpdate.document, "update", 1, 1);
         }
-        lambda$new$0();
+        dismiss();
     }
 
     private void runShadowAnimation(final boolean z) {

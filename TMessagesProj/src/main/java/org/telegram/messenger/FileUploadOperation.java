@@ -38,8 +38,10 @@ public class FileUploadOperation {
     private boolean nextPartFirst;
     private int operationGuid;
     private static final int minUploadChunkSize = 128;
+    private static final int minUploadChunkBoostSize = 512;
     private static final int minUploadChunkSlowNetworkSize = 32;
     private static final int initialRequestsCount = 8;
+    private static final int initialRequestsBoostCount = 14;
     private static final int initialRequestsSlowNetworkCount = 1;
     private static final int maxUploadingKBytes = 1024 * 2;
     private static final int maxUploadingSlowNetworkKBytes = 32;
@@ -121,7 +123,8 @@ public class FileUploadOperation {
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("start upload on slow network = " + slowNetwork);
             }
-            for (int a = 0, count = (slowNetwork ? initialRequestsSlowNetworkCount : initialRequestsCount); a < count; a++) {
+            int initialCount = slowNetwork ? initialRequestsSlowNetworkCount : (com.exteragram.messenger.ExteraConfig.getUploadSpeedBoost() ? initialRequestsBoostCount : initialRequestsCount);
+            for (int a = 0; a < initialCount; a++) {
                 startUploadRequest();
             }
         });
@@ -158,7 +161,8 @@ public class FileUploadOperation {
                 cachedResults.clear();
 
                 operationGuid++;
-                for (int a = 0, count = (slowNetwork ? initialRequestsSlowNetworkCount : initialRequestsCount); a < count; a++) {
+                int initialCount = slowNetwork ? initialRequestsSlowNetworkCount : (com.exteragram.messenger.ExteraConfig.getUploadSpeedBoost() ? initialRequestsBoostCount : initialRequestsCount);
+                for (int a = 0; a < initialCount; a++) {
                     startUploadRequest();
                 }
             }
@@ -309,7 +313,8 @@ public class FileUploadOperation {
                 if (AccountInstance.getInstance(currentAccount).getUserConfig().isPremium() && totalFileSize > FileLoader.DEFAULT_MAX_FILE_SIZE) {
                     maxUploadParts = MessagesController.getInstance(currentAccount).uploadMaxFilePartsPremium;
                 }
-                uploadChunkSize = (int) Math.max(slowNetwork ? minUploadChunkSlowNetworkSize : minUploadChunkSize, (totalFileSize + 1024L * maxUploadParts - 1) / (1024L * maxUploadParts));
+                int minChunk = slowNetwork ? minUploadChunkSlowNetworkSize : (com.exteragram.messenger.ExteraConfig.getUploadSpeedBoost() ? minUploadChunkBoostSize : minUploadChunkSize);
+                uploadChunkSize = (int) Math.max(minChunk, (totalFileSize + 1024L * maxUploadParts - 1) / (1024L * maxUploadParts));
                 if (1024 % uploadChunkSize != 0) {
                     int chunkSize = 64;
                     while (uploadChunkSize > chunkSize) {

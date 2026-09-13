@@ -209,7 +209,7 @@ public class DrawerAccountPickerView extends FrameLayout {
         final RecyclerView.ChildDrawingOrderCallback childDrawingOrderCallback = new RecyclerView.ChildDrawingOrderCallback() { 
             @Override // androidx.recyclerview.widget.RecyclerView.ChildDrawingOrderCallback
             public final int onGetChildDrawingOrder(int i, int i2) {
-                return this.f$0.lambda$new$0(i, i2);
+                return DrawerAccountPickerView.this.lambda$new$0(i, i2);
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() { 
@@ -284,6 +284,125 @@ public class DrawerAccountPickerView extends FrameLayout {
         setVisibility(8);
     }
 
+    private int lambda$new$0(int i, int i2) {
+        int iIndexOfChild;
+        View view = this.draggingItemView;
+        if (view != null && (iIndexOfChild = this.recyclerView.indexOfChild(view)) >= 0) {
+            if (i2 == i - 1) {
+                return iIndexOfChild;
+            }
+            if (i2 >= iIndexOfChild) {
+                return i2 + 1;
+            }
+        }
+        return i2;
+    }
+
+    public void setOnAccountSelected(Runnable runnable) {
+        this.onAccountSelected = runnable;
+    }
+
+    public void setOnAccountLongClick(OnAccountLongClick onAccountLongClick) {
+        this.onAccountLongClick = onAccountLongClick;
+    }
+
+    public void loadAccounts() {
+        loadAccounts(null);
+    }
+
+    public void loadAccounts(BadgeDTO badgeDTO) {
+        this.badgeOverride = badgeDTO;
+        this.accounts.clear();
+        for (int i = 0; i < 16; i++) {
+            if (UserConfig.getInstance(i).isClientActivated()) {
+                this.accounts.add(Integer.valueOf(i));
+            }
+        }
+        this.accounts.sort(Comparator.comparingLong(new ToLongFunction() {
+            @Override
+            public final long applyAsLong(Object obj) {
+                return UserConfig.getInstance(((Integer) obj).intValue()).loginTime;
+            }
+        }));
+        this.adapter.notifyDataSetChanged();
+    }
+
+    public void toggleExpand() {
+        setExpanded(!this.expanded);
+    }
+
+    public boolean isExpanded() {
+        return this.expanded;
+    }
+
+    public void setExpanded(boolean z) {
+        if (this.expanded == z) {
+            return;
+        }
+        this.expanded = z;
+        MessagesController.getGlobalMainSettings().edit().putBoolean("accountsShown", z).apply();
+        if (z) {
+            loadAccounts();
+            setVisibility(0);
+        }
+        ValueAnimator valueAnimator = this.expandAnimator;
+        if (valueAnimator != null) {
+            valueAnimator.cancel();
+        }
+        int measuredHeight = this.currentAnimatedHeight;
+        if (measuredHeight < 0) {
+            measuredHeight = this.clipWrapper.getLayoutParams().height;
+            if (measuredHeight < 0) {
+                measuredHeight = this.clipWrapper.getHeight();
+            }
+            if (measuredHeight < 0) {
+                measuredHeight = z ? 0 : this.clipWrapper.getMeasuredHeight();
+            }
+        }
+        this.currentAnimatedHeight = -1;
+        int itemCount = this.adapter.getItemCount();
+        this.clipWrapper.measure(View.MeasureSpec.makeMeasureSpec(((View) getParent()).getMeasuredWidth() - AndroidUtilities.dp(24.0f), TLObject.FLAG_30), View.MeasureSpec.makeMeasureSpec((int) ((AndroidUtilities.dp(48.0f) * (itemCount <= 6 ? itemCount : 5.5f)) + (AndroidUtilities.dp(4.0f) * 2)), Integer.MIN_VALUE));
+        int measuredHeight2 = z ? this.clipWrapper.getMeasuredHeight() : 0;
+        this.currentAnimatedHeight = measuredHeight;
+        ValueAnimator valueAnimatorOfInt = ValueAnimator.ofInt(measuredHeight, measuredHeight2);
+        this.expandAnimator = valueAnimatorOfInt;
+        valueAnimatorOfInt.setDuration(250L);
+        valueAnimatorOfInt.setInterpolator(CubicBezierInterpolator.DEFAULT);
+        valueAnimatorOfInt.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
+                DrawerAccountPickerView.this.lambda$setExpanded$2(valueAnimator2);
+            }
+        });
+        valueAnimatorOfInt.addListener(new AnimatorListenerAdapter() {
+            private boolean cancelled;
+
+            @Override
+            public void onAnimationCancel(Animator animator) {
+                this.cancelled = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animator) {
+                if (this.cancelled || DrawerAccountPickerView.this.expandAnimator != animator) {
+                    return;
+                }
+                DrawerAccountPickerView.this.expandAnimator = null;
+                DrawerAccountPickerView.this.currentAnimatedHeight = -1;
+                boolean z2 = DrawerAccountPickerView.this.expanded;
+                DrawerAccountPickerView drawerAccountPickerView = DrawerAccountPickerView.this;
+                if (!z2) {
+                    drawerAccountPickerView.setVisibility(8);
+                    return;
+                }
+                ViewGroup.LayoutParams layoutParams = drawerAccountPickerView.clipWrapper.getLayoutParams();
+                layoutParams.height = -2;
+                DrawerAccountPickerView.this.clipWrapper.setLayoutParams(layoutParams);
+            }
+        });
+        valueAnimatorOfInt.start();
+    }
+
     public void lambda$setExpanded$2(ValueAnimator valueAnimator) {
         this.currentAnimatedHeight = ((Integer) valueAnimator.getAnimatedValue()).intValue();
         this.clipWrapper.requestLayout();
@@ -327,7 +446,7 @@ public class DrawerAccountPickerView extends FrameLayout {
         }
         Integer availableAccountForAdd = getAvailableAccountForAdd();
         if (availableAccountForAdd != null) {
-            launchActivity.lambda$runLinkRequest$101(new LoginActivity(availableAccountForAdd.intValue()));
+            launchActivity.presentFragment(new LoginActivity(availableAccountForAdd.intValue()));
         } else {
             if (UserConfig.hasPremiumOnAccounts() || (safeLastFragment = LaunchActivity.getSafeLastFragment()) == null) {
                 return;
@@ -431,16 +550,56 @@ public class DrawerAccountPickerView extends FrameLayout {
                 accountRowView.setOnClickListener(new View.OnClickListener() { 
                     @Override // android.view.View.OnClickListener
                     public final void onClick(View view2) {
-                        this.f$0.lambda$bindAccountViewHolder$0(num, view2);
+                        AccountAdapter.this.lambda$bindAccountViewHolder$0(num, view2);
                     }
                 });
                 accountRowView.setOnLongClickListener(new View.OnLongClickListener() { 
                     @Override // android.view.View.OnLongClickListener
                     public final boolean onLongClick(View view2) {
-                        return this.f$0.lambda$bindAccountViewHolder$1(num, viewHolder, view2);
+                        return AccountAdapter.this.lambda$bindAccountViewHolder$1(num, viewHolder, view2);
                     }
                 });
             }
+        }
+
+        private void lambda$bindAccountViewHolder$0(Integer num, View view) {
+            if (num.intValue() != UserConfig.selectedAccount) {
+                if (DrawerAccountPickerView.this.onAccountSelected != null) {
+                    DrawerAccountPickerView.this.onAccountSelected.run();
+                }
+                Context context = DrawerAccountPickerView.this.getContext();
+                if (context instanceof LaunchActivity) {
+                    ((LaunchActivity) context).switchToAccount(num.intValue(), true);
+                }
+            }
+        }
+
+        private boolean lambda$bindAccountViewHolder$1(Integer num, RecyclerView.ViewHolder viewHolder, View view) {
+            int iIntValue = num.intValue();
+            int i = UserConfig.selectedAccount;
+            DrawerAccountPickerView drawerAccountPickerView = DrawerAccountPickerView.this;
+            if (iIntValue == i) {
+                drawerAccountPickerView.itemTouchHelper.startDrag(viewHolder);
+                return true;
+            }
+            if (drawerAccountPickerView.onAccountLongClick == null) {
+                return true;
+            }
+            DrawerAccountPickerView.this.onAccountLongClick.onLongClick(num.intValue(), view);
+            return true;
+        }
+
+        private void bindAddAccountViewHolder(RecyclerView.ViewHolder viewHolder) {
+            View view = viewHolder.itemView;
+            if (view instanceof AddAccountView) {
+                ((AddAccountView) view).updateColors();
+            }
+            viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public final void onClick(View view2) {
+                    AccountAdapter.this.lambda$bindAddAccountViewHolder$2(view2);
+                }
+            });
         }
 
         public void lambda$bindAddAccountViewHolder$2(View view) {

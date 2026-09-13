@@ -11,6 +11,7 @@ package org.telegram.ui.Cells;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
+import com.exteragram.messenger.ExteraConfig;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -529,10 +530,14 @@ public class ProfileSearchCell extends BaseCell implements NotificationCenter.No
         }
         nameString = AndroidUtilities.replaceNewLines(nameString);
         if (TextUtils.isEmpty(nameString)) {
-            if (user != null && !TextUtils.isEmpty(user.phone)) {
-                nameString = PhoneFormat.getInstance().format("+" + user.phone);
+            if (ExteraConfig.getHidePhoneNumber()) {
+                nameString = getString(R.string.MobileHidden);
             } else {
-                nameString = getString(R.string.HiddenName);
+                if (user != null && !TextUtils.isEmpty(user.phone)) {
+                    nameString = PhoneFormat.getInstance().format("+" + user.phone);
+                } else {
+                    nameString = getString(R.string.HiddenName);
+                }
             }
         }
         if (customPaints) {

@@ -17,6 +17,7 @@ import com.exteragram.messenger.preferences.BasePreferencesActivity;
 import com.exteragram.messenger.utils.text.LocaleUtils;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
@@ -94,13 +95,27 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
             actionBarMenuItemSearchListener.setSearchFieldHint(LocaleController.getString(R.string.Search));
         }
         AndroidUtilities.updateViewVisibilityAnimated(this.searchItem, ExteraConfig.getPluginsEngine() && !PluginsController.INSTANCE.getInstance().getPlugins().isEmpty(), 0.5f, false);
+        ActionBarMenuItem addItem = this.actionBar.menu.addItem(2, R.drawable.msg_add);
+        if (addItem != null) {
+            addItem.setContentDescription(LocaleController.getString(R.string.Add));
+            addItem.setOnClickListener(v -> {
+                try {
+                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT);
+                    intent.setType("*/*");
+                    intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+                    startActivityForResult(android.content.Intent.createChooser(intent, LocaleController.getString(R.string.SelectFile)), 1001);
+                } catch (Exception e) {
+                    org.telegram.messenger.FileLog.e(e);
+                }
+            });
+        }
         ActionBarMenuItem actionBarMenuItemAddItem = this.actionBar.menu.addItem(1, R.drawable.msg_info);
         this.infoItem = actionBarMenuItemAddItem;
         if (actionBarMenuItemAddItem != null) {
             actionBarMenuItemAddItem.setOnClickListener(new View.OnClickListener() { 
                 @Override // android.view.View.OnClickListener
                 public final void onClick(View view) {
-                    this.f$0.presentFragment(new PluginsInfoActivity());
+                    PluginsActivity.this.presentFragment(new PluginsInfoActivity());
                 }
             });
         }
@@ -126,6 +141,7 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
         Plugin plugin;
         if (!this.searching) {
             items.add(UItem.asRippleCheck(0, LocaleController.getString(R.string.EnablePluginsEngine)).setChecked(ExteraConfig.getPluginsEngine()));
+            items.add(UItem.asShadow(LocaleController.getString(R.string.PluginsInfo)));
         }
         if (ExteraConfig.getPluginsEngine()) {
             HashMap map = new HashMap(PluginsController.INSTANCE.getInstance().getPlugins());
@@ -137,7 +153,7 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
                 final Function1 function1 = new Function1() { 
                     @Override // kotlin.jvm.functions.Function1
                     public final Object invoke(Object obj) {
-                        return Boolean.valueOf(PluginsActivity.m1343$r8$lambda$pqUrQXSOvACq2ucF3IrTdNqGZA(this.f$0, (Plugin) obj));
+                        return Boolean.valueOf(PluginsActivity.m1343$r8$lambda$pqUrQXSOvACq2ucF3IrTdNqGZA(PluginsActivity.this, (Plugin) obj));
                     }
                 };
                 collectionValues.removeIf(new Predicate() { 
@@ -177,13 +193,12 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
                     }
                 }
                 ArrayList<Plugin> arrayList = new ArrayList(map.values());
-                final AnonymousClass2 anonymousClass2 = AnonymousClass2.INSTANCE;
-                CollectionsKt.sortWith(arrayList, Comparator.comparing(new Function() { 
-                    @Override // java.util.function.Function
-                    public final Object apply(Object obj) {
-                        return PluginsActivity.$r8$lambda$X5zu9VD1VCXfWn2LS4hF6w14QRA(anonymousClass2, obj);
+                Collections.sort(arrayList, new Comparator<Plugin>() {
+                    @Override
+                    public int compare(Plugin p1, Plugin p2) {
+                        return p1.getName().compareTo(p2.getName());
                     }
-                }));
+                });
                 for (Plugin plugin2 : arrayList) {
                     if (!PluginsController.INSTANCE.isPluginPinned(plugin2.getId())) {
                         items.add(createPluginItem(plugin2));
@@ -200,22 +215,9 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
     public static boolean m1343$r8$lambda$pqUrQXSOvACq2ucF3IrTdNqGZA(PluginsActivity pluginsActivity, Plugin plugin) {
         String name = plugin.getName();
         Locale locale = Locale.ROOT;
-        return !StringsKt.contains$default((CharSequence) name.toLowerCase(locale), (CharSequence) pluginsActivity.query.toLowerCase(locale), false, 2, (Object) null);
+        return !name.toLowerCase(locale).contains(pluginsActivity.query.toLowerCase(locale));
     }
 
-    @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
-    public static final /* synthetic */ class AnonymousClass2 extends FunctionReferenceImpl implements Function1<Plugin, String> {
-        public static final AnonymousClass2 INSTANCE = new AnonymousClass2();
-
-        public AnonymousClass2() {
-            super(1, Plugin.class, "getName", "getName()Ljava/lang/String;", 0);
-        }
-
-        @Override // kotlin.jvm.functions.Function1
-        public final String invoke(Plugin plugin) {
-            return plugin.getName();
-        }
-    }
 
     public static String $r8$lambda$X5zu9VD1VCXfWn2LS4hF6w14QRA(Function1 function1, Object obj) {
         return (String) function1.invoke(obj);
@@ -253,7 +255,7 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
                 PluginsWatchdog.INSTANCE.showNotRespondingAlert(this.$plugin);
                 return;
             }
-            AlertDialog.Builder message = new AlertDialog.Builder(this.this$0.getParentActivity(), ((BaseFragment) this.this$0).resourceProvider).setTitle(LocaleController.getString(R.string.PluginDelete)).setMessage(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.PluginDeleteInfo, this.$plugin.getName())));
+            AlertDialog.Builder message = new AlertDialog.Builder(this.this$0.getParentActivity(), this.this$0.getResourceProvider()).setTitle(LocaleController.getString(R.string.PluginDelete)).setMessage(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.PluginDeleteInfo, this.$plugin.getName())));
             String string = LocaleController.getString(R.string.Delete);
             final Plugin plugin = this.$plugin;
             final PluginsActivity pluginsActivity = this.this$0;
@@ -301,7 +303,7 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
                 PluginsWatchdog.INSTANCE.showNotRespondingAlert(this.$plugin);
                 return;
             }
-            final PluginCell pluginCell = (PluginCell) view;
+            final PluginCell pluginCell = view instanceof PluginCell ? (PluginCell) view : (view.getParent() instanceof PluginCell ? (PluginCell) view.getParent() : null);
             final boolean z = !this.$plugin.isEnabled();
             PluginsController companion = PluginsController.INSTANCE.getInstance();
             String id = this.$plugin.getId();
@@ -310,10 +312,11 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
             companion.setPluginEnabled(id, z, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
+                    final String errorMsg = (String) obj;
                     AndroidUtilities.runOnUIThread(new Runnable() { 
                         @Override // java.lang.Runnable
                         public final void run() {
-                            PluginsActivity.AnonymousClass1.togglePlugin$lambda$1$0(pluginsActivity, str, z, plugin, pluginCell);
+                            PluginsActivity.AnonymousClass1.togglePlugin$lambda$1$0(pluginsActivity, errorMsg, z, plugin, pluginCell);
                         }
                     });
                 }
@@ -325,14 +328,18 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
                 return;
             }
             if (str != null) {
-                BulletinFactory.of(pluginsActivity).createSimpleBulletin(R.raw.error, LocaleController.formatString(z ? R.string.PluginEnableError : R.string.PluginDisableError, plugin.getName()), LocaleUtils.createCopySpan(pluginsActivity), new Runnable() { 
+                BulletinFactory.of(pluginsActivity).createSimpleBulletin(R.raw.error, AndroidUtilities.replaceTags(LocaleController.formatString(z ? R.string.PluginEnableError : R.string.PluginDisableError, plugin.getName())), LocaleUtils.createCopySpan(pluginsActivity), new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
                         PluginsActivity.AnonymousClass1.togglePlugin$lambda$1$0$0(str, pluginsActivity);
                     }
                 }).show();
             } else {
-                pluginCell.setChecked(z, true);
+                if (pluginCell != null) {
+                    pluginCell.setChecked(z, true);
+                } else {
+                    ((BasePreferencesActivity) pluginsActivity).listView.adapter.update(true);
+                }
             }
         }
 
@@ -387,6 +394,7 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
         item.checked = pluginsEngine;
         textCheckCell.setChecked(pluginsEngine);
         textCheckCell.setBackgroundColorAnimated(ExteraConfig.getPluginsEngine(), Theme.getColor(ExteraConfig.getPluginsEngine() ? Theme.key_windowBackgroundChecked : Theme.key_windowBackgroundUnchecked));
+        final PluginsActivity pluginsActivity = this;
         Runnable runnable = new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
@@ -460,5 +468,20 @@ public final class PluginsActivity extends BasePreferencesActivity implements No
         }
         this.actionBar.closeSearchField();
         return false;
+    }
+
+    @Override
+    public void onActivityResultFragment(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResultFragment(requestCode, resultCode, data);
+        if (requestCode == 1001 && resultCode == android.app.Activity.RESULT_OK && data != null && data.getData() != null) {
+            try {
+                java.io.File tempFile = com.exteragram.messenger.utils.IntentsController.INSTANCE.getTempFileFromIntent(data.getData());
+                if (tempFile != null && tempFile.exists()) {
+                    PluginsController.INSTANCE.getInstance().showInstallDialog(this, tempFile.getAbsolutePath(), false);
+                }
+            } catch (Exception e) {
+                org.telegram.messenger.FileLog.e(e);
+            }
+        }
     }
 }

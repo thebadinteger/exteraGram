@@ -284,6 +284,14 @@ public final class BulletinFactory {
         return create(layout, text.length() < 20 ? Bulletin.DURATION_SHORT : Bulletin.DURATION_LONG);
     }
 
+    public Bulletin createSimpleBulletin(CharSequence charSequence, CharSequence charSequence2, int i) {
+        Bulletin.TwoLineLottieLayout twoLineLottieLayout = new Bulletin.TwoLineLottieLayout(getContext(), this.resourcesProvider);
+        twoLineLottieLayout.setSticker(i);
+        twoLineLottieLayout.titleTextView.setText(charSequence);
+        twoLineLottieLayout.subtitleTextView.setText(charSequence2);
+        return create(twoLineLottieLayout, 5000);
+    }
+
     public Bulletin createSimpleBulletin(TLRPC.Document document, CharSequence title, CharSequence text) {
         if (document == null) return new Bulletin.EmptyBulletin();
         final Bulletin.TwoLineLayout layout = new Bulletin.TwoLineLayout(getContext(), resourcesProvider);

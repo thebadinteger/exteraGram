@@ -136,7 +136,7 @@ public final class ZipArchiveWriter {
         }
     }
 
-    private final OutputStream newOutputStream(Path path, boolean replacingExisting) {
+    private final OutputStream newOutputStream(Path path, boolean replacingExisting) throws IOException {
         if (replacingExisting) {
             return Files.newOutputStream(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
         }
@@ -146,9 +146,9 @@ public final class ZipArchiveWriter {
     private final void writeDirectories(ZipOutputStream zip, Path normalizedRoot, List<? extends Path> directories, SaveProgress progress) throws IOException {
         Iterator<? extends Path> it = directories.iterator();
         while (it.hasNext()) {
-            Path pathM = DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next());
+            Path pathM = (Path) it.next();
             progress.checkCanceled();
-            String str = StringsKt.replace$default(normalizedRoot.relativize(pathM).toString(), '\\', '/', false, 4, (Object) null) + '/';
+            String str = normalizedRoot.relativize(pathM).toString().replace('\\', '/') + '/';
             zip.putNextEntry(new ZipEntry(str));
             zip.closeEntry();
             progress.entryCompleted(str);
@@ -158,9 +158,9 @@ public final class ZipArchiveWriter {
     private final void writeFiles(ZipOutputStream zip, Path normalizedRoot, List<? extends Path> files, SaveProgress progress, int bufferSize) throws IOException {
         Iterator<? extends Path> it = files.iterator();
         while (it.hasNext()) {
-            Path pathM = DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next());
+            Path pathM = (Path) it.next();
             progress.checkCanceled();
-            String strReplace$default = StringsKt.replace$default(normalizedRoot.relativize(pathM).toString(), '\\', '/', false, 4, (Object) null);
+            String strReplace$default = normalizedRoot.relativize(pathM).toString().replace('\\', '/');
             zip.putNextEntry(new ZipEntry(strReplace$default));
             InputStream inputStreamNewInputStream = Files.newInputStream(pathM, new OpenOption[0]);
             try {
@@ -168,7 +168,6 @@ public final class ZipArchiveWriter {
                 Unit unit = Unit.INSTANCE;
                 CloseableKt.closeFinally(inputStreamNewInputStream, null);
                 zip.closeEntry();
-                progress.entryCompleted(strReplace$default);
             } catch (Throwable th) {
                 try {
                     throw th;
@@ -177,6 +176,7 @@ public final class ZipArchiveWriter {
                     throw th2;
                 }
             }
+            progress.entryCompleted(strReplace$default);
         }
     }
 
@@ -193,10 +193,10 @@ public final class ZipArchiveWriter {
                 public final Object invoke(Object obj) {
                     return Boolean.valueOf(ZipArchiveWriter.listDirectories$lambda$0$1(options, normalizedRoot, (Path) obj));
                 }
-            }), new Comparator() { // from class: org.simplifiles.internal.archive.zip.ZipArchiveWriter$listDirectories$lambda$0$$inlined$sortedBy$1
+            }), new Comparator<Path>() { // from class: org.simplifiles.internal.archive.zip.ZipArchiveWriter$listDirectories$lambda$0$$inlined$sortedBy$1
                 @Override // java.util.Comparator
-                public final int compare(T t, T t2) {
-                    return ComparisonsKt.compareValues(normalizedRoot.relativize(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t)).toString(), normalizedRoot.relativize(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t2)).toString());
+                public final int compare(Path t, Path t2) {
+                    return ComparisonsKt.compareValues(normalizedRoot.relativize(t).toString(), normalizedRoot.relativize(t2).toString());
                 }
             }));
             AutoCloseableKt.closeFinally(streamWalk, null);
@@ -232,10 +232,10 @@ public final class ZipArchiveWriter {
                 public final Object invoke(Object obj) {
                     return Boolean.valueOf(ZipArchiveWriter.listFiles$lambda$0$1(options, normalizedRoot, (Path) obj));
                 }
-            }), new Comparator() { // from class: org.simplifiles.internal.archive.zip.ZipArchiveWriter$listFiles$lambda$0$$inlined$sortedBy$1
+            }), new Comparator<Path>() { // from class: org.simplifiles.internal.archive.zip.ZipArchiveWriter$listFiles$lambda$0$$inlined$sortedBy$1
                 @Override // java.util.Comparator
-                public final int compare(T t, T t2) {
-                    return ComparisonsKt.compareValues(normalizedRoot.relativize(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t)).toString(), normalizedRoot.relativize(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t2)).toString());
+                public final int compare(Path t, Path t2) {
+                    return ComparisonsKt.compareValues(normalizedRoot.relativize(t).toString(), normalizedRoot.relativize(t2).toString());
                 }
             }));
             AutoCloseableKt.closeFinally(streamWalk, null);
@@ -259,7 +259,7 @@ public final class ZipArchiveWriter {
     }
 
     private final String entryPath(Path normalizedRoot, Path path) {
-        return StringsKt.replace$default(normalizedRoot.relativize(path).toString(), '\\', '/', false, 4, (Object) null);
+        return normalizedRoot.relativize(path).toString().replace('\\', '/');
     }
 
     private final void copy(InputStream input, OutputStream output, int bufferSize, SaveProgress progress, String archivePath) throws IOException {
@@ -276,10 +276,10 @@ public final class ZipArchiveWriter {
     }
 
     private final long totalFileSize(List<? extends Path> files) throws IOException {
-        Iterator<T> it = files.iterator();
+        Iterator<? extends Path> it = files.iterator();
         long j = 0;
         while (it.hasNext()) {
-            long size = Files.size(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next()));
+            long size = Files.size((Path) it.next());
             j = LongCompanionObject.MAX_VALUE - j < size ? Long.MAX_VALUE : j + size;
         }
         return j;

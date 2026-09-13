@@ -20,19 +20,19 @@ public final class BadgesController$updateBadge$1$1 extends SuspendLambda implem
     final /* synthetic */ BadgeDTO $badge;
     int label;
 
-    public BadgesController$updateBadge$1$1(BadgeDTO badgeDTO, Continuation<? super BadgesController$updateBadge$1$1> continuation) {
-        super(2, continuation);
+    public BadgesController$updateBadge$1$1(BadgeDTO badgeDTO, Continuation continuation) {
+        super(2, (Continuation) continuation);
         this.$badge = badgeDTO;
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
     public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
-        return new BadgesController$updateBadge$1$1(this.$badge, continuation);
+        return (Continuation) new BadgesController$updateBadge$1$1(this.$badge, (Continuation) continuation);
     }
 
     @Override // kotlin.jvm.functions.Function2
     public final Object invoke(CoroutineScope coroutineScope, Continuation<? super Unit> continuation) {
-        return ((BadgesController$updateBadge$1$1) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+        return ((BadgesController$updateBadge$1$1) (Object) create(coroutineScope, (Continuation) continuation)).invokeSuspend(Unit.INSTANCE);
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
@@ -50,8 +50,7 @@ public final class BadgesController$updateBadge$1$1 extends SuspendLambda implem
             }
         } else {
             if (i != 1) {
-                Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-                return null;
+                throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
             ResultKt.throwOnFailure(obj);
         }

@@ -875,7 +875,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
         deleteChatSubmenu = other.addSubItem(delete_chat_id, R.drawable.msg_leave, getString(R.string.LeaveMegaMenu), themeDelegate);
 
         avatarContainer = new ChatAvatarContainer(context, this, false, resourceProvider);
-        avatarContainer.getAvatarImageView().setRoundRadius(AndroidUtilities.dp(16));
+        avatarContainer.getAvatarImageView().setRoundRadius(com.exteragram.messenger.ExteraConfig.getAvatarCorners(42.0f, false, true));
         avatarContainer.setOccupyStatusBar(!AndroidUtilities.isTablet() && !inPreviewMode);
         avatarContainer.allowDrawStories = getDialogId() < 0;
         avatarContainer.setClipChildren(false);

@@ -137,17 +137,17 @@ public class IconPackCell extends FrameLayout {
                 iconPackCell.getHandle().setOnTouchListener(new View.OnTouchListener() { 
                     @Override // android.view.View.OnTouchListener
                     public final boolean onTouch(View view2, MotionEvent motionEvent) {
-                        return IconPackCell.Factory.m1199$r8$lambda$CP8IXe3DODPybMaF8F7KjxaU4(universalRecyclerView, view, view2, motionEvent);
+                        return IconPackCell.Factory.onTouchDrag(universalRecyclerView, view, view2, motionEvent);
                     }
                 });
             }
         }
 
-        public static /* synthetic */ boolean m1199$r8$lambda$CP8IXe3DODPybMaF8F7KjxaU4(UniversalRecyclerView universalRecyclerView, View view, View view2, MotionEvent motionEvent) {
-            if (motionEvent.getAction() != 0 || universalRecyclerView == null) {
+        public static boolean onTouchDrag(UniversalRecyclerView universalRecyclerView, View view, View view2, MotionEvent motionEvent) {
+            if (motionEvent.getAction() != 0 || universalRecyclerView == null || universalRecyclerView.itemTouchHelper == null) {
                 return false;
             }
-            universalRecyclerView.startDrag(universalRecyclerView.getChildViewHolder(view));
+            universalRecyclerView.itemTouchHelper.startDrag(universalRecyclerView.getChildViewHolder(view));
             return false;
         }
 

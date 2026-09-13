@@ -2,7 +2,7 @@ package com.exteragram.messenger.preferences.utils;
 
 import android.text.TextUtils;
 import android.view.View;
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.ai.ui.activities.AiPreferencesActivity;
 import com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity;
@@ -17,6 +17,8 @@ import com.exteragram.messenger.preferences.appearance.AppearancePreferencesActi
 import com.exteragram.messenger.preferences.chats.ChatsPreferencesActivity;
 import com.exteragram.messenger.utils.text.LocaleUtils;
 import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,8 +40,19 @@ import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.ProfileActivity;
 
 public class SettingsRegistry {
-    private static final Map<Class<? extends BaseFragment>, Integer> categoriesIcons = com.exteragram.messenger.utils.RecordUtils.mapOf(new Map.Entry[]{new AbstractMap.SimpleEntry(MainPreferencesActivity.class, Integer.valueOf(R.drawable.extera_outline)), new AbstractMap.SimpleEntry(GeneralPreferencesActivity.class, Integer.valueOf(R.drawable.msg_media)), new AbstractMap.SimpleEntry(AppearancePreferencesActivity.class, Integer.valueOf(R.drawable.msg_theme)), new AbstractMap.SimpleEntry(ChatsPreferencesActivity.class, Integer.valueOf(R.drawable.msg_discussion)), new AbstractMap.SimpleEntry(PluginsInfoActivity.class, Integer.valueOf(R.drawable.msg_plugins)), new AbstractMap.SimpleEntry(OtherPreferencesActivity.class, Integer.valueOf(R.drawable.msg_fave)), new AbstractMap.SimpleEntry(AiPreferencesActivity.class, Integer.valueOf(R.drawable.msg_bot)), new AbstractMap.SimpleEntry(AppNavigationPreferencesActivity.class, Integer.valueOf(R.drawable.msg_list)), new AbstractMap.SimpleEntry(PillStackPreferencesActivity.class, Integer.valueOf(R.drawable.outline_header_search))});
-    public static List<String> newFeatures = java.util.Arrays.asList("customSavePath", "Camera-ExtendedSettings-StartWithWideAngle", "zoomSlider", "aiFeatures", "hideDialogsSearchBar", "Appearance-M3Styles-ChatHeader", "Appearance-M3Styles-NavigationBar", "Appearance-Sections", "glassOutlineStyle", "glassMessageMenu", "Feed-BottomTab", "aiTemperature", "AI-Service-Reasoning");
+    private static final Map<Class<? extends BaseFragment>, Integer> categoriesIcons = new HashMap<>();
+    static {
+        categoriesIcons.put(MainPreferencesActivity.class, Integer.valueOf(R.drawable.extera_outline));
+        categoriesIcons.put(GeneralPreferencesActivity.class, Integer.valueOf(R.drawable.msg_media));
+        categoriesIcons.put(AppearancePreferencesActivity.class, Integer.valueOf(R.drawable.msg_theme));
+        categoriesIcons.put(ChatsPreferencesActivity.class, Integer.valueOf(R.drawable.msg_discussion));
+        categoriesIcons.put(PluginsInfoActivity.class, Integer.valueOf(R.drawable.msg_plugins));
+        categoriesIcons.put(OtherPreferencesActivity.class, Integer.valueOf(R.drawable.msg_fave));
+        categoriesIcons.put(AiPreferencesActivity.class, Integer.valueOf(R.drawable.msg_bot));
+        categoriesIcons.put(AppNavigationPreferencesActivity.class, Integer.valueOf(R.drawable.msg_list));
+        categoriesIcons.put(PillStackPreferencesActivity.class, Integer.valueOf(R.drawable.outline_header_search));
+    }
+    public static List<String> newFeatures = Arrays.asList("customSavePath", "Camera-ExtendedSettings-StartWithWideAngle", "zoomSlider", "aiFeatures", "hideDialogsSearchBar", "Appearance-M3Styles-ChatHeader", "Appearance-M3Styles-NavigationBar", "Appearance-Sections", "glassOutlineStyle", "glassMessageMenu", "Feed-BottomTab", "aiTemperature", "AI-Service-Reasoning");
     private boolean entriesFetched;
     private String entriesLangCode;
     private final ConcurrentHashMap<Integer, Entry> preparedEntries = new ConcurrentHashMap<>();
@@ -96,7 +109,7 @@ public class SettingsRegistry {
             ExteraConfig.getEditor().putString("newFeaturesShowedAt", ExteraConfig.getGSON().toJson(ExteraConfig.getNewFeaturesShowedAt())).apply();
             return true;
         }
-        if (Math.abs(System.currentTimeMillis() - l.longValue()) <= DurationKt.MILLIS_IN_DAY) {
+        if (Math.abs(System.currentTimeMillis() - l.longValue()) <= 86400000L) {
             return true;
         }
         ExteraConfig.getNewFeaturesShowedAt().remove(str);
@@ -152,7 +165,7 @@ public class SettingsRegistry {
 
     public String getFirstSettingLink(Class<? extends BaseFragment> cls, UItem uItem) {
         final int iGenerateGUIDForUItem = generateGUIDForUItem(cls, uItem);
-        Map.Entry<String, Entry> entryOrElse = this.entriesStringAlias.entrySet().stream().filter(new Predicate() { 
+        Map.Entry<String, Entry> entryOrElse = (Map.Entry<String, Entry>) this.entriesStringAlias.entrySet().stream().filter(new Predicate() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda2
             @Override // java.util.function.Predicate
             public final boolean test(Object obj) {
                 return SettingsRegistry.$r8$lambda$p4BQB7CEiJF3IYJpUIO4QjqPKlE(iGenerateGUIDForUItem, (Map.Entry) obj);
@@ -164,14 +177,35 @@ public class SettingsRegistry {
         return "https://t.me/exteraSettings?s=" + entryOrElse.getKey();
     }
 
-    public static ProfileActivity.SearchAdapter.SearchResult[] $r8$lambda$Uq61hhP3TlTJmft55hT5WjpJsx0(int i) {
+    public static /* synthetic */ boolean $r8$lambda$p4BQB7CEiJF3IYJpUIO4QjqPKlE(int i, Map.Entry entry) {
+        return ((Entry) entry.getValue()).guid == i;
+    }
+
+    public ProfileActivity.SearchAdapter.SearchResult[] getSearchResults(final ProfileActivity.SearchAdapter searchAdapter) {
+        createEntriesIfNeeded();
+        return (ProfileActivity.SearchAdapter.SearchResult[]) this.preparedEntries.values().stream().map(new Function() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda3
+            @Override // java.util.function.Function
+            public final Object apply(Object obj) {
+                return ((SettingsRegistry.Entry) obj).toSearchResult(searchAdapter);
+            }
+        }).toArray(new IntFunction() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda4
+            @Override // java.util.function.IntFunction
+            public final Object apply(int i) {
+                return SettingsRegistry.$r8$lambda$Uq61hhP3TlTJmft55hT5WjpJsx0(i);
+            }
+        });
+    }
+
+    public static /* synthetic */ ProfileActivity.SearchAdapter.SearchResult[] $r8$lambda$Uq61hhP3TlTJmft55hT5WjpJsx0(int i) {
         return new ProfileActivity.SearchAdapter.SearchResult[i];
     }
 
-    public int getCategoryIcon(Class<? extends BaseFragment> cls) {
-        return ((Integer) java.util.Objects.requireNonNullElse(categoriesIcons.get(cls), 0)).intValue();
+    private int getCategoryIcon(Class<? extends BaseFragment> cls) {
+        Integer icon = categoriesIcons.get(cls);
+        return icon != null ? icon.intValue() : 0;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public BaseFragment initiateFragment(Class<? extends BaseFragment> cls) {
         try {
             BaseFragment lastFragment = LaunchActivity.getLastFragment();
@@ -188,13 +222,14 @@ public class SettingsRegistry {
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void openActivity(Class<? extends BaseFragment> cls, final Integer num) {
         final BaseFragment baseFragmentInitiateFragment;
         final BaseFragment lastFragment = LaunchActivity.getLastFragment();
         if (lastFragment == null || (baseFragmentInitiateFragment = initiateFragment(cls)) == null) {
             return;
         }
-        AndroidUtilities.runOnUIThread(new Runnable() { 
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda5
             @Override // java.lang.Runnable
             public final void run() {
                 lastFragment.presentFragment(baseFragmentInitiateFragment);
@@ -204,7 +239,7 @@ public class SettingsRegistry {
             return;
         }
         final BasePreferencesActivity basePreferencesActivity = (BasePreferencesActivity) baseFragmentInitiateFragment;
-        AndroidUtilities.runOnUIThread(new Runnable() { 
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda6
             @Override // java.lang.Runnable
             public final void run() {
                 basePreferencesActivity.scrollToItem(num.intValue());
@@ -223,16 +258,17 @@ public class SettingsRegistry {
             this.preparedEntries.clear();
         }
         FileLog.d("[Extera] Initialising activities...");
-        categoriesIcons.keySet().forEach(new Consumer() { 
+        categoriesIcons.keySet().forEach(new Consumer() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$$ExternalSyntheticLambda7
             @Override // java.util.function.Consumer
             public final void accept(Object obj) {
-                this.f$0.initiateFragment((Class) obj);
+                SettingsRegistry.this.initiateFragment((Class) obj);
             }
         });
         this.entriesFetched = true;
         this.entriesLangCode = key;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public static int generateGUIDForUItem(Class<?> cls, UItem uItem) {
         return Objects.hash(cls.getName(), Integer.valueOf(uItem.id));
     }
@@ -245,7 +281,57 @@ public class SettingsRegistry {
         private final String subtext;
         private final String title;
 
-        private void lambda$toSearchResult$0() {
+        private /* synthetic */ boolean $record$equals(Object obj) {
+            if (!(obj instanceof Entry)) {
+                return false;
+            }
+            Entry entry = (Entry) obj;
+            return this.guid == entry.guid && this.itemId == entry.itemId && this.icon == entry.icon && Objects.equals(this.title, entry.title) && Objects.equals(this.subtext, entry.subtext) && Objects.equals(this.fragmentClass, entry.fragmentClass);
+        }
+
+        private /* synthetic */ Object[] $record$getFieldsAsObjects() {
+            return new Object[]{Integer.valueOf(this.guid), Integer.valueOf(this.itemId), this.title, this.subtext, Integer.valueOf(this.icon), this.fragmentClass};
+        }
+
+        private Entry(int i, int i2, String str, String str2, int i3, Class<? extends BaseFragment> cls) {
+            this.guid = i;
+            this.itemId = i2;
+            this.title = str;
+            this.subtext = str2;
+            this.icon = i3;
+            this.fragmentClass = cls;
+        }
+
+        public final boolean equals(Object obj) {
+            return $record$equals(obj);
+        }
+
+        public final int hashCode() {
+            return Objects.hash(this.guid, this.itemId, this.icon, this.title, this.subtext, this.fragmentClass);
+        }
+
+        public final String toString() {
+            return "Entry[guid=" + this.guid + ", itemId=" + this.itemId + ", title=" + this.title + ", subtext=" + this.subtext + ", icon=" + this.icon + ", fragmentClass=" + this.fragmentClass + "]";
+        }
+
+        public static Entry fromUItem(BaseFragment baseFragment, UItem uItem) {
+            Class<? extends BaseFragment> cls = (Class<? extends BaseFragment>) baseFragment.getClass();
+            CharSequence charSequence = uItem.text;
+            return new Entry(SettingsRegistry.generateGUIDForUItem(cls, uItem), uItem.id, charSequence == null ? null : String.valueOf(charSequence), baseFragment instanceof BasePreferencesActivity ? ((BasePreferencesActivity) baseFragment).getTitle() : null, SettingsRegistry.getInstance().getCategoryIcon(cls), cls);
+        }
+
+        public ProfileActivity.SearchAdapter.SearchResult toSearchResult(ProfileActivity.SearchAdapter searchAdapter) {
+            Objects.requireNonNull(searchAdapter);
+            return new ProfileActivity.SearchAdapter.SearchResult(this.guid, this.title, String.valueOf(this.itemId), this.subtext, this.icon, new Runnable() { // from class: com.exteragram.messenger.preferences.utils.SettingsRegistry$Entry$$ExternalSyntheticLambda1
+                @Override // java.lang.Runnable
+                public final void run() {
+                    Entry.this.lambda$toSearchResult$0();
+                }
+            });
+        }
+
+        /* JADX INFO: Access modifiers changed from: private */
+        public /* synthetic */ void lambda$toSearchResult$0() {
             SettingsRegistry.getInstance().openActivity(this.fragmentClass, Integer.valueOf(this.itemId));
         }
     }

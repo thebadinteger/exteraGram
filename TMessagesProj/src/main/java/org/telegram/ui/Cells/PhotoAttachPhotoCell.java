@@ -44,6 +44,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import androidx.core.graphics.ColorUtils;
 import androidx.core.math.MathUtils;
 
@@ -521,11 +523,16 @@ public class PhotoAttachPhotoCell extends FrameLayout {
             videoPlayImageView.setVisibility(VISIBLE);
             ((LayoutParams) videoTextView.getLayoutParams()).leftMargin = dp(13);
             videoTextView.setText(AndroidUtilities.formatShortDuration(photoEntry.duration));
-        } else if (photoEntry.isHighQuality() && isChecked()) {
+        } else if (photoEntry.isHighQuality() && !ExteraConfig.getAlwaysSendInHD()) {
             videoInfoContainer.setVisibility(VISIBLE);
             videoPlayImageView.setVisibility(GONE);
             ((LayoutParams) videoTextView.getLayoutParams()).leftMargin = dp(0);
             videoTextView.setText(getString(R.string.ShortHighQuality));
+        } else if (!photoEntry.isHighQuality() && ExteraConfig.getAlwaysSendInHD()) {
+            videoInfoContainer.setVisibility(VISIBLE);
+            videoPlayImageView.setVisibility(GONE);
+            ((LayoutParams) videoTextView.getLayoutParams()).leftMargin = dp(0);
+            videoTextView.setText(getString(R.string.ShortStandardQuality));
         } else {
             videoPlayImageView.setVisibility(GONE);
             videoInfoContainer.setVisibility(INVISIBLE);

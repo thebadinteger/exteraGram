@@ -33,7 +33,112 @@ public final class PluginFileViewer {
     private PluginFileViewer() {
     }
 
-    public static private final String normalizeFileName(File file, String fileName) {
+    public static /* synthetic */ boolean open$default(PluginFileViewer pluginFileViewer, BaseFragment baseFragment, File file, String str, int i, Object obj) {
+        if ((i & 4) != 0) {
+            str = null;
+        }
+        return pluginFileViewer.open(baseFragment, file, str);
+    }
+
+    public final boolean open(final BaseFragment fragment, final File file, final String fileName) {
+        Activity parentActivity;
+        if (fragment == null || (parentActivity = fragment.getParentActivity()) == null || file == null || !file.exists() || !file.isFile()) {
+            return false;
+        }
+        if (file.length() > 524288) {
+            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.error, LocaleController.getString(R.string.ImportFileTooLarge)).show();
+            return false;
+        }
+        final AlertDialog alertDialog = new AlertDialog(parentActivity, 3, fragment.getResourceProvider());
+        alertDialog.setCanceledOnTouchOutside(false);
+        final boolean[] zArr = {false};
+        alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() { // from class: com.exteragram.messenger.plugins.ui.components.PluginFileViewer$$ExternalSyntheticLambda0
+            @Override // android.content.DialogInterface.OnCancelListener
+            public final void onCancel(DialogInterface dialogInterface) {
+                PluginFileViewer.m1360$r8$lambda$V5c36KhCJGXK1eWQobTq6ixb5g(zArr, dialogInterface);
+            }
+        });
+        alertDialog.showDelayed(150L);
+        Utilities.globalQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.plugins.ui.components.PluginFileViewer$$ExternalSyntheticLambda1
+            @Override // java.lang.Runnable
+            public final void run() {
+                PluginFileViewer.$r8$lambda$qqdbMSxrLs0kkr2wrRKExk_Q7bY(file, fileName, alertDialog, zArr, fragment);
+            }
+        });
+        return true;
+    }
+
+    /* JADX INFO: renamed from: $r8$lambda$V5c36KhC-JGXK1eWQobTq6ixb5g, reason: not valid java name */
+    public static void m1360$r8$lambda$V5c36KhCJGXK1eWQobTq6ixb5g(boolean[] zArr, DialogInterface dialogInterface) {
+        zArr[0] = true;
+    }
+
+    public static void $r8$lambda$qqdbMSxrLs0kkr2wrRKExk_Q7bY(File file, String str, final AlertDialog alertDialog, final boolean[] zArr, final BaseFragment baseFragment) {
+        MessageObject messageObjectCreateMessageObject = null;
+        try {
+            PluginFileViewer pluginFileViewer = INSTANCE;
+            messageObjectCreateMessageObject = pluginFileViewer.createMessageObject(file, pluginFileViewer.normalizeFileName(file, str));
+        } catch (Throwable th) {
+            FileLog.e(th);
+        }
+        final MessageObject finalMsg = messageObjectCreateMessageObject;
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.plugins.ui.components.PluginFileViewer$$ExternalSyntheticLambda2
+            @Override // java.lang.Runnable
+            public final void run() {
+                PluginFileViewer.open$lambda$1$0(alertDialog, zArr, finalMsg, baseFragment);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public static final void open$lambda$1$0(AlertDialog alertDialog, boolean[] zArr, MessageObject messageObject, BaseFragment baseFragment) {
+        try {
+            alertDialog.dismiss();
+        } catch (Throwable unused) {
+        }
+        if (zArr[0]) {
+            return;
+        }
+        if (messageObject != null) {
+            baseFragment.createArticleViewer(false).open(messageObject);
+        } else {
+            BulletinFactory.of(baseFragment).createSimpleBulletin(R.raw.error, LocaleController.getString(R.string.ErrorOccurred)).show();
+        }
+    }
+
+    private final MessageObject createMessageObject(File file, String fileName) {
+        String text = FilesKt.readText(file, Charsets.UTF_8);
+        TL_iv.TL_page tL_page = new TL_iv.TL_page();
+        tL_page.local = file;
+        tL_page.url = fileName;
+        MarkdownUtils.appendPreformattedBlocks(tL_page.blocks, text, "python", 8192);
+        TLRPC.TL_webPage tL_webPage = new TLRPC.TL_webPage();
+        tL_webPage.id = file.getAbsolutePath().hashCode();
+        tL_webPage.url = fileName;
+        tL_webPage.display_url = fileName;
+        tL_webPage.title = fileName;
+        tL_webPage.flags |= 1028;
+        tL_webPage.cached_page = tL_page;
+        long j = UserConfig.getInstance(UserConfig.selectedAccount).clientUserId;
+        TLRPC.TL_message tL_message = new TLRPC.TL_message();
+        tL_message.id = 0;
+        tL_message.date = (int) (System.currentTimeMillis() / 1000);
+        tL_message.message = fileName;
+        tL_message.out = true;
+        TLRPC.TL_peerUser tL_peerUser = new TLRPC.TL_peerUser();
+        tL_peerUser.user_id = j;
+        tL_message.peer_id = tL_peerUser;
+        TLRPC.TL_peerUser tL_peerUser2 = new TLRPC.TL_peerUser();
+        tL_peerUser2.user_id = j;
+        tL_message.from_id = tL_peerUser2;
+        TLRPC.TL_messageMediaWebPage tL_messageMediaWebPage = new TLRPC.TL_messageMediaWebPage();
+        tL_messageMediaWebPage.webpage = tL_webPage;
+        tL_message.media = tL_messageMediaWebPage;
+        return new MessageObject(UserConfig.selectedAccount, tL_message, false, true);
+    }
+
+    /* JADX WARN: Code duplicated, block: B:8:0x000c  */
+    private final String normalizeFileName(File file, String fileName) {
         if (fileName == null) {
             fileName = file.getName();
         } else {

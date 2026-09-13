@@ -26,7 +26,7 @@ import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
 
 public class ServicesActivity extends BasePreferencesActivity implements NotificationCenter.NotificationCenterDelegate {
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public boolean needHideTitle() {
         return true;
     }
@@ -43,19 +43,19 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
         super.onFragmentDestroy();
     }
 
-    @Override 
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
     public void didReceivedNotification(int i, int i2, Object... objArr) {
         if (i == NotificationCenter.servicesUpdated) {
             this.listView.adapter.update(true);
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public String getTitle() {
         return LocaleController.getString(R.string.Services);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
         arrayList.add(UItem.asTopView(getTitle(), LocaleController.getString(R.string.ServicesInfo), "exteraGramPlaceholders", "🔑"));
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.Services)));
@@ -72,7 +72,7 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
         PorterDuff.Mode mode = PorterDuff.Mode.MULTIPLY;
         drawable.setColorFilter(new PorterDuffColorFilter(themedColor, mode));
         drawable2.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_checkboxCheck), mode));
-        UItem uItemAccent = UItem.asButton(1, new CombinedDrawable(drawable, drawable2) { 
+        UItem uItemAccent = UItem.asButton(1, new CombinedDrawable(drawable, drawable2) { // from class: com.exteragram.messenger.ai.ui.activities.ServicesActivity.1
             @Override // org.telegram.ui.Components.CombinedDrawable, android.graphics.drawable.Drawable
             public void setColorFilter(ColorFilter colorFilter) {
             }
@@ -85,7 +85,7 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
         arrayList.add(uItemAccent);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void onClick(UItem uItem, View view, int i, float f, float f2) {
         if (uItem.id >= 100) {
             Object obj = uItem.object;
@@ -103,7 +103,7 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public boolean onLongClick(UItem uItem, View view, int i, float f, float f2) {
         if (uItem == null) {
             return false;
@@ -113,26 +113,63 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
             return false;
         }
         final Service service = (Service) obj;
-        ItemOptions.makeOptions(this, view).add(R.drawable.msg_edit, LocaleController.getString(R.string.Edit), new Runnable() { 
+        ItemOptions.makeOptions(this, view).add(R.drawable.msg_edit, LocaleController.getString(R.string.Edit), new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.ServicesActivity$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$onLongClick$0(service);
+                ServicesActivity.this.lambda$onLongClick$0(service);
             }
-        }).add(R.drawable.msg_copy, LocaleController.getString(R.string.Copy), new Runnable() { 
+        }).add(R.drawable.msg_copy, LocaleController.getString(R.string.Copy), new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.ServicesActivity$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$onLongClick$1(service);
+                ServicesActivity.this.lambda$onLongClick$1(service);
             }
-        }).add(R.drawable.msg_delete, (CharSequence) LocaleController.getString(R.string.Delete), true, new Runnable() { 
+        }).add(R.drawable.msg_delete, (CharSequence) LocaleController.getString(R.string.Delete), true, new Runnable() { // from class: com.exteragram.messenger.ai.ui.activities.ServicesActivity$$ExternalSyntheticLambda2
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$onLongClick$2(service);
+                ServicesActivity.this.lambda$onLongClick$2(service);
             }
         }).setGravity(LocaleController.isRTL ? 3 : 5).setScrimViewBackground(this.listView.getClipBackground(view)).show();
         return true;
     }
 
-    public void lambda$confirmDeleteService$3(Service service, AlertDialog alertDialog, int i) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onLongClick$0(Service service) {
+        presentFragment(new EditServiceActivity(service));
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onLongClick$1(Service service) {
+        if (AndroidUtilities.addToClipboard(service.getUrl() + "\n" + service.getModel() + "\n" + service.getKey())) {
+            BulletinFactory.of(this).createCopyBulletin(LocaleController.getString(R.string.TextCopied)).show();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: confirmDeleteService, reason: merged with bridge method [inline-methods] */
+    public void lambda$onLongClick$2(final Service service) {
+        if (service == null || getParentActivity() == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(LocaleController.getString(R.string.Delete));
+        builder.setMessage(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.DeleteServiceInfo, service.getShortModel())));
+        builder.setPositiveButton(LocaleController.getString(R.string.Delete), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.ai.ui.activities.ServicesActivity$$ExternalSyntheticLambda3
+            @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
+            public final void onClick(AlertDialog alertDialog, int i) {
+                ServicesActivity.this.lambda$confirmDeleteService$3(service, alertDialog, i);
+            }
+        });
+        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+        AlertDialog alertDialogCreate = builder.create();
+        showDialog(alertDialogCreate);
+        TextView textView = (TextView) alertDialogCreate.getButton(-1);
+        if (textView != null) {
+            textView.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$confirmDeleteService$3(Service service, AlertDialog alertDialog, int i) {
         deleteService(service);
     }
 
@@ -148,7 +185,7 @@ public class ServicesActivity extends BasePreferencesActivity implements Notific
                 AiConfig.setSelectedServices(AiController.getInstance().getAll().get(0));
             }
         }
-        getNotificationCenter().lambda$postNotificationNameOnUIThread$1(NotificationCenter.servicesUpdated, new Object[0]);
+        getNotificationCenter().postNotificationNameOnUIThread(NotificationCenter.servicesUpdated, new Object[0]);
         UniversalRecyclerView universalRecyclerView = this.listView;
         if (universalRecyclerView == null || (universalAdapter = universalRecyclerView.adapter) == null) {
             return;

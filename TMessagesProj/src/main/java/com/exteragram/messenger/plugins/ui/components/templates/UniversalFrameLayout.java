@@ -7,7 +7,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
-import kotlin.Deprecated;
 import kotlin.Metadata;
 import kotlin.jvm.JvmOverloads;
 import kotlin.jvm.internal.DefaultConstructorMarker;
@@ -20,7 +19,7 @@ public final class UniversalFrameLayout extends FrameLayout {
 
     @JvmOverloads
     public UniversalFrameLayout(Context context) {
-        this(context, null, 2, 0 == true ? 1 : 0);
+        this(context, null);
     }
 
     @JvmOverloads
@@ -108,7 +107,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onLayout(changed, left, top, right, bottom, new Utilities.Callback5() { 
                 @Override 
                 public final void run(Object obj, Object obj2, Object obj3, Object obj4, Object obj5) {
-                    this.f$0.callSuperOnLayout(((Boolean) obj).booleanValue(), ((Integer) obj2).intValue(), ((Integer) obj3).intValue(), ((Integer) obj4).intValue(), ((Integer) obj5).intValue());
+                    UniversalFrameLayout.this.callSuperOnLayout(((Boolean) obj).booleanValue(), ((Integer) obj2).intValue(), ((Integer) obj3).intValue(), ((Integer) obj4).intValue(), ((Integer) obj5).intValue());
                 }
             });
         } else {
@@ -123,7 +122,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onMeasure(widthMeasureSpec, heightMeasureSpec, new Utilities.Callback2() { 
                 @Override 
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.callSuperOnMeasure(((Integer) obj).intValue(), ((Integer) obj2).intValue());
+                    UniversalFrameLayout.this.callSuperOnMeasure(((Integer) obj).intValue(), ((Integer) obj2).intValue());
                 }
             });
         } else {
@@ -138,7 +137,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.setTranslationX(translationX, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperSetTranslationX(((Float) obj).floatValue());
+                    UniversalFrameLayout.this.callSuperSetTranslationX(((Float) obj).floatValue());
                 }
             });
         } else {
@@ -153,7 +152,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.setTranslationY(translationY, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperSetTranslationY(((Float) obj).floatValue());
+                    UniversalFrameLayout.this.callSuperSetTranslationY(((Float) obj).floatValue());
                 }
             });
         } else {
@@ -168,7 +167,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onAttachedToWindow(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.callSuperOnAttachedToWindow();
+                    UniversalFrameLayout.this.callSuperOnAttachedToWindow();
                 }
             });
         } else {
@@ -183,7 +182,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onDetachedFromWindow(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.callSuperOnDetachedFromWindow();
+                    UniversalFrameLayout.this.callSuperOnDetachedFromWindow();
                 }
             });
         } else {
@@ -198,7 +197,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.dispatchDraw(canvas, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperDispatchDraw((Canvas) obj);
+                    UniversalFrameLayout.this.callSuperDispatchDraw((Canvas) obj);
                 }
             });
         } else {
@@ -213,7 +212,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.requestLayout(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.callSuperRequestLayout();
+                    UniversalFrameLayout.this.callSuperRequestLayout();
                 }
             });
         } else {
@@ -225,18 +224,18 @@ public final class UniversalFrameLayout extends FrameLayout {
     public void invalidate() {
         UniversalFrameLayoutListener universalFrameLayoutListener = this.universalFrameLayoutListener;
         if (universalFrameLayoutListener != null) {
-            universalFrameLayoutListener.invalidate(new UniversalFrameLayout$$ExternalSyntheticLambda3(this));
+            universalFrameLayoutListener.invalidate(new Runnable() { @Override public void run() { UniversalFrameLayout.this.callSuperInvalidate(); } });
         } else {
             super.invalidate();
         }
     }
 
     @Override // android.view.View
-    @Deprecated(message = "Deprecated in Java")
+    @Deprecated
     public void invalidate(int l, int t, int r, int b2) {
         UniversalFrameLayoutListener universalFrameLayoutListener = this.universalFrameLayoutListener;
         if (universalFrameLayoutListener != null) {
-            universalFrameLayoutListener.invalidate(l, t, r, b2, new UniversalFrameLayout$$ExternalSyntheticLambda3(this));
+            universalFrameLayoutListener.invalidate(l, t, r, b2, new Runnable() { @Override public void run() { UniversalFrameLayout.this.callSuperInvalidate(); } });
         } else {
             super.invalidate(l, t, r, b2);
         }
@@ -249,7 +248,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onDraw(canvas, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperOnDraw((Canvas) obj);
+                    UniversalFrameLayout.this.callSuperOnDraw((Canvas) obj);
                 }
             });
         } else {
@@ -264,7 +263,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.onInitializeAccessibilityNodeInfo(info, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperOnInitializeAccessibilityNodeInfo((AccessibilityNodeInfo) obj);
+                    UniversalFrameLayout.this.callSuperOnInitializeAccessibilityNodeInfo((AccessibilityNodeInfo) obj);
                 }
             });
         } else {
@@ -279,7 +278,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             return universalFrameLayoutListener.onInterceptTouchEvent(ev, new Utilities.CallbackReturn() { 
                 @Override 
                 public final Object run(Object obj) {
-                    return Boolean.valueOf(this.f$0.callSuperOnInterceptTouchEvent((MotionEvent) obj));
+                    return Boolean.valueOf(UniversalFrameLayout.this.callSuperOnInterceptTouchEvent((MotionEvent) obj));
                 }
             });
         }
@@ -293,7 +292,7 @@ public final class UniversalFrameLayout extends FrameLayout {
         return universalFrameLayoutListener != null ? universalFrameLayoutListener.onTouchEvent(event, new Utilities.CallbackReturn() { 
             @Override 
             public final Object run(Object obj) {
-                return Boolean.valueOf(this.f$0.callSuperOnTouchEvent((MotionEvent) obj));
+                return Boolean.valueOf(UniversalFrameLayout.this.callSuperOnTouchEvent((MotionEvent) obj));
             }
         }) : super.onTouchEvent(event);
     }
@@ -305,7 +304,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             return universalFrameLayoutListener.drawChild(canvas, child, drawingTime, new Utilities.Callback3Return() { 
                 @Override 
                 public final Object run(Object obj, Object obj2, Object obj3) {
-                    return Boolean.valueOf(this.f$0.callSuperDrawChild((Canvas) obj, (View) obj2, ((Long) obj3).longValue()));
+                    return Boolean.valueOf(UniversalFrameLayout.this.callSuperDrawChild((Canvas) obj, (View) obj2, ((Long) obj3).longValue()));
                 }
             });
         }
@@ -319,7 +318,7 @@ public final class UniversalFrameLayout extends FrameLayout {
             universalFrameLayoutListener.setVisibility(visibility, new Utilities.Callback() { 
                 @Override 
                 public final void run(Object obj) {
-                    this.f$0.callSuperSetVisibility(((Integer) obj).intValue());
+                    UniversalFrameLayout.this.callSuperSetVisibility(((Integer) obj).intValue());
                 }
             });
         } else {
@@ -330,88 +329,6 @@ public final class UniversalFrameLayout extends FrameLayout {
     @Metadata(d1 = {"\u0000p\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0010\u000b\n\u0000\n\u0002\u0010\b\n\u0002\b\u0004\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u0007\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\t\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0004\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\t\n\u0002\u0018\u0002\n\u0002\b\u0003\bf\u0018\u00002\u00020\u0001JV\u0010\u0002\u001a\u00020\u00032\u0006\u0010\u0004\u001a\u00020\u00052\u0006\u0010\u0006\u001a\u00020\u00072\u0006\u0010\b\u001a\u00020\u00072\u0006\u0010\t\u001a\u00020\u00072\u0006\u0010\n\u001a\u00020\u00072$\u0010\u000b\u001a \u0012\u0004\u0012\u00020\u0005\u0012\u0004\u0012\u00020\u0007\u0012\u0004\u0012\u00020\u0007\u0012\u0004\u0012\u00020\u0007\u0012\u0004\u0012\u00020\u00070\fH\u0016J,\u0010\r\u001a\u00020\u00032\u0006\u0010\u000e\u001a\u00020\u00072\u0006\u0010\u000f\u001a\u00020\u00072\u0012\u0010\u000b\u001a\u000e\u0012\u0004\u0012\u00020\u0007\u0012\u0004\u0012\u00020\u00070\u0010H\u0016J\u001e\u0010\u0011\u001a\u00020\u00032\u0006\u0010\u0012\u001a\u00020\u00132\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020\u00130\u0014H\u0016J\u001e\u0010\u0015\u001a\u00020\u00032\u0006\u0010\u0016\u001a\u00020\u00132\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020\u00130\u0014H\u0016J\u0010\u0010\u0017\u001a\u00020\u00032\u0006\u0010\u000b\u001a\u00020\u0018H\u0016J\u0010\u0010\u0019\u001a\u00020\u00032\u0006\u0010\u000b\u001a\u00020\u0018H\u0016J\u001e\u0010\u001a\u001a\u00020\u00032\u0006\u0010\u001b\u001a\u00020\u001c2\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020\u001c0\u0014H\u0016J\u0010\u0010\u001d\u001a\u00020\u00032\u0006\u0010\u000b\u001a\u00020\u0018H\u0016J\u0010\u0010\u001e\u001a\u00020\u00032\u0006\u0010\u000b\u001a\u00020\u0018H\u0016J0\u0010\u001e\u001a\u00020\u00032\u0006\u0010\u001f\u001a\u00020\u00072\u0006\u0010 \u001a\u00020\u00072\u0006\u0010!\u001a\u00020\u00072\u0006\u0010\"\u001a\u00020\u00072\u0006\u0010\u000b\u001a\u00020\u0018H\u0016J\u001e\u0010#\u001a\u00020\u00032\u0006\u0010\u001b\u001a\u00020\u001c2\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020\u001c0\u0014H\u0016J\u001e\u0010$\u001a\u00020\u00032\u0006\u0010%\u001a\u00020&2\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020&0\u0014H\u0016J$\u0010'\u001a\u00020\u00052\u0006\u0010(\u001a\u00020)2\u0012\u0010\u000b\u001a\u000e\u0012\u0004\u0012\u00020)\u0012\u0004\u0012\u00020\u00050*H\u0016J$\u0010+\u001a\u00020\u00052\u0006\u0010,\u001a\u00020)2\u0012\u0010\u000b\u001a\u000e\u0012\u0004\u0012\u00020)\u0012\u0004\u0012\u00020\u00050*H\u0016J@\u0010-\u001a\u00020\u00052\u0006\u0010\u001b\u001a\u00020\u001c2\u0006\u0010.\u001a\u00020/2\u0006\u00100\u001a\u0002012\u001e\u0010\u000b\u001a\u001a\u0012\u0004\u0012\u00020\u001c\u0012\u0004\u0012\u00020/\u0012\u0004\u0012\u000201\u0012\u0004\u0012\u00020\u000502H\u0016J\u001e\u00103\u001a\u00020\u00032\u0006\u00104\u001a\u00020\u00072\f\u0010\u000b\u001a\b\u0012\u0004\u0012\u00020\u00070\u0014H\u0016¨\u00065À\u0006\u0003"}, d2 = {"Lcom/exteragram/messenger/plugins/ui/components/templates/UniversalFrameLayout$UniversalFrameLayoutListener;", _UrlKt.FRAGMENT_ENCODE_SET, "onLayout", _UrlKt.FRAGMENT_ENCODE_SET, "changed", _UrlKt.FRAGMENT_ENCODE_SET, "left", _UrlKt.FRAGMENT_ENCODE_SET, "top", "right", "bottom", "originalMethod", "Lorg/telegram/messenger/Utilities$Callback5;", "onMeasure", "widthMeasureSpec", "heightMeasureSpec", "Lorg/telegram/messenger/Utilities$Callback2;", "setTranslationX", "translationX", _UrlKt.FRAGMENT_ENCODE_SET, "Lorg/telegram/messenger/Utilities$Callback;", "setTranslationY", "translationY", "onAttachedToWindow", "Ljava/lang/Runnable;", "onDetachedFromWindow", "dispatchDraw", "canvas", "Landroid/graphics/Canvas;", "requestLayout", "invalidate", "l", "t", "r", "b", "onDraw", "onInitializeAccessibilityNodeInfo", "info", "Landroid/view/accessibility/AccessibilityNodeInfo;", "onInterceptTouchEvent", "ev", "Landroid/view/MotionEvent;", "Lorg/telegram/messenger/Utilities$CallbackReturn;", "onTouchEvent", "event", "drawChild", "child", "Landroid/view/View;", "drawingTime", _UrlKt.FRAGMENT_ENCODE_SET, "Lorg/telegram/messenger/Utilities$Callback3Return;", "setVisibility", "visibility", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
     public interface UniversalFrameLayoutListener {
 
-        @Metadata(k = 3, mv = {2, 2, 0}, xi = 48)
-        public static final class DefaultImpls {
-            @Deprecated
-            public static void onLayout(UniversalFrameLayoutListener universalFrameLayoutListener, boolean z, int i, int i2, int i3, int i4, Utilities.Callback5<Boolean, Integer, Integer, Integer, Integer> callback5) {
-                UniversalFrameLayoutListener.super.onLayout(z, i, i2, i3, i4, callback5);
-            }
-
-            @Deprecated
-            public static void onMeasure(UniversalFrameLayoutListener universalFrameLayoutListener, int i, int i2, Utilities.Callback2<Integer, Integer> callback2) {
-                UniversalFrameLayoutListener.super.onMeasure(i, i2, callback2);
-            }
-
-            @Deprecated
-            public static void setTranslationX(UniversalFrameLayoutListener universalFrameLayoutListener, float f, Utilities.Callback<Float> callback) {
-                UniversalFrameLayoutListener.super.setTranslationX(f, callback);
-            }
-
-            @Deprecated
-            public static void setTranslationY(UniversalFrameLayoutListener universalFrameLayoutListener, float f, Utilities.Callback<Float> callback) {
-                UniversalFrameLayoutListener.super.setTranslationY(f, callback);
-            }
-
-            @Deprecated
-            public static void onAttachedToWindow(UniversalFrameLayoutListener universalFrameLayoutListener, Runnable runnable) {
-                UniversalFrameLayoutListener.super.onAttachedToWindow(runnable);
-            }
-
-            @Deprecated
-            public static void onDetachedFromWindow(UniversalFrameLayoutListener universalFrameLayoutListener, Runnable runnable) {
-                UniversalFrameLayoutListener.super.onDetachedFromWindow(runnable);
-            }
-
-            @Deprecated
-            public static void dispatchDraw(UniversalFrameLayoutListener universalFrameLayoutListener, Canvas canvas, Utilities.Callback<Canvas> callback) {
-                UniversalFrameLayoutListener.super.dispatchDraw(canvas, callback);
-            }
-
-            @Deprecated
-            public static void requestLayout(UniversalFrameLayoutListener universalFrameLayoutListener, Runnable runnable) {
-                UniversalFrameLayoutListener.super.requestLayout(runnable);
-            }
-
-            @Deprecated
-            public static void invalidate(UniversalFrameLayoutListener universalFrameLayoutListener, Runnable runnable) {
-                UniversalFrameLayoutListener.super.invalidate(runnable);
-            }
-
-            @Deprecated
-            public static void invalidate(UniversalFrameLayoutListener universalFrameLayoutListener, int i, int i2, int i3, int i4, Runnable runnable) {
-                UniversalFrameLayoutListener.super.invalidate(i, i2, i3, i4, runnable);
-            }
-
-            @Deprecated
-            public static void onDraw(UniversalFrameLayoutListener universalFrameLayoutListener, Canvas canvas, Utilities.Callback<Canvas> callback) {
-                UniversalFrameLayoutListener.super.onDraw(canvas, callback);
-            }
-
-            @Deprecated
-            public static void onInitializeAccessibilityNodeInfo(UniversalFrameLayoutListener universalFrameLayoutListener, AccessibilityNodeInfo accessibilityNodeInfo, Utilities.Callback<AccessibilityNodeInfo> callback) {
-                UniversalFrameLayoutListener.super.onInitializeAccessibilityNodeInfo(accessibilityNodeInfo, callback);
-            }
-
-            @Deprecated
-            public static boolean onInterceptTouchEvent(UniversalFrameLayoutListener universalFrameLayoutListener, MotionEvent motionEvent, Utilities.CallbackReturn<MotionEvent, Boolean> callbackReturn) {
-                return UniversalFrameLayoutListener.super.onInterceptTouchEvent(motionEvent, callbackReturn);
-            }
-
-            @Deprecated
-            public static boolean onTouchEvent(UniversalFrameLayoutListener universalFrameLayoutListener, MotionEvent motionEvent, Utilities.CallbackReturn<MotionEvent, Boolean> callbackReturn) {
-                return UniversalFrameLayoutListener.super.onTouchEvent(motionEvent, callbackReturn);
-            }
-
-            @Deprecated
-            public static boolean drawChild(UniversalFrameLayoutListener universalFrameLayoutListener, Canvas canvas, View view, long j, Utilities.Callback3Return<Canvas, View, Long, Boolean> callback3Return) {
-                return UniversalFrameLayoutListener.super.drawChild(canvas, view, j, callback3Return);
-            }
-
-            @Deprecated
-            public static void setVisibility(UniversalFrameLayoutListener universalFrameLayoutListener, int i, Utilities.Callback<Integer> callback) {
-                UniversalFrameLayoutListener.super.setVisibility(i, callback);
-            }
-        }
 
         default void onLayout(boolean changed, int left, int top, int right, int bottom, Utilities.Callback5<Boolean, Integer, Integer, Integer, Integer> originalMethod) {
             originalMethod.run(Boolean.valueOf(changed), Integer.valueOf(left), Integer.valueOf(top), Integer.valueOf(right), Integer.valueOf(bottom));

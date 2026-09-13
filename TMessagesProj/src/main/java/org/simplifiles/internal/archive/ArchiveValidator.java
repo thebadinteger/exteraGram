@@ -99,21 +99,21 @@ public final class ArchiveValidator {
     }
 
     private final boolean hasExistingPathAncestor(String path, Set<String> existingPaths) {
-        int iIndexOf$default = StringsKt.indexOf$default((CharSequence) path, '/', 0, false, 6, (Object) null);
+        int iIndexOf$default = path.indexOf('/');
         while (iIndexOf$default >= 0) {
             if (existingPaths.contains(path.substring(0, iIndexOf$default))) {
                 return true;
             }
-            iIndexOf$default = StringsKt.indexOf$default((CharSequence) path, '/', iIndexOf$default + 1, false, 4, (Object) null);
+            iIndexOf$default = path.indexOf('/', iIndexOf$default + 1);
         }
         return false;
     }
 
     private final void addParentPaths(String path, Set<String> parentPaths) {
-        int iIndexOf$default = StringsKt.indexOf$default((CharSequence) path, '/', 0, false, 6, (Object) null);
+        int iIndexOf$default = path.indexOf('/');
         while (iIndexOf$default >= 0) {
             parentPaths.add(path.substring(0, iIndexOf$default));
-            iIndexOf$default = StringsKt.indexOf$default((CharSequence) path, '/', iIndexOf$default + 1, false, 4, (Object) null);
+            iIndexOf$default = path.indexOf('/', iIndexOf$default + 1);
         }
     }
 

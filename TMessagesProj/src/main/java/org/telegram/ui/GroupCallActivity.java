@@ -58,6 +58,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
+import com.exteragram.messenger.ExteraConfig;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -5160,27 +5161,27 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
                         canvas.save();
                         float s = getMeasuredHeight() / (float) scrimView.getAvatarImageView().getMeasuredHeight();
 
-                        float fromRadius = scrimView.getAvatarImageView().getMeasuredHeight() / 2f * s;
+                        float fromRadius = ExteraConfig.getAvatarCorners(scrimView.getAvatarImageView().getMeasuredHeight(), true) * s;
                         int topRad = (int) ((fromRadius * (1f - progressToAvatarPreview) + (dp(13) * progressToAvatarPreview)));
                         int bottomRad = (int) (fromRadius * (1f - progressToAvatarPreview));
                         scrimView.getAvatarWavesDrawable().draw(canvas, scrimView.getAvatarImageView().getMeasuredHeight() / 2, scrimView.getAvatarImageView().getMeasuredHeight() / 2, this);
                         scrimView.getAvatarImageView().getImageReceiver().setImageCoords(0, 0, getMeasuredWidth(), getMeasuredHeight());
                         scrimView.getAvatarImageView().setRoundRadius(topRad, topRad, bottomRad, bottomRad);
                         scrimView.getAvatarImageView().getImageReceiver().draw(canvas);
-                        scrimView.getAvatarImageView().setRoundRadius(scrimView.getAvatarImageView().getMeasuredHeight() / 2);
+                        scrimView.getAvatarImageView().setRoundRadius(ExteraConfig.getAvatarCorners(scrimView.getAvatarImageView().getMeasuredHeight(), true));
                         canvas.restore();
                     } else if (scrimFullscreenView != null && scrimRenderer == null && previewTextureTransitionEnabled) {
                         canvas.save();
                         float s = getMeasuredHeight() / (float) scrimFullscreenView.getAvatarImageView().getMeasuredHeight();
 
-                        float fromRadius = scrimFullscreenView.getAvatarImageView().getMeasuredHeight() / 2f * s;
+                        float fromRadius = ExteraConfig.getAvatarCorners(scrimFullscreenView.getAvatarImageView().getMeasuredHeight(), true) * s;
                         int topRad = (int) ((fromRadius * (1f - progressToAvatarPreview) + (dp(13) * progressToAvatarPreview)));
                         int bottomRad = (int) (fromRadius * (1f - progressToAvatarPreview));
                        // scrimFullscreenView.getAvatarWavesDrawable().draw(canvas, scrimFullscreenView.getAvatarImageView().getMeasuredHeight() / 2, scrimFullscreenView.getAvatarImageView().getMeasuredHeight() / 2, this);
                         scrimFullscreenView.getAvatarImageView().getImageReceiver().setImageCoords(0, 0, getMeasuredWidth(), getMeasuredHeight());
                         scrimFullscreenView.getAvatarImageView().setRoundRadius(topRad, topRad, bottomRad, bottomRad);
                         scrimFullscreenView.getAvatarImageView().getImageReceiver().draw(canvas);
-                        scrimFullscreenView.getAvatarImageView().setRoundRadius(scrimFullscreenView.getAvatarImageView().getMeasuredHeight() / 2);
+                        scrimFullscreenView.getAvatarImageView().setRoundRadius(ExteraConfig.getAvatarCorners(scrimFullscreenView.getAvatarImageView().getMeasuredHeight(), true));
                         canvas.restore();
                     }
                 }
@@ -8366,7 +8367,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
             fromX = view.getAvatarImageView().getX() + view.getX() + listView.getX() - left;
             fromY = view.getAvatarImageView().getY() + view.getY() + listView.getY() - top;
             fromScale = view.getAvatarImageView().getMeasuredHeight() / (float) listView.getMeasuredWidth();
-            fromRadius = (int) ((view.getAvatarImageView().getMeasuredHeight() >> 1) / fromScale);
+            fromRadius = (int) (ExteraConfig.getAvatarCorners(view.getAvatarImageView().getMeasuredHeight(), true) / fromScale);
         } else {
             if (scrimRenderer == null) {
                 previewTextureTransitionEnabled = true;
@@ -8383,7 +8384,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
                     fromX = scrimFullscreenView.getAvatarImageView().getX() + scrimFullscreenView.getX() + fullscreenUsersListView.getX() + renderersContainer.getX() - left;
                     fromY = scrimFullscreenView.getAvatarImageView().getY() + scrimFullscreenView.getY() + fullscreenUsersListView.getY() + renderersContainer.getY() - top;
                     fromScale = scrimFullscreenView.getAvatarImageView().getMeasuredHeight() / (float) listView.getMeasuredWidth();
-                    fromRadius = (int) ((scrimFullscreenView.getAvatarImageView().getMeasuredHeight() >> 1) / fromScale);
+                    fromRadius = (int) (ExteraConfig.getAvatarCorners(scrimFullscreenView.getAvatarImageView().getMeasuredHeight(), true) / fromScale);
                 } else if (previewTextureTransitionEnabled) {
                     fromX = scrimFullscreenView.getX() + fullscreenUsersListView.getX() + renderersContainer.getX() - left;
                     fromY = scrimFullscreenView.getY() + fullscreenUsersListView.getY() + renderersContainer.getY() - top;

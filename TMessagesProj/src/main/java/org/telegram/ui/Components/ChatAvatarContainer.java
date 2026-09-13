@@ -8,6 +8,7 @@
 
 package org.telegram.ui.Components;
 
+import com.exteragram.messenger.api.dto.BadgeDTO;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.replaceArrows;
@@ -123,6 +124,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     public boolean premiumIconHiddable = false;
 
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable emojiStatusDrawable;
+    private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable emojiStatusDrawable2;
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable botVerificationDrawable;
 
     protected boolean useAnimatedSubtitle() {
@@ -132,6 +134,16 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     public void hideSubtitle() {
         if (getSubtitleTextView() != null) {
             getSubtitleTextView().setVisibility(View.GONE);
+        }
+    }
+
+    public void setAvatarSizeInDp(int i) {
+        if (this.avatarSizeInDp != i) {
+            this.avatarSizeInDp = i;
+            if (this.avatarImageView != null) {
+                this.avatarImageView.setRoundRadius(com.exteragram.messenger.utils.ui.ChatHeaderUiHelper.getAvatarRadius(i, false, false));
+            }
+            requestLayout();
         }
     }
 
@@ -370,6 +382,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
 
         emojiStatusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(titleTextView, dp(24));
+        emojiStatusDrawable2 = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(titleTextView, dp(24));
         botVerificationDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(titleTextView, dp(17));
     }
 
@@ -931,6 +944,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     public void setTitle(CharSequence value, boolean scam, boolean fake, boolean verified, boolean premium, TLRPC.EmojiStatus emojiStatus, boolean animated) {
+        setTitle(value, scam, fake, verified, premium, null, emojiStatus, animated);
+    }
+
+    public void setTitle(CharSequence value, boolean scam, boolean fake, boolean verified, boolean premium, BadgeDTO badgeDTO, TLRPC.EmojiStatus emojiStatus, boolean animated) {
         if (value != null) {
             value = Emoji.replaceEmoji(value, titleTextView.getPaint().getFontMetricsInt(), false);
         }
@@ -981,6 +998,18 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         } else {
             titleTextView.setRightDrawable(null);
             rightDrawableContentDescription = null;
+        }
+        if (badgeDTO != null) {
+            emojiStatusDrawable2.set(badgeDTO.getDocumentId(), animated);
+            emojiStatusDrawable2.setParticles(true, false);
+            emojiStatusDrawable2.setColor(getThemedColor(Theme.key_profile_verifiedBackground));
+            if (titleTextView.getRightDrawable() == emojiStatusDrawable) {
+                titleTextView.setRightDrawable2(emojiStatusDrawable2);
+            } else {
+                titleTextView.setRightDrawable(emojiStatusDrawable2);
+            }
+            rightDrawableIsScamOrVerified = true;
+            rightDrawableContentDescription = badgeDTO.getText();
         }
         checkActionBar(animated);
     }

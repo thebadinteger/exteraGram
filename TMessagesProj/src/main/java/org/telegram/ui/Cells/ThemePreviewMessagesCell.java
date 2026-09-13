@@ -19,6 +19,8 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaDataController;
@@ -375,7 +377,7 @@ public class ThemePreviewMessagesCell extends LinearLayout {
                     }
                     if (getAvatarImage() != null && getAvatarImage().getImageHeight() != 0) {
                         getAvatarImage().setImageCoords(getAvatarImage().getImageX(), getMeasuredHeight() - getAvatarImage().getImageHeight() - AndroidUtilities.dp(4), getAvatarImage().getImageWidth(), getAvatarImage().getImageHeight());
-                        getAvatarImage().setRoundRadius((int) (getAvatarImage().getImageHeight() / 2f));
+                        getAvatarImage().setRoundRadius(ExteraConfig.getAvatarCorners(getAvatarImage().getImageHeight(), true));
                         getAvatarImage().draw(canvas);
                     } else if (type == TYPE_REACTIONS_DOUBLE_TAP) {
                         invalidate();

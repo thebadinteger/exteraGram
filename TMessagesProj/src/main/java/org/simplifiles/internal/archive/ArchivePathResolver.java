@@ -16,7 +16,11 @@ public final class ArchivePathResolver {
         if ((i & 4) != 0) {
             z = false;
         }
-        return archivePathResolver.resolve(path, str, z);
+        try {
+            return archivePathResolver.resolve(path, str, z);
+        } catch (UnsafeArchivePathException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final Path resolve(Path root, String path, boolean allowAbsolute) throws UnsafeArchivePathException {

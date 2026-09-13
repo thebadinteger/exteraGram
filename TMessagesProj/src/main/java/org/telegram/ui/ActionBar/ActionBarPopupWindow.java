@@ -51,8 +51,10 @@ import org.telegram.messenger.FileLog;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.utils.ViewOutlineProviderImpl;
+import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.PopupSwipeBackLayout;
+import com.exteragram.messenger.ExteraConfig;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -107,8 +109,10 @@ public class ActionBarPopupWindow extends PopupWindow {
         public boolean updateAnimation;
         public boolean clipChildren;
         public boolean swipeBackGravityRight;
+        public boolean swipeBackGravityCenterHorizontal;
         public boolean swipeBackGravityBottom;
 
+        private org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory glassBackgroundFactory;
         private OnDispatchKeyEventListener mOnDispatchKeyEventListener;
         private float backScaleX = 1;
         private float backScaleY = 1;
@@ -117,6 +121,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         private int lastStartedChild = 0;
         public boolean shownFromBottom;
         private boolean animationEnabled = true;
+        private boolean cascadeEnabled = false;
         private ArrayList<AnimatorSet> itemAnimators;
         private HashMap<View, Integer> positions = new HashMap<>();
         private int gapStartY = -1000000;
@@ -254,6 +259,35 @@ public class ActionBarPopupWindow extends PopupWindow {
                     }
                     return super.drawChild(canvas, child, drawingTime);
                 }
+
+                @Override
+                public void addView(final View view, int index, ViewGroup.LayoutParams params) {
+                    view.setAlpha(0.0f);
+                    view.setTranslationY(AndroidUtilities.dp(shownFromBottom ? 12.0f : -12.0f));
+                    super.addView(view, index, params);
+                    if (cascadeEnabled && (view instanceof ActionBarMenuSubItem) && ExteraConfig.getGroupMessageMenu()) {
+                        int count = 0;
+                        for (int i = 0; i < getChildCount(); i++) {
+                            View child = getChildAt(i);
+                            if (child instanceof ActionBarMenuSubItem && child.getVisibility() == View.VISIBLE) {
+                                count++;
+                            }
+                        }
+                        final int animIndex = count;
+                        view.post(() -> {
+                            view.animate()
+                                .alpha(view.isEnabled() ? 1.0f : 0.5f)
+                                .translationY(0.0f)
+                                .setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT)
+                                .setStartDelay((animIndex * 35L) + 10)
+                                .setDuration(400L)
+                                .start();
+                        });
+                    } else {
+                        view.setAlpha(view.isEnabled() ? 1.0f : 0.5f);
+                        view.setTranslationY(0.0f);
+                    }
+                }
             };
             linearLayout.setOrientation(LinearLayout.VERTICAL);
             if (scrollView != null) {
@@ -295,6 +329,14 @@ public class ActionBarPopupWindow extends PopupWindow {
             if (backgroundColor != color && backgroundDrawable != null) {
                 backgroundDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor = color, PorterDuff.Mode.MULTIPLY));
             }
+        }
+
+        public void setGlassBackgroundFactory(org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory blurredBackgroundDrawableViewFactory) {
+            this.glassBackgroundFactory = blurredBackgroundDrawableViewFactory;
+        }
+
+        public org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory getGlassBackgroundFactory() {
+            return this.glassBackgroundFactory;
         }
 
         @Keep
@@ -405,6 +447,10 @@ public class ActionBarPopupWindow extends PopupWindow {
 
         public void setAnimationEnabled(boolean value) {
             animationEnabled = value;
+        }
+
+        public void setCascadeEnabled(boolean z) {
+            this.cascadeEnabled = z;
         }
 
         @Override
@@ -1110,6 +1156,7 @@ public class ActionBarPopupWindow extends PopupWindow {
     public static class GapView extends FrameLayout {
 
         Drawable shadowDrawable;
+        boolean dividerVisible = true;
 
         public GapView(Context context, Theme.ResourcesProvider resourcesProvider) {
             this(context, resourcesProvider, Theme.key_actionBarDefaultSubmenuSeparator);
@@ -1129,13 +1176,19 @@ public class ActionBarPopupWindow extends PopupWindow {
             setBackgroundColor(color);
         }
 
+        public void setDividerVisible(boolean z) {
+            this.dividerVisible = z;
+            invalidate();
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            if (shadowDrawable != null) {
-                shadowDrawable.setBounds(0, 0, getWidth(), getHeight());
-                shadowDrawable.draw(canvas);
+            if (!dividerVisible || shadowDrawable == null) {
+                return;
             }
+            shadowDrawable.setBounds(0, 0, getWidth(), getHeight());
+            shadowDrawable.draw(canvas);
         }
     }
 }

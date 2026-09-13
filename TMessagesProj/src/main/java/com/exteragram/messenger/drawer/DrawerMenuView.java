@@ -69,14 +69,14 @@ public class DrawerMenuView extends ScrollView {
                         drawerMenuItemView.setOnClickListener(new View.OnClickListener() { 
                             @Override // android.view.View.OnClickListener
                             public final void onClick(View view2) {
-                                this.f$0.lambda$rebuildMenu$0(menuItemInfo, view2);
+                                DrawerMenuView.this.lambda$rebuildMenu$0(menuItemInfo, view2);
                             }
                         });
                         if (menuItemInfo.onLongClick() != null) {
                             drawerMenuItemView.setOnLongClickListener(new View.OnLongClickListener() { 
                                 @Override // android.view.View.OnLongClickListener
                                 public final boolean onLongClick(View view2) {
-                                    return this.f$0.lambda$rebuildMenu$1(menuItemInfo, view2);
+                                    return DrawerMenuView.this.lambda$rebuildMenu$1(menuItemInfo, view2);
                                 }
                             });
                         }

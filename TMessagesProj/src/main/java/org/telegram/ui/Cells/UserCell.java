@@ -23,6 +23,9 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.exteragram.messenger.AvatarCornerType;
+import com.exteragram.messenger.ExteraConfig;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -179,7 +182,7 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
                 return super.onTouchEvent(event);
             }
         };
-        avatarImageView.setRoundRadius(dp(24));
+        avatarImageView.setRoundRadius(ExteraConfig.getAvatarCorners(46.0f));
         addView(avatarImageView, LayoutHelper.createFrame(46, 46, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : 7 + padding, 6, LocaleController.isRTL ? 7 + padding : 0, 0));
         setClipChildren(false);
 
@@ -737,8 +740,14 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
             avatarImageView.setImageDrawable(avatarDrawable);
         }
 
-        avatarImageView.setRoundRadius(isCommunity ? dp(46 * 20 / 72f) :
-                (currentChat != null && currentChat.forum ? dp(14) : dp(24)));
+        boolean zHasStories = MessagesController.getInstance(currentAccount).getStoriesController().hasStories(dialogId);
+        int avatarCorners;
+        if (isCommunity) {
+            avatarCorners = ExteraConfig.getAvatarCorners(46.0f, false, AvatarCornerType.COMMUNITY, zHasStories);
+        } else {
+            avatarCorners = ExteraConfig.getAvatarCorners(46.0f, false, currentChat != null && currentChat.forum, zHasStories);
+        }
+        avatarImageView.setRoundRadius(avatarCorners);
 
         nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
     }

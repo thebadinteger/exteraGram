@@ -26,21 +26,17 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
 
     public PyMethodHook(String str, PyObject pyObject) {
         this(str, pyObject, true, true);
-        "pluginId";
     }
 
     public PyMethodHook(String str, PyObject pyObject, int i) {
         this(str, pyObject, i, true, true);
-        "pluginId";
     }
 
     public PyMethodHook(String str, PyObject pyObject, boolean z, boolean z2) {
-        "pluginId";
         this.beforeHookedFilters = new ArrayList<>();
         this.afterHookedFilters = new ArrayList<>();
         if (pyObject == null) {
-            RandomKt$$ExternalSyntheticBUOutline0.m("Python callback object cannot be null");
-            throw null;
+            throw new IllegalArgumentException("Python callback object cannot be null");
         }
         this.pluginId = str;
         this.pythonCallback = pyObject;
@@ -50,12 +46,10 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
 
     public PyMethodHook(String str, PyObject pyObject, int i, boolean z, boolean z2) {
         super(i);
-        "pluginId";
         this.beforeHookedFilters = new ArrayList<>();
         this.afterHookedFilters = new ArrayList<>();
         if (pyObject == null) {
-            RandomKt$$ExternalSyntheticBUOutline0.m("Python callback object cannot be null");
-            throw null;
+            throw new IllegalArgumentException("Python callback object cannot be null");
         }
         this.pluginId = str;
         this.pythonCallback = pyObject;
@@ -64,12 +58,10 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
     }
 
     public final void setBeforeHookedFilters(ArrayList<HookFilter> beforeHookedFilters) {
-        "beforeHookedFilters";
         this.beforeHookedFilters = beforeHookedFilters;
     }
 
     public final void setAfterHookedFilters(ArrayList<HookFilter> afterHookedFilters) {
-        "afterHookedFilters";
         this.afterHookedFilters = afterHookedFilters;
     }
 
@@ -85,7 +77,6 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
     public void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
         PyObject pyObject;
         PyObject pyObjectCall;
-        "param";
         if (this.disabled || (pyObject = this.beforeHook) == null || !PluginsController.INSTANCE.getInstance().isPluginActive$TMessagesProj(this.pluginId)) {
             return;
         }
@@ -102,7 +93,6 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
     public void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
         PyObject pyObject;
         PyObject pyObjectCall;
-        "param";
         if (this.disabled || (pyObject = this.afterHook) == null || !PluginsController.INSTANCE.getInstance().isPluginActive$TMessagesProj(this.pluginId)) {
             return;
         }
@@ -133,9 +123,7 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
     }
 
     private final boolean executeFilters(ArrayList<HookFilter> filters, XC_MethodHook.MethodHookParam param, boolean isBefore) {
-        "iterator(...)";
         for (HookFilter hookFilter : filters) {
-            "next(...)";
             if (!hookFilter.execute(param, isBefore)) {
                 return false;
             }
@@ -151,7 +139,7 @@ public final class PyMethodHook extends XC_MethodHook implements AutoCloseable {
     }
 
     private final void handleHookError(String hookMethodName, Throwable t) {
-        if ((t instanceof PyException) && t.getMessage() != null && StringsKt.contains$default((CharSequence) t.getMessage(), (CharSequence) "closed", false, 2, (Object) null)) {
+        if ((t instanceof PyException) && t.getMessage() != null && t.getMessage().contains("closed")) {
             this.disabled = true;
             FileLog.e("Attempted to call a closed PyObject callback in " + this.pluginId);
             return;

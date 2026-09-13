@@ -14,10 +14,17 @@ public final class ArchiveValidationException extends SimpliFilesException {
         return this.report;
     }
 
-    public ArchiveValidationException(ValidationReport validationReport) {
-        String message;
+    private static String formatMessage(ValidationReport validationReport) {
+        if (validationReport == null) {
+            return "Archive failed validation: unknown validation issue";
+        }
         ArchiveIssue archiveIssue = (ArchiveIssue) CollectionsKt.firstOrNull((List) validationReport.getIssues());
-        super("Archive failed validation: ".concat((archiveIssue == null || (message = archiveIssue.getMessage()) == null) ? "unknown validation issue" : message));
+        String message = archiveIssue != null ? archiveIssue.getMessage() : null;
+        return "Archive failed validation: " + (message != null ? message : "unknown validation issue");
+    }
+
+    public ArchiveValidationException(ValidationReport validationReport) {
+        super(formatMessage(validationReport));
         this.report = validationReport;
     }
 }

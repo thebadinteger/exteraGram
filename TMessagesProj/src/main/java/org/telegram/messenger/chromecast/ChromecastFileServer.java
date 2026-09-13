@@ -114,7 +114,7 @@ public class ChromecastFileServer extends NanoHTTPD {
         } else {
             if (!started) {
                 try {
-                    start(NanoHTTPD.SOCKET_READ_TIMEOUT, true);
+                    start(5000, true);
                     started = true;
                 } catch (IOException e) {
                     throw new RuntimeException(e);

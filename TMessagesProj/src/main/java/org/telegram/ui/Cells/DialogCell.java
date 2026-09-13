@@ -12,6 +12,9 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.LocaleController.getString;
 
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.AvatarCornerType;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -692,7 +695,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         Theme.createDialogsResources(context);
         drawMonoforumAvatar = false;
         drawCommunityAvatar = false;
-        avatarImage.setRoundRadius(dp(26));
+        avatarImage.setRoundRadius(com.exteragram.messenger.ExteraConfig.getAvatarCorners(52.0f));
         for (int i = 0; i < thumbImage.length; ++i) {
             thumbImage[i] = new ImageReceiver(this);
             thumbImage[i].ignoreNotifications = true;
@@ -3223,7 +3226,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             }
             drawMonoforumAvatar = false;
             drawCommunityAvatar = false;
-            avatarImage.setRoundRadius(dp(26));
+            avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(52.0f));
             drawUnmute = false;
         } else {
             int oldUnreadCount = unreadCount;
@@ -3671,11 +3674,9 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             if (drawMonoforumAvatar) {
                 avatarRadius = 1;
             } else if (drawCommunityAvatar) {
-                avatarRadius = dp(12);
-            } else if (chat != null && chat.forum && currentDialogFolderId == 0 && !useFromUserAsAvatar || !isSavedDialog && user != null && user.self && MessagesController.getInstance(currentAccount).savedViewAsChats) {
-                avatarRadius = dp(16);
+                avatarRadius = ExteraConfig.getAvatarCorners(48.0f, false, AvatarCornerType.COMMUNITY);
             } else {
-                avatarRadius = dp(28);
+                avatarRadius = ExteraConfig.getAvatarCorners(56.0f, false, (chat != null && chat.forum && currentDialogFolderId == 0 && !useFromUserAsAvatar) || (!isSavedDialog && user != null && user.self && MessagesController.getInstance(currentAccount).savedViewAsChats), !(MessagesController.getInstance(currentAccount).getStoriesController().hasStories(getDialogId()) || getDialogId() == UserConfig.getInstance(currentAccount).clientUserId) || (currentDialogFolderId != 0 && MessagesController.getInstance(currentAccount).getStoriesController().hasHiddenStories()));
             }
 
             avatarImage.setRoundRadius(avatarRadius);

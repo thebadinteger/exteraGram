@@ -26,7 +26,7 @@ public final class ExtractedArchive implements AutoCloseable {
     public final ArchiveFile file(String path) {
         Path pathResolve$default = ArchivePathResolver.resolve$default(ArchivePathResolver.INSTANCE, this.root, path, false, 4, null);
         Path path2 = this.root;
-        return new ArchiveFile(path2, StringsKt.replace$default(path2.relativize(pathResolve$default).toString(), '\\', '/', false, 4, (Object) null), pathResolve$default);
+        return new ArchiveFile(path2, path2.relativize(pathResolve$default).toString().replace('\\', '/'), pathResolve$default);
     }
 
     @Override // java.lang.AutoCloseable

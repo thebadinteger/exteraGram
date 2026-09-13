@@ -841,13 +841,12 @@ public abstract class DataTypesUtils {
         if (j3 != 0) {
             return new ApiWrap$Peer(EmptyChat(j3));
         }
-        Buffer$$ExternalSyntheticBUOutline4.m("PeerId in EmptyPeer: ", ExteraConfig.getGSON().toJson(peer));
-        return null;
+        throw new IllegalArgumentException("PeerId in EmptyPeer: " + ExteraConfig.getGSON().toJson(peer));
     }
 
     public static HashMap<Long, ApiWrap$Peer> ParsePeersLists(ArrayList<TLRPC.User> arrayList, ArrayList<TLRPC.Chat> arrayList2) {
         ApiWrap$Peer apiWrap$Peer;
-        LinkedHashMap linkedHashMap = new LinkedHashMap();
+        LinkedHashMap<Long, ApiWrap$Peer> linkedHashMap = new LinkedHashMap<>();
         int size = arrayList.size();
         int i = 0;
         int i2 = 0;
@@ -1034,15 +1033,14 @@ public abstract class DataTypesUtils {
 
     public static String ComputeDocumentName(ApiWrap$ParseMediaContext apiWrap$ParseMediaContext, final TLRPC.Document document, int i, String str) {
         if (document == null) {
-            f$$ExternalSyntheticBUOutline1.m("trying to pass null document!!!");
-            return null;
+            throw new IllegalArgumentException("trying to pass null document!!!");
         }
         if (str != null && !str.isEmpty()) {
             return str;
         }
         String extensionFromMime = getExtensionFromMime(document.mime_type, document);
-        new Utilities.CallbackReturn() { 
-            @Override 
+        new Utilities.CallbackReturn() { // from class: com.exteragram.messenger.export.api.DataTypesUtils$$ExternalSyntheticLambda2
+            @Override // org.telegram.messenger.Utilities.CallbackReturn
             public final Object run(Object obj) {
                 return Boolean.valueOf(!document.mime_type.equalsIgnoreCase((String) obj));
             }
@@ -1054,7 +1052,7 @@ public abstract class DataTypesUtils {
             apiWrap$ParseMediaContext.audios = i2;
             sb.append(i2);
             sb.append(PrepareFileNameDatePart(i));
-            sb.append(!zEqualsIgnoreCase ? ".mp3" : ".ogg");
+            sb.append(zEqualsIgnoreCase ? ".mp3" : ".ogg");
             return sb.toString();
         }
         if (MessageObject.isVideoDocument(document)) {
@@ -1227,7 +1225,7 @@ public abstract class DataTypesUtils {
     }
 
     public static int ApplicationColorIndex(int i) {
-        Integer num = new HashMap<Integer, Integer>() { 
+        Integer num = new HashMap<Integer, Integer>() { // from class: com.exteragram.messenger.export.api.DataTypesUtils.1
             {
                 put(1, 0);
                 put(7, 0);
@@ -1337,7 +1335,7 @@ public abstract class DataTypesUtils {
     }
 
     public static String FormatText(ArrayList<ApiWrap$TextPart> arrayList, final String str, final String str2) {
-        return (String) arrayList.stream().map(new Function() { 
+        return (String) arrayList.stream().map(new Function() { // from class: com.exteragram.messenger.export.api.DataTypesUtils$$ExternalSyntheticLambda1
             @Override // java.util.function.Function
             public final Object apply(Object obj) {
                 return DataTypesUtils.$r8$lambda$YnixTTMCGZSy3zr12T7r1r9bYeo(str, str2, (ApiWrap$TextPart) obj);
@@ -1345,7 +1343,634 @@ public abstract class DataTypesUtils {
         }).collect(Collectors.joining());
     }
 
-    public static void $r8$lambda$vQE9eoidmhRnt1aHYXJ5PfuJR64(HashMap map, ArrayList arrayList, ArrayList arrayList2) {
+    /* JADX INFO: renamed from: com.exteragram.messenger.export.api.DataTypesUtils$2, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass2 {
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type;
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason;
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type;
+
+        static {
+            int[] iArr = new int[ApiWrap$TextPart.Type.values().length];
+            $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type = iArr;
+            try {
+                iArr[ApiWrap$TextPart.Type.Text.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Unknown.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.BankCard.ordinal()] = 3;
+            } catch (NoSuchFieldError unused3) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Mention.ordinal()] = 4;
+            } catch (NoSuchFieldError unused4) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Hashtag.ordinal()] = 5;
+            } catch (NoSuchFieldError unused5) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.BotCommand.ordinal()] = 6;
+            } catch (NoSuchFieldError unused6) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Url.ordinal()] = 7;
+            } catch (NoSuchFieldError unused7) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Email.ordinal()] = 8;
+            } catch (NoSuchFieldError unused8) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Bold.ordinal()] = 9;
+            } catch (NoSuchFieldError unused9) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Italic.ordinal()] = 10;
+            } catch (NoSuchFieldError unused10) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Code.ordinal()] = 11;
+            } catch (NoSuchFieldError unused11) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Pre.ordinal()] = 12;
+            } catch (NoSuchFieldError unused12) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.TextUrl.ordinal()] = 13;
+            } catch (NoSuchFieldError unused13) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.MentionName.ordinal()] = 14;
+            } catch (NoSuchFieldError unused14) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Phone.ordinal()] = 15;
+            } catch (NoSuchFieldError unused15) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Cashtag.ordinal()] = 16;
+            } catch (NoSuchFieldError unused16) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Underline.ordinal()] = 17;
+            } catch (NoSuchFieldError unused17) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Strike.ordinal()] = 18;
+            } catch (NoSuchFieldError unused18) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Blockquote.ordinal()] = 19;
+            } catch (NoSuchFieldError unused19) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.Spoiler.ordinal()] = 20;
+            } catch (NoSuchFieldError unused20) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[ApiWrap$TextPart.Type.CustomEmoji.ordinal()] = 21;
+            } catch (NoSuchFieldError unused21) {
+            }
+            int[] iArr2 = new int[ApiWrap$File.SkipReason.values().length];
+            $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason = iArr2;
+            try {
+                iArr2[ApiWrap$File.SkipReason.Unavailable.ordinal()] = 1;
+            } catch (NoSuchFieldError unused22) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason[ApiWrap$File.SkipReason.FileSize.ordinal()] = 2;
+            } catch (NoSuchFieldError unused23) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason[ApiWrap$File.SkipReason.FileType.ordinal()] = 3;
+            } catch (NoSuchFieldError unused24) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason[ApiWrap$File.SkipReason.None.ordinal()] = 4;
+            } catch (NoSuchFieldError unused25) {
+            }
+            int[] iArr3 = new int[ApiWrap$DialogInfo.Type.values().length];
+            $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type = iArr3;
+            try {
+                iArr3[ApiWrap$DialogInfo.Type.Self.ordinal()] = 1;
+            } catch (NoSuchFieldError unused26) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.Personal.ordinal()] = 2;
+            } catch (NoSuchFieldError unused27) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.Bot.ordinal()] = 3;
+            } catch (NoSuchFieldError unused28) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.PrivateGroup.ordinal()] = 4;
+            } catch (NoSuchFieldError unused29) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.PrivateSupergroup.ordinal()] = 5;
+            } catch (NoSuchFieldError unused30) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.PublicSupergroup.ordinal()] = 6;
+            } catch (NoSuchFieldError unused31) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.PrivateChannel.ordinal()] = 7;
+            } catch (NoSuchFieldError unused32) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.PublicChannel.ordinal()] = 8;
+            } catch (NoSuchFieldError unused33) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.Unknown.ordinal()] = 9;
+            } catch (NoSuchFieldError unused34) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.Replies.ordinal()] = 10;
+            } catch (NoSuchFieldError unused35) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$api$ApiWrap$DialogInfo$Type[ApiWrap$DialogInfo.Type.VerifyCodes.ordinal()] = 11;
+            } catch (NoSuchFieldError unused36) {
+            }
+        }
+    }
+
+    public static /* synthetic */ String $r8$lambda$YnixTTMCGZSy3zr12T7r1r9bYeo(String str, String str2, ApiWrap$TextPart apiWrap$TextPart) {
+        String strSerializeString = HtmlContext.SerializeString(apiWrap$TextPart.text);
+        switch (AnonymousClass2.$SwitchMap$com$exteragram$messenger$export$api$ApiWrap$TextPart$Type[apiWrap$TextPart.type.ordinal()]) {
+            case 1:
+            case 2:
+            case 3:
+                return strSerializeString;
+            case 4:
+                return "<a href=\"" + str + strSerializeString.substring(1) + "\">" + strSerializeString + "</a>";
+            case 5:
+                return "<a href=\"\" onclick=\"return ShowHashtag(" + HtmlContext.SerializeString("\"" + strSerializeString.substring(1) + Typography.quote) + ")\">" + strSerializeString + "</a>";
+            case 6:
+                return "<a href=\"\" onclick=\"return ShowBotCommand(" + HtmlContext.SerializeString("\"" + strSerializeString.substring(1) + Typography.quote) + ")\">" + strSerializeString + "</a>";
+            case 7:
+                return "<a href=\"" + strSerializeString + "\">" + strSerializeString + "</a>";
+            case 8:
+                return "<a href=\"mailto:" + strSerializeString + "\">" + strSerializeString + "</a>";
+            case 9:
+                return "<strong>" + strSerializeString + "</strong>";
+            case 10:
+                return "<em>" + strSerializeString + "</em>";
+            case 11:
+                return "<code>" + strSerializeString + "</code>";
+            case 12:
+                return "<pre>" + strSerializeString + "</pre>";
+            case 13:
+                return "<a href=\"" + HtmlContext.SerializeString(apiWrap$TextPart.additional) + "\">" + strSerializeString + "</a>";
+            case 14:
+                return "<a href=\"\" onclick=\"return ShowMentionName()\">" + strSerializeString + "</a>";
+            case 15:
+                return "<a href=\"tel:" + strSerializeString + "\">" + strSerializeString + "</a>";
+            case 16:
+                return "<a href=\"\" onclick=\"return ShowCashtag(" + HtmlContext.SerializeString("\"" + strSerializeString.substring(1) + Typography.quote) + ")\">" + strSerializeString + "</a>";
+            case 17:
+                return "<u>" + strSerializeString + "</u>";
+            case 18:
+                return "<s>" + strSerializeString + "</s>";
+            case 19:
+                return "<blockquote>" + strSerializeString + "</blockquote>";
+            case 20:
+                return "<span class=\"spoiler hidden\" onclick=\"ShowSpoiler(this)\"><span aria-hidden=\"true\">" + strSerializeString + "</span></span>";
+            case 21:
+                return FormatCustomEmoji(apiWrap$TextPart.additional, strSerializeString, str2);
+            default:
+                throw new IncompatibleClassChangeError();
+        }
+    }
+
+    public static String FormatCustomEmoji(String str, String str2, String str3) {
+        String str4;
+        StringBuilder sb = new StringBuilder();
+        if (str.isEmpty()) {
+            str4 = "<a href=\"\" onclick=\"return ShowNotLoadedEmoji();\">";
+        } else if (str.equals(ApiWrap$TextPart.UnavailableEmoji())) {
+            str4 = "<a href=\"\" onclick=\"return ShowNotAvailableEmoji();\">";
+        } else {
+            str4 = "<a href = \"" + str3 + str + "\">";
+        }
+        sb.append(str4);
+        sb.append(str2);
+        sb.append("</a>");
+        return sb.toString();
+    }
+
+    public static ApiWrap$StoriesSlice ParseStoriesSlice(ArrayList<TL_stories.StoryItem> arrayList, int i) {
+        ApiWrap$Document apiWrap$Document;
+        ApiWrap$StoriesSlice apiWrap$StoriesSlice = new ApiWrap$StoriesSlice();
+        int size = arrayList.size();
+        int i2 = 0;
+        while (i2 < size) {
+            TL_stories.StoryItem storyItem = arrayList.get(i2);
+            i2++;
+            TL_stories.StoryItem storyItem2 = storyItem;
+            apiWrap$StoriesSlice.lastId = storyItem2.id;
+            apiWrap$StoriesSlice.skipped++;
+            int i3 = storyItem2.date;
+            ApiWrap$Media apiWrap$Media = new ApiWrap$Media();
+            TLRPC.MessageMedia messageMedia = storyItem2.media;
+            String extensionFromMime = ".jpg";
+            if (messageMedia instanceof TLRPC.TL_messageMediaPhoto) {
+                TLRPC.TL_messageMediaPhoto tL_messageMediaPhoto = (TLRPC.TL_messageMediaPhoto) messageMedia;
+                StringBuilder sb = new StringBuilder("stories/");
+                i++;
+                sb.append(PrepareStoryFileName(i, i3, ".jpg"));
+                String string = sb.toString();
+                TLRPC.Photo photo = tL_messageMediaPhoto.photo;
+                HtmlWriter.Photo photoParsePhoto = photo != null ? ParsePhoto(photo, string) : new HtmlWriter.Photo();
+                photoParsePhoto.spoilered = tL_messageMediaPhoto.spoiler;
+                apiWrap$Media.content = photoParsePhoto;
+            } else if (messageMedia instanceof TLRPC.TL_messageMediaDocument) {
+                TLRPC.TL_messageMediaDocument tL_messageMediaDocument = (TLRPC.TL_messageMediaDocument) messageMedia;
+                TLRPC.Document document = tL_messageMediaDocument.document;
+                ApiWrap$ParseMediaContext apiWrap$ParseMediaContext = new ApiWrap$ParseMediaContext();
+                if (document != null) {
+                    apiWrap$Document = ParseDocument(apiWrap$ParseMediaContext, document, "stories", i3);
+                } else {
+                    apiWrap$Document = new ApiWrap$Document();
+                }
+                if (!apiWrap$Document.mime.equals("image/jpeg")) {
+                    if (apiWrap$Document.mime.equals("image/png")) {
+                        extensionFromMime = ".png";
+                    } else {
+                        extensionFromMime = getExtensionFromMime(apiWrap$Document.mime, null);
+                    }
+                }
+                ApiWrap$File apiWrap$File = apiWrap$Document.file;
+                StringBuilder sb2 = new StringBuilder("stories/");
+                i++;
+                sb2.append(PrepareStoryFileName(i, i3, extensionFromMime));
+                String string2 = sb2.toString();
+                apiWrap$File.suggestedPath = string2;
+                apiWrap$Document.thumb.file.suggestedPath = string2.concat("_thumb.jpg");
+                apiWrap$Document.spoilered = tL_messageMediaDocument.spoiler;
+                apiWrap$Media.content = apiWrap$Document;
+            } else {
+                apiWrap$Media.content = new ApiWrap$UnsupportedMedia();
+            }
+            if (!(apiWrap$Media.content instanceof ApiWrap$UnsupportedMedia)) {
+                ApiWrap$Story apiWrap$Story = new ApiWrap$Story();
+                apiWrap$Story.id = storyItem2.id;
+                apiWrap$Story.date = i3;
+                apiWrap$Story.expires = storyItem2.expire_date;
+                apiWrap$Story.media = apiWrap$Media;
+                apiWrap$Story.pinned = storyItem2.pinned;
+                String str = storyItem2.caption;
+                apiWrap$Story.caption = str != null ? ParseText(str, storyItem2.entities) : new ArrayList<>();
+                apiWrap$StoriesSlice.list.add(apiWrap$Story);
+                apiWrap$StoriesSlice.skipped--;
+            }
+        }
+        return apiWrap$StoriesSlice;
+    }
+
+    private static ArrayList<ArrayList<ApiWrap$HistoryMessageMarkupButton>> ButtonRowsFromTL(TLRPC.TL_replyKeyboardMarkup tL_replyKeyboardMarkup) {
+        ApiWrap$HistoryMessageMarkupButton.Type type;
+        ApiWrap$HistoryMessageMarkupButton.Type type2;
+        byte[] bArr;
+        ArrayList<TLRPC.TL_keyboardButtonRow> arrayList = tL_replyKeyboardMarkup.rows;
+        if (arrayList.isEmpty()) {
+            return new ArrayList<>();
+        }
+        ArrayList<ArrayList<ApiWrap$HistoryMessageMarkupButton>> arrayList2 = new ArrayList<>();
+        arrayList2.ensureCapacity(arrayList.size());
+        int size = arrayList.size();
+        int i = 0;
+        while (i < size) {
+            TLRPC.TL_keyboardButtonRow tL_keyboardButtonRow = arrayList.get(i);
+            i++;
+            TLRPC.TL_keyboardButtonRow tL_keyboardButtonRow2 = tL_keyboardButtonRow;
+            ArrayList<ApiWrap$HistoryMessageMarkupButton> arrayList3 = new ArrayList<>();
+            arrayList3.ensureCapacity(tL_keyboardButtonRow2.buttons.size());
+            ArrayList<TLRPC.KeyboardButton> arrayList4 = tL_keyboardButtonRow2.buttons;
+            int size2 = arrayList4.size();
+            int i2 = 0;
+            while (i2 < size2) {
+                TLRPC.KeyboardButton keyboardButton = arrayList4.get(i2);
+                i2++;
+                TLRPC.KeyboardButton keyboardButton2 = keyboardButton;
+                if (keyboardButton2 instanceof TLRPC.TL_keyboardButton) {
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.Default, ((TLRPC.TL_keyboardButton) keyboardButton2).text));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonCallback) {
+                    TLRPC.TL_keyboardButtonCallback tL_keyboardButtonCallback = (TLRPC.TL_keyboardButtonCallback) keyboardButton2;
+                    if (tL_keyboardButtonCallback.requires_password) {
+                        type = ApiWrap$HistoryMessageMarkupButton.Type.CallbackWithPassword;
+                    } else {
+                        type = ApiWrap$HistoryMessageMarkupButton.Type.Callback;
+                    }
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(type, tL_keyboardButtonCallback.text, tL_keyboardButtonCallback.data));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonRequestGeoLocation) {
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.RequestLocation, ((TLRPC.TL_keyboardButtonRequestGeoLocation) keyboardButton2).text));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonRequestPhone) {
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.RequestPhone, ((TLRPC.TL_keyboardButtonRequestPhone) keyboardButton2).text));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonRequestPeer) {
+                    TLRPC.TL_keyboardButtonRequestPeer tL_keyboardButtonRequestPeer = (TLRPC.TL_keyboardButtonRequestPeer) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.RequestPeer, tL_keyboardButtonRequestPeer.text, "unsupported".getBytes(StandardCharsets.UTF_8), _UrlKt.FRAGMENT_ENCODE_SET, tL_keyboardButtonRequestPeer.button_id));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonUrl) {
+                    TLRPC.TL_keyboardButtonUrl tL_keyboardButtonUrl = (TLRPC.TL_keyboardButtonUrl) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.Url, tL_keyboardButtonUrl.text, tL_keyboardButtonUrl.url.getBytes(StandardCharsets.UTF_8)));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonSwitchInline) {
+                    TLRPC.TL_keyboardButtonSwitchInline tL_keyboardButtonSwitchInline = (TLRPC.TL_keyboardButtonSwitchInline) keyboardButton2;
+                    if (tL_keyboardButtonSwitchInline.same_peer) {
+                        type2 = ApiWrap$HistoryMessageMarkupButton.Type.SwitchInlineSame;
+                    } else {
+                        type2 = ApiWrap$HistoryMessageMarkupButton.Type.SwitchInline;
+                    }
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(type2, tL_keyboardButtonSwitchInline.text, tL_keyboardButtonSwitchInline.query.getBytes(StandardCharsets.UTF_8)));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonGame) {
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.Game, ((TLRPC.TL_keyboardButtonGame) keyboardButton2).text));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonBuy) {
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.Buy, ((TLRPC.TL_keyboardButtonBuy) keyboardButton2).text));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonUrlAuth) {
+                    TLRPC.TL_keyboardButtonUrlAuth tL_keyboardButtonUrlAuth = (TLRPC.TL_keyboardButtonUrlAuth) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.Auth, tL_keyboardButtonUrlAuth.text, tL_keyboardButtonUrlAuth.url.getBytes(StandardCharsets.UTF_8), tL_keyboardButtonUrlAuth.fwd_text, tL_keyboardButtonUrlAuth.button_id));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonRequestPoll) {
+                    TLRPC.TL_keyboardButtonRequestPoll tL_keyboardButtonRequestPoll = (TLRPC.TL_keyboardButtonRequestPoll) keyboardButton2;
+                    if (tL_keyboardButtonRequestPoll.quiz) {
+                        bArr = new byte[1];
+                    } else {
+                        bArr = new byte[0];
+                    }
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.RequestPoll, tL_keyboardButtonRequestPoll.text, bArr));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonUserProfile) {
+                    TLRPC.TL_keyboardButtonUserProfile tL_keyboardButtonUserProfile = (TLRPC.TL_keyboardButtonUserProfile) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.UserProfile, tL_keyboardButtonUserProfile.text, String.valueOf(tL_keyboardButtonUserProfile.user_id).getBytes(StandardCharsets.UTF_8)));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonWebView) {
+                    TLRPC.TL_keyboardButtonWebView tL_keyboardButtonWebView = (TLRPC.TL_keyboardButtonWebView) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.WebView, tL_keyboardButtonWebView.text, tL_keyboardButtonWebView.url.getBytes(StandardCharsets.UTF_8)));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonSimpleWebView) {
+                    TLRPC.TL_keyboardButtonSimpleWebView tL_keyboardButtonSimpleWebView = (TLRPC.TL_keyboardButtonSimpleWebView) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.SimpleWebView, tL_keyboardButtonSimpleWebView.text, tL_keyboardButtonSimpleWebView.url.getBytes(StandardCharsets.UTF_8)));
+                } else if (keyboardButton2 instanceof TLRPC.TL_keyboardButtonCopy) {
+                    TLRPC.TL_keyboardButtonCopy tL_keyboardButtonCopy = (TLRPC.TL_keyboardButtonCopy) keyboardButton2;
+                    arrayList3.add(new ApiWrap$HistoryMessageMarkupButton(ApiWrap$HistoryMessageMarkupButton.Type.CopyText, tL_keyboardButtonCopy.text, tL_keyboardButtonCopy.copy_text.getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+            if (!arrayList3.isEmpty()) {
+                arrayList2.add(arrayList3);
+            }
+        }
+        return arrayList2;
+    }
+
+    public static HtmlWriter.Photo ParsePhoto(TLRPC.Photo photo, String str) {
+        HtmlWriter.Photo photo2 = new HtmlWriter.Photo();
+        if (photo instanceof TLRPC.TL_photoEmpty) {
+            photo2.id = ((TLRPC.TL_photoEmpty) photo).id;
+            return photo2;
+        }
+        if (photo instanceof TLRPC.TL_photo) {
+            TLRPC.TL_photo tL_photo = (TLRPC.TL_photo) photo;
+            photo2.id = tL_photo.id;
+            photo2.date = tL_photo.date;
+            photo2.image = ParseMaxImage(tL_photo, str);
+        }
+        return photo2;
+    }
+
+    private static ApiWrap$Image ParseMaxImage(TLRPC.Photo photo, String str) {
+        if (photo == null) {
+            return null;
+        }
+        ApiWrap$Image apiWrap$Image = new ApiWrap$Image();
+        apiWrap$Image.file.suggestedPath = str;
+        ArrayList<TLRPC.PhotoSize> arrayList = photo.sizes;
+        int size = arrayList.size();
+        long j = 0;
+        int i = 0;
+        while (i < size) {
+            TLRPC.PhotoSize photoSize = arrayList.get(i);
+            i++;
+            TLRPC.PhotoSize photoSize2 = photoSize;
+            if (!(photoSize2 instanceof TLRPC.TL_photoSizeEmpty) && !(photoSize2 instanceof TLRPC.TL_photoStrippedSize) && !(photoSize2 instanceof TLRPC.TL_photoPathSize)) {
+                int i2 = photoSize2.w;
+                int i3 = photoSize2.h;
+                long j2 = i2 * i3;
+                if (j2 > j) {
+                    apiWrap$Image.width = i2;
+                    apiWrap$Image.height = i3;
+                    TLRPC.TL_inputPhotoFileLocation tL_inputPhotoFileLocation = new TLRPC.TL_inputPhotoFileLocation();
+                    tL_inputPhotoFileLocation.id = photo.id;
+                    tL_inputPhotoFileLocation.access_hash = photo.access_hash;
+                    tL_inputPhotoFileLocation.file_reference = photo.file_reference;
+                    tL_inputPhotoFileLocation.thumb_size = photoSize2.type;
+                    apiWrap$Image.file.location = new ApiWrap$FileLocation();
+                    ApiWrap$File apiWrap$File = apiWrap$Image.file;
+                    ApiWrap$FileLocation apiWrap$FileLocation = apiWrap$File.location;
+                    apiWrap$FileLocation.data = tL_inputPhotoFileLocation;
+                    apiWrap$FileLocation.dcId = photo.dc_id;
+                    if (photoSize2 instanceof TLRPC.TL_photoCachedSize) {
+                        byte[] bArr = ((TLRPC.TL_photoCachedSize) photoSize2).bytes;
+                        apiWrap$File.content = bArr;
+                        apiWrap$File.size = bArr.length;
+                    } else if (photoSize2 instanceof TLRPC.TL_photoSizeProgressive) {
+                        TLRPC.TL_photoSizeProgressive tL_photoSizeProgressive = (TLRPC.TL_photoSizeProgressive) photoSize2;
+                        if (!tL_photoSizeProgressive.sizes.isEmpty()) {
+                            ApiWrap$File apiWrap$File2 = apiWrap$Image.file;
+                            apiWrap$File2.content = new byte[0];
+                            ArrayList<Integer> arrayList2 = tL_photoSizeProgressive.sizes;
+                            apiWrap$File2.size = arrayList2.get(arrayList2.size() - 1).intValue();
+                        }
+                    } else {
+                        apiWrap$File.content = new byte[0];
+                        apiWrap$File.size = photoSize2.size;
+                    }
+                    j = j2;
+                }
+            }
+        }
+        return apiWrap$Image;
+    }
+
+    private static String PrepareStoryFileName(int i, int i2, String str) {
+        return "story_" + i + PrepareFileNameDatePart(i2) + str;
+    }
+
+    private static String PreparePhotoFileName(int i, int i2) {
+        return "photo_" + i + PrepareFileNameDatePart(i2) + ".jpg";
+    }
+
+    private static String PrepareFileNameDatePart(int i) {
+        if (i != 0) {
+            return "@" + LocaleController.getInstance().getExportFileFormatter().format(((long) i) * 1000);
+        }
+        return _UrlKt.FRAGMENT_ENCODE_SET;
+    }
+
+    public static void FillUserpicNames(HtmlWriter.UserpicData userpicData, ApiWrap$Peer apiWrap$Peer) {
+        if (apiWrap$Peer == null) {
+            return;
+        }
+        ApiWrap$User apiWrap$User = apiWrap$Peer.user;
+        String strName = _UrlKt.FRAGMENT_ENCODE_SET;
+        if (apiWrap$User != null) {
+            ApiWrap$ContactInfo apiWrap$ContactInfo = apiWrap$User.info;
+            String str = apiWrap$ContactInfo.firstName;
+            if (str == null) {
+                str = _UrlKt.FRAGMENT_ENCODE_SET;
+            }
+            userpicData.firstName = str;
+            String str2 = apiWrap$ContactInfo.lastName;
+            if (str2 != null) {
+                strName = str2;
+            }
+            userpicData.lastName = strName;
+            return;
+        }
+        if (apiWrap$Peer.chat != null) {
+            if (apiWrap$Peer.name() != null) {
+                strName = apiWrap$Peer.name();
+            }
+            userpicData.firstName = strName;
+        }
+    }
+
+    public static void FillUserpicNames(HtmlWriter.UserpicData userpicData, String str) {
+        String[] strArrSplit = str.split(" ");
+        userpicData.firstName = strArrSplit[0];
+        for (int i = 1; i != strArrSplit.length; i++) {
+            if (!strArrSplit[i].isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                if (!userpicData.lastName.isEmpty()) {
+                    sb.append(" ");
+                }
+                sb.append(strArrSplit[i]);
+                userpicData.lastName = sb.toString();
+            }
+        }
+    }
+
+    public static String ComputeLocationKey(ApiWrap$FileLocation apiWrap$FileLocation) {
+        String str = apiWrap$FileLocation.dcId + "_";
+        TLRPC.InputFileLocation inputFileLocation = apiWrap$FileLocation.data;
+        if (inputFileLocation instanceof TLRPC.TL_inputDocumentFileLocation) {
+            return str + "doc_" + ((TLRPC.TL_inputDocumentFileLocation) inputFileLocation).id;
+        }
+        if (inputFileLocation instanceof TLRPC.TL_inputPhotoFileLocation) {
+            return str + "photo_" + ((TLRPC.TL_inputPhotoFileLocation) inputFileLocation).id;
+        }
+        if (inputFileLocation instanceof ExportRequests$TL_inputTakeoutFileLocation) {
+            return str.concat("takeout");
+        }
+        FileLog.e("wtf! File location type in Export::ComputeLocationKey. " + apiWrap$FileLocation);
+        return str;
+    }
+
+    public static boolean DisplayDate(int i, int i2) {
+        if (i2 == 0) {
+            return true;
+        }
+        return !Objects.equals(LocaleController.formatDate(i), LocaleController.formatDate(i2));
+    }
+
+    public static ArrayList<HtmlWriter.Photo> ParseUserpicsSlice(ArrayList<TLRPC.Photo> arrayList, int i) {
+        ArrayList<HtmlWriter.Photo> arrayList2 = new ArrayList<>(arrayList.size());
+        int size = arrayList.size();
+        int i2 = 0;
+        while (i2 < size) {
+            TLRPC.Photo photo = arrayList.get(i2);
+            i2++;
+            TLRPC.Photo photo2 = photo;
+            StringBuilder sb = new StringBuilder("profile_pictures/");
+            i++;
+            sb.append(PreparePhotoFileName(i, photo2.date));
+            arrayList2.add(ParsePhoto(photo2, sb.toString()));
+        }
+        return arrayList2;
+    }
+
+    public static String NoFileDescription(ApiWrap$File.SkipReason skipReason) {
+        int i = AnonymousClass2.$SwitchMap$com$exteragram$messenger$export$api$ApiWrap$File$SkipReason[skipReason.ordinal()];
+        if (i == 1) {
+            return "Unavailable, please try again later.";
+        }
+        if (i == 2) {
+            return "Exceeds maximum size, change data exporting settings to download.";
+        }
+        if (i == 3) {
+            return "Not included, change data exporting settings to download.";
+        }
+        if (i == 4) {
+            return _UrlKt.FRAGMENT_ENCODE_SET;
+        }
+        throw new RuntimeException("Skip reason in NoFileDescription.");
+    }
+
+    public static ApiWrap$ContactsList ParseContactsList(Vector<ExportRequests$SavedContact> vector) {
+        ApiWrap$ContactsList apiWrap$ContactsList = new ApiWrap$ContactsList();
+        apiWrap$ContactsList.list.ensureCapacity(vector.objects.size());
+        ArrayList<ExportRequests$SavedContact> arrayList = vector.objects;
+        int size = arrayList.size();
+        int i = 0;
+        while (i < size) {
+            Object obj = arrayList.get(i);
+            i++;
+            ExportRequests$SavedContact exportRequests$SavedContact = (ExportRequests$SavedContact) obj;
+            ApiWrap$ContactInfo apiWrap$ContactInfo = new ApiWrap$ContactInfo();
+            apiWrap$ContactInfo.firstName = exportRequests$SavedContact.first_name;
+            apiWrap$ContactInfo.lastName = exportRequests$SavedContact.last_name;
+            String str = exportRequests$SavedContact.phone;
+            apiWrap$ContactInfo.phoneNumber = str;
+            apiWrap$ContactInfo.date = exportRequests$SavedContact.date;
+            apiWrap$ContactInfo.colorIndex = PeerColorIndex(StringBarePeerId(str));
+            apiWrap$ContactsList.list.add(apiWrap$ContactInfo);
+        }
+        return apiWrap$ContactsList;
+    }
+
+    public static boolean AppendTopPeers(ApiWrap$ContactsList apiWrap$ContactsList, TLRPC.contacts_TopPeers contacts_toppeers) {
+        if (contacts_toppeers instanceof TLRPC.TL_contacts_topPeersNotModified) {
+            return false;
+        }
+        if (contacts_toppeers instanceof TLRPC.TL_contacts_topPeersDisabled) {
+            return true;
+        }
+        if (!(contacts_toppeers instanceof TLRPC.TL_contacts_topPeers)) {
+            return false;
+        }
+        TLRPC.TL_contacts_topPeers tL_contacts_topPeers = (TLRPC.TL_contacts_topPeers) contacts_toppeers;
+        final HashMap<Long, ApiWrap$Peer> mapParsePeersLists = ParsePeersLists(tL_contacts_topPeers.users, tL_contacts_topPeers.chats);
+        Utilities.Callback2 callback2 = new Utilities.Callback2() { // from class: com.exteragram.messenger.export.api.DataTypesUtils$$ExternalSyntheticLambda3
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                DataTypesUtils.$r8$lambda$vQE9eoidmhRnt1aHYXJ5PfuJR64(mapParsePeersLists, (ArrayList) obj, (ArrayList) obj2);
+            }
+        };
+        ArrayList<TLRPC.TL_topPeerCategoryPeers> arrayList = tL_contacts_topPeers.categories;
+        int size = arrayList.size();
+        int i = 0;
+        while (i < size) {
+            TLRPC.TL_topPeerCategoryPeers tL_topPeerCategoryPeers = arrayList.get(i);
+            i++;
+            TLRPC.TL_topPeerCategoryPeers tL_topPeerCategoryPeers2 = tL_topPeerCategoryPeers;
+            TLRPC.TopPeerCategory topPeerCategory = tL_topPeerCategoryPeers2.category;
+            if (topPeerCategory instanceof TLRPC.TL_topPeerCategoryCorrespondents) {
+                callback2.run(apiWrap$ContactsList.correspondents, tL_topPeerCategoryPeers2.peers);
+            } else if (topPeerCategory instanceof TLRPC.TL_topPeerCategoryBotsInline) {
+                callback2.run(apiWrap$ContactsList.inlineBots, tL_topPeerCategoryPeers2.peers);
+            } else {
+                if (!(topPeerCategory instanceof TLRPC.TL_topPeerCategoryPhoneCalls)) {
+                    return false;
+                }
+                callback2.run(apiWrap$ContactsList.phoneCalls, tL_topPeerCategoryPeers2.peers);
+            }
+        }
+        return true;
+    }
+
+    public static /* synthetic */ void $r8$lambda$vQE9eoidmhRnt1aHYXJ5PfuJR64(HashMap map, ArrayList arrayList, ArrayList arrayList2) {
         int size = arrayList2.size();
         int i = 0;
         while (i < size) {
@@ -1379,7 +2004,7 @@ public abstract class DataTypesUtils {
         for (int i2 = 0; i2 < size; i2++) {
             arrayList3.add(Integer.valueOf(i2));
         }
-        Collections.sort(arrayList3, Comparator.comparing(new Function() { 
+        Collections.sort(arrayList3, Comparator.comparing(new Function() { // from class: com.exteragram.messenger.export.api.DataTypesUtils$$ExternalSyntheticLambda0
             @Override // java.util.function.Function
             public final Object apply(Object obj) {
                 return DataTypesUtils.$r8$lambda$hVjdozXZbebV18GIZWQWbnIt_UI(arrayList, (Integer) obj);

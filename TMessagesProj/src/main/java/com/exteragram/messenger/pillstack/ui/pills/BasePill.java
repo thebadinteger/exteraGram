@@ -58,7 +58,7 @@ public abstract class BasePill extends FrameLayout {
         this.autoRefreshRunnable = new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$0();
+                BasePill.this.lambda$new$0();
             }
         };
         this.resourcesProvider = resourcesProvider;

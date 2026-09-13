@@ -80,7 +80,7 @@ public class DrawerHeaderView extends FrameLayout {
         backupImageView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
+                DrawerHeaderView.this.lambda$new$0(view);
             }
         });
         FrameLayout frameLayout = new FrameLayout(context);
@@ -102,13 +102,13 @@ public class DrawerHeaderView extends FrameLayout {
         frameLayout.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$1(view);
+                DrawerHeaderView.this.lambda$new$1(view);
             }
         });
         frameLayout.setOnLongClickListener(new View.OnLongClickListener() { 
             @Override // android.view.View.OnLongClickListener
             public final boolean onLongClick(View view) {
-                return this.f$0.lambda$new$2(view);
+                return DrawerHeaderView.this.lambda$new$2(view);
             }
         });
         updateThemeToggleColors();
@@ -120,7 +120,7 @@ public class DrawerHeaderView extends FrameLayout {
         frameLayout2.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$3(view);
+                DrawerHeaderView.this.lambda$new$3(view);
             }
         });
         LinearLayout linearLayout = new LinearLayout(context);
@@ -146,7 +146,7 @@ public class DrawerHeaderView extends FrameLayout {
         frameLayout3.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$4(view);
+                DrawerHeaderView.this.lambda$new$4(view);
             }
         });
         SimpleTextView simpleTextView = new SimpleTextView(context);
@@ -169,13 +169,13 @@ public class DrawerHeaderView extends FrameLayout {
         simpleTextView.setRightDrawableOnClick(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$5(view);
+                DrawerHeaderView.this.lambda$new$5(view);
             }
         });
         simpleTextView.setRightDrawable2OnClick(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$6(view);
+                DrawerHeaderView.this.lambda$new$6(view);
             }
         });
         SimpleTextView simpleTextView2 = new SimpleTextView(context);
@@ -353,6 +353,7 @@ public class DrawerHeaderView extends FrameLayout {
             i = 0;
         } else {
             jClamp = 0;
+            i = 0;
         }
         if (i != this.lastProxyState) {
             TransitionManager.beginDelayedTransition(this, new ChangeBounds().setDuration(150L));

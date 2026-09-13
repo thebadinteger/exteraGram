@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 repositories {
     mavenCentral()
@@ -23,7 +25,7 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 35
+    compileSdkVersion 36
     buildToolsVersion '35.0.0'
 
     defaultConfig.applicationId = APP_PACKAGE
@@ -80,7 +82,7 @@ android {
             jniDebuggable false
             signingConfig signingConfigs.release
             applicationIdSuffix ""
-            minifyEnabled true
+            minifyEnabled false
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), '../TMessagesProj/proguard-rules.pro'
             ndk.debugSymbolLevel = 'FULL'
@@ -150,11 +152,13 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionName APP_VERSION_NAME
         ndkVersion "27.2.12479018"
 
         multiDexEnabled true
+        multiDexKeepFile file('maindexlist.txt')
+        multiDexKeepProguard file('main-dex-rules.pro')
 
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
 

@@ -91,9 +91,7 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
 
     @Override 
     public String getTitle() {
-        String string = R.string.PluginsEngine);
-        "getString(...)";
-        return string;
+        return LocaleController.getString(R.string.PluginsEngine);
     }
 
     @Override // org.telegram.ui.ActionBar.BaseFragment
@@ -117,7 +115,6 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
 
     @Override 
     public void didReceivedNotification(int id, int account, Object... args) {
-        "args";
         if (id == NotificationCenter.pluginsPySdkInfoChanged) {
             this.listView.adapter.update(true);
         }
@@ -126,8 +123,6 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
     @Override 
     public void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         CharSequence string;
-        "items";
-        "adapter";
         items.add(UItem.asHeader(LocaleController.getString(R.string.Settings)));
         items.add(UItem.asCheck(PreferenceItem.DEVELOPER_MODE.getId(), LocaleController.getString(R.string.PluginsDevMode), R.drawable.msg_settings).setChecked(ExteraConfig.getPluginsDevMode()).setEnabled(ExteraConfig.getPluginsEngine() && !ExteraConfig.getPluginsSafeMode()).setSearchable(this).setLinkAlias("pluginsDeveloperMode", this));
         items.add(UItem.asCheck(PreferenceItem.COMPACT_VIEW.getId(), LocaleController.getString(R.string.PluginsCompactView), R.drawable.msg_topics).setChecked(ExteraConfig.getPluginsCompactView()).setEnabled(ExteraConfig.getPluginsEngine()).setSearchable(this).setLinkAlias("pluginsCompactView", this));
@@ -158,8 +153,6 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
 
     @Override 
     public void onClick(UItem item, View view, int position, float x, float y) {
-        "item";
-        "view";
         int i = item.id;
         if (i <= 0 || i > PreferenceItem.getEntries().size()) {
             return;
@@ -171,7 +164,7 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
                     toggleBooleanSettingAndRefresh(item, new Consumer() { 
                         @Override // com.google.android.exoplayer2.util.Consumer
                         public final void accept(Object obj) {
-                            PluginsInfoActivity.m1349$r8$lambda$8QlKkw5kfayJfhO899himkCzI(this.f$0, (Boolean) obj);
+                            PluginsInfoActivity.m1349$r8$lambda$8QlKkw5kfayJfhO899himkCzI(PluginsInfoActivity.this, (Boolean) obj);
                         }
                     });
                     break;
@@ -196,7 +189,7 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
                     toggleBooleanSettingAndRefresh(item, new Consumer() { 
                         @Override // com.google.android.exoplayer2.util.Consumer
                         public final void accept(Object obj) {
-                            PluginsInfoActivity.m1350$r8$lambda$fA84ngNcg3E8iytEUb70vzqJw(this.f$0, (Boolean) obj);
+                            PluginsInfoActivity.m1350$r8$lambda$fA84ngNcg3E8iytEUb70vzqJw(PluginsInfoActivity.this, (Boolean) obj);
                         }
                     });
                     break;
@@ -241,7 +234,7 @@ public final class PluginsInfoActivity extends BasePreferencesActivity implement
 
     public static void $r8$lambda$wqIs6z_14DjJRgtbGrlNat2R__w(Boolean bool) {
         ExteraConfig.setPluginsCompactView(bool.booleanValue());
-        NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.reloadInterface, new Object[0]);
+        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.reloadInterface, new Object[0]);
     }
 
     public static void $r8$lambda$uvPKm0MyDJVKV9ru_YI_2UEFTNQ(SharedPreferences sharedPreferences, Boolean bool) {

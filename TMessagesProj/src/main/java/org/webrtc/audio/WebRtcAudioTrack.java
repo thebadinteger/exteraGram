@@ -1,4 +1,100 @@
-private class AudioTrackThread extends Thread {
+/*
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
+package org.webrtc.audio;
+
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.os.Build;
+import android.os.Process;
+import androidx.annotation.Nullable;
+import java.nio.ByteBuffer;
+
+import org.telegram.messenger.FileLog;
+import org.webrtc.CalledByNative;
+import org.webrtc.Logging;
+import org.webrtc.ThreadUtils;
+import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackErrorCallback;
+import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackStartErrorCode;
+import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackStateCallback;
+import org.webrtc.audio.LowLatencyAudioBufferManager;
+
+class WebRtcAudioTrack {
+  private static final String TAG = "WebRtcAudioTrackExternal";
+
+  // Default audio data format is PCM 16 bit per sample.
+  // Guaranteed to be supported by all devices.
+  private static final int BITS_PER_SAMPLE = 16;
+
+  // Requested size of each recorded buffer provided to the client.
+  private static final int CALLBACK_BUFFER_SIZE_MS = 10;
+
+  // Average number of callbacks per second.
+  private static final int BUFFERS_PER_SECOND = 1000 / CALLBACK_BUFFER_SIZE_MS;
+
+  // The AudioTrackThread is allowed to wait for successful call to join()
+  // but the wait times out afther this amount of time.
+  private static final long AUDIO_TRACK_THREAD_JOIN_TIMEOUT_MS = 2000;
+
+  // By default, WebRTC creates audio tracks with a usage attribute
+  // corresponding to voice communications, such as telephony or VoIP.
+  private static final int DEFAULT_USAGE = getDefaultUsageAttribute();
+
+  private static int getDefaultUsageAttribute() {
+    if (Build.VERSION.SDK_INT >= 21) {
+      return AudioAttributes.USAGE_VOICE_COMMUNICATION;
+    } else {
+      // Not used on SDKs lower than L.
+      return 0;
+    }
+  }
+
+  // Indicates the AudioTrack has started playing audio.
+  private static final int AUDIO_TRACK_START = 0;
+
+  // Indicates the AudioTrack has stopped playing audio.
+  private static final int AUDIO_TRACK_STOP = 1;
+
+  private long nativeAudioTrack;
+  private final Context context;
+  private final AudioManager audioManager;
+  private final ThreadUtils.ThreadChecker threadChecker = new ThreadUtils.ThreadChecker();
+
+  private ByteBuffer byteBuffer;
+
+  private @Nullable final AudioAttributes audioAttributes;
+  private @Nullable AudioTrack audioTrack;
+  private @Nullable AudioTrackThread audioThread;
+  private final VolumeLogger volumeLogger;
+
+  // Samples to be played are replaced by zeros if `speakerMute` is set to true.
+  // Can be used to ensure that the speaker is fully muted.
+  private volatile boolean speakerMute;
+  private byte[] emptyBytes;
+  private boolean useLowLatency;
+  private int initialBufferSizeInFrames;
+
+  private final @Nullable AudioTrackErrorCallback errorCallback;
+  private final @Nullable AudioTrackStateCallback stateCallback;
+
+  /**
+   * Audio thread which keeps calling AudioTrack.write() to stream audio.
+   * Data is periodically acquired from the native WebRTC layer using the
+   * nativeGetPlayoutData callback function.
+   * This thread uses a Process.THREAD_PRIORITY_URGENT_AUDIO priority.
+   */
+  private class AudioTrackThread extends Thread {
     private volatile boolean keepAlive = true;
     private LowLatencyAudioBufferManager bufferManager;
 

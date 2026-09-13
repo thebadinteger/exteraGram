@@ -43,7 +43,7 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void initializeOptionStrings() {
         initItemDetails();
     }
@@ -54,38 +54,93 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public String getTitle() {
         return LocaleController.getString(R.string.PillStackPills);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity, org.telegram.ui.ActionBar.BaseFragment
     public View createView(Context context) {
         View viewCreateView = super.createView(context);
         ActionBarMenuItem actionBarMenuItemAddItem = this.actionBar.createMenu().addItem(0, R.drawable.msg_reset);
         this.resetItem = actionBarMenuItemAddItem;
         actionBarMenuItemAddItem.setContentDescription(LocaleController.getString(R.string.Reset));
         updateResetButtonVisibility();
-        this.resetItem.setOnClickListener(new View.OnClickListener() { 
+        this.resetItem.setOnClickListener(new View.OnClickListener() { // from class: com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity$$ExternalSyntheticLambda0
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$createView$0(view);
+                PillStackPreferencesActivity.this.lambda$createView$0(view);
             }
         });
         UniversalRecyclerView universalRecyclerView = this.listView;
         if (universalRecyclerView != null) {
             universalRecyclerView.allowReorder(true);
-            this.listView.listenReorder(new Utilities.Callback2() { 
-                @Override 
+            this.listView.listenReorder(new Utilities.Callback2() { // from class: com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity$$ExternalSyntheticLambda1
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.updateConfigFromReorder(((Integer) obj).intValue(), (ArrayList) obj2);
+                    PillStackPreferencesActivity.this.updateConfigFromReorder(((Integer) obj).intValue(), (ArrayList) obj2);
                 }
             });
         }
         return viewCreateView;
     }
 
-    public void $r8$lambda$ZNAThjqAeJc9LOjkEYIGUxiiUGM(ItemInfo itemInfo, View view) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$createView$0(View view) {
+        resetToDefault();
+    }
+
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
+    public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
+        if (this.reorderIcon == null) {
+            this.reorderIcon = ContextCompat.getDrawable(getContext(), R.drawable.list_reorder);
+        }
+        arrayList.add(UItem.asHeader(LocaleController.getString(R.string.Settings)));
+        arrayList.add(UItem.asCheck(1000, LocaleController.getString(R.string.PillStackInfiniteScrolling)).setSearchable(this).setLinkAlias("pillStackInfiniteScrolling", this).setChecked(PillStackConfig.getInfiniteScrolling()));
+        arrayList.add(UItem.asShadow(null));
+        this.activeSectionId = -1;
+        this.hiddenSectionId = -1;
+        if (!PillStackConfig.getActivePills().isEmpty()) {
+            this.activeSectionId = addMenuSection(arrayList, universalAdapter, LocaleController.getString(R.string.PillStackActivePills), PillStackConfig.getActivePills());
+            arrayList.add(UItem.asShadow(LocaleController.getString(R.string.PillStackPillsSettingsInfo)));
+        }
+        if (PillStackConfig.getHiddenPills().isEmpty()) {
+            return;
+        }
+        this.hiddenSectionId = addMenuSection(arrayList, universalAdapter, LocaleController.getString(R.string.PillStackHiddenPills), PillStackConfig.getHiddenPills());
+        if (PillStackConfig.getActivePills().isEmpty()) {
+            arrayList.add(UItem.asShadow(LocaleController.getString(R.string.PillStackPillsSettingsInfo)));
+        }
+    }
+
+    private int addMenuSection(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter, String str, List<Integer> list) {
+        universalAdapter.whiteSectionStart();
+        arrayList.add(UItem.asHeader(str));
+        int iReorderSectionStart = universalAdapter.reorderSectionStart();
+        for (Integer num : list) {
+            ItemInfo itemInfo = this.itemDetails.get(num);
+            if (itemInfo != null) {
+                arrayList.add(createMenuItem(num.intValue(), itemInfo));
+            }
+        }
+        universalAdapter.reorderSectionEnd();
+        universalAdapter.whiteSectionEnd();
+        return iReorderSectionStart;
+    }
+
+    private UItem createMenuItem(int i, final ItemInfo itemInfo) {
+        UItem uItemAsButton = UItem.asButton(i, itemInfo.iconRes, itemInfo.name);
+        uItemAsButton.object2 = this.reorderIcon;
+        uItemAsButton.bind = new Utilities.Callback() { // from class: com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity$$ExternalSyntheticLambda3
+            @Override // org.telegram.messenger.Utilities.Callback
+            public final void run(Object obj) {
+                PillStackPreferencesActivity.$r8$lambda$ZNAThjqAeJc9LOjkEYIGUxiiUGM(itemInfo, (View) obj);
+            }
+        };
+        return uItemAsButton;
+    }
+
+    public static /* synthetic */ void $r8$lambda$ZNAThjqAeJc9LOjkEYIGUxiiUGM(ItemInfo itemInfo, View view) {
         if (view instanceof TextCell) {
             TextCell textCell = (TextCell) view;
             textCell.setColorfulIcon(itemInfo.iconColorTop, itemInfo.iconColorBottom, itemInfo.iconRes);
@@ -94,6 +149,7 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void updateConfigFromReorder(int i, ArrayList<UItem> arrayList) {
         ArrayList arrayList2 = new ArrayList();
         int size = arrayList.size();
@@ -113,11 +169,11 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
         saveAndNotify();
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void onClick(UItem uItem, View view, int i, float f, float f2) {
         int i2 = uItem.id;
         if (i2 == 1000) {
-            toggleBooleanSettingAndRefresh(uItem, new Consumer() { 
+            toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.pillstack.ui.PillStackPreferencesActivity$$ExternalSyntheticLambda2
                 @Override // com.google.android.exoplayer2.util.Consumer
                 public final void accept(Object obj) {
                     PillStackConfig.setInfiniteScrolling(((Boolean) obj).booleanValue());
@@ -140,7 +196,7 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
     private void saveAndNotify() {
         UniversalAdapter universalAdapter;
         PillStackConfig.savePillsLayout();
-        NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
         UniversalRecyclerView universalRecyclerView = this.listView;
         if (universalRecyclerView != null && (universalAdapter = universalRecyclerView.adapter) != null) {
             universalAdapter.update(true);
@@ -171,7 +227,7 @@ public class PillStackPreferencesActivity extends BasePreferencesActivity {
             }
         }
         PillStackConfig.savePillsLayout();
-        NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
         UniversalRecyclerView universalRecyclerView = this.listView;
         if (universalRecyclerView != null && (universalAdapter = universalRecyclerView.adapter) != null) {
             universalAdapter.update(true);

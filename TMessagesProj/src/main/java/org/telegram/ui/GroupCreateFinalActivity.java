@@ -27,6 +27,8 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.InputFilter;
 import android.text.TextUtils;
+
+import com.exteragram.messenger.ExteraConfig;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -501,7 +503,7 @@ public class GroupCreateFinalActivity extends BaseFragment implements Notificati
                 super.invalidate(l, t, r, b);
             }
         };
-        avatarImage.setRoundRadius(dp(chatType == ChatObject.CHAT_TYPE_FORUM ? 16 : 32));
+        avatarImage.setRoundRadius(ExteraConfig.getAvatarCorners(64.0f, false, chatType == ChatObject.CHAT_TYPE_FORUM));
         avatarDrawable.setInfo(5, null, null);
         avatarImage.setImageDrawable(avatarDrawable);
         avatarImage.setContentDescription(getString(R.string.ChoosePhoto));
@@ -515,7 +517,7 @@ public class GroupCreateFinalActivity extends BaseFragment implements Notificati
             protected void onDraw(Canvas canvas) {
                 if (avatarImage != null && avatarProgressView.getVisibility() == VISIBLE && avatarImage.getImageReceiver().hasNotThumb()) {
                     paint.setAlpha((int) (0x55 * avatarImage.getImageReceiver().getCurrentAlpha() * avatarProgressView.getAlpha()));
-                    canvas.drawCircle(getMeasuredWidth() / 2.0f, getMeasuredHeight() / 2.0f, getMeasuredWidth() / 2.0f, paint);
+                    canvas.drawRoundRect(0.0f, 0.0f, getMeasuredWidth(), getMeasuredHeight(), ExteraConfig.getAvatarCorners(getMeasuredWidth(), true), ExteraConfig.getAvatarCorners(getMeasuredWidth(), true), paint);
                 }
             }
         };

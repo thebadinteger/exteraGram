@@ -278,11 +278,10 @@ public class Reflector {
     }
 
     private Collection<Method> getDeclaredMethods() {
-        Class<?> superclass;
         try {
             return Arrays.asList(this.klass.getDeclaredMethods());
         } catch (NoClassDefFoundError unused) {
-            HashSet hashSet = new HashSet();
+            HashSet<Method> hashSet = new HashSet<>();
             try {
                 for (Method method : this.klass.getMethods()) {
                     if (method.getDeclaringClass() == this.klass) {
@@ -294,6 +293,7 @@ public class Reflector {
                         }
                     }
                 }
+                Class<?> superclass = this.klass;
                 while (true) {
                     superclass = superclass.getSuperclass();
                     if (superclass == null) {
@@ -308,7 +308,7 @@ public class Reflector {
                 }
             } catch (NoClassDefFoundError unused4) {
             }
-            superclass = this.klass;
+            return hashSet;
         }
     }
 

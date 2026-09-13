@@ -45,6 +45,7 @@ public class Utilities {
     public static volatile DispatchQueue themeQueue = new DispatchQueue("themeQueue");
     public static volatile DispatchQueue externalNetworkQueue = new DispatchQueue("externalNetworkQueue");
     public static volatile DispatchQueue videoPlayerQueue;
+    public static volatile DispatchQueue pluginsQueue = new DispatchQueue("pluginsQueue");
 
     private final static String RANDOM_STRING_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

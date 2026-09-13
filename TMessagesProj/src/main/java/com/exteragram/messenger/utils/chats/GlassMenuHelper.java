@@ -50,7 +50,8 @@ public abstract class GlassMenuHelper {
         if (!z) {
             return Theme.getColor(Theme.key_actionBarDefaultSubmenuSeparator, resourcesProvider);
         }
-        return Theme.multAlpha(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark() ? 0.03f : 0.06f);
+        boolean isDark = resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark();
+        return Theme.multAlpha(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), isDark ? 0.03f : 0.06f);
     }
 
     public static BlurredBackgroundDrawable createPanelBackground(BlurredBackgroundDrawableViewFactory blurredBackgroundDrawableViewFactory, Theme.ResourcesProvider resourcesProvider, View view) {

@@ -1,4 +1,180 @@
-static class SyncQueueItem {
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package androidx.recyclerview.widget;
+
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class MessageThreadUtil<T> implements ThreadUtil<T> {
+
+    @Override
+    public MainThreadCallback<T> getMainThreadProxy(final MainThreadCallback<T> callback) {
+        return new MainThreadCallback<T>() {
+            final MessageQueue mQueue = new MessageQueue();
+            final private Handler mMainThreadHandler = new Handler(Looper.getMainLooper());
+
+            static final int UPDATE_ITEM_COUNT = 1;
+            static final int ADD_TILE = 2;
+            static final int REMOVE_TILE = 3;
+
+            @Override
+            public void updateItemCount(int generation, int itemCount) {
+                sendMessage(SyncQueueItem.obtainMessage(UPDATE_ITEM_COUNT, generation, itemCount));
+            }
+
+            @Override
+            public void addTile(int generation, TileList.Tile<T> tile) {
+                sendMessage(SyncQueueItem.obtainMessage(ADD_TILE, generation, tile));
+            }
+
+            @Override
+            public void removeTile(int generation, int position) {
+                sendMessage(SyncQueueItem.obtainMessage(REMOVE_TILE, generation, position));
+            }
+
+            private void sendMessage(SyncQueueItem msg) {
+                mQueue.sendMessage(msg);
+                mMainThreadHandler.post(mMainThreadRunnable);
+            }
+
+            private Runnable mMainThreadRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    SyncQueueItem msg = mQueue.next();
+                    while (msg != null) {
+                        switch (msg.what) {
+                            case UPDATE_ITEM_COUNT:
+                                callback.updateItemCount(msg.arg1, msg.arg2);
+                                break;
+                            case ADD_TILE:
+                                @SuppressWarnings("unchecked")
+                                TileList.Tile<T> tile = (TileList.Tile<T>) msg.data;
+                                callback.addTile(msg.arg1, tile);
+                                break;
+                            case REMOVE_TILE:
+                                callback.removeTile(msg.arg1, msg.arg2);
+                                break;
+                            default:
+                                Log.e("ThreadUtil", "Unsupported message, what=" + msg.what);
+                        }
+                        msg = mQueue.next();
+                    }
+                }
+            };
+        };
+    }
+
+    @Override
+    public BackgroundCallback<T> getBackgroundProxy(final BackgroundCallback<T> callback) {
+        return new BackgroundCallback<T>() {
+            final MessageQueue mQueue = new MessageQueue();
+            private final Executor mExecutor = AsyncTask.THREAD_POOL_EXECUTOR;
+            AtomicBoolean mBackgroundRunning = new AtomicBoolean(false);
+
+            static final int REFRESH = 1;
+            static final int UPDATE_RANGE = 2;
+            static final int LOAD_TILE = 3;
+            static final int RECYCLE_TILE = 4;
+
+            @Override
+            public void refresh(int generation) {
+                sendMessageAtFrontOfQueue(SyncQueueItem.obtainMessage(REFRESH, generation, null));
+            }
+
+            @Override
+            public void updateRange(int rangeStart, int rangeEnd,
+                                    int extRangeStart, int extRangeEnd, int scrollHint) {
+                sendMessageAtFrontOfQueue(SyncQueueItem.obtainMessage(UPDATE_RANGE,
+                        rangeStart, rangeEnd, extRangeStart, extRangeEnd, scrollHint, null));
+            }
+
+            @Override
+            public void loadTile(int position, int scrollHint) {
+                sendMessage(SyncQueueItem.obtainMessage(LOAD_TILE, position, scrollHint));
+            }
+
+            @Override
+            public void recycleTile(TileList.Tile<T> tile) {
+                sendMessage(SyncQueueItem.obtainMessage(RECYCLE_TILE, 0, tile));
+            }
+
+            private void sendMessage(SyncQueueItem msg) {
+                mQueue.sendMessage(msg);
+                maybeExecuteBackgroundRunnable();
+            }
+
+            private void sendMessageAtFrontOfQueue(SyncQueueItem msg) {
+                mQueue.sendMessageAtFrontOfQueue(msg);
+                maybeExecuteBackgroundRunnable();
+            }
+
+            private void maybeExecuteBackgroundRunnable() {
+                if (mBackgroundRunning.compareAndSet(false, true)) {
+                    mExecutor.execute(mBackgroundRunnable);
+                }
+            }
+
+            private Runnable mBackgroundRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        SyncQueueItem msg = mQueue.next();
+                        if (msg == null) {
+                            break;
+                        }
+                        switch (msg.what) {
+                            case REFRESH:
+                                mQueue.removeMessages(REFRESH);
+                                callback.refresh(msg.arg1);
+                                break;
+                            case UPDATE_RANGE:
+                                mQueue.removeMessages(UPDATE_RANGE);
+                                mQueue.removeMessages(LOAD_TILE);
+                                callback.updateRange(
+                                        msg.arg1, msg.arg2, msg.arg3, msg.arg4, msg.arg5);
+                                break;
+                            case LOAD_TILE:
+                                callback.loadTile(msg.arg1, msg.arg2);
+                                break;
+                            case RECYCLE_TILE:
+                                @SuppressWarnings("unchecked")
+                                TileList.Tile<T> tile = (TileList.Tile<T>) msg.data;
+                                callback.recycleTile(tile);
+                                break;
+                            default:
+                                Log.e("ThreadUtil", "Unsupported message, what=" + msg.what);
+                        }
+                    }
+                    mBackgroundRunning.set(false);
+                }
+            };
+        };
+    }
+
+    /**
+     * Replica of android.os.Message. Unfortunately, cannot use it without a Handler and don't want
+     * to create a thread just for this component.
+     */
+    static class SyncQueueItem {
 
         private static SyncQueueItem sPool;
         private static final Object sPoolLock = new Object();

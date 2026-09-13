@@ -11,7 +11,17 @@ public final class BooleanPref extends BasePref<Boolean> {
         super(Boolean.valueOf(z), str);
     }
 
-    public /* synthetic */ void save(String str, Boolean bool) {
+    public /* synthetic */ BooleanPref(boolean z, String str, int i, DefaultConstructorMarker defaultConstructorMarker) {
+        this(z, (i & 2) != 0 ? null : str);
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ Boolean fetch(String str, Boolean bool) {
+        return fetch(str, bool.booleanValue());
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ void save(String str, Boolean bool) {
         save(str, bool.booleanValue());
     }
 

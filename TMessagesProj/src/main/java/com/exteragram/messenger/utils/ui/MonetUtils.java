@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import androidx.core.graphics.ColorUtils;
-import com.google.android.gms.cast.MediaError;
 import com.google.android.material.color.MaterialColors;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -66,7 +65,6 @@ public final class MonetUtils {
         int i2;
         int i3;
         String string;
-        "colorString";
         if (colorString.length() == 0) {
             return 0;
         }
@@ -79,16 +77,15 @@ public final class MonetUtils {
                 }
                 String strGroup2 = matcher.group(2);
                 if (strGroup2 != null) {
-                    Iterator it = StringsKt.split$default((CharSequence) strGroup2, new String[]{","}, false, 0, 6, (Object) null).iterator();
                     i = 100;
                     i2 = 100;
                     i3 = 100;
-                    while (it.hasNext()) {
-                        List listSplit$default = StringsKt.split$default((CharSequence) it.next(), new String[]{"="}, false, 0, 6, (Object) null);
-                        if (listSplit$default.size() == 2) {
+                    for (String part : strGroup2.split(",")) {
+                        String[] pair = part.split("=");
+                        if (pair.length == 2) {
                             try {
-                                String string2 = StringsKt.trim((CharSequence) listSplit$default.get(0)).toString();
-                                int i4 = Integer.parseInt(StringsKt.trim((CharSequence) listSplit$default.get(1)).toString());
+                                String string2 = pair[0].trim();
+                                int i4 = Integer.parseInt(pair[1].trim());
                                 int iHashCode = string2.hashCode();
                                 if (iHashCode != 97) {
                                     if (iHashCode != 108) {
@@ -127,7 +124,7 @@ public final class MonetUtils {
                 if (i != 100) {
                     color = ColorUtils.setAlphaComponent(color, (int) (i * 2.55f));
                 }
-                return (StringsKt.startsWith$default(colorString, "mR", false, 2, (Object) null) || StringsKt.startsWith$default(colorString, "mG", false, 2, (Object) null)) ? harmonize(color) : color;
+                return (colorString.startsWith("mR") || colorString.startsWith("mG")) ? harmonize(color) : color;
             }
             return 0;
         } catch (Exception e) {
@@ -150,7 +147,7 @@ public final class MonetUtils {
         if (index >= strArr.length) {
             return 0;
         }
-        return getColor(strArr[index] + (isDark ? 200 : MediaError.DetailedErrorCode.TEXT_UNKNOWN));
+        return getColor(strArr[index] + (isDark ? 200 : 600));
     }
 
     @JvmStatic
@@ -175,7 +172,6 @@ public final class MonetUtils {
 
     @JvmStatic
     public static final void registerReceiver(Context context) {
-        "context";
         try {
             harmonizeContextColor = 0;
             overlayChangeReceiver.register(context);
@@ -186,7 +182,6 @@ public final class MonetUtils {
 
     @JvmStatic
     public static final void unregisterReceiver(Context context) {
-        "context";
         try {
             overlayChangeReceiver.unregister(context);
         } catch (Exception unused) {
@@ -198,7 +193,6 @@ public final class MonetUtils {
         private boolean isRegistered;
 
         public final void register(Context context) {
-            "context";
             if (this.isRegistered) {
                 return;
             }
@@ -210,7 +204,6 @@ public final class MonetUtils {
         }
 
         public final void unregister(Context context) {
-            "context";
             if (this.isRegistered) {
                 context.unregisterReceiver(this);
                 this.isRegistered = false;
@@ -219,8 +212,6 @@ public final class MonetUtils {
 
         @Override // android.content.BroadcastReceiver
         public void onReceive(Context context, Intent intent) {
-            "context";
-            "intent";
             if (Intrinsics.areEqual("android.intent.action.OVERLAY_CHANGED", intent.getAction())) {
                 MonetUtils.harmonizeContextColor = 0;
                 Theme.refreshMonetColors();

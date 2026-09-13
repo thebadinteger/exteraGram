@@ -98,6 +98,9 @@ public class SimpleTextView extends View implements Drawable.Callback {
     private int textHeight;
     public int rightDrawableX;
     public int rightDrawableY;
+    public int rightDrawable2X;
+    public int rightDrawable2Y;
+    private OnClickListener rightDrawable2OnClickListener;
     private boolean wasLayout;
 
     private boolean leftDrawableOutside, rightDrawableOutside;
@@ -928,6 +931,8 @@ public class SimpleTextView extends View implements Drawable.Callback {
             } else {
                 y = getPaddingTop() + (textHeight - dh) / 2 + rightDrawableTopPadding;
             }
+            rightDrawable2X = x + (dw >> 1);
+            rightDrawable2Y = y + (dh >> 1);
             rightDrawable2.setBounds(x, y, x + dw, y + dh);
             rightDrawable2.draw(canvas);
             totalWidth += drawablePadding + dw;
@@ -974,6 +979,8 @@ public class SimpleTextView extends View implements Drawable.Callback {
                 } else {
                     y = getPaddingTop() + (textHeight - dh) / 2 + rightDrawableTopPadding;
                 }
+                rightDrawable2X = x + (dw >> 1);
+                rightDrawable2Y = y + (dh >> 1);
                 rightDrawable2.setBounds(x, y, x + dw, y + dh);
                 rightDrawable2.draw(canvas);
             }
@@ -1069,6 +1076,8 @@ public class SimpleTextView extends View implements Drawable.Callback {
                 } else {
                     y = getPaddingTop() + (textHeight - dh) / 2 + rightDrawableTopPadding;
                 }
+                rightDrawable2X = x + (dw >> 1);
+                rightDrawable2Y = y + (dh >> 1);
                 rightDrawable2.setBounds(x, y, x + dw, y + dh);
                 rightDrawable2.draw(canvas);
                 totalWidth += drawablePadding + dw;
@@ -1147,6 +1156,8 @@ public class SimpleTextView extends View implements Drawable.Callback {
             } else {
                 y = getPaddingTop() + (textHeight - dh) / 2 + rightDrawableTopPadding;
             }
+            rightDrawable2X = x + (dw >> 1);
+            rightDrawable2Y = y + (dh >> 1);
             rightDrawable2.setBounds(x, y, x + dw, y + dh);
             rightDrawable2.draw(canvas);
         }
@@ -1158,6 +1169,14 @@ public class SimpleTextView extends View implements Drawable.Callback {
 
     public int getRightDrawableY() {
         return rightDrawableY;
+    }
+
+    public int getRightDrawable2X() {
+        return rightDrawable2X;
+    }
+
+    public int getRightDrawable2Y() {
+        return rightDrawable2Y;
     }
 
     public int getMaxTextWidth() {
@@ -1327,8 +1346,19 @@ public class SimpleTextView extends View implements Drawable.Callback {
         rightDrawableOnClickListener = onClickListener;
     }
 
+    public void setRightDrawable2OnClick(OnClickListener onClickListener) {
+        rightDrawable2OnClickListener = onClickListener;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (rightDrawable2OnClickListener != null && rightDrawable2 != null) {
+            AndroidUtilities.rectTmp.set(rightDrawable2X - dp(16), rightDrawable2Y - dp(16), rightDrawable2X + dp(16), rightDrawable2Y + dp(16));
+            if (event.getAction() == MotionEvent.ACTION_UP && AndroidUtilities.rectTmp.contains((int) event.getX(), (int) event.getY())) {
+                rightDrawable2OnClickListener.onClick(this);
+                return true;
+            }
+        }
         if (rightDrawableOnClickListener != null && rightDrawable != null) {
             AndroidUtilities.rectTmp.set(rightDrawableX - dp(16), rightDrawableY - dp(16), rightDrawableX + dp(16), rightDrawableY + dp(16));
             if (event.getAction() == MotionEvent.ACTION_DOWN && AndroidUtilities.rectTmp.contains((int) event.getX(), (int) event.getY())) {

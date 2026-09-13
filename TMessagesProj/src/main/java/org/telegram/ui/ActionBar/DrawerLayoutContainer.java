@@ -28,10 +28,13 @@ import androidx.core.view.WindowInsetsCompat;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
+import com.exteragram.messenger.drawer.DrawerContainer;
 
 public class DrawerLayoutContainer extends FrameLayout {
 
     private INavigationLayout parentActionBarLayout;
+    private DrawerContainer drawerContainer;
+    private boolean drawCurrentPreviewFragmentAbove;
 
     private boolean hasCutout;
 
@@ -82,17 +85,54 @@ public class DrawerLayoutContainer extends FrameLayout {
         parentActionBarLayout = layout;
     }
 
-    public boolean isDrawCurrentPreviewFragmentAbove() {
-        return false;
+    public INavigationLayout getParentActionBarLayout() {
+        return parentActionBarLayout;
     }
 
+    public void setDrawerContainer(DrawerContainer drawerContainer) {
+        DrawerContainer drawerContainer2 = this.drawerContainer;
+        if (drawerContainer2 == drawerContainer) {
+            return;
+        }
+        if (drawerContainer2 != null) {
+            drawerContainer2.dispose();
+            removeView(this.drawerContainer);
+        }
+        this.drawerContainer = drawerContainer;
+        if (drawerContainer != null) {
+            addView(drawerContainer, new FrameLayout.LayoutParams(-1, -1));
+        }
+    }
+
+    public DrawerContainer getDrawerContainer() {
+        return this.drawerContainer;
+    }
+
+    public boolean isDrawCurrentPreviewFragmentAbove() {
+        return this.drawCurrentPreviewFragmentAbove;
+    }
+
+    public void setDrawCurrentPreviewFragmentAbove(boolean z) {
+        this.drawCurrentPreviewFragmentAbove = z;
+        invalidate();
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        return false;
+        DrawerContainer drawerContainer = this.drawerContainer;
+        return drawerContainer != null && drawerContainer.handleEdgeSwipeTouch(ev);
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return parentActionBarLayout.checkTransitionAnimation();
+        DrawerContainer drawerContainer = this.drawerContainer;
+        if (drawerContainer != null && drawerContainer.getVisibility() == 0) {
+            return false;
+        }
+        if (drawerContainer != null && drawerContainer.handleEdgeSwipeIntercept(ev)) {
+            return true;
+        }
+        return parentActionBarLayout != null && parentActionBarLayout.checkTransitionAnimation();
     }
 
     @Override

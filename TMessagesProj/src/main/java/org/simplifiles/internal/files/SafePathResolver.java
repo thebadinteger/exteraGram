@@ -26,16 +26,13 @@ public final class SafePathResolver {
         if (StringsKt.isBlank(path)) {
             throw new UnsafePathException(path, "path must not be blank");
         }
-        if (StringsKt.startsWith$default(path, "/", false, 2, (Object) null) || StringsKt.startsWith$default(path, "\\", false, 2, (Object) null) || WINDOWS_ABSOLUTE_PATH.matches(path)) {
+        if (path.startsWith("/") || path.startsWith("\\") || WINDOWS_ABSOLUTE_PATH.matches(path)) {
             throw new UnsafePathException(path, "path must be relative");
         }
-        List listSplit$default = StringsKt.split$default((CharSequence) path, new char[]{'/', '\\'}, false, 0, 6, (Object) null);
-        if (!(listSplit$default instanceof Collection) || !listSplit$default.isEmpty()) {
-            Iterator it = listSplit$default.iterator();
-            while (it.hasNext()) {
-                if (Intrinsics.areEqual((String) it.next(), "..")) {
-                    throw new UnsafePathException(path, "path must not contain parent traversal");
-                }
+        String[] parts = path.split("[/\\\\]");
+        for (String part : parts) {
+            if (Intrinsics.areEqual(part, "..")) {
+                throw new UnsafePathException(path, "path must not contain parent traversal");
             }
         }
         Path path2 = Paths.get(path, new String[0]);

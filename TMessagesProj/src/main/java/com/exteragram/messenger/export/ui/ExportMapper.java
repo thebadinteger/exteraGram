@@ -410,7 +410,174 @@ public class ExportMapper {
         return new Pair<>(sb.toString(), arrayList);
     }
 
-    public /* synthetic */ TLRPC.TL_messageMediaDocument lambda$mapMedia$0(JsonMessage jsonMessage) {
+    private TLRPC.MessageMedia mapMedia(final JsonMessage jsonMessage) {
+        String str = jsonMessage.media.mediaType;
+        if (str == null) {
+            return lambda$mapMedia$0(jsonMessage);
+        }
+        switch (str) {
+            case "sticker":
+                try {
+                    byte[] bArrDecode = Base64.decode(jsonMessage.media.serializedSticker, 0);
+                    NativeByteBuffer nativeByteBuffer = new NativeByteBuffer(bArrDecode.length);
+                    try {
+                        nativeByteBuffer.buffer.put(bArrDecode);
+                        nativeByteBuffer.rewind();
+                        TLRPC.MessageMedia messageMediaTLdeserialize = TLRPC.MessageMedia.TLdeserialize(nativeByteBuffer, nativeByteBuffer.readInt32(false), false);
+                        nativeByteBuffer.reuse();
+                        return messageMediaTLdeserialize;
+                    } catch (Exception e) {
+                        FileLog.e("Export: failed to deserialize sticker: ", e);
+                        nativeByteBuffer.reuse();
+                        return null;
+                    }
+                } catch (Exception e2) {
+                    FileLog.e("Export: failed to decode sticker: ", e2);
+                    return null;
+                }
+            case "video_file":
+            case "video_message":
+            case "voice_message":
+            case "animation":
+            case "audio_file":
+                return lambda$mapMedia$0(jsonMessage);
+            case "paidMedia":
+                TLRPC.TL_messageMediaPaidMedia tL_messageMediaPaidMedia = new TLRPC.TL_messageMediaPaidMedia();
+                tL_messageMediaPaidMedia.stars_amount = jsonMessage.media.paidStarsAmount;
+                return tL_messageMediaPaidMedia;
+            case "giveawayResults":
+                TLRPC.TL_messageMediaGiveawayResults tL_messageMediaGiveawayResults = new TLRPC.TL_messageMediaGiveawayResults();
+                GiveawayResults giveawayResults = jsonMessage.media.giveawayResults;
+                tL_messageMediaGiveawayResults.channel_id = Utilities.parseLong(giveawayResults.channel).longValue();
+                tL_messageMediaGiveawayResults.winners = new ArrayList<>();
+                if (giveawayResults.winners != null) {
+                    for (String w : giveawayResults.winners) {
+                        tL_messageMediaGiveawayResults.winners.add(Utilities.parseLong(w));
+                    }
+                }
+                tL_messageMediaGiveawayResults.prize_description = giveawayResults.additionalPrize;
+                tL_messageMediaGiveawayResults.until_date = Utilities.parseInt((CharSequence) giveawayResults.untilDate).intValue();
+                tL_messageMediaGiveawayResults.launch_msg_id = Utilities.parseInt((CharSequence) giveawayResults.launchMessageId).intValue();
+                tL_messageMediaGiveawayResults.additional_peers_count = Utilities.parseInt((CharSequence) giveawayResults.additionalPeersCount).intValue();
+                tL_messageMediaGiveawayResults.winners_count = Utilities.parseInt((CharSequence) giveawayResults.winnersCount).intValue();
+                tL_messageMediaGiveawayResults.unclaimed_count = Utilities.parseInt((CharSequence) giveawayResults.unclaimedCount).intValue();
+                tL_messageMediaGiveawayResults.months = Utilities.parseInt((CharSequence) giveawayResults.months).intValue();
+                tL_messageMediaGiveawayResults.stars = Utilities.parseInt((CharSequence) giveawayResults.stars).intValue();
+                tL_messageMediaGiveawayResults.refunded = giveawayResults.isRefunded;
+                tL_messageMediaGiveawayResults.only_new_subscribers = giveawayResults.onlyNewSubscribers;
+                return tL_messageMediaGiveawayResults;
+            case "game":
+                TLRPC.TL_messageMediaGame tL_messageMediaGame = new TLRPC.TL_messageMediaGame();
+                TLRPC.TL_game tL_game = new TLRPC.TL_game();
+                tL_messageMediaGame.game = tL_game;
+                Media media = jsonMessage.media;
+                tL_game.title = media.gameTitle;
+                tL_game.description = media.gameDescription;
+                tL_game.short_name = media.gameShortName;
+                return tL_messageMediaGame;
+            case "poll":
+                TLRPC.TL_messageMediaPoll tL_messageMediaPoll = new TLRPC.TL_messageMediaPoll();
+                TLRPC.TL_poll tL_poll = new TLRPC.TL_poll();
+                TLRPC.TL_textWithEntities tL_textWithEntities = tL_poll.question;
+                Poll poll = jsonMessage.media.poll;
+                tL_textWithEntities.text = poll.question;
+                tL_poll.closed = poll.closed;
+                for (Answer answer : poll.answers) {
+                    TLRPC.TL_pollAnswer tL_pollAnswer = new TLRPC.TL_pollAnswer();
+                    tL_pollAnswer.text.text = answer.text;
+                    tL_poll.answers.add(tL_pollAnswer);
+                }
+                TLRPC.TL_pollResults tL_pollResults = new TLRPC.TL_pollResults();
+                tL_pollResults.total_voters = Utilities.parseInt((CharSequence) jsonMessage.media.poll.totalVotes).intValue();
+                tL_messageMediaPoll.poll = tL_poll;
+                tL_messageMediaPoll.results = tL_pollResults;
+                return tL_messageMediaPoll;
+            case "photo":
+                TLRPC.TL_messageMediaPhoto tL_messageMediaPhoto = new TLRPC.TL_messageMediaPhoto();
+                Media media2 = jsonMessage.media;
+                tL_messageMediaPhoto.spoiler = media2.spoiler;
+                tL_messageMediaPhoto.ttl_seconds = media2.ttl;
+                String str2 = media2.photoPathRelative;
+                if (str2 != null) {
+                    StringBuilder sb = new StringBuilder();
+                    String str3 = this.path;
+                    sb.append(str3.substring(0, str3.indexOf("/chats/")));
+                    sb.append("/");
+                    sb.append(str2);
+                    tL_messageMediaPhoto.attachPath = sb.toString();
+                }
+                tL_messageMediaPhoto.photo = new TLRPC.TL_photo();
+                TLRPC.TL_photoSize tL_photoSize = new TLRPC.TL_photoSize();
+                Media media3 = jsonMessage.media;
+                tL_photoSize.w = media3.width;
+                tL_photoSize.h = media3.height;
+                tL_photoSize.type = "y";
+                tL_photoSize.location = new ExportFileLocation(this.path);
+                tL_photoSize.size = Utilities.parseInt((CharSequence) ((jsonMessage.media.size / 1024) + "")).intValue();
+                tL_messageMediaPhoto.photo.sizes.add(tL_photoSize);
+                return tL_messageMediaPhoto;
+            case "venue":
+                TLRPC.TL_messageMediaVenue tL_messageMediaVenue = new TLRPC.TL_messageMediaVenue();
+                Media media4 = jsonMessage.media;
+                tL_messageMediaVenue.title = media4.venueTitle;
+                tL_messageMediaVenue.address = media4.venueAddress;
+                TLRPC.TL_geoPoint tL_geoPoint = new TLRPC.TL_geoPoint();
+                tL_messageMediaVenue.geo = tL_geoPoint;
+                tL_geoPoint._long = Utilities.parseLong(jsonMessage.media.location.longitude).longValue();
+                tL_messageMediaVenue.geo.lat = Utilities.parseLong(jsonMessage.media.location.latitude).longValue();
+                return tL_messageMediaVenue;
+            case "contact":
+                TLRPC.TL_messageMediaContact tL_messageMediaContact = new TLRPC.TL_messageMediaContact();
+                ContactInformation contactInformation = jsonMessage.media.contact;
+                tL_messageMediaContact.phone_number = contactInformation.phoneNumber;
+                tL_messageMediaContact.first_name = contactInformation.firstName;
+                tL_messageMediaContact.last_name = contactInformation.lastName;
+                String str4 = contactInformation.vcardRelativePath;
+                if (str4 != null) {
+                    StringBuilder sb2 = new StringBuilder();
+                    String str5 = this.path;
+                    sb2.append(str5.substring(0, str5.indexOf("/chats/")));
+                    sb2.append("/");
+                    sb2.append(str4);
+                    tL_messageMediaContact.vcard = sb2.toString();
+                }
+                return tL_messageMediaContact;
+            case "geopoint":
+                TLRPC.TL_messageMediaGeo tL_messageMediaGeo = new TLRPC.TL_messageMediaGeo();
+                TLRPC.TL_geoPoint tL_geoPoint2 = new TLRPC.TL_geoPoint();
+                tL_messageMediaGeo.geo = tL_geoPoint2;
+                tL_geoPoint2._long = Utilities.parseLong(jsonMessage.media.location.longitude).longValue();
+                tL_messageMediaGeo.geo.lat = Utilities.parseLong(jsonMessage.media.location.latitude).longValue();
+                tL_messageMediaGeo.ttl_seconds = jsonMessage.media.ttl;
+                return tL_messageMediaGeo;
+            case "invoice":
+                TLRPC.TL_messageMediaInvoice tL_messageMediaInvoice = new TLRPC.TL_messageMediaInvoice();
+                InvoiceInformation invoiceInformation = jsonMessage.media.invoice;
+                tL_messageMediaInvoice.title = invoiceInformation.title;
+                tL_messageMediaInvoice.description = invoiceInformation.description;
+                tL_messageMediaInvoice.total_amount = Utilities.parseLong(invoiceInformation.amount).longValue();
+                InvoiceInformation invoiceInformation2 = jsonMessage.media.invoice;
+                tL_messageMediaInvoice.currency = invoiceInformation2.currency;
+                tL_messageMediaInvoice.receipt_msg_id = Utilities.parseInt((CharSequence) invoiceInformation2.receiptMsgId).intValue();
+                return tL_messageMediaInvoice;
+            case "giveawayStart":
+                TLRPC.TL_messageMediaGiveaway tL_messageMediaGiveaway = new TLRPC.TL_messageMediaGiveaway();
+                GiveawayInformation giveawayInformation = jsonMessage.media.giveawayInformation;
+                tL_messageMediaGiveaway.quantity = Utilities.parseInt((CharSequence) giveawayInformation.quantity).intValue();
+                tL_messageMediaGiveaway.months = Utilities.parseInt((CharSequence) giveawayInformation.months).intValue();
+                tL_messageMediaGiveaway.until_date = Utilities.parseInt((CharSequence) giveawayInformation.until_date).intValue();
+                tL_messageMediaGiveaway.channels = new ArrayList<>(giveawayInformation.channels);
+                tL_messageMediaGiveaway.countries_iso2 = new ArrayList<>(giveawayInformation.countries);
+                tL_messageMediaGiveaway.prize_description = giveawayInformation.additionalPrize;
+                tL_messageMediaGiveaway.stars = Utilities.parseInt((CharSequence) giveawayInformation.stars).intValue();
+                tL_messageMediaGiveaway.only_new_subscribers = giveawayInformation.onlyNew;
+                return tL_messageMediaGiveaway;
+            default:
+                return new TLRPC.TL_messageMediaUnsupported();
+        }
+    }
+
+    public TLRPC.TL_messageMediaDocument lambda$mapMedia$0(JsonMessage jsonMessage) {
         TLRPC.TL_messageMediaDocument tL_messageMediaDocument = new TLRPC.TL_messageMediaDocument();
         tL_messageMediaDocument.flags = 1;
         Media media = jsonMessage.media;

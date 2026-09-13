@@ -19,6 +19,7 @@ import com.exteragram.messenger.utils.ui.MonetUtils;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLObject;
@@ -92,8 +93,7 @@ public class HeaderSettingsCell extends LinearLayout implements CustomPreference
             textView2.setPadding(0, 0, 0, 0);
             addView(textView2, LayoutHelper.createLinear(-2, -2, 49, 60, 2, 60, 28));
         } catch (PackageManager.NameNotFoundException e) {
-            HttpUrl$$ExternalSyntheticBUOutline0.m(e);
-            throw null;
+            FileLog.e(e);
         }
     }
 

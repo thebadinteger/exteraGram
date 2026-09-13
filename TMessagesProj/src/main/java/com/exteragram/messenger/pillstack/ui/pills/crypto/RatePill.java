@@ -130,13 +130,20 @@ public abstract class RatePill extends BasePill implements NotificationCenter.No
             return false;
         }
         final ItemOptions itemOptionsMakeOptions = ItemOptions.makeOptions(safeLastFragment, (View) this, true);
-        final ItemOptions itemOptionsAddGap = itemOptionsMakeOptions.makeSwipeback(true).add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), new RatePill$$ExternalSyntheticLambda1(itemOptionsMakeOptions)).addGap();
+        final ItemOptions[] gapHolder = new ItemOptions[1];
+        final ItemOptions itemOptionsAddGap = itemOptionsMakeOptions.makeSwipeback(true).add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), new Runnable() {
+            @Override // java.lang.Runnable
+            public final void run() {
+                itemOptionsMakeOptions.openSwipeback(gapHolder[0]);
+            }
+        }).addGap();
+        gapHolder[0] = itemOptionsAddGap;
         final String targetSelection = getTargetSelection();
         for (final String str : getTargetCurrencies()) {
             itemOptionsAddGap.addChecked(str.equalsIgnoreCase(targetSelection), PillStackCurrencies.getTargetCurrencyLabel(str), new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$onPillLongClicked$0(itemOptionsMakeOptions, str, targetSelection);
+                    RatePill.this.lambda$onPillLongClicked$0(itemOptionsMakeOptions, str, targetSelection);
                 }
             });
         }
@@ -150,10 +157,11 @@ public abstract class RatePill extends BasePill implements NotificationCenter.No
                 itemOptionsMakeOptions.openSwipeback(itemOptionsAddGap);
             }
         });
-        itemOptionsMakeOptions.add(actionBarMenuSubItem).addGap().add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), new Runnable() { 
+        itemOptionsMakeOptions.add(actionBarMenuSubItem);
+        itemOptionsMakeOptions.addGap().add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$onPillLongClicked$2();
+                RatePill.this.lambda$onPillLongClicked$2();
             }
         }).add(R.drawable.msg_settings, LocaleController.getString(R.string.Settings), new Runnable() { 
             @Override // java.lang.Runnable
@@ -162,6 +170,55 @@ public abstract class RatePill extends BasePill implements NotificationCenter.No
             }
         }).setSwipebackGravity(!LocaleController.isRTL, false).forceBelowScrim(true).setDrawScrim(false).setGravity(LocaleController.isRTL ? 3 : 5).setDimAlpha(0).show();
         return true;
+    }
+
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onPillLongClicked$0(ItemOptions itemOptions, String str, String str2) {
+        itemOptions.dismiss();
+        if (str.equalsIgnoreCase(str2)) {
+            return;
+        }
+        setTargetSelection(str);
+        onUpdateData(false);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onPillLongClicked$2() {
+        onUpdateData(true);
+    }
+
+    @Override
+    public void onUpdateData(boolean z) {
+        final String strResolveTargetCurrency = ExchangeRates.resolveTargetCurrency(UserConfig.selectedAccount, getTargetSelection());
+        String str = (String) this.cache.cachedPrice.get();
+        if (!android.text.TextUtils.equals(strResolveTargetCurrency, (CharSequence) this.cache.cachedCurrency.get())) {
+            str = null;
+        }
+        if (!z && str != null && !isRefreshDue()) {
+            setData(str, false);
+            return;
+        }
+        if (this.requestInFlight) {
+            return;
+        }
+        this.requestInFlight = true;
+        if (z) {
+            animateSizeChange();
+        }
+        startLoading();
+        if (str == null && this.cache.cachedPrice.get() == null) {
+            this.iconView.setVisibility(8);
+            this.textView.setVisibility(8);
+        } else {
+            this.iconView.setImageResource(this.iconResId);
+            this.iconView.setVisibility(0);
+            this.textView.setVisibility(0);
+        }
+        if (z) {
+            ExchangeRates.clearCache();
+        }
+        ExchangeRates.fetch(state -> lambda$onUpdateData$4(strResolveTargetCurrency, (ExchangeRates.State) state));
     }
 
     public void lambda$onUpdateData$4(String str, ExchangeRates.State state) {

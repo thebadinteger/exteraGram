@@ -1,31 +1,28 @@
 package org.telegram.ui.Components.glass;
 
-import static org.telegram.messenger.AndroidUtilities.dp;
-import static org.telegram.messenger.AndroidUtilities.dpf2;
-import static org.telegram.messenger.AndroidUtilities.lerp;
-
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.util.TypedValue;
-import android.view.Gravity;
+import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.RawRes;
-import androidx.annotation.StringRes;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.math.MathUtils;
-
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.IconPackType;
+import com.exteragram.messenger.icons.IconManager;
+import com.exteragram.messenger.utils.ui.MainTabsUiHelper;
+import me.vkryl.android.AnimatorUtils;
+import me.vkryl.android.animator.BoolAnimator;
+import me.vkryl.android.animator.FactorAnimator;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DocumentObject;
@@ -35,6 +32,7 @@ import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AnimatedTextView;
@@ -45,509 +43,546 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.Premium.PremiumGradient;
 import org.telegram.ui.Components.RLottieDrawable;
 import org.telegram.ui.Components.RLottieImageView;
-import org.telegram.ui.Components.ScaleStateListAnimator;
 import org.telegram.ui.MainTabsLayout;
 
-import me.vkryl.android.AnimatorUtils;
-import me.vkryl.android.animator.BoolAnimator;
-import me.vkryl.android.animator.FactorAnimator;
-
+/* JADX INFO: loaded from: C:\Users\badinteger\Files\.mess\extera\dex_files\classes3.dex */
 public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, FactorAnimator.Target {
-    private final TextView textView;
-    private final RLottieImageView imageView;
+    private static final RectF tmpRectF = new RectF();
+    private int additionalWidth;
+    public float attachScale;
+    private AvatarDrawable avatarDrawable;
     private BackupImageView backupImageView;
-    private Theme.ResourcesProvider resourcesProvider;
-    private final Paint paintCounterBackground = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final AnimatedTextView.AnimatedTextDrawable counter;
-
-    private static final int ANIMATOR_ID_IS_SELECTED = 0;
-    private static final int ANIMATOR_ID_COUNTER_VISIBLE = 1;
-    private static final int ANIMATOR_ID_COUNTER_ERROR = 2;
-
-    private final BoolAnimator isSelectedAnimator = new BoolAnimator(ANIMATOR_ID_IS_SELECTED, this, AnimatorUtils.DECELERATE_INTERPOLATOR, 320);
-    private final BoolAnimator isHasCounterAnimator = new BoolAnimator(ANIMATOR_ID_COUNTER_VISIBLE, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
-    private final BoolAnimator isHasCounterErrorAnimator = new BoolAnimator(ANIMATOR_ID_COUNTER_ERROR, this, CubicBezierInterpolator.EASE_OUT_QUINT, 380);
+    private int colorDefault;
     private int colorSelected;
     private int colorSelectedText;
-    private int colorDefault;
-    private boolean usePremiumCounter;
-
+    private final AnimatedTextView.AnimatedTextDrawable counter;
+    private final TextPaint defaultTextPaint;
+    private float gestureSelectedOverride;
+    private boolean hasGestureSelectedOverride;
+    private boolean hasVisualWidth;
+    private final RLottieImageView imageView;
+    private final BoolAnimator isHasCounterAnimator;
+    private final BoolAnimator isHasCounterErrorAnimator;
+    private final BoolAnimator isSelectedAnimator;
+    private long lastBotIconId;
+    private int lastIconAnimationRaw;
+    private boolean lastIsSelected;
+    private boolean needUpdateBackupViewColor;
+    private final Paint paintCounterBackground;
+    private Drawable premiumStarDrawable;
+    private Theme.ResourcesProvider resourcesProvider;
+    private TextPaint scaledTextPaint;
+    private final BoolAnimator selectedIndicatorAlphaAnimator;
+    private boolean selfMeasure;
+    private boolean skipDrawSelector;
     private TabAnimation tabAnimation;
     private TLRPC.TL_attachMenuBot tabAnimationBot;
+    private final TextView textView;
+    private boolean useMainTabSelectedIndicator;
+    private boolean usePremiumCounter;
+    private float visualWidth;
 
-    private final TextPaint defaultTextPaint;
+    public enum TabAnimationType {
+        LOTTIE,
+        STATIC
+    }
 
-    public GlassTabView(@NonNull Context context) {
+    public void onPreBind() {
+    }
+
+    public GlassTabView(Context context) {
         super(context);
-        imageView = new RLottieImageView(context);
-        addView(imageView, LayoutHelper.createFrame(44, 44, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, -6, 0, 0));
-
-        imageView.setColorFilter(new PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN));
-
-        textView = new TextView(context);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
+        this.paintCounterBackground = new Paint(1);
+        DecelerateInterpolator decelerateInterpolator = AnimatorUtils.DECELERATE_INTERPOLATOR;
+        this.isSelectedAnimator = new BoolAnimator(0, this, decelerateInterpolator, 320L);
+        this.selectedIndicatorAlphaAnimator = new BoolAnimator(3, this, decelerateInterpolator, 0L);
+        CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
+        this.isHasCounterAnimator = new BoolAnimator(1, this, cubicBezierInterpolator, 380L);
+        this.isHasCounterErrorAnimator = new BoolAnimator(2, this, cubicBezierInterpolator, 380L);
+        this.attachScale = 1.0f;
+        RLottieImageView rLottieImageView = new RLottieImageView(context);
+        this.imageView = rLottieImageView;
+        addView(rLottieImageView, LayoutHelper.createFrame(44, 44.0f, 49, 0.0f, -6.0f, 0.0f, 0.0f));
+        rLottieImageView.setColorFilter(new PorterDuffColorFilter(-16777216, PorterDuff.Mode.SRC_IN));
+        TextView textView = new TextView(context);
+        this.textView = textView;
+        textView.setTextSize(1, 12.0f);
         textView.setSingleLine();
         textView.setLines(1);
         textView.setEllipsize(TextUtils.TruncateAt.END);
         textView.setTypeface(AndroidUtilities.bold());
-        textView.setGravity(Gravity.CENTER);
-
-        defaultTextPaint = new TextPaint(textView.getPaint());
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 28.33f, 0, 0));
-
-        counter = new AnimatedTextView.AnimatedTextDrawable();
-        counter.setTypeface(AndroidUtilities.bold());
-        counter.setCallback(this);
-        counter.setGravity(Gravity.CENTER);
-        counter.setTextColor(Color.WHITE);
-        counter.setTextSize(dp(10));
+        textView.setGravity(17);
+        this.defaultTextPaint = new TextPaint(textView.getPaint());
+        addView(textView, LayoutHelper.createFrame(-1, -2.0f, 49, 0.0f, 28.33f, 0.0f, 0.0f));
+        AnimatedTextView.AnimatedTextDrawable animatedTextDrawable = new AnimatedTextView.AnimatedTextDrawable();
+        this.counter = animatedTextDrawable;
+        animatedTextDrawable.setTypeface(AndroidUtilities.bold());
+        animatedTextDrawable.setCallback(this);
+        animatedTextDrawable.setGravity(17);
+        animatedTextDrawable.setTextColor(Theme.getColor(Theme.key_glass_targetMainTabs));
+        animatedTextDrawable.setTextSize(AndroidUtilities.dp(10.0f));
     }
 
-    private boolean hasVisualWidth;
-    private float visualWidth;
-    public void setVisualWidth(float width) {
-        hasVisualWidth = true;
-        if (visualWidth != width) {
-            visualWidth = width;
+    public void setVisualWidth(float f) {
+        this.hasVisualWidth = true;
+        if (this.visualWidth != f) {
+            this.visualWidth = f;
             checkVisualWidth();
             invalidate();
         }
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    @Override // android.view.View
+    public void onSizeChanged(int i, int i2, int i3, int i4) {
+        super.onSizeChanged(i, i2, i3, i4);
         checkVisualWidth();
     }
 
     private void checkVisualWidth() {
-        if (hasVisualWidth) {
-            final float offset = (visualWidth - getMeasuredWidth()) / 2f;
-            imageView.setTranslationX(offset);
-            textView.setTranslationX(offset);
+        if (this.hasVisualWidth) {
+            float measuredWidth = (this.visualWidth - getMeasuredWidth()) / 2.0f;
+            this.imageView.setTranslationX(measuredWidth);
+            this.textView.setTranslationX(measuredWidth);
         }
     }
 
-    private static final RectF tmpRectF = new RectF();
-
-    private boolean hasGestureSelectedOverride;
-    private float gestureSelectedOverride;
-    private boolean skipDrawSelector;
-
-    public void setGestureSelectedOverride(float gestureSelectedOverride, boolean allow) {
-        this.gestureSelectedOverride = gestureSelectedOverride;
-        this.hasGestureSelectedOverride = allow;
+    public void setGestureSelectedOverride(float f, boolean z) {
+        this.gestureSelectedOverride = f;
+        this.hasGestureSelectedOverride = z && !this.useMainTabSelectedIndicator;
         invalidate();
     }
 
-    public void setSkipDrawSelector(boolean skipDrawSelector) {
-        if (this.skipDrawSelector != skipDrawSelector) {
-            this.skipDrawSelector = skipDrawSelector;
+    public void setSkipDrawSelector(boolean z) {
+        if (this.skipDrawSelector != z) {
+            this.skipDrawSelector = z;
             invalidate();
         }
     }
 
-    @Override
-    protected void dispatchDraw(@NonNull Canvas canvas) {
-        final float viewWidth = hasVisualWidth ? visualWidth : getWidth();
-        final float selectedFactor = hasGestureSelectedOverride ? gestureSelectedOverride : isSelectedAnimator.getFloatValue();
-        if (selectedFactor > 0 && !skipDrawSelector) {
-            final float alpha = AnimatorUtils.DECELERATE_INTERPOLATOR.getInterpolation(selectedFactor);
-
-            paintCounterBackground.setColor(Theme.multAlpha(colorSelected, 0.09f * alpha));
-            tmpRectF.set(0, 0, viewWidth, getHeight());
-            final float r = Math.min(tmpRectF.width(), tmpRectF.height()) / 2f;
-            final float s = lerp(0.6f, 1, selectedFactor) * MathUtils.clamp(attachScale, 0, 1);
+    @Override // android.view.ViewGroup, android.view.View
+    public void dispatchDraw(Canvas canvas) {
+        float interpolation;
+        float width = this.hasVisualWidth ? this.visualWidth : getWidth();
+        float floatValue = this.hasGestureSelectedOverride ? this.gestureSelectedOverride : this.isSelectedAnimator.getFloatValue();
+        if (floatValue > 0.0f && !this.skipDrawSelector) {
+            if (this.useMainTabSelectedIndicator) {
+                interpolation = this.selectedIndicatorAlphaAnimator.getFloatValue();
+            } else {
+                interpolation = AnimatorUtils.DECELERATE_INTERPOLATOR.getInterpolation(floatValue);
+            }
+            boolean z = this.useMainTabSelectedIndicator;
+            Paint paint = this.paintCounterBackground;
+            if (z) {
+                paint.setColor(MainTabsUiHelper.getMainTabSelectedIndicatorColor(this.colorSelected, interpolation));
+                MainTabsUiHelper.setMainTabSelectedIndicatorBounds(tmpRectF, width, getHeight());
+            } else {
+                paint.setColor(Theme.multAlpha(this.colorSelected, interpolation * 0.09f));
+                tmpRectF.set(0.0f, 0.0f, width, getHeight());
+            }
+            RectF rectF = tmpRectF;
+            float fMin = Math.min(rectF.width(), rectF.height()) / 2.0f;
+            float fClamp = MathUtils.clamp(this.attachScale, 0.0f, 1.0f);
+            float selectedBackgroundScaleX = MainTabsUiHelper.getSelectedBackgroundScaleX(this.useMainTabSelectedIndicator, floatValue) * fClamp;
+            float selectedBackgroundScaleY = MainTabsUiHelper.getSelectedBackgroundScaleY(this.useMainTabSelectedIndicator, floatValue) * fClamp;
             canvas.save();
-            canvas.scale(s, s, tmpRectF.centerX(), tmpRectF.centerY());
-            canvas.drawRoundRect(tmpRectF, r, r, paintCounterBackground);
+            canvas.scale(selectedBackgroundScaleX, selectedBackgroundScaleY, rectF.centerX(), rectF.centerY());
+            canvas.drawRoundRect(rectF, fMin, fMin, this.paintCounterBackground);
             canvas.restore();
         }
-
-        final float hasCounter = (usePremiumCounter ? 1f : isHasCounterAnimator.getFloatValue()) * attachScale;
-        final boolean saveLayer = hasCounter > 0;
-        if (saveLayer) {
-            canvas.saveLayer(0, 0, viewWidth, getHeight(), null);
+        float floatValue2 = (this.usePremiumCounter ? 1.0f : this.isHasCounterAnimator.getFloatValue()) * this.attachScale;
+        boolean z2 = floatValue2 > 0.0f;
+        if (z2) {
+            canvas.saveLayer(0.0f, 0.0f, width, getHeight(), null);
         }
-
         super.dispatchDraw(canvas);
-
-        if (hasCounter > 0) {
+        if (floatValue2 > 0.0f) {
             canvas.save();
-
-            final float gap = dpf2(1.33f);
-            final float cx = viewWidth / 2f + dpf2(11);
-            final float cy = dpf2(10);
-            final float height = dpf2(16);
-            final float width = Math.max(height, counter.getCurrentWidth() + dp(8));
-            final float rOuter = dpf2(9.333f);
-            final float rInner = dpf2(8f);
-            tmpRectF.set(
-                    cx - width / 2f - gap,
-                    cy - height / 2f - gap,
-                    cx + width / 2f + gap,
-                    cy + height / 2f + gap
-            );
-
-            canvas.scale(hasCounter, hasCounter, cx, cy);
-            canvas.drawRoundRect(tmpRectF, rOuter, rOuter, Theme.PAINT_CLEAR);
-            tmpRectF.inset(gap, gap);
-
-            if (usePremiumCounter) {
-                if (premiumStarDrawable == null) {
-                    premiumStarDrawable = getContext().getResources().getDrawable(R.drawable.star).mutate();
+            float fDpf2 = AndroidUtilities.dpf2(1.33f);
+            float fDpf3 = (width / 2.0f) + AndroidUtilities.dpf2(11.0f);
+            float mainTabCounterCenterY = MainTabsUiHelper.getMainTabCounterCenterY(this.useMainTabSelectedIndicator);
+            float fDpf4 = AndroidUtilities.dpf2(16.0f);
+            float fMax = Math.max(fDpf4, this.counter.getCurrentWidth() + AndroidUtilities.dp(8.0f));
+            float fDpf5 = AndroidUtilities.dpf2(9.333f);
+            float fDpf6 = AndroidUtilities.dpf2(8.0f);
+            RectF rectF2 = tmpRectF;
+            float f = fMax / 2.0f;
+            float f2 = fDpf4 / 2.0f;
+            rectF2.set((fDpf3 - f) - fDpf2, (mainTabCounterCenterY - f2) - fDpf2, f + fDpf3 + fDpf2, f2 + mainTabCounterCenterY + fDpf2);
+            canvas.scale(floatValue2, floatValue2, fDpf3, mainTabCounterCenterY);
+            canvas.drawRoundRect(rectF2, fDpf5, fDpf5, Theme.PAINT_CLEAR);
+            rectF2.inset(fDpf2, fDpf2);
+            if (this.usePremiumCounter) {
+                if (this.premiumStarDrawable == null) {
+                    this.premiumStarDrawable = getContext().getResources().getDrawable(R.drawable.star).mutate();
                 }
-
-                PremiumGradient.getInstance().updateMainGradientMatrix(0, 0, dp(96), dp(16), 0, 0);
-                canvas.drawRoundRect(tmpRectF, rInner, rInner, PremiumGradient.getInstance().getMainGradientPaint());
-                int x = (int)(cx - dpf2(7f));
-                int y = (int)(cy - dpf2(7f));
-                premiumStarDrawable.setBounds(x, y, x + dp(14), y + dp(14));
-                premiumStarDrawable.draw(canvas);
+                PremiumGradient.getInstance().updateMainGradientMatrix(0, 0, AndroidUtilities.dp(96.0f), AndroidUtilities.dp(16.0f), 0.0f, 0.0f);
+                canvas.drawRoundRect(rectF2, fDpf6, fDpf6, PremiumGradient.getInstance().getMainGradientPaint());
+                int iDpf2 = (int) (fDpf3 - AndroidUtilities.dpf2(7.0f));
+                int iDpf3 = (int) (mainTabCounterCenterY - AndroidUtilities.dpf2(7.0f));
+                this.premiumStarDrawable.setBounds(iDpf2, iDpf3, AndroidUtilities.dp(14.0f) + iDpf2, AndroidUtilities.dp(14.0f) + iDpf3);
+                this.premiumStarDrawable.draw(canvas);
             } else {
-                paintCounterBackground.setColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_telegram_color), Theme.getColor(Theme.key_fill_RedNormal), isHasCounterErrorAnimator.getFloatValue()));
-                canvas.drawRoundRect(tmpRectF, rInner, rInner, paintCounterBackground);
-                counter.setBounds(tmpRectF);
-                counter.draw(canvas);
+                this.paintCounterBackground.setColor(ColorUtils.blendARGB(Theme.getColor(Theme.key_telegram_color), Theme.getColor(Theme.key_fill_RedNormal), this.isHasCounterErrorAnimator.getFloatValue()));
+                canvas.drawRoundRect(rectF2, fDpf6, fDpf6, this.paintCounterBackground);
+                this.counter.setBounds(rectF2);
+                this.counter.draw(canvas);
             }
             canvas.restore();
         }
-
-        if (saveLayer) {
+        if (z2) {
             canvas.restore();
         }
     }
 
-    private Drawable premiumStarDrawable;
-
-    public void setCounter(String text, boolean isError, boolean animated) {
-        counter.setText(text, animated);
-        isHasCounterAnimator.setValue(!TextUtils.isEmpty(text), animated);
-        isHasCounterErrorAnimator.setValue(isError, animated);
+    public void setCounter(String str, boolean z, boolean z2) {
+        this.counter.setText(str, z2);
+        this.isHasCounterAnimator.setValue(!TextUtils.isEmpty(str), z2);
+        this.isHasCounterErrorAnimator.setValue(z, z2);
     }
 
-    public void setPremiumBadge(boolean usePremiumBadge) {
-        usePremiumCounter = usePremiumBadge;
+    @Override // android.view.View
+    public boolean verifyDrawable(Drawable drawable) {
+        return drawable == this.counter || super.verifyDrawable(drawable);
     }
 
-    public void setSelected(boolean selected, boolean animated) {
-        isSelectedAnimator.setValue(selected, animated);
-        checkPlayAnimation(animated);
+    public void setPremiumBadge(boolean z) {
+        this.usePremiumCounter = z;
+    }
 
-        textView.setTypeface(selected ? AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_EXTRA_BOLD) : AndroidUtilities.bold());
+    public void setSelected(boolean z, boolean z2) {
+        Typeface typefaceBold;
+        boolean z3 = this.useMainTabSelectedIndicator;
+        BoolAnimator boolAnimator = this.isSelectedAnimator;
+        if (z3) {
+            MainTabsUiHelper.setMaterial3MainTabSelected(boolAnimator, this.selectedIndicatorAlphaAnimator, z, z2);
+        } else {
+            boolAnimator.setValue(z, z2);
+        }
+        checkPlayAnimation(z2);
+        TextView textView = this.textView;
+        if (this.useMainTabSelectedIndicator || !z) {
+            typefaceBold = AndroidUtilities.bold();
+        } else {
+            typefaceBold = AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_EXTRA_BOLD);
+        }
+        textView.setTypeface(typefaceBold);
     }
 
     public boolean isTabSelected() {
-        return isSelectedAnimator.getValue();
+        return this.isSelectedAnimator.getValue();
     }
 
-    @Override
-    public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
-        if (id == ANIMATOR_ID_IS_SELECTED) {
+    @Override // me.vkryl.android.animator.FactorAnimator.Target
+    public void onFactorChanged(int i, float f, float f2, FactorAnimator factorAnimator) {
+        if (i == 0) {
             updateColors();
         }
         invalidate();
     }
 
-    private boolean needUpdateBackupViewColor;
-
     private void updateColors() {
-        final int color = ColorUtils.blendARGB(colorDefault, colorSelected, isSelectedAnimator.getFloatValue());
-        final int colorText = ColorUtils.blendARGB(colorDefault, colorSelectedText, isSelectedAnimator.getFloatValue());
-
-        final PorterDuffColorFilter filter = new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN);
-        if (backupImageView != null && needUpdateBackupViewColor) {
-            backupImageView.setColorFilter(filter);
-            backupImageView.invalidate();
+        int iBlendARGB = ColorUtils.blendARGB(this.colorDefault, this.colorSelected, this.isSelectedAnimator.getFloatValue());
+        int iBlendARGB2 = ColorUtils.blendARGB(this.colorDefault, this.colorSelectedText, this.isSelectedAnimator.getFloatValue());
+        PorterDuffColorFilter porterDuffColorFilter = new PorterDuffColorFilter(iBlendARGB, PorterDuff.Mode.SRC_IN);
+        BackupImageView backupImageView = this.backupImageView;
+        if (backupImageView != null && this.needUpdateBackupViewColor) {
+            backupImageView.setColorFilter(porterDuffColorFilter);
+            this.backupImageView.invalidate();
         }
-        imageView.setColorFilter(filter);
-        textView.setTextColor(colorText);
+        this.imageView.setColorFilter(porterDuffColorFilter);
+        this.textView.setTextColor(iBlendARGB2);
+        this.counter.setTextColor(Theme.getColor(Theme.key_glass_targetMainTabs));
     }
 
     public void updateColorsLottie() {
-        colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
-        colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
-        colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        this.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, this.resourcesProvider);
+        this.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, this.resourcesProvider);
+        this.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, this.resourcesProvider);
         updateColors();
         invalidate();
     }
 
-
-    private boolean lastIsSelected;
-    private int lastIconAnimationRaw;
-    private long lastBotIconId;
-
-    private void checkPlayAnimation(boolean animated) {
-        final boolean isSelected = isSelectedAnimator.getValue();
-
-        if (tabAnimationBot !=  null) {
-            boolean animatedIcon = true;
-            TLRPC.TL_attachMenuBotIcon icon = MediaDataController.getAnimatedAttachMenuBotIcon(tabAnimationBot, isSelected);
-            if (icon == null) {
-                icon = MediaDataController.getStaticAttachMenuBotIcon(tabAnimationBot);
-                animatedIcon = false;
+    private void checkPlayAnimation(boolean z) {
+        TabAnimation tabAnimation;
+        int i;
+        TLRPC.Document document;
+        boolean value = this.isSelectedAnimator.getValue();
+        TLRPC.TL_attachMenuBot tL_attachMenuBot = this.tabAnimationBot;
+        boolean z2 = true;
+        if (tL_attachMenuBot != null) {
+            TLRPC.TL_attachMenuBotIcon animatedAttachMenuBotIcon = MediaDataController.getAnimatedAttachMenuBotIcon(tL_attachMenuBot, value);
+            if (animatedAttachMenuBotIcon == null) {
+                animatedAttachMenuBotIcon = MediaDataController.getStaticAttachMenuBotIcon(this.tabAnimationBot);
+                z2 = false;
             }
-            if (icon != null && icon.icon != null) {
-                TLRPC.Document iconDoc = icon.icon;
-                if (lastBotIconId != icon.icon.id) {
-                    String filter = "24_24" + (animatedIcon && !animated || true ? "_lastframe" : "");
-                    backupImageView.setImage(
-                        ImageLocation.getForDocument(iconDoc), filter,
-                        ImageLocation.getForDocument(iconDoc), filter,
-                        animatedIcon ? null : DocumentObject.getSvgThumb(iconDoc, Theme.key_windowBackgroundGray, 1f),
-                        tabAnimationBot
-                    );
-                    lastBotIconId = iconDoc.id;
-                }
-            } else {
-                backupImageView.clearImage();
+            if (animatedAttachMenuBotIcon == null || (document = animatedAttachMenuBotIcon.icon) == null) {
+                this.backupImageView.clearImage();
+            } else if (this.lastBotIconId != document.id) {
+                this.backupImageView.setImage(ImageLocation.getForDocument(document), "24_24_lastframe", ImageLocation.getForDocument(document), "24_24_lastframe", z2 ? null : DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundGray, 1.0f), this.tabAnimationBot);
+                this.lastBotIconId = document.id;
             }
             updateColors();
             return;
         }
-
-        if (tabAnimation == null) {
+        TabAnimation tabAnimation2 = this.tabAnimation;
+        if (tabAnimation2 == null) {
             return;
         }
-
-        if (tabAnimation.iconStatic != -1) {
-            imageView.setImageResource(tabAnimation.iconStatic);
+        if ((tabAnimation2.iconToFilled == 0 || !IconManager.INSTANCE.isBasePackOnly(IconPackType.DEFAULT)) && ((i = (tabAnimation = this.tabAnimation).iconDrawableOutline) != 0 || tabAnimation.iconDrawableFilled != 0)) {
+            if (value) {
+                i = tabAnimation.iconDrawableFilled;
+            }
+            if (this.lastIconAnimationRaw != i) {
+                this.lastIconAnimationRaw = i;
+                this.imageView.clearAnimationDrawable();
+                this.imageView.setImageResource(i);
+            }
             updateColors();
             return;
         }
-
-        final int animationToSet = isSelected ?
-            tabAnimation.iconToFilled : tabAnimation.iconToOutline;
-
-        if (tabAnimation.endFrameMid != -1) {
-            boolean update = lastIsSelected != isSelected;
-            if (lastIconAnimationRaw != animationToSet) {
-                lastIconAnimationRaw = animationToSet;
-                imageView.setAnimation(animationToSet, 24, 24);
-                update = true;
+        TabAnimation tabAnimation3 = this.tabAnimation;
+        int i2 = tabAnimation3.iconStatic;
+        if (i2 != -1) {
+            this.imageView.setImageResource(i2);
+            updateColors();
+            return;
+        }
+        int i3 = value ? tabAnimation3.iconToFilled : tabAnimation3.iconToOutline;
+        if (tabAnimation3.endFrameMid != -1) {
+            boolean z3 = this.lastIsSelected != value;
+            if (this.lastIconAnimationRaw != i3) {
+                this.lastIconAnimationRaw = i3;
+                this.imageView.setAnimation(i3, 24, 24);
+                z3 = true;
             }
-
-            if (update) {
-                final RLottieDrawable drawable = imageView.getAnimatedDrawable();
-                if (drawable == null) {
+            if (z3) {
+                RLottieDrawable animatedDrawable = this.imageView.getAnimatedDrawable();
+                if (animatedDrawable == null) {
                     return;
                 }
-
-                if (isSelected) {
-                    drawable.setCustomEndFrame(tabAnimation.endFrameMid);
-                    if (drawable.getCurrentFrame() >= tabAnimation.endFrameEnd - 2) {
-                        drawable.setCurrentFrame(0, false);
+                if (value) {
+                    animatedDrawable.setCustomEndFrame(this.tabAnimation.endFrameMid);
+                    if (animatedDrawable.getCurrentFrame() >= this.tabAnimation.endFrameEnd - 2) {
+                        animatedDrawable.setCurrentFrame(0, false);
                     }
-                    if (drawable.getCurrentFrame() <= tabAnimation.endFrameMid) {
-                        drawable.start();
+                    int currentFrame = animatedDrawable.getCurrentFrame();
+                    int i4 = this.tabAnimation.endFrameMid;
+                    if (currentFrame <= i4) {
+                        animatedDrawable.start();
                     } else {
-                        drawable.setCurrentFrame(tabAnimation.endFrameMid);
+                        animatedDrawable.setCurrentFrame(i4);
                     }
                 } else {
-                    if (drawable.getCurrentFrame() >= tabAnimation.endFrameMid - 1) {
-                        drawable.setCustomEndFrame(tabAnimation.endFrameEnd - 1);
-                        drawable.start();
+                    int currentFrame2 = animatedDrawable.getCurrentFrame();
+                    TabAnimation tabAnimation4 = this.tabAnimation;
+                    if (currentFrame2 >= tabAnimation4.endFrameMid - 1) {
+                        animatedDrawable.setCustomEndFrame(tabAnimation4.endFrameEnd - 1);
+                        animatedDrawable.start();
                     } else {
-                        drawable.setCustomEndFrame(0);
-                        drawable.setCurrentFrame(0);
+                        animatedDrawable.setCustomEndFrame(0);
+                        animatedDrawable.setCurrentFrame(0);
                     }
                 }
             }
-            lastIsSelected = isSelected;
+            this.lastIsSelected = value;
             return;
         }
-
-        if (tabAnimation.iconToFilled != tabAnimation.iconToOutline) {
-            if (lastIconAnimationRaw != animationToSet) {
-                lastIconAnimationRaw = animationToSet;
-
-                imageView.setAnimation(animationToSet, 24, 24);
-                imageView.getAnimatedDrawable().setPlayInDirectionOfCustomEndFrame(false);
-                if (animated) {
-                    imageView.getAnimatedDrawable().setCurrentFrame(0);
-                    imageView.playAnimation();
+        if (tabAnimation3.iconToFilled != tabAnimation3.iconToOutline) {
+            if (this.lastIconAnimationRaw != i3) {
+                this.lastIconAnimationRaw = i3;
+                this.imageView.setAnimation(i3, 24, 24);
+                this.imageView.getAnimatedDrawable().setPlayInDirectionOfCustomEndFrame(false);
+                RLottieImageView rLottieImageView = this.imageView;
+                if (z) {
+                    rLottieImageView.getAnimatedDrawable().setCurrentFrame(0);
+                    this.imageView.playAnimation();
+                    return;
                 } else {
-                    imageView.getAnimatedDrawable().setProgress(0.99f);
+                    rLottieImageView.getAnimatedDrawable().setProgress(0.99f);
+                    return;
                 }
             }
             return;
         }
-
-        if (imageView.getAnimatedDrawable() == null) {
-            imageView.setAnimation(tabAnimation.iconToFilled, 24, 24);
+        if (this.imageView.getAnimatedDrawable() == null) {
+            this.imageView.setAnimation(this.tabAnimation.iconToFilled, 24, 24);
         }
-
-        final RLottieDrawable drawable = imageView.getAnimatedDrawable();
-        if (drawable == null) {
+        RLottieDrawable animatedDrawable2 = this.imageView.getAnimatedDrawable();
+        if (animatedDrawable2 == null || this.lastIsSelected == value) {
             return;
         }
-
-        if (lastIsSelected != isSelected) {
-            lastIsSelected = isSelected;
-            if (isSelected) {
-                drawable.setPlayInDirectionOfCustomEndFrame(false);
-                drawable.setCurrentFrame(0);
-                drawable.setCustomEndFrame(drawable.getFramesCount());
-            } else {
-                drawable.setPlayInDirectionOfCustomEndFrame(true);
-                drawable.setCurrentFrame(drawable.getFramesCount());
-                drawable.setCustomEndFrame(0);
-            }
-            imageView.playAnimation();
+        this.lastIsSelected = value;
+        if (value) {
+            animatedDrawable2.setPlayInDirectionOfCustomEndFrame(false);
+            animatedDrawable2.setCurrentFrame(0);
+            animatedDrawable2.setCustomEndFrame(animatedDrawable2.getFramesCount());
+        } else {
+            animatedDrawable2.setPlayInDirectionOfCustomEndFrame(true);
+            animatedDrawable2.setCurrentFrame(animatedDrawable2.getFramesCount());
+            animatedDrawable2.setCustomEndFrame(0);
         }
+        this.imageView.playAnimation();
     }
 
-    public static GlassTabView createMainTab(Context context, Theme.ResourcesProvider resourcesProvider, TabAnimation tabAnimation, @StringRes int stringRes) {
-        GlassTabView tab = new GlassTabView(context);
-        tab.resourcesProvider = resourcesProvider;
-        tab.tabAnimation = tabAnimation;
-        tab.textView.setText(LocaleController.getString(stringRes));
-        tab.checkPlayAnimation(false);
-        tab.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 4, 0, 0));
-        tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
-        tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
-        tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
-        tab.updateColors();
-        return tab;
+    public static GlassTabView createMainTab(Context context, Theme.ResourcesProvider resourcesProvider, TabAnimation tabAnimation, int i) {
+        GlassTabView glassTabView = new GlassTabView(context);
+        glassTabView.resourcesProvider = resourcesProvider;
+        glassTabView.tabAnimation = tabAnimation;
+        glassTabView.textView.setText(LocaleController.getString(i));
+        glassTabView.checkPlayAnimation(false);
+        glassTabView.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24.0f, 49, 0.0f, 4.0f, 0.0f, 0.0f));
+        glassTabView.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
+        glassTabView.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
+        glassTabView.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        glassTabView.updateColors();
+        return glassTabView;
     }
 
-    public static GlassTabView createAvatar(Context context, Theme.ResourcesProvider resourcesProvider, int currentAccount, @StringRes int stringRes) {
-        GlassTabView tab = new GlassTabView(context);
-        tab.textView.setText(LocaleController.getString(stringRes));
-        tab.imageView.setVisibility(GONE);
+    public static GlassTabView createMainNavigationTab(Context context, Theme.ResourcesProvider resourcesProvider, TabAnimation tabAnimation, int i) {
+        GlassTabView glassTabViewCreateMainTab = createMainTab(context, resourcesProvider, tabAnimation, i);
+        glassTabViewCreateMainTab.setMainTabStyle();
+        return glassTabViewCreateMainTab;
+    }
 
-        TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(UserConfig.getInstance(currentAccount).getClientUserId());
+    public static GlassTabView createAvatar(Context context, Theme.ResourcesProvider resourcesProvider, int i, int i2) {
+        GlassTabView glassTabView = new GlassTabView(context);
+        glassTabView.textView.setText(LocaleController.getString(i2));
+        glassTabView.imageView.setVisibility(8);
+        TLRPC.User user = MessagesController.getInstance(i).getUser(Long.valueOf(UserConfig.getInstance(i).getClientUserId()));
         AvatarDrawable avatarDrawable = new AvatarDrawable(user);
-
         BackupImageView backupImageView = new BackupImageView(context);
         backupImageView.setForUserOrChat(user, avatarDrawable);
-        backupImageView.setRoundRadius(dp(11));
-        tab.backupImageView = backupImageView;
-
-        tab.addView(backupImageView, LayoutHelper.createFrame(22, 22, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 5, 0, 0));
-        tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
-        tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
-        tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
-        tab.updateColors();
-        return tab;
+        backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(22.0f));
+        glassTabView.backupImageView = backupImageView;
+        glassTabView.addView(backupImageView, LayoutHelper.createFrame(22, 22.0f, 49, 0.0f, 5.0f, 0.0f, 0.0f));
+        glassTabView.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
+        glassTabView.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
+        glassTabView.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        glassTabView.updateColors();
+        return glassTabView;
     }
 
-    public void updateUserAvatar(int currentAccount) {
-        TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(UserConfig.getInstance(currentAccount).getClientUserId());
-        AvatarDrawable avatarDrawable = new AvatarDrawable(user);
-        backupImageView.setForUserOrChat(user, avatarDrawable);
+    public static GlassTabView createMainNavigationAvatar(Context context, Theme.ResourcesProvider resourcesProvider, int i, int i2) {
+        GlassTabView glassTabViewCreateAvatar = createAvatar(context, resourcesProvider, i, i2);
+        glassTabViewCreateAvatar.setMainTabStyle();
+        return glassTabViewCreateAvatar;
+    }
+
+    private void setMainTabStyle() {
+        if (MainTabsUiHelper.isMaterial3NavigationBar()) {
+            this.useMainTabSelectedIndicator = true;
+            this.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24.0f, 49, 0.0f, MainTabsUiHelper.getMaterial3MainTabIconTopDp(), 0.0f, 0.0f));
+            BackupImageView backupImageView = this.backupImageView;
+            if (backupImageView != null) {
+                backupImageView.setLayoutParams(LayoutHelper.createFrame(22, 22.0f, 49, 0.0f, MainTabsUiHelper.getMaterial3MainTabAvatarTopDp(), 0.0f, 0.0f));
+            }
+            MainTabsUiHelper.applyMaterial3MainTabStyle(this.textView, this.isSelectedAnimator);
+        }
+    }
+
+    public void updateUserAvatar(int i) {
+        TLRPC.User user = MessagesController.getInstance(i).getUser(Long.valueOf(UserConfig.getInstance(i).getClientUserId()));
+        this.backupImageView.setForUserOrChat(user, new AvatarDrawable(user));
     }
 
     public static GlassTabView createAttachTab(Context context, Theme.ResourcesProvider resourcesProvider) {
-        GlassTabView tab = new GlassTabView(context);
-        tab.resourcesProvider = resourcesProvider;
-        tab.selfMeasure = true;
-        tab.textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
-        tab.textView.setPadding(dp(8), 0, dp(8), 0);
-        tab.checkPlayAnimation(false);
-        tab.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 4, 0, 0));
-        tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
-        tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
-        tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
-        tab.updateColors();
-        return tab;
+        GlassTabView glassTabView = new GlassTabView(context);
+        glassTabView.resourcesProvider = resourcesProvider;
+        glassTabView.selfMeasure = true;
+        glassTabView.textView.setTextSize(1, 11.0f);
+        glassTabView.textView.setPadding(AndroidUtilities.dp(8.0f), 0, AndroidUtilities.dp(8.0f), 0);
+        glassTabView.checkPlayAnimation(false);
+        glassTabView.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24.0f, 49, 0.0f, 4.0f, 0.0f, 0.0f));
+        glassTabView.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
+        glassTabView.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
+        glassTabView.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        glassTabView.updateColors();
+        return glassTabView;
     }
 
     public static GlassTabView createAttachBotTab(Context context, Theme.ResourcesProvider resourcesProvider) {
-        GlassTabView tab = new GlassTabView(context);
-        tab.resourcesProvider = resourcesProvider;
-        tab.selfMeasure = true;
-        tab.textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
-        tab.textView.setPadding(dp(8), 0, dp(8), 0);
-        tab.imageView.setVisibility(GONE);
-        tab.checkPlayAnimation(false);
-        tab.backupImageView = new BackupImageView(context);
-        tab.addView(tab.backupImageView, LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 4, 0, 0));
-        tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
-        tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
-        tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
-        tab.updateColors();
-        return tab;
+        GlassTabView glassTabView = new GlassTabView(context);
+        glassTabView.resourcesProvider = resourcesProvider;
+        glassTabView.selfMeasure = true;
+        glassTabView.textView.setTextSize(1, 11.0f);
+        glassTabView.textView.setPadding(AndroidUtilities.dp(8.0f), 0, AndroidUtilities.dp(8.0f), 0);
+        glassTabView.imageView.setVisibility(8);
+        glassTabView.checkPlayAnimation(false);
+        BackupImageView backupImageView = new BackupImageView(context);
+        glassTabView.backupImageView = backupImageView;
+        glassTabView.addView(backupImageView, LayoutHelper.createFrame(24, 24.0f, 49, 0.0f, 4.0f, 0.0f, 0.0f));
+        glassTabView.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
+        glassTabView.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
+        glassTabView.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        glassTabView.updateColors();
+        return glassTabView;
     }
 
     public BackupImageView getBackupImageView() {
-        return backupImageView;
+        return this.backupImageView;
     }
 
-    private boolean selfMeasure;
-    private int additionalWidth;
-
-    public void setAdditionalWidth(int additionalWidth) {
-        this.additionalWidth = additionalWidth;
+    public void setAdditionalWidth(int i) {
+        this.additionalWidth = i;
         this.selfMeasure = true;
     }
 
     public float measureAttachTabWidth() {
-        final float textWidth = measureTextWidth();
-        final float padding = lerp(dpf2(16), dp(8), MathUtils.clamp((textWidth - dp(40)) / dp(16), 0, 1));
-        return Math.min(dp(84), (int) (textWidth + padding * 2));
+        float fMeasureTextWidth = measureTextWidth();
+        return Math.min(AndroidUtilities.dp(84.0f), (int) (fMeasureTextWidth + (AndroidUtilities.lerp(AndroidUtilities.dpf2(16.0f), AndroidUtilities.dp(8.0f), MathUtils.clamp((fMeasureTextWidth - AndroidUtilities.dp(40.0f)) / AndroidUtilities.dp(16.0f), 0.0f, 1.0f)) * 2.0f)));
     }
 
-    public float attachScale = 1;
-    public void setAttachScale(float scale) {
-        textView.setScaleX(scale);
-        textView.setScaleY(scale);
-        imageView.setScaleX(scale);
-        imageView.setScaleY(scale);
+    public void setAttachScale(float f) {
+        this.textView.setScaleX(f);
+        this.textView.setScaleY(f);
+        this.imageView.setScaleX(f);
+        this.imageView.setScaleY(f);
+        BackupImageView backupImageView = this.backupImageView;
         if (backupImageView != null) {
-            backupImageView.setScaleX(scale);
-            backupImageView.setScaleY(scale);
+            backupImageView.setScaleX(f);
+            this.backupImageView.setScaleY(f);
         }
-        attachScale = scale;
+        this.attachScale = f;
         invalidate();
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (selfMeasure) {
-            final int width = (int) (measureAttachTabWidth()) + additionalWidth;
-            super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), heightMeasureSpec);
+    @Override // android.widget.FrameLayout, android.view.View
+    public void onMeasure(int i, int i2) {
+        if (this.selfMeasure) {
+            super.onMeasure(View.MeasureSpec.makeMeasureSpec(((int) measureAttachTabWidth()) + this.additionalWidth, TLObject.FLAG_30), i2);
         } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            super.onMeasure(i, i2);
         }
     }
 
-    @Override
     public float measureTextWidth() {
-        return defaultTextPaint.measureText(textView.getText().toString());
+        return this.defaultTextPaint.measureText(this.textView.getText().toString());
     }
 
-    private TextPaint scaledTextPaint;
-
-    @Override
-    public float measureTextWidth(float textSizeDp) {
-        if (scaledTextPaint == null) {
-            scaledTextPaint = new TextPaint(defaultTextPaint);
+    @Override // org.telegram.ui.MainTabsLayout.Tab
+    public float measureTextWidth(float f) {
+        if (this.scaledTextPaint == null) {
+            this.scaledTextPaint = new TextPaint(this.defaultTextPaint);
         }
-        scaledTextPaint.setTextSize(dp(textSizeDp));
-        return scaledTextPaint.measureText(textView.getText().toString());
+        this.scaledTextPaint.setTextSize(AndroidUtilities.dp(f));
+        return this.scaledTextPaint.measureText(this.textView.getText().toString());
     }
 
-    @Override
-    public void setTextSizeDp(float textSizeDp) {
-        final float px = dp(textSizeDp);
-        if (textView.getTextSize() != px) {
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSizeDp);
-            defaultTextPaint.setTextSize(px);
+    @Override // org.telegram.ui.MainTabsLayout.Tab
+    public void setTextSizeDp(float f) {
+        float fDp = AndroidUtilities.dp(f);
+        if (this.textView.getTextSize() != fDp) {
+            this.textView.setTextSize(1, f);
+            this.defaultTextPaint.setTextSize(fDp);
         }
-    }
-
-    private enum TabAnimationType {
-        LOTTIE,
-        STATIC
     }
 
     public enum TabAnimation {
-        CONTACTS(R.raw.tab_contacts),
-        CALLS(R.raw.tab_calls),
-        CHATS(R.raw.tab_chats),
-        SETTINGS(R.raw.tab_settings),
-
+        CONTACTS(R.raw.tab_contacts, R.drawable.tabs_contact_active_24, R.drawable.tabs_contacts_24, -1, -1),
+        CALLS(R.raw.tab_calls, R.drawable.tabs_calls_active_24, R.drawable.tabs_calls_24, -1, -1),
+        CHATS(R.raw.tab_chats, R.drawable.tabs_chats_active_24, R.drawable.tabs_chats_24, -1, -1),
+        SETTINGS(R.raw.tab_settings, R.drawable.filled_profile_settings, R.drawable.outline_profile_settings, -1, -1),
+        FEED(0, R.drawable.ic_feed_filled, R.drawable.ic_feed, -1, -1),
         CHECKLIST(R.raw.tab_checklist, R.raw.tab_checklist_reverse),
         COLORS(R.raw.tab_colors, R.raw.tab_colors_reverse),
         FILES(R.raw.tab_files, R.raw.tab_files_reverse),
@@ -564,113 +599,114 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         WALLET(R.raw.tab_wallet, R.raw.tab_wallet_reverse),
         LINK(TabAnimationType.STATIC, R.drawable.tabs_link_24),
         ARTICLE(R.raw.tab_article, R.raw.tab_article_reverse),
-
         BOOSTS(R.raw.boosts, 25, 49),
         MONETIZATION(R.raw.monetize, 19, 45);
 
-        public final @RawRes int iconToFilled;
-        public final @RawRes int iconToOutline;
-        public final @DrawableRes int iconStatic;
-        public final int endFrameMid, endFrameEnd;
+        public final int endFrameEnd;
+        public final int endFrameMid;
+        public final int iconDrawableFilled;
+        public final int iconDrawableOutline;
+        public final int iconStatic;
+        public final int iconToFilled;
+        public final int iconToOutline;
 
-        TabAnimation(int iconRes, int endFrameMid, int endFrameEnd) {
-            this.iconToFilled = iconRes;
-            this.iconToOutline = iconRes;
-            this.endFrameMid = endFrameMid;
-            this.endFrameEnd = endFrameEnd;
+        TabAnimation(int i, int i2, int i3) {
+            this.iconToFilled = i;
+            this.iconToOutline = i;
+            this.iconDrawableFilled = 0;
+            this.iconDrawableOutline = 0;
+            this.endFrameMid = i2;
+            this.endFrameEnd = i3;
             this.iconStatic = -1;
         }
 
-        TabAnimation(TabAnimationType type, int icon) {
-            if (type == TabAnimationType.LOTTIE) {
-                this.iconToFilled = icon;
-                this.iconToOutline = icon;
+        TabAnimation(TabAnimationType tabAnimationType, int i) {
+            if (tabAnimationType == TabAnimationType.LOTTIE) {
+                this.iconToFilled = i;
+                this.iconToOutline = i;
                 this.iconStatic = -1;
             } else {
-                this.iconStatic = icon;
+                this.iconStatic = i;
                 this.iconToFilled = -1;
                 this.iconToOutline = -1;
             }
+            this.iconDrawableFilled = 0;
+            this.iconDrawableOutline = 0;
             this.endFrameMid = -1;
             this.endFrameEnd = -1;
         }
 
-        TabAnimation(int iconRes) {
-            this.iconToFilled = iconRes;
-            this.iconToOutline = iconRes;
-            this.endFrameMid = -1;
-            this.endFrameEnd = -1;
+        TabAnimation(int i, int i2, int i3, int i4, int i5) {
+            this.iconToFilled = i;
+            this.iconToOutline = i;
+            this.iconDrawableFilled = i2;
+            this.iconDrawableOutline = i3;
+            this.endFrameMid = i4;
+            this.endFrameEnd = i5;
             this.iconStatic = -1;
         }
 
-        TabAnimation(int iconToFilled, int iconToOutline) {
-            this.iconToFilled = iconToFilled;
-            this.iconToOutline = iconToOutline;
+        TabAnimation(int i, int i2) {
+            this.iconToFilled = i;
+            this.iconToOutline = i2;
+            this.iconDrawableFilled = 0;
+            this.iconDrawableOutline = 0;
             this.endFrameMid = -1;
             this.endFrameEnd = -1;
             this.iconStatic = -1;
         }
     }
 
-    public void setTabAnimation(TabAnimation animation) {
-        tabAnimation = animation;
-        tabAnimationBot = null;
-        lastIconAnimationRaw = 0;
-        lastBotIconId = 0;
-        imageView.clearAnimationDrawable();
+    public void setTabAnimation(TabAnimation tabAnimation) {
+        this.tabAnimation = tabAnimation;
+        this.tabAnimationBot = null;
+        this.lastIconAnimationRaw = 0;
+        this.lastBotIconId = 0L;
+        this.imageView.clearAnimationDrawable();
         checkPlayAnimation(false);
     }
 
-    public void setText(CharSequence text) {
-        textView.setText(text);
+    public void setText(CharSequence charSequence) {
+        this.textView.setText(charSequence);
     }
 
-
-    private AvatarDrawable avatarDrawable;
-
-    public void setAttachBot(TLRPC.User user, TLRPC.TL_attachMenuBot bot, int currentAccount) {
-        if (user == null || bot == null) {
+    public void setAttachBot(TLRPC.User user, TLRPC.TL_attachMenuBot tL_attachMenuBot, int i) {
+        if (user == null || tL_attachMenuBot == null) {
             return;
         }
-        tabAnimation = null;
-        tabAnimationBot = bot;
-        lastIconAnimationRaw = 0;
-        lastBotIconId = 0;
-        textView.setText(bot.short_name);
-
-        backupImageView.setRoundRadius(0);
-        backupImageView.setSize(dp(24), dp(24));
-        backupImageView.setLayoutParams(LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 4, 0, 0));
-        needUpdateBackupViewColor = true;
+        this.tabAnimation = null;
+        this.tabAnimationBot = tL_attachMenuBot;
+        this.lastIconAnimationRaw = 0;
+        this.lastBotIconId = 0L;
+        this.textView.setText(tL_attachMenuBot.short_name);
+        this.backupImageView.setRoundRadius(0);
+        this.backupImageView.setSize(AndroidUtilities.dp(24.0f), AndroidUtilities.dp(24.0f));
+        this.backupImageView.setLayoutParams(LayoutHelper.createFrame(24, 24.0f, 49, 0.0f, 4.0f, 0.0f, 0.0f));
+        this.needUpdateBackupViewColor = true;
         checkPlayAnimation(false);
         updateColors();
         invalidate();
     }
 
-    public void setAttachBotUser(TLRPC.User user, int currentAccount) {
+    public void setAttachBotUser(TLRPC.User user, int i) {
         if (user == null) {
             return;
         }
-        tabAnimation = null;
-        tabAnimationBot = null;
-        lastIconAnimationRaw = 0;
-        lastBotIconId = 0;
-
-        textView.setText(ContactsController.formatName(user.first_name, user.last_name));
-        if (avatarDrawable == null) {
-            avatarDrawable = new AvatarDrawable();
+        this.tabAnimation = null;
+        this.tabAnimationBot = null;
+        this.lastIconAnimationRaw = 0;
+        this.lastBotIconId = 0L;
+        this.textView.setText(ContactsController.formatName(user.first_name, user.last_name));
+        if (this.avatarDrawable == null) {
+            this.avatarDrawable = new AvatarDrawable();
         }
-        avatarDrawable.setInfo(currentAccount, user);
-        backupImageView.setForUserOrChat(user, avatarDrawable);
-        backupImageView.setSize(-1, -1);
-        backupImageView.setRoundRadius(dp(11.33f));
-        backupImageView.setLayoutParams(LayoutHelper.createFrame(22, 22, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 5, 0, 0));
-        backupImageView.setColorFilter(null);
-        needUpdateBackupViewColor = false;
+        this.avatarDrawable.setInfo(i, user);
+        this.backupImageView.setForUserOrChat(user, this.avatarDrawable);
+        this.backupImageView.setSize(-1, -1);
+        this.backupImageView.setRoundRadius(ExteraConfig.getAvatarCorners(22.0f));
+        this.backupImageView.setLayoutParams(LayoutHelper.createFrame(22, 22.0f, 49, 0.0f, 5.0f, 0.0f, 0.0f));
+        this.backupImageView.setColorFilter(null);
+        this.needUpdateBackupViewColor = false;
         invalidate();
-    }
-
-    public void onPreBind() {
-
     }
 }

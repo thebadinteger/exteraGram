@@ -6,7 +6,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import androidx.core.graphics.ColorUtils;
-import kotlin.Deprecated;
 import kotlin.Metadata;
 import kotlin.jvm.internal.DefaultConstructorMarker;
 import okhttp3.internal.url._UrlKt;
@@ -26,7 +25,7 @@ public final class PreviewBackgroundDrawable extends Drawable {
     }
 
     @Override // android.graphics.drawable.Drawable
-    @Deprecated(message = "Deprecated in Java")
+    @Deprecated
     public int getOpacity() {
         return -3;
     }

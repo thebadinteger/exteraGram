@@ -19,23 +19,33 @@ import java.util.Objects;
 public class BuildVars {
 
     public static boolean DEBUG_VERSION = BuildConfig.DEBUG_VERSION;
-    public static boolean LOGS_ENABLED = BuildConfig.DEBUG_VERSION;
+    public static boolean LOGS_ENABLED = com.exteragram.messenger.ExteraConfig.getLogging();
     public static boolean DEBUG_PRIVATE_VERSION = BuildConfig.DEBUG_PRIVATE_VERSION;
     public static boolean USE_CLOUD_STRINGS = true;
     public static boolean CHECK_UPDATES = true;
     public static boolean NO_SCOPED_STORAGE = Build.VERSION.SDK_INT <= 29;
+    public static int BUILD_VERSION = BuildConfig.VERSION_NUM;
     public static String BUILD_VERSION_STRING = BuildConfig.BUILD_VERSION_STRING;
 
-    public static int APP_ID = 4;
-    public static String APP_HASH = "014b35b6184100b085b0d0572f9b5103";
+    public static int APP_ID = 12935793;
+    public static String APP_HASH = "a2926e8cbd01ded5bed25b48cf622927";
 
-    // SafetyNet key for Google Identity SDK, set it to empty to disable
-    public static String SAFETYNET_KEY = "AIzaSyDqt8P-7F7CPCseMkOiVRgb1LY8RN1bvH8";
-    public static String PLAYSTORE_APP_URL = "https://play.google.com/store/apps/details?id=org.telegram.messenger";
+    public static String SAFETYNET_KEY = "";
+    public static String PLAYSTORE_APP_URL = "https://github.com/exteraSquad/exteraGram/releases/latest";
+    public static String GITHUB_APP_URL = "https://github.com/exteraSquad/exteraGram/releases/latest";
+    public static String RELEASES_URL = "https://t.me/exteraReleases";
     public static String HUAWEI_STORE_URL = "https://appgallery.huawei.com/app/C101184875";
     public static String GOOGLE_AUTH_CLIENT_ID = "760348033671-81kmi3pi84p11ub8hp9a1funsv0rn2p9.apps.googleusercontent.com";
 
     public static String HUAWEI_APP_ID = "101184875";
+
+    public static int getExteraAppId() {
+        return APP_ID;
+    }
+
+    public static String getExteraAppHash() {
+        return APP_HASH;
+    }
 
     // You can use this flag to disable Google Play Billing (If you're making fork and want it to be in Google Play)
     public static boolean IS_BILLING_UNAVAILABLE = false;
@@ -44,6 +54,8 @@ public class BuildVars {
     public static boolean SUPPORTS_PASSKEYS = true;
 
     public static boolean USE_LEGACY_SYSTEM_INSETS = false;
+    public static boolean PM_BUILD = false;
+    public static boolean IS_LITE_VERSION = false;
 
     static {
         if (ApplicationLoader.applicationContext != null) {

@@ -24,6 +24,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -225,7 +227,9 @@ public class TextCheckCell2 extends FrameLayout {
             checkBox.clearAnimation();
             textView.animate().alpha(value ? 1 : .5f).start();
             valueTextView.animate().alpha(value ? 1 : .5f).start();
-            checkBox.animate().alpha(value ? 1 : .5f).start();
+            if (!ExteraConfig.getNewSwitchStyle()) {
+                checkBox.animate().alpha(value ? 1 : .5f).start();
+            }
         } else {
             if (value) {
                 textView.setAlpha(1.0f);

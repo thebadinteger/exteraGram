@@ -97,7 +97,7 @@ public class AvatarCornersPreviewCell extends FrameLayout implements CustomPrefe
         AltSeekbar altSeekbar = new AltSeekbar(context, new AltSeekbar.OnDrag() { 
             @Override 
             public final void run(float f) {
-                this.f$0.lambda$new$1(baseFragment, f);
+                AvatarCornersPreviewCell.this.lambda$new$1(baseFragment, f);
             }
         }, 0, 28, LocaleController.getString(R.string.AvatarCorners), LocaleController.getString(R.string.AvatarCornersLeft), LocaleController.getString(R.string.AvatarCornersRight));
         this.seekBar = altSeekbar;
@@ -111,6 +111,73 @@ public class AvatarCornersPreviewCell extends FrameLayout implements CustomPrefe
             frameLayout.setMinimumHeight(AndroidUtilities.dp(83.0f));
         }
         addView(frameLayout, LayoutHelper.createFrame(-1, -2.0f, 49, 21.0f, 114.0f, 21.0f, 21.0f));
+    }
+
+    public void lambda$new$1(BaseFragment baseFragment, float f) {
+        ExteraConfig.setAvatarCorners(f);
+        invalidate();
+        this.preview.invalidate();
+        DialogCell dialogCell = this.dialogCell;
+        if (dialogCell != null) {
+            dialogCell.update(0);
+        }
+        baseFragment.getParentLayout().rebuildFragments(0);
+    }
+
+    private void initRealMode(Context context, Theme.ResourcesProvider resourcesProvider, int i, MessagesController messagesController) {
+        this.fetcher = new ProfileChannelCell.ChannelMessageFetcher(i);
+        CubicBezierInterpolator cubicBezierInterpolator = CubicBezierInterpolator.EASE_OUT_QUINT;
+        this.channelLoadingAlpha = new AnimatedFloat(this, 320L, cubicBezierInterpolator);
+        this.messagesLoadingAlpha = new AnimatedFloat(this, 320L, cubicBezierInterpolator);
+        LoadingDrawable loadingDrawable = new LoadingDrawable();
+        this.loadingDrawable = loadingDrawable;
+        int i2 = Theme.key_listSelector;
+        loadingDrawable.setColors(Theme.multAlpha(Theme.getColor(i2), 1.3f), Theme.multAlpha(Theme.getColor(i2), 0.85f));
+        this.loadingDrawable.setRadiiDp(8.0f);
+        DialogCell dialogCell = new DialogCell(null, context, false, true, i, resourcesProvider);
+        this.dialogCell = dialogCell;
+        dialogCell.isForChannelSubscriberCell = true;
+        dialogCell.setDialogCellDelegate(new DialogCell.DialogCellDelegate() {
+            @Override
+            public boolean canClickButtonInside() {
+                return false;
+            }
+
+            @Override
+            public void onButtonClicked(DialogCell dialogCell2) {
+            }
+
+            @Override
+            public void onButtonLongPress(DialogCell dialogCell2) {
+            }
+
+            @Override
+            public void openHiddenStories() {
+            }
+
+            @Override
+            public void openStory(DialogCell dialogCell2, Runnable runnable) {
+            }
+
+            @Override
+            public void showChatPreview(DialogCell dialogCell2) {
+            }
+        });
+        DialogCell dialogCell2 = this.dialogCell;
+        dialogCell2.avatarStart = 15;
+        dialogCell2.messagePaddingStart = 83;
+        if (messagesController.getChat(1571726392L) != null) {
+            setDialogId(1571726392L);
+            return;
+        }
+        this.loadingChannel = true;
+        this.loadingMessages = true;
+        messagesController.getUserNameResolver().resolve("exteraGram", new Consumer() {
+            @Override
+            public final void accept(Object obj) {
+                AvatarCornersPreviewCell.this.lambda$initRealMode$2((Long) obj);
+            }
+        });
     }
 
     public void lambda$initRealMode$2(Long l) {
@@ -224,7 +291,7 @@ public class AvatarCornersPreviewCell extends FrameLayout implements CustomPrefe
         this.fetcher.subscribe(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$setDialogId$3(j, z);
+                AvatarCornersPreviewCell.this.lambda$setDialogId$3(j, z);
             }
         });
     }

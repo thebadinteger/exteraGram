@@ -1,3 +1,41 @@
+/*
+ *  Copyright 2016 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
+package org.webrtc;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
+import androidx.annotation.Nullable;
+import android.view.Surface;
+
+import org.telegram.messenger.FileLog;
+
+/**
+ * An implementation of VideoCapturer to capture the screen content as a video stream.
+ * Capturing is done by {@code MediaProjection} on a {@code SurfaceTexture}. We interact with this
+ * {@code SurfaceTexture} using a {@code SurfaceTextureHelper}.
+ * The {@code SurfaceTextureHelper} is created by the native code and passed to this capturer in
+ * {@code VideoCapturer.initialize()}. On receiving a new frame, this capturer passes it
+ * as a texture to the native code via {@code CapturerObserver.onFrameCaptured()}. This takes
+ * place on the HandlerThread of the given {@code SurfaceTextureHelper}. When done with each frame,
+ * the native code returns the buffer to the  {@code SurfaceTextureHelper} to be used for new
+ * frames. At any time, at most one frame is being processed.
+ *
+ * @note This class is only supported on Android Lollipop and above.
+ */
 @TargetApi(21)
 public class ScreenCapturerAndroid implements VideoCapturer, VideoSink {
   private static final int DISPLAY_FLAGS =

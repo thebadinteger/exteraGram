@@ -43,7 +43,7 @@ public class ColoredBackground extends Drawable {
         RectF rectF = AndroidUtilities.rectTmp;
         rectF.set(bounds);
         canvas.drawRoundRect(rectF, fDp, fDp, this.paint);
-        if (!Theme.isCurrentThemeDark() || Theme.isCurrentThemeMonet()) {
+        if (!Theme.isCurrentThemeDark()) {
             return;
         }
         float fDp2 = AndroidUtilities.dp(1.0f);

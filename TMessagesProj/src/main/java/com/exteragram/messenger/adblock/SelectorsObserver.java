@@ -38,7 +38,7 @@ public class SelectorsObserver {
                     this.webView.post(new Runnable() { 
                         @Override // java.lang.Runnable
                         public final void run() {
-                            this.f$0.lambda$onElementsFound$0(cosmeticHideContinuous);
+                            SelectorsObserver.this.lambda$onElementsFound$0(cosmeticHideContinuous);
                         }
                     });
                 }

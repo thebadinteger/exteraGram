@@ -42,10 +42,12 @@ public enum BotWebViewVibrationEffect {
     }
 
     public void vibrate() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            AndroidUtilities.getVibrator().vibrate(getVibrationEffectForOreo());
-        } else {
-            AndroidUtilities.getVibrator().vibrate(fallbackTimings, -1);
+        if (com.exteragram.messenger.ExteraConfig.getInAppVibration()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                AndroidUtilities.getVibrator().vibrate(getVibrationEffectForOreo());
+            } else {
+                AndroidUtilities.getVibrator().vibrate(fallbackTimings, -1);
+            }
         }
     }
 }

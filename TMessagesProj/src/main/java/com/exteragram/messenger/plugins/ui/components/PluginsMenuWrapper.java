@@ -41,10 +41,7 @@ public class PluginsMenuWrapper {
     public void closeMenu() {
     }
 
-    public PluginsMenuWrapper(final PopupSwipeBackLayout popupSwipeBackLayout, List<MenuItemRecord> list, String str, Map<String, ? extends Object> map, Theme.ResourcesProvider resourcesProvider) {
-        "swipeBackLayout";
-        "menuType";
-        "contextData";
+    public PluginsMenuWrapper(final PopupSwipeBackLayout popupSwipeBackLayout, List<MenuItemRecord> list, String str, Map<String, Object> map, Theme.ResourcesProvider resourcesProvider) {
         this.menuType = str;
         this.contextData = map;
         this.resourcesProvider = resourcesProvider;
@@ -56,7 +53,7 @@ public class PluginsMenuWrapper {
         actionBarMenuSubItem.setItemHeight(44);
         actionBarMenuSubItem.setTextAndIcon(LocaleController.getString(R.string.Back), R.drawable.msg_arrow_back);
         actionBarMenuSubItem.getTextView().setPadding(LocaleController.isRTL ? 0 : AndroidUtilities.dp(40.0f), 0, LocaleController.isRTL ? AndroidUtilities.dp(40.0f) : 0, 0);
-        actionBarMenuSubItem.setOnClickListener(new View.OnClickListener() { 
+        actionBarMenuSubItem.setOnClickListener(new View.OnClickListener() { // from class: com.exteragram.messenger.plugins.ui.components.PluginsMenuWrapper$$ExternalSyntheticLambda1
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
                 popupSwipeBackLayout.closeForeground();
@@ -80,20 +77,76 @@ public class PluginsMenuWrapper {
         return this.swipeBack;
     }
 
-    Context $context;
-            private final AnimatedFloat alphaFloat;
+    /* JADX WARN: 'this' call moved to the top of the method (can break code semantics) */
+    public PluginsMenuWrapper(PopupSwipeBackLayout popupSwipeBackLayout, String str, Map<String, ?> map, Theme.ResourcesProvider resourcesProvider) {
+        this(popupSwipeBackLayout, null, str, (Map<String, Object>) map, resourcesProvider);
+    }
+
+    public final void rebuildMenu(List<MenuItemRecord> existingItems) {
+        int i;
+        this.menuItemsContainer.removeAllViews();
+        if (existingItems == null) {
+            existingItems = PluginsController.INSTANCE.getInstance().getMenuItemsForLocation(this.menuType, this.contextData);
+        }
+        Context context = this.menuItemsContainer.getContext();
+        this.menuItemsContainer.addView(createGap(), LayoutHelper.createLinear(-1, 8));
+        int i2 = 0;
+        for (final MenuItemRecord menuItemRecord : existingItems) {
+            String text = menuItemRecord.getText();
+            if (text != null && text.length() != 0) {
+                ActionBarMenuSubItem actionBarMenuSubItem = new ActionBarMenuSubItem(context, false, false, this.resourcesProvider);
+                actionBarMenuSubItem.setTextAndIcon(menuItemRecord.getText(), menuItemRecord.getIconResId());
+                actionBarMenuSubItem.setMinimumWidth(AndroidUtilities.dp(196.0f));
+                actionBarMenuSubItem.setOnClickListener(new View.OnClickListener() { // from class: com.exteragram.messenger.plugins.ui.components.PluginsMenuWrapper$$ExternalSyntheticLambda0
+                    @Override // android.view.View.OnClickListener
+                    public final void onClick(View view) {
+                        PluginsMenuWrapper.rebuildMenu$lambda$0$0(PluginsMenuWrapper.this, menuItemRecord, view);
+                    }
+                });
+                if (TextUtils.isEmpty(menuItemRecord.getSubtext())) {
+                    i = 48;
+                } else {
+                    actionBarMenuSubItem.setSubtext(menuItemRecord.getSubtext());
+                    i = 56;
+                    actionBarMenuSubItem.setItemHeight(56);
+                }
+                this.menuItemsContainer.addView(actionBarMenuSubItem, LayoutHelper.createLinear(-1, i));
+                i2 += i;
+                actionBarMenuSubItem.setTag(menuItemRecord);
+            }
+        }
+        int iDp = AndroidUtilities.dp(436.0f);
+        Object parent = this.menuItemsContainer.getParent();
+        View view = parent instanceof View ? (View) parent : null;
+        if (view == null) {
+            return;
+        }
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        LinearLayout.LayoutParams layoutParamsCreateLinear = layoutParams instanceof LinearLayout.LayoutParams ? (LinearLayout.LayoutParams) layoutParams : null;
+        if (layoutParamsCreateLinear == null) {
+            layoutParamsCreateLinear = LayoutHelper.createLinear(-1, -2);
+        }
+        if (i2 <= iDp || Math.abs(i2 - iDp) <= 112) {
+            iDp = -2;
+        }
+        layoutParamsCreateLinear.height = iDp;
+        view.setLayoutParams(layoutParamsCreateLinear);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public static final void rebuildMenu$lambda$0$0(PluginsMenuWrapper pluginsMenuWrapper, MenuItemRecord menuItemRecord, View view) {
+        pluginsMenuWrapper.closeMenu();
+        menuItemRecord.executeClick(pluginsMenuWrapper.contextData);
+    }
+
+    private final ScrollView createScrollView(final Context context) {
+        return new ScrollView(context) { // from class: com.exteragram.messenger.plugins.ui.components.PluginsMenuWrapper.createScrollView.1
+            private final AnimatedFloat alphaFloat = new AnimatedFloat(this, 350L, CubicBezierInterpolator.EASE_OUT_QUINT);
             private Drawable topShadowDrawable;
             private boolean wasCanScrollVertically;
 
-            {
-                super(context);
-                this.$context = context;
-                this.alphaFloat = new AnimatedFloat(this, 350L, CubicBezierInterpolator.EASE_OUT_QUINT);
-            }
-
             @Override // android.widget.ScrollView, android.view.ViewGroup, android.view.ViewParent
             public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
-                "target";
                 super.onNestedScroll(target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed);
                 boolean zCanScrollVertically = canScrollVertically(-1);
                 if (this.wasCanScrollVertically != zCanScrollVertically) {
@@ -104,14 +157,13 @@ public class PluginsMenuWrapper {
 
             @Override // android.view.ViewGroup, android.view.View
             public void dispatchDraw(Canvas canvas) {
-                "canvas";
                 super.dispatchDraw(canvas);
                 float f = this.alphaFloat.set(canScrollVertically(-1) ? 1.0f : 0.0f) * 0.5f;
                 if (f <= 0.0f) {
                     return;
                 }
                 if (this.topShadowDrawable == null) {
-                    this.topShadowDrawable = ContextCompat.getDrawable(this.$context, R.drawable.header_shadow);
+                    this.topShadowDrawable = ContextCompat.getDrawable(context, R.drawable.header_shadow);
                 }
                 Drawable drawable = this.topShadowDrawable;
                 if (drawable != null) {

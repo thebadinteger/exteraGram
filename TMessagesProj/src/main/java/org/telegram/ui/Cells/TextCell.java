@@ -630,6 +630,53 @@ public class TextCell extends FrameLayout {
         imageView.setBackground(drawable);
     }
 
+    public void setColorfulIcon(int colorTop, int colorBottom, int resId, boolean whiteIcon) {
+        offsetFromImage = getOffsetFromImage(true);
+        imageView.setVisibility(VISIBLE);
+        imageView.setPadding(dp(2), dp(2), dp(2), dp(2));
+        imageView.setTranslationX(dp(LocaleController.isRTL ? 0 : -3));
+        imageView.setImageResource(resId);
+        if (whiteIcon) {
+            imageView.setColorFilter(new PorterDuffColorFilter(Theme.isCurrentThemeMonet() ? Theme.getColor(Theme.key_chats_actionIcon) : Color.WHITE, PorterDuff.Mode.SRC_IN));
+        } else {
+            imageView.setColorFilter(null);
+        }
+        final boolean border = resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark();
+        SettingsActivity.SettingCell.Background drawable = new SettingsActivity.SettingCell.Background();
+        drawable.setColor(colorTop, colorBottom);
+        drawable.setDrawBorder(border);
+        imageView.setBackground(drawable);
+    }
+
+    public void setTextAndIconAndValueDrawable(CharSequence text, Drawable iconDrawable, Drawable valueDrawable, boolean divider) {
+        offsetFromImage = 71;
+        imageLeft = 21;
+        textView.setText(text);
+        textView.setRightDrawable(null);
+        valueText = null;
+        valueTextView.setText(null, false);
+        valueTextView.setVisibility(GONE);
+        valueSpoilersTextView.setVisibility(GONE);
+        imageView.setColorFilter(null);
+        if (iconDrawable instanceof RLottieDrawable) {
+            imageView.setAnimation((RLottieDrawable) iconDrawable);
+        } else {
+            imageView.setImageDrawable(iconDrawable);
+        }
+        imageView.setVisibility(VISIBLE);
+        imageView.setPadding(0, dp(6), 0, 0);
+        valueImageView.setVisibility(VISIBLE);
+        valueImageView.setImageDrawable(valueDrawable);
+        needDivider = divider;
+        setWillNotDraw(!divider);
+        if (checkBox != null) {
+            checkBox.setVisibility(GONE);
+        }
+        if (emojiDrawable != null) {
+            emojiDrawable.set((Drawable) null, false);
+        }
+    }
+
     public void setTextAndCheck(CharSequence text, boolean checked, boolean divider) {
         imageLeft = 16;
         offsetFromImage = getOffsetFromImage(false);
@@ -979,5 +1026,32 @@ public class TextCell extends FrameLayout {
         } else {
             subtitleView.setVisibility(View.GONE);
         }
+    }
+
+    public void reset() {
+        textView.setText("");
+        subtitleView.setText("");
+        valueTextView.setText(null, false);
+        valueSpoilersTextView.setText("");
+        imageView.setVisibility(GONE);
+        valueTextView.setVisibility(GONE);
+        valueSpoilersTextView.setVisibility(GONE);
+        valueImageView.setVisibility(GONE);
+        subtitleView.setVisibility(GONE);
+        if (checkBox != null) {
+            checkBox.setVisibility(GONE);
+        }
+        imageView.setImageDrawable(null);
+        imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(inDialogs ? Theme.key_dialogIcon : Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        imageView.setBackground(null);
+        if (emojiDrawable != null) {
+            emojiDrawable.set((Drawable) null, false);
+        }
+        textView.setRightDrawable(null);
+        prioritizeTitleOverValue = false;
+        offsetFromImage = 71;
+        heightDp = 50;
+        imageLeft = 21;
+        imageView.setScaleType(ImageView.ScaleType.CENTER);
     }
 }

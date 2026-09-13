@@ -198,6 +198,10 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
         return alpha;
     }
 
+    public void setOverrideFadeColor(int i) {
+        invalidateSelf();
+    }
+
     @Override
     public void setColorFilter(@Nullable ColorFilter colorFilter) {
         //

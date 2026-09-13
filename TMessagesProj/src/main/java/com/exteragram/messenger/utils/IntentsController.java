@@ -35,6 +35,7 @@ import kotlin.text.StringsKt;
 import okhttp3.internal.url._UrlKt;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
@@ -55,64 +56,23 @@ import org.telegram.ui.ProfileActivity;
 @SourceDebugExtension({"SMAP\nIntentsController.kt\nKotlin\n*S Kotlin\n*F\n+ 1 IntentsController.kt\ncom/exteragram/messenger/utils/IntentsController\n+ 2 fake.kt\nkotlin/jvm/internal/FakeKt\n*L\n1#1,266:1\n1#2:267\n*E\n"})
 public final class IntentsController {
     public static final IntentsController INSTANCE = new IntentsController();
-    private static final Map<String, Function1<Uri, Unit>> deeplinkCallbacks = MapsKt.mapOf(TuplesKt.to("extera", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.m1483$r8$lambda$WdTKTpzhigC61xIeBWpH_WTkyc((Uri) obj);
-        }
-    }), TuplesKt.to("export", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.m1479$r8$lambda$9XjeTv5CAxJc0C67EC8OKii4c0((Uri) obj);
-        }
-    }), TuplesKt.to("feed", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$L2RxthlVNJpl5iMxDDpn7NHtzy0((Uri) obj);
-        }
-    }), TuplesKt.to("support", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$It8J4Jzm7OhL1Vqi8KopB5SXXqg((Uri) obj);
-        }
-    }), TuplesKt.to("donate", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$b8B8zH141hhzJ54sxiCZj1b2KUg((Uri) obj);
-        }
-    }), TuplesKt.to("emoji", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$4nHeLUQ09Gyn3NZM8J_qAzCpDyA((Uri) obj);
-        }
-    }), TuplesKt.to("user", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.m1486$r8$lambda$u3rHULPL9MN5BHaU8W8fgkJiyE((Uri) obj);
-        }
-    }), TuplesKt.to("chat", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$IW9cVW1_Ls85TWGd_6MsusR_AB8((Uri) obj);
-        }
-    }));
-    private static final Map<String, Function1<Uri, Unit>> callbacks = MapsKt.mapOf(TuplesKt.to("exteraSettings", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return IntentsController.$r8$lambda$sZPDRQSzV6QOqGXDv1JwbZbiGWg((Uri) obj);
-        }
-    }));
-    private static final Map<String, Function1<Intent, Boolean>> actionCallbacks = MapsKt.mapOf(TuplesKt.to("com.exteragram.plugins.safemode", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return Boolean.valueOf(IntentsController.$r8$lambda$t_HCOUeylOGoGDt_jk1guvYhKgg((Intent) obj));
-        }
-    }), TuplesKt.to("android.intent.action.VIEW", new Function1() { 
-        @Override // kotlin.jvm.functions.Function1
-        public final Object invoke(Object obj) {
-            return Boolean.valueOf(IntentsController.$r8$lambda$bACeRfEFydNv6BTd7X5lA6iME_8((Intent) obj));
-        }
-    }));
+    private static final Map<String, Function1<Uri, Unit>> deeplinkCallbacks = new java.util.HashMap<String, Function1<Uri, Unit>>() {{
+        put("extera", IntentsController::m1483$r8$lambda$WdTKTpzhigC61xIeBWpH_WTkyc);
+        put("export", IntentsController::m1479$r8$lambda$9XjeTv5CAxJc0C67EC8OKii4c0);
+        put("feed", IntentsController::$r8$lambda$L2RxthlVNJpl5iMxDDpn7NHtzy0);
+        put("support", IntentsController::$r8$lambda$It8J4Jzm7OhL1Vqi8KopB5SXXqg);
+        put("donate", IntentsController::$r8$lambda$b8B8zH141hhzJ54sxiCZj1b2KUg);
+        put("emoji", IntentsController::$r8$lambda$4nHeLUQ09Gyn3NZM8J_qAzCpDyA);
+        put("user", IntentsController::m1486$r8$lambda$u3rHULPL9MN5BHaU8W8fgkJiyE);
+        put("chat", IntentsController::$r8$lambda$IW9cVW1_Ls85TWGd_6MsusR_AB8);
+    }};
+    private static final Map<String, Function1<Uri, Unit>> callbacks = new java.util.HashMap<String, Function1<Uri, Unit>>() {{
+        put("exteraSettings", IntentsController::$r8$lambda$sZPDRQSzV6QOqGXDv1JwbZbiGWg);
+    }};
+    private static final Map<String, Function1<Intent, Boolean>> actionCallbacks = new java.util.HashMap<String, Function1<Intent, Boolean>>() {{
+        put("com.exteragram.plugins.safemode", IntentsController::$r8$lambda$t_HCOUeylOGoGDt_jk1guvYhKgg);
+        put("android.intent.action.VIEW", IntentsController::$r8$lambda$bACeRfEFydNv6BTd7X5lA6iME_8);
+    }};
 
     private IntentsController() {
     }
@@ -128,7 +88,7 @@ public final class IntentsController {
     }
 
     public static final void deeplinkCallbacks$lambda$0$0() {
-        LaunchActivity.instance.lambda$runLinkRequest$101(new MainPreferencesActivity());
+        LaunchActivity.instance.presentFragment(new MainPreferencesActivity());
     }
 
     public static Unit m1479$r8$lambda$9XjeTv5CAxJc0C67EC8OKii4c0(Uri uri) {
@@ -172,7 +132,7 @@ public final class IntentsController {
     }
 
     public static final void deeplinkCallbacks$lambda$4$0() {
-        LaunchActivity.instance.lambda$runLinkRequest$101(new OtherPreferencesActivity());
+        LaunchActivity.instance.presentFragment(new OtherPreferencesActivity());
     }
 
     public static Unit $r8$lambda$4nHeLUQ09Gyn3NZM8J_qAzCpDyA(Uri uri) {
@@ -332,55 +292,47 @@ public final class IntentsController {
         Boolean boolValueOf = null;
         if (path != null && (strSubstringAfterLast = StringsKt.substringAfterLast(path, '.', _UrlKt.FRAGMENT_ENCODE_SET)) != null && (safeLastFragment = LaunchActivity.getSafeLastFragment()) != null) {
             int iHashCode = strSubstringAfterLast.hashCode();
-            if (iHashCode != -1289044077) {
-                if (iHashCode != -985174221) {
-                    if (iHashCode == 100029210 && strSubstringAfterLast.equals("icons")) {
-                        IconManager.INSTANCE.handleIconPack(safeLastFragment, INSTANCE.getTempFileFromIntent(data).getAbsolutePath());
+            try {
+                if (iHashCode != -1289044077) {
+                    if (iHashCode != -985174221) {
+                        if (iHashCode == 100029210 && strSubstringAfterLast.equals("icons")) {
+                            IconManager.INSTANCE.handleIconPack(safeLastFragment, INSTANCE.getTempFileFromIntent(data).getAbsolutePath());
+                            z = true;
+                        }
+                    } else if (strSubstringAfterLast.equals("plugin")) {
+                        PluginsController.INSTANCE.getInstance().showInstallDialog(safeLastFragment, INSTANCE.getTempFileFromIntent(data).getAbsolutePath(), false);
                         z = true;
                     }
-                } else if (strSubstringAfterLast.equals("plugin")) {
-                    PluginsController.INSTANCE.getInstance().showInstallDialog(safeLastFragment, INSTANCE.getTempFileFromIntent(data).getAbsolutePath(), false);
+                } else if (strSubstringAfterLast.equals("extera")) {
+                    new BackupBottomSheet(safeLastFragment, INSTANCE.getTempFileFromIntent(data)).showIfPossible();
                     z = true;
                 }
-            } else if (strSubstringAfterLast.equals("extera")) {
-                new BackupBottomSheet(safeLastFragment, INSTANCE.getTempFileFromIntent(data)).showIfPossible();
-                z = true;
+            } catch (Exception e) {
+                FileLog.e(e);
             }
             boolValueOf = Boolean.valueOf(z);
         }
         return Intrinsics.areEqual(boolValueOf, Boolean.TRUE);
     }
 
-    public final File getTempFileFromIntent(Uri uri) throws FileNotFoundException {
+    public final File getTempFileFromIntent(Uri uri) {
         File file = new File(ApplicationLoader.getFilesDirFixed(), "temp");
         if (!file.exists()) {
             file.mkdirs();
         }
         File file2 = new File(file, "temp_file_" + System.currentTimeMillis() + ".plugin");
-        InputStream inputStreamOpenInputStream = ApplicationLoader.applicationContext.getContentResolver().openInputStream(uri);
-        if (inputStreamOpenInputStream != null) {
-            try {
-                FileOutputStream fileOutputStream = new FileOutputStream(file2);
-                try {
-                    ByteStreamsKt.copyTo$default(inputStreamOpenInputStream, fileOutputStream, 0, 2, null);
-                    CloseableKt.closeFinally(fileOutputStream, null);
-                    CloseableKt.closeFinally(inputStreamOpenInputStream, null);
-                } catch (Throwable th) {
-                    try {
-                        throw th;
-                    } catch (Throwable th2) {
-                        CloseableKt.closeFinally(fileOutputStream, th);
-                        throw th2;
+        try (InputStream inputStreamOpenInputStream = ApplicationLoader.applicationContext.getContentResolver().openInputStream(uri)) {
+            if (inputStreamOpenInputStream != null) {
+                try (FileOutputStream fileOutputStream = new FileOutputStream(file2)) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = inputStreamOpenInputStream.read(buffer)) >= 0) {
+                        fileOutputStream.write(buffer, 0, bytesRead);
                     }
                 }
-            } catch (Throwable th3) {
-                try {
-                    throw th3;
-                } catch (Throwable th4) {
-                    CloseableKt.closeFinally(inputStreamOpenInputStream, th3);
-                    throw th4;
-                }
             }
+        } catch (Exception e) {
+            FileLog.e(e);
         }
         file2.deleteOnExit();
         return file2;

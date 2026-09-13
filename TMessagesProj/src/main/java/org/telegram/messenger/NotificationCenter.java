@@ -376,6 +376,25 @@ public class NotificationCenter {
     public static final int communityPendingRequestsUpdate = totalEvents++;
     public static final int communitySwitchedCollapsed = totalEvents++;
 
+    public static final int contactsTabVisibleToggled = totalEvents++;
+    public static final int feedTabVisibleToggled = totalEvents++;
+    public static final int feedNeedReload = totalEvents++;
+    public static final int nowPlayingUpdated = totalEvents++;
+    public static final int rolesUpdated = totalEvents++;
+    public static final int servicesUpdated = totalEvents++;
+    public static final int pluginsUpdated = totalEvents++;
+    public static final int pluginIsNotResponding = totalEvents++;
+    public static final int pluginSettingsRegistered = totalEvents++;
+    public static final int pluginSettingsUnregistered = totalEvents++;
+    public static final int pluginMenuItemsUpdated = totalEvents++;
+    public static final int iconPackUpdated = totalEvents++;
+    public static final int pillStackSettingsChanged = totalEvents++;
+    public static final int pillStackLayoutChanged = totalEvents++;
+    public static final int pluginsPySdkInfoChanged = totalEvents++;
+    public static final int proxyPingUpdated = totalEvents++;
+    public static final int onUpdateLoginToken = totalEvents++;
+
+
     public static boolean alreadyLogged;
 
     private final SparseArray<ArrayList<NotificationCenterDelegate>> observers = new SparseArray<>();

@@ -1,3 +1,216 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package androidx.recyclerview.widget;
+
+import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX;
+import static androidx.core.view.ViewCompat.TYPE_NON_TOUCH;
+import static androidx.core.view.ViewCompat.TYPE_TOUCH;
+
+import android.animation.LayoutTransition;
+import android.animation.TimeInterpolator;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.database.Observable;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.os.SystemClock;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.util.SparseArray;
+import android.view.Display;
+import android.view.FocusFinder;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
+import android.view.animation.Interpolator;
+import android.widget.EdgeEffect;
+import android.widget.LinearLayout;
+import android.widget.OverScroller;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BuildVars;
+import org.telegram.messenger.FileLog;
+
+import androidx.annotation.CallSuper;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.Px;
+import androidx.annotation.RestrictTo;
+import androidx.annotation.VisibleForTesting;
+import androidx.core.os.TraceCompat;
+import androidx.core.util.Consumer;
+import androidx.core.util.Preconditions;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.InputDeviceCompat;
+import androidx.core.view.MotionEventCompat;
+import androidx.core.view.NestedScrollingChild2;
+import androidx.core.view.NestedScrollingChild3;
+import androidx.core.view.NestedScrollingChildHelper;
+import androidx.core.view.ScrollingView;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewConfigurationCompat;
+import androidx.core.view.accessibility.AccessibilityEventCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.core.widget.EdgeEffectCompat;
+import androidx.customview.view.AbsSavedState;
+import androidx.recyclerview.widget.RecyclerView.ItemAnimator.ItemHolderInfo;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * A flexible view for providing a limited window into a large data set.
+ *
+ * <h3>Glossary of terms:</h3>
+ *
+ * <ul>
+ *     <li><em>Adapter:</em> A subclass of {@link Adapter} responsible for providing views
+ *     that represent items in a data set.</li>
+ *     <li><em>Position:</em> The position of a data item within an <em>Adapter</em>.</li>
+ *     <li><em>Index:</em> The index of an attached child view as used in a call to
+ *     {@link ViewGroup#getChildAt}. Contrast with <em>Position.</em></li>
+ *     <li><em>Binding:</em> The process of preparing a child view to display data corresponding
+ *     to a <em>position</em> within the adapter.</li>
+ *     <li><em>Recycle (view):</em> A view previously used to display data for a specific adapter
+ *     position may be placed in a cache for later reuse to display the same type of data again
+ *     later. This can drastically improve performance by skipping initial layout inflation
+ *     or construction.</li>
+ *     <li><em>Scrap (view):</em> A child view that has entered into a temporarily detached
+ *     state during layout. Scrap views may be reused without becoming fully detached
+ *     from the parent RecyclerView, either unmodified if no rebinding is required or modified
+ *     by the adapter if the view was considered <em>dirty</em>.</li>
+ *     <li><em>Dirty (view):</em> A child view that must be rebound by the adapter before
+ *     being displayed.</li>
+ * </ul>
+ *
+ * <h3>Positions in RecyclerView:</h3>
+ * <p>
+ * RecyclerView introduces an additional level of abstraction between the {@link Adapter} and
+ * {@link LayoutManager} to be able to detect data set changes in batches during a layout
+ * calculation. This saves LayoutManager from tracking adapter changes to calculate animations.
+ * It also helps with performance because all view bindings happen at the same time and unnecessary
+ * bindings are avoided.
+ * <p>
+ * For this reason, there are two types of <code>position</code> related methods in RecyclerView:
+ * <ul>
+ *     <li>layout position: Position of an item in the latest layout calculation. This is the
+ *     position from the LayoutManager's perspective.</li>
+ *     <li>adapter position: Position of an item in the adapter. This is the position from
+ *     the Adapter's perspective.</li>
+ * </ul>
+ * <p>
+ * These two positions are the same except the time between dispatching <code>adapter.notify*
+ * </code> events and calculating the updated layout.
+ * <p>
+ * Methods that return or receive <code>*LayoutPosition*</code> use position as of the latest
+ * layout calculation (e.g. {@link ViewHolder#getLayoutPosition()},
+ * {@link #findViewHolderForLayoutPosition(int)}). These positions include all changes until the
+ * last layout calculation. You can rely on these positions to be consistent with what user is
+ * currently seeing on the screen. For example, if you have a list of items on the screen and user
+ * asks for the 5<sup>th</sup> element, you should use these methods as they'll match what user
+ * is seeing.
+ * <p>
+ * The other set of position related methods are in the form of
+ * <code>*AdapterPosition*</code>. (e.g. {@link ViewHolder#getAdapterPosition()},
+ * {@link #findViewHolderForAdapterPosition(int)}) You should use these methods when you need to
+ * work with up-to-date adapter positions even if they may not have been reflected to layout yet.
+ * For example, if you want to access the item in the adapter on a ViewHolder click, you should use
+ * {@link ViewHolder#getAdapterPosition()}. Beware that these methods may not be able to calculate
+ * adapter positions if {@link Adapter#notifyDataSetChanged()} has been called and new layout has
+ * not yet been calculated. For this reasons, you should carefully handle {@link #NO_POSITION} or
+ * <code>null</code> results from these methods.
+ * <p>
+ * When writing a {@link LayoutManager} you almost always want to use layout positions whereas when
+ * writing an {@link Adapter}, you probably want to use adapter positions.
+ * <p>
+ * <h3>Presenting Dynamic Data</h3>
+ * To display updatable data in a RecyclerView, your adapter needs to signal inserts, moves, and
+ * deletions to RecyclerView. You can build this yourself by manually calling
+ * {@code adapter.notify*} methods when content changes, or you can use one of the easier solutions
+ * RecyclerView provides:
+ * <p>
+ * <h4>List diffing with DiffUtil</h4>
+ * If your RecyclerView is displaying a list that is re-fetched from scratch for each update (e.g.
+ * from the network, or from a database), {@link DiffUtil} can calculate the difference between
+ * versions of the list. {@code DiffUtil} takes both lists as input and computes the difference,
+ * which can be passed to RecyclerView to trigger minimal animations and updates to keep your UI
+ * performant, and animations meaningful. This approach requires that each list is represented in
+ * memory with immutable content, and relies on receiving updates as new instances of lists. This
+ * approach is also ideal if your UI layer doesn't implement sorting, it just presents the data in
+ * the order it's given.
+ * <p>
+ * The best part of this approach is that it extends to any arbitrary changes - item updates,
+ * moves, addition and removal can all be computed and handled the same way. Though you do have
+ * to keep two copies of the list in memory while diffing, and must avoid mutating them, it's
+ * possible to share unmodified elements between list versions.
+ * <p>
+ * There are three primary ways to do this for RecyclerView. We recommend you start with
+ * {@link ListAdapter}, the higher-level API that builds in {@link List} diffing on a background
+ * thread, with minimal code. {@link AsyncListDiffer} also provides this behavior, but without
+ * defining an Adapter to subclass. If you want more control, {@link DiffUtil} is the lower-level
+ * API you can use to compute the diffs yourself. Each approach allows you to specify how diffs
+ * should be computed based on item data.
+ * <p>
+ * <h4>List mutation with SortedList</h4>
+ * If your RecyclerView receives updates incrementally, e.g. item X is inserted, or item Y is
+ * removed, you can use {@link SortedList} to manage your list. You define how to order items,
+ * and it will automatically trigger update signals that RecyclerView can use. SortedList works
+ * if you only need to handle insert and remove events, and has the benefit that you only ever
+ * need to have a single copy of the list in memory. It can also compute differences with
+ * {@link SortedList#replaceAll(Object[])}, but this method is more limited than the list diffing
+ * behavior above.
+ * <p>
+ * <h4>Paging Library</h4>
+ * The <a href="https://developer.android.com/topic/libraries/architecture/paging/">Paging
+ * library</a> extends the diff-based approach to additionally support paged loading. It provides
+ * the {@link androidx.paging.PagedList} class that operates as a self-loading list, provided a
+ * source of data like a database, or paginated network API. It provides convenient list diffing
+ * support out of the box, similar to {@code ListAdapter} and {@code AsyncListDiffer}. For more
+ * information about the Paging library, see the
+ * <a href="https://developer.android.com/topic/libraries/architecture/paging/">library
+ * documentation</a>.
+ *
+ * {@link androidx.recyclerview.R.attr#layoutManager}
+ */
 public class RecyclerView extends ViewGroup implements ScrollingView,
         NestedScrollingChild2, NestedScrollingChild3 {
 

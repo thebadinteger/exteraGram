@@ -7,4 +7,30 @@
     <attr name="widgetPreviewTime" format="string" />
     <attr name="widgetPreviewImage" format="reference" />
     <attr name="widgetPreviewDot" format="integer" />
+
+    <attr name="colorContainerChecked" format="color|reference" />
+    <attr name="colorContainerUnchecked" format="color|reference" />
+    <attr name="colorOnContainerChecked" format="color|reference" />
+    <attr name="state_swiped" format="boolean" />
+    <attr name="focusRingsRadius" format="dimension|reference" />
+    <attr name="focusRingsInset" format="dimension|reference" />
+    <attr name="toolbarNavigationButtonCircleColor" format="color|reference" />
+
+    <attr name="materialButtonGroupOverflowButtonStyle" format="reference" />
+    <attr name="overflowLinearLayoutOverflowButtonStyle" format="reference" />
+    <attr name="snackbarCloseButtonStyle" format="reference" />
+    <attr name="widthChange" format="fraction|dimension|reference" />
+    <attr name="listItemShapeAppearanceChecked" format="reference" />
+    <attr name="listItemShapeAppearancePressed" format="reference" />
+    <attr name="listItemShapeAppearanceFocused" format="reference" />
+    <attr name="listItemShapeAppearanceHovered" format="reference" />
+    <attr name="listItemShapeAppearanceSingle" format="reference" />
+    <attr name="listItemShapeAppearanceFirst" format="reference" />
+    <attr name="listItemShapeAppearanceLast" format="reference" />
+    <attr name="listItemShapeAppearanceMiddle" format="reference" />
+    <attr name="containerShapePressed" format="reference" />
+    <attr name="containerShapeChecked" format="reference" />
+    <attr name="containerShapeDefault" format="reference" />
+    <attr name="shapeCornerSizeExtraSmall" format="dimension|reference" />
+    <attr name="shapeCornerSizeSmall" format="dimension|reference" />
 </resources>

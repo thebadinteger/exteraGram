@@ -23,6 +23,8 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+
+import com.exteragram.messenger.ExteraConfig;
 import android.view.Gravity;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
@@ -143,7 +145,7 @@ public class GroupCreateUserCell extends FrameLayout {
         avatarDrawable = new AvatarDrawable();
 
         avatarImageView = new BackupImageView(context);
-        avatarImageView.setRoundRadius(AndroidUtilities.dp(24));
+        avatarImageView.setRoundRadius(ExteraConfig.getAvatarCorners(46.0f));
         addView(avatarImageView, LayoutHelper.createFrame(46, 46, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : (13 + padding), 6, LocaleController.isRTL ? (13 + padding) : 0, 0));
 
         nameTextView = new SimpleTextView(context) {
@@ -540,7 +542,7 @@ public class GroupCreateUserCell extends FrameLayout {
             }
         }
 
-        avatarImageView.setRoundRadius(currentChat != null && currentChat.forum ? AndroidUtilities.dp(14) : AndroidUtilities.dp(24));
+        avatarImageView.setRoundRadius(ExteraConfig.getAvatarCorners(46.0f, false, currentChat != null && currentChat.forum));
         if (currentStatus != null) {
             statusTextView.setText(currentStatus, true);
             statusTextView.setTag(Theme.key_windowBackgroundWhiteGrayText);
@@ -563,9 +565,15 @@ public class GroupCreateUserCell extends FrameLayout {
 
         } else if (checkBoxType == 2 && (isChecked || checkProgress > 0.0f)) {
             paint.setColor(Theme.getColor(Theme.key_checkboxSquareBackground, resourcesProvider));
-            float cx = avatarImageView.getLeft() + avatarImageView.getMeasuredWidth() / 2;
-            float cy = avatarImageView.getTop() + avatarImageView.getMeasuredHeight() / 2;
-            canvas.drawCircle(cx, cy, AndroidUtilities.dp(18) + AndroidUtilities.dp(4) * checkProgress, paint);
+            float cx = avatarImageView.getLeft() + avatarImageView.getMeasuredWidth() / 2f;
+            float cy = avatarImageView.getTop() + avatarImageView.getMeasuredHeight() / 2f;
+            float fDp = AndroidUtilities.dp(18.0f) + (AndroidUtilities.dp(4.0f) * checkProgress);
+            float f = cx - fDp;
+            float f2 = cy - fDp;
+            float f3 = cx + fDp;
+            float f4 = cy + fDp;
+            float f5 = fDp * 2.0f;
+            canvas.drawRoundRect(f, f2, f3, f4, ExteraConfig.getAvatarCorners(f5, true), ExteraConfig.getAvatarCorners(f5, true), paint);
         }
         if (drawDivider) {
             int start = AndroidUtilities.dp(LocaleController.isRTL ? 0 : 72 + padding);

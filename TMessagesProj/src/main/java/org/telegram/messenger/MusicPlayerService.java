@@ -344,7 +344,7 @@ public class MusicPlayerService extends Service implements NotificationCenter.No
                 mediaStyle.setShowActionsInCompactView(0);
             }
             Notification.Builder bldr = new Notification.Builder(this);
-            bldr.setSmallIcon(R.drawable.player)
+            bldr.setSmallIcon(com.exteragram.messenger.icons.IconManager.getNotificationSystemIcon())
                     .setOngoing(isPlaying)
                     .setContentTitle(contentTitle)
                     .setContentText(contentText)

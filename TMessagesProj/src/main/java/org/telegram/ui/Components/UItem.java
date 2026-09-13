@@ -43,10 +43,19 @@ public class UItem extends AdapterWithDiffUtils.Item {
     public CharSequence animatedText;
     public String[] texts;
     public boolean accent, red, transparent, locked;
+    public boolean drawLine;
     public int spanCount = MAX_SPAN_COUNT;
     public int parentSpanCount;
+    public int checkBoxIconResId;
+    public boolean exteraExpandableSwitch;
+    public Integer iconColor;
+    public boolean multiline;
+    public boolean prioritizeTitleOverValue;
+    public com.exteragram.messenger.plugins.models.SettingItem settingItem;
+    public View.OnClickListener switchClickCallback;
 
     public boolean include;
+
     public long dialogId;
     public String chatType;
     public int flags;
@@ -299,6 +308,23 @@ public class UItem extends AdapterWithDiffUtils.Item {
         return i;
     }
 
+    public static UItem asCheck(int id, CharSequence text, int iconResId) {
+        UItem i = new UItem(UniversalAdapter.VIEW_TYPE_CHECK, false);
+        i.id = id;
+        i.text = text;
+        i.iconResId = iconResId;
+        return i;
+    }
+
+    public static UItem asCheck(int id, CharSequence text, CharSequence subtext, boolean multiline) {
+        UItem i = new UItem(UniversalAdapter.VIEW_TYPE_CHECK, false);
+        i.id = id;
+        i.text = text;
+        i.textValue = subtext;
+        i.multiline = multiline;
+        return i;
+    }
+
     public static UItem asRadio(int id, CharSequence text) {
         UItem i = new UItem(UniversalAdapter.VIEW_TYPE_RADIO, false);
         i.id = id;
@@ -392,6 +418,16 @@ public class UItem extends AdapterWithDiffUtils.Item {
 
     public static UItem asSlideView(String[] choices, int chosen, Utilities.Callback<Integer> whenChose) {
         UItem item = new UItem(UniversalAdapter.VIEW_TYPE_SLIDE, false);
+        item.texts = choices;
+        item.intValue = chosen;
+        item.intCallback = whenChose;
+        item.longValue = -1;
+        return item;
+    }
+
+    public static UItem asSlideView(int id, String[] choices, int chosen, Utilities.Callback<Integer> whenChose) {
+        UItem item = new UItem(UniversalAdapter.VIEW_TYPE_SLIDE, false);
+        item.id = id;
         item.texts = choices;
         item.intValue = chosen;
         item.intCallback = whenChose;
@@ -717,8 +753,89 @@ public class UItem extends AdapterWithDiffUtils.Item {
         return factory.viewType == viewType;
     }
 
+    public static UItem asShadow() {
+        return asShadow(null);
+    }
+
+    public static UItem asButtonWithSubtext(int i, int i2, CharSequence charSequence, CharSequence charSequence2, int i3, int i4) {
+        UItem uItem = new UItem(UniversalAdapter.VIEW_TYPE_TEXT, false);
+        uItem.id = i;
+        uItem.iconResId = i2;
+        uItem.text = charSequence;
+        uItem.subtext = charSequence2;
+        uItem.pad = i3;
+        uItem.intValue = i4;
+        return uItem;
+    }
+
+    public static UItem asExteraExpandableSwitch(int i, CharSequence charSequence, CharSequence charSequence2, View.OnClickListener onClickListener) {
+        UItem uItem = new UItem(UniversalAdapter.VIEW_TYPE_EXPANDABLE_SWITCH, false);
+        uItem.id = i;
+        uItem.text = charSequence;
+        uItem.animatedText = charSequence2;
+        uItem.exteraExpandableSwitch = true;
+        uItem.switchClickCallback = onClickListener;
+        return uItem;
+    }
+
+    public UItem setTransparent(boolean z) {
+        this.transparent = z;
+        return this;
+    }
+
+    public UItem setCheckBoxIcon(int i) {
+        this.checkBoxIconResId = i;
+        return this;
+    }
+
+    public UItem showDivider(boolean z) {
+        this.hideDivider = !z;
+        return this;
+    }
+
+    public UItem setSearchable(com.exteragram.messenger.preferences.BasePreferencesActivity basePreferencesActivity) {
+        if (com.exteragram.messenger.preferences.utils.SettingsRegistry.isValidForSearch(this)) {
+            com.exteragram.messenger.preferences.utils.SettingsRegistry.getInstance().addSearchEntry(basePreferencesActivity, this);
+        }
+        return this;
+    }
+
+    public UItem setLinkAlias(String str, com.exteragram.messenger.preferences.BasePreferencesActivity basePreferencesActivity) {
+        if (com.exteragram.messenger.preferences.utils.SettingsRegistry.isValidForLinkAliases(this)) {
+            com.exteragram.messenger.preferences.utils.SettingsRegistry.getInstance().addLinkAliasForOption(str, basePreferencesActivity, this);
+        }
+        return this;
+    }
+
+    public UItem setValue(CharSequence charSequence) {
+        this.textValue = charSequence;
+        return this;
+    }
+
+    public UItem setMultiline(boolean z) {
+        this.multiline = z;
+        return this;
+    }
+
+    public UItem setIcon(int i) {
+        this.iconResId = i;
+        return this;
+    }
+
+    public UItem setColorfulIcon(int i, int i2) {
+        setIcon(i);
+        this.iconColor = Integer.valueOf(i2);
+        return this;
+    }
+
+    public UItem prioritizeTitleOverValue(boolean z) {
+        this.prioritizeTitleOverValue = z;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
+
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UItem item = (UItem) o;

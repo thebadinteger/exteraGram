@@ -5759,7 +5759,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     private static void writeMotionPhoto(File photoFile, File videoFile, OutputStream out, boolean[] cancelled) throws IOException {
         final long videoLength = videoFile.length();
         final String xmp = buildMotionPhotoXmp(videoLength);
-        final byte[] xmpHeader = "http://ns.adobe.com/xap/1.0/ ".getBytes("UTF-8");
+        final byte[] xmpHeader = "http://ns.adobe.com/xap/1.0/\0".getBytes("UTF-8");
         final byte[] xmpBytes = xmp.getBytes("UTF-8");
         final int segLen = xmpHeader.length + xmpBytes.length + 2;
         if (segLen > 65535) {

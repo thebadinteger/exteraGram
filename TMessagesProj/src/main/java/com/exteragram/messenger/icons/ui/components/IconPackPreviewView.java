@@ -75,7 +75,7 @@ public class IconPackPreviewView extends View {
         this.changeRunnable = new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.animateToNext();
+                IconPackPreviewView.this.animateToNext();
             }
         };
     }
@@ -177,9 +177,30 @@ public class IconPackPreviewView extends View {
         Utilities.globalQueue.postRunnable(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$loadIcons$1(arrayList, i, iArr, iconPack, z);
+                IconPackPreviewView.this.lambda$loadIcons$1(arrayList, i, iArr, iconPack, z);
             }
         });
+    }
+
+    private void lambda$loadIcons$1(List<Integer> list, int i, int[] iArr, IconPack iconPack, boolean z) {
+        List<Integer> randomIds = pickRandomIconIdsInternal(list, i, iArr);
+        Drawable[] drawables = new Drawable[this.currentIconIds.length];
+        int[] iconIds = new int[this.currentIconIds.length];
+        for (int j = 0; j < this.currentIconIds.length; j++) {
+            if (j < randomIds.size()) {
+                int iconId = randomIds.get(j);
+                iconIds[j] = iconId;
+                drawables[j] = getIconDrawableInternal(iconPack, iconId);
+            } else if (!randomIds.isEmpty() && this.isCircularMode) {
+                int iconId = randomIds.get(j % randomIds.size());
+                iconIds[j] = iconId;
+                drawables[j] = getIconDrawableInternal(iconPack, iconId);
+            } else {
+                iconIds[j] = 0;
+                drawables[j] = null;
+            }
+        }
+        AndroidUtilities.runOnUIThread(() -> lambda$loadIcons$0(iconPack, z, drawables, randomIds, iconIds));
     }
 
     public void lambda$loadIcons$0(IconPack iconPack, boolean z, Drawable[] drawableArr, List list, int[] iArr) {
@@ -299,7 +320,7 @@ public class IconPackPreviewView extends View {
             this.animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
                 @Override // android.animation.ValueAnimator.AnimatorUpdateListener
                 public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                    this.f$0.lambda$startTransition$2(valueAnimator2);
+                    IconPackPreviewView.this.lambda$startTransition$2(valueAnimator2);
                 }
             });
             this.animator.addListener(new AnimatorListenerAdapter() { 

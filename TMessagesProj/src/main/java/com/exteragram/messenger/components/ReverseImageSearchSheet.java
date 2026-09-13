@@ -19,8 +19,6 @@ import androidx.annotation.Keep;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.adblock.AdBlockClient;
 import com.exteragram.messenger.adblock.data.BlockResult;
-import com.google.android.gms.cast.MediaError;
-import com.google.android.gms.cast.framework.media.NotificationOptions;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -84,7 +82,7 @@ public class ReverseImageSearchSheet extends BottomSheet {
         this.useBackgroundTopPadding = false;
         setCanDismissWithSwipe(false);
         int currentActionBarHeight = ActionBar.getCurrentActionBarHeight() + AndroidUtilities.statusBarHeight;
-        FrameLayout frameLayout = new FrameLayout(context) { 
+        FrameLayout frameLayout = new FrameLayout(context) { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet.1
             @Override // android.widget.FrameLayout, android.view.View
             public void onMeasure(int i, int i2) {
                 super.onMeasure(i, View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.getSize(i2), TLObject.FLAG_30));
@@ -111,7 +109,7 @@ public class ReverseImageSearchSheet extends BottomSheet {
         if (enableAdBlock) {
             this.webView.addJavascriptInterface(adblockBridge, "Android");
         }
-        this.webView.setWebViewClient(new WebViewClient() { 
+        this.webView.setWebViewClient(new WebViewClient() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet.2
             @Override // android.webkit.WebViewClient
             public WebResourceResponse shouldInterceptRequest(WebView webView2, WebResourceRequest webResourceRequest) {
                 if (ReverseImageSearchSheet.this.adblockEnabled && webResourceRequest != null && !webResourceRequest.isForMainFrame()) {
@@ -119,7 +117,7 @@ public class ReverseImageSearchSheet extends BottomSheet {
                     if (blockResultIsAdRequest != null && blockResultIsAdRequest.isMatched()) {
                         String redirect = blockResultIsAdRequest.getRedirect();
                         if (TextUtils.isEmpty(redirect)) {
-                            return new WebResourceResponse("text/plain", "utf-8", MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, "Blocked", null, null);
+                            return new WebResourceResponse("text/plain", "utf-8", 500, "Blocked", null, null);
                         }
                         if (redirect.startsWith("data:")) {
                             try {
@@ -130,7 +128,7 @@ public class ReverseImageSearchSheet extends BottomSheet {
                                 map.put("Access-Control-Allow-Origin", "*");
                                 return new WebResourceResponse(strSubstring, null, 200, "OK", map, new ByteArrayInputStream(Base64.decode(strSubstring2, 0)));
                             } catch (Exception unused) {
-                                return new WebResourceResponse("text/plain", "utf-8", MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, "Blocked", null, null);
+                                return new WebResourceResponse("text/plain", "utf-8", 500, "Blocked", null, null);
                             }
                         }
                     }
@@ -215,7 +213,7 @@ public class ReverseImageSearchSheet extends BottomSheet {
         actionBar.setItemsBackgroundColor(getThemedColor(Theme.key_actionBarWhiteSelector), false);
         actionBar.setBackButtonImage(R.drawable.ic_close_white);
         actionBar.setTitle(provider.title);
-        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { 
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet.3
             @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
             public void onItemClick(int i3) {
                 if (i3 == -1) {
@@ -243,15 +241,27 @@ public class ReverseImageSearchSheet extends BottomSheet {
         circularProgressIndicator.setIndicatorTrackGapSize(AndroidUtilities.dp(3.0f));
         frameLayout.addView(circularProgressIndicator, LayoutHelper.createFrame(-2, -2, 17));
         setCustomView(frameLayout);
-        Utilities.globalQueue.postRunnable(new Runnable() { 
+        Utilities.globalQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$1(file, provider);
+                ReverseImageSearchSheet.this.lambda$new$1(file, provider);
             }
         });
     }
 
-    public void lambda$new$0(String str, Provider provider) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$new$1(File file, final Provider provider) {
+        final String strEncodeImage = encodeImage(file);
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet$$ExternalSyntheticLambda1
+            @Override // java.lang.Runnable
+            public final void run() {
+                ReverseImageSearchSheet.this.lambda$new$0(strEncodeImage, provider);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$new$0(String str, Provider provider) {
         if (this.webView == null) {
             return;
         }
@@ -262,16 +272,17 @@ public class ReverseImageSearchSheet extends BottomSheet {
         seedConsentCookies(provider);
         this.pendingScript = buildUploadScript(provider, str);
         this.webView.loadUrl(provider.landingUrl);
-        Runnable runnable = new Runnable() { 
+        Runnable runnable = new Runnable() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet$$ExternalSyntheticLambda3
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.reveal();
+                ReverseImageSearchSheet.this.reveal();
             }
         };
         this.revealTimeout = runnable;
-        AndroidUtilities.runOnUIThread(runnable, NotificationOptions.SKIP_STEP_THIRTY_SECONDS_IN_MS);
+        AndroidUtilities.runOnUIThread(runnable, 30000L);
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void reveal() {
         if (this.revealed || this.webView == null) {
             return;
@@ -287,22 +298,151 @@ public class ReverseImageSearchSheet extends BottomSheet {
         this.webView.animate().alpha(1.0f).setDuration(150L).start();
         CircularProgressIndicator circularProgressIndicator = this.spinner;
         if (circularProgressIndicator != null) {
-            circularProgressIndicator.animate().alpha(0.0f).setDuration(150L).withEndAction(new Runnable() { 
+            circularProgressIndicator.animate().alpha(0.0f).setDuration(150L).withEndAction(new Runnable() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet$$ExternalSyntheticLambda2
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$reveal$2();
+                    ReverseImageSearchSheet.this.lambda$reveal$2();
                 }
             }).start();
         }
     }
 
-    public void lambda$onElementsFound$0(String str) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$reveal$2() {
+        this.spinner.setVisibility(8);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void onUrlChanged(String str) {
+        this.currentUrl = str;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void hideProviderAds(WebView webView) {
+        if (this.provider != Provider.YANDEX) {
+            return;
+        }
+        webView.evaluateJavascript("(function(){try{if(!document.getElementById('__ayu_adcleanup')){var s=document.createElement('style');s.id='__ayu_adcleanup';s.textContent='.DistributionPopup,.Smartbanner{display:none!important}';(document.head||document.documentElement).appendChild(s);}}catch(e){}})();", null);
+    }
+
+    private static void seedConsentCookies(Provider provider) {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        int i = AnonymousClass4.$SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider[provider.ordinal()];
+        if (i == 1) {
+            cookieManager.setCookie("https://www.google.com", "SOCS=CAISHAgBEhJnd3NfMjAyNjA2MjYtMF9SQzEaAmVuIAEaBgiAjozSBg; Domain=.google.com; Path=/; Secure; SameSite=Lax");
+        } else if (i == 2) {
+            cookieManager.setCookie("https://www.bing.com", "BCP=AD=1&AL=1&SM=1; Domain=.bing.com; Path=/; Secure");
+        } else if (i == 3) {
+            cookieManager.setCookie("https://tineye.com", "cookie_consent=accepted; Path=/");
+        } else if (i == 4) {
+            String[] strArr = {"https://yandex.com", "https://yandex.ru"};
+            for (int i2 = 0; i2 < 2; i2++) {
+                String str = strArr[i2];
+                cookieManager.setCookie(str, "gdpr=0; Domain=" + (str.endsWith(".ru") ? ".yandex.ru" : ".yandex.com") + "; Path=/; Secure");
+            }
+        }
+        cookieManager.flush();
+    }
+
+    /* JADX INFO: renamed from: com.exteragram.messenger.components.ReverseImageSearchSheet$4, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass4 {
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider;
+
+        static {
+            int[] iArr = new int[Provider.values().length];
+            $SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider = iArr;
+            try {
+                iArr[Provider.GOOGLE.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider[Provider.BING.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider[Provider.TINEYE.ordinal()] = 3;
+            } catch (NoSuchFieldError unused3) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider[Provider.YANDEX.ordinal()] = 4;
+            } catch (NoSuchFieldError unused4) {
+            }
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void applyCosmetic(String str) {
+        if (this.webView == null || str == null) {
+            return;
+        }
+        if (str.startsWith("http://") || str.startsWith("https://")) {
+            AdBlockClient.CosmeticHide cosmeticHide = AdBlockClient.getCosmeticHide(str);
+            this.adblockBridge.setCosmeticHide(cosmeticHide);
+            if (cosmeticHide != null) {
+                if (!TextUtils.isEmpty(cosmeticHide.getHideCss())) {
+                    this.webView.evaluateJavascript(cosmeticHide.getHideCss(), null);
+                }
+                if (!TextUtils.isEmpty(cosmeticHide.getInjectedScript())) {
+                    this.webView.evaluateJavascript(cosmeticHide.getInjectedScript(), null);
+                }
+                if (cosmeticHide.isGenericHide()) {
+                    return;
+                }
+                this.webView.evaluateJavascript("    function getAllClassesAndIds() {\n        let elements = document.getElementsByTagName('*');\n        let classes = new Set();\n        let ids = new Set();\n\n        for (let element of elements) {\n            if (element.classList.length > 0) {\n                element.classList.forEach(cls => classes.add(cls));\n            }\n            if (element.id) {\n                ids.add(element.id);\n            }\n        }\n\n        return {\n            classes: Array.from(classes),\n            ids: Array.from(ids)\n        };\n    }\n\n    const observer = new MutationObserver(function(mutations) {\n        let result = getAllClassesAndIds();\n        Android.onElementsFound(JSON.stringify(result));\n    });\n\n    observer.observe(document, {\n        childList: true,\n        subtree: true,\n        attributes: true,\n        attributeFilter: ['class', 'id']\n    });\n\n    let result = getAllClassesAndIds();\n    Android.onElementsFound(JSON.stringify(result));\n", null);
+            }
+        }
+    }
+
+    public class AdblockBridge {
+        private volatile AdBlockClient.CosmeticHide cosmeticHide;
+        private final Set<String> hiddenSelectors;
+        private final Object lock;
+
+        private AdblockBridge() {
+            this.hiddenSelectors = Collections.synchronizedSet(new HashSet());
+            this.lock = new Object();
+        }
+
+        public void setCosmeticHide(AdBlockClient.CosmeticHide cosmeticHide) {
+            synchronized (this.lock) {
+                this.hiddenSelectors.clear();
+                this.cosmeticHide = cosmeticHide;
+            }
+        }
+
+        @JavascriptInterface
+        @Keep
+        public void onElementsFound(String str) {
+            synchronized (this.lock) {
+                try {
+                    if (this.cosmeticHide == null) {
+                        return;
+                    }
+                    final String cosmeticHideContinuous = AdBlockClient.getCosmeticHideContinuous(this.cosmeticHide, this.hiddenSelectors, str);
+                    if (!TextUtils.isEmpty(cosmeticHideContinuous)) {
+                        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.components.ReverseImageSearchSheet$AdblockBridge$$ExternalSyntheticLambda0
+                            @Override // java.lang.Runnable
+                            public final void run() {
+                                AdblockBridge.this.lambda$onElementsFound$0(cosmeticHideContinuous);
+                            }
+                        });
+                    }
+                } catch (Throwable th) {
+                    throw th;
+                }
+            }
+        }
+
+        /* JADX INFO: Access modifiers changed from: private */
+        public /* synthetic */ void lambda$onElementsFound$0(String str) {
             if (ReverseImageSearchSheet.this.webView != null) {
                 ReverseImageSearchSheet.this.webView.evaluateJavascript(str, null);
             }
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public static boolean isProviderHost(Provider provider, String str) {
         String lowerCase = str.toLowerCase();
         int i = AnonymousClass4.$SwitchMap$com$exteragram$messenger$components$ReverseImageSearchSheet$Provider[provider.ordinal()];
@@ -374,13 +514,13 @@ public class ReverseImageSearchSheet extends BottomSheet {
         return null;
     }
 
-    @Override // org.telegram.ui.ActionBar.BottomSheet, android.app.Dialog
-    public void lambda$openCrafting$8() {
+    @Override
+    public void onBackPressed() {
         WebView webView = this.webView;
         if (webView != null && webView.canGoBack()) {
             this.webView.goBack();
         } else {
-            super.lambda$openCrafting$8();
+            super.onBackPressed();
         }
     }
 

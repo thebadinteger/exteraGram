@@ -1,3 +1,40 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package androidx.recyclerview.widget;
+
+import android.content.Context;
+import android.graphics.PointF;
+import android.util.DisplayMetrics;
+import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+
+import org.telegram.messenger.BuildVars;
+
+/**
+ * {@link RecyclerView.SmoothScroller} implementation which uses a {@link LinearInterpolator} until
+ * the target position becomes a child of the RecyclerView and then uses a
+ * {@link DecelerateInterpolator} to slowly approach to target position.
+ * <p>
+ * If the {@link RecyclerView.LayoutManager} you are using does not implement the
+ * {@link RecyclerView.SmoothScroller.ScrollVectorProvider} interface, then you must override the
+ * {@link #computeScrollVectorForPosition(int)} method. All the LayoutManagers bundled with
+ * the support library implement this interface.
+ */
 public class LinearSmoothScroller extends RecyclerView.SmoothScroller {
 
     private static final boolean DEBUG = BuildVars.DEBUG_VERSION;

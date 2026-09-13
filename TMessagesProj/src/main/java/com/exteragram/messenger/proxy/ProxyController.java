@@ -89,10 +89,10 @@ public final class ProxyController {
         try {
             ensureLoaded();
             ArrayList arrayList = new ArrayList(this.proxyList);
-            Collections.sort(arrayList, new Comparator() { 
+            Collections.sort(arrayList, new Comparator() { // from class: com.exteragram.messenger.proxy.ProxyController$$ExternalSyntheticLambda0
                 @Override // java.util.Comparator
                 public final int compare(Object obj, Object obj2) {
-                    return this.f$0.lambda$saveProxyList$0((SharedConfig.ProxyInfo) obj, (SharedConfig.ProxyInfo) obj2);
+                    return ProxyController.this.lambda$saveProxyList$0((SharedConfig.ProxyInfo) obj, (SharedConfig.ProxyInfo) obj2);
                 }
             });
             SerializedData serializedData = new SerializedData();
@@ -133,16 +133,168 @@ public final class ProxyController {
         }
     }
 
-    public void lambda$requestProxyCountry$3(final String str, String str2, final ProxyCountryCallback proxyCountryCallback) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ int lambda$saveProxyList$0(SharedConfig.ProxyInfo proxyInfo, SharedConfig.ProxyInfo proxyInfo2) {
+        SharedConfig.ProxyInfo proxyInfo3 = this.currentProxy;
+        long j = proxyInfo3 == proxyInfo ? -200000L : 0L;
+        if (!proxyInfo.available) {
+            j += 100000;
+        }
+        long j2 = proxyInfo3 == proxyInfo2 ? -200000L : 0L;
+        if (!proxyInfo2.available) {
+            j2 += 100000;
+        }
+        return Long.compare(proxyInfo.ping + j, proxyInfo2.ping + j2);
+    }
+
+    public synchronized SharedConfig.ProxyInfo addProxy(SharedConfig.ProxyInfo proxyInfo) {
+        ensureLoaded();
+        int size = this.proxyList.size();
+        int i = 0;
+        while (true) {
+            ArrayList<SharedConfig.ProxyInfo> arrayList = this.proxyList;
+            if (i < size) {
+                SharedConfig.ProxyInfo proxyInfo2 = arrayList.get(i);
+                if (proxyInfo.address.equals(proxyInfo2.address) && proxyInfo.port == proxyInfo2.port && proxyInfo.username.equals(proxyInfo2.username) && proxyInfo.password.equals(proxyInfo2.password) && proxyInfo.secret.equals(proxyInfo2.secret)) {
+                    return proxyInfo2;
+                }
+                i++;
+            } else {
+                arrayList.add(0, proxyInfo);
+                syncProxyList();
+                saveProxyList();
+                return proxyInfo;
+            }
+        }
+    }
+
+    public synchronized SharedConfig.ProxyInfo saveProxy(SharedConfig.ProxyInfo proxyInfo, String str, String str2) {
+        SharedConfig.ProxyInfo proxyInfoAddProxy;
         try {
-            str = getCountryDisplayName(fetchProxyCountryCode(str2));
+            ensureLoaded();
+            if (!TextUtils.isEmpty(str) && !TextUtils.equals(str, proxyInfo.getLink())) {
+                moveMetadata(str, proxyInfo.getLink());
+            }
+            proxyInfoAddProxy = addProxy(proxyInfo);
+            if (str2 != null) {
+                setName(proxyInfoAddProxy, str2);
+            }
+        } catch (Throwable th) {
+            throw th;
+        }
+        return proxyInfoAddProxy;
+    }
+
+    public synchronized String buildShareLink(SharedConfig.ProxyInfo proxyInfo) {
+        return buildShareLink(proxyInfo, null);
+    }
+
+    public synchronized String buildShareLink(SharedConfig.ProxyInfo proxyInfo, String str) {
+        if (proxyInfo == null) {
+            return _UrlKt.FRAGMENT_ENCODE_SET;
+        }
+        String link = proxyInfo.getLink();
+        String strNormalizeName = normalizeName(str);
+        if (TextUtils.isEmpty(strNormalizeName)) {
+            strNormalizeName = getName(proxyInfo);
+        }
+        if (TextUtils.isEmpty(strNormalizeName)) {
+            return link;
+        }
+        try {
+            return link + "&title=" + URLEncoder.encode(strNormalizeName, "UTF-8");
+        } catch (UnsupportedEncodingException unused) {
+            return link;
+        }
+    }
+
+    public synchronized void deleteProxy(SharedConfig.ProxyInfo proxyInfo) {
+        try {
+            ensureLoaded();
+            String proxyKey = getProxyKey(proxyInfo);
+            SharedConfig.ProxyInfo proxyInfo2 = this.currentProxy;
+            if (proxyInfo2 == proxyInfo || (proxyKey != null && proxyKey.equals(getProxyKey(proxyInfo2)))) {
+                this.currentProxy = null;
+                SharedConfig.currentProxy = null;
+                SharedPreferences globalMainSettings = MessagesController.getGlobalMainSettings();
+                boolean z = globalMainSettings.getBoolean("proxy_enabled", false);
+                SharedPreferences.Editor editorEdit = globalMainSettings.edit();
+                editorEdit.putString("proxy_ip", _UrlKt.FRAGMENT_ENCODE_SET);
+                editorEdit.putString("proxy_pass", _UrlKt.FRAGMENT_ENCODE_SET);
+                editorEdit.putString("proxy_user", _UrlKt.FRAGMENT_ENCODE_SET);
+                editorEdit.putString("proxy_secret", _UrlKt.FRAGMENT_ENCODE_SET);
+                editorEdit.putInt("proxy_port", 1080);
+                editorEdit.putBoolean("proxy_enabled", false);
+                editorEdit.putBoolean("proxy_enabled_calls", false);
+                editorEdit.apply();
+                if (z) {
+                    ConnectionsManager.setProxySettings(false, _UrlKt.FRAGMENT_ENCODE_SET, 0, _UrlKt.FRAGMENT_ENCODE_SET, _UrlKt.FRAGMENT_ENCODE_SET, _UrlKt.FRAGMENT_ENCODE_SET);
+                }
+            }
+            this.proxyList.remove(proxyInfo);
+            removeProxy(proxyInfo);
+            syncProxyList();
+            saveProxyList();
+        } catch (Throwable th) {
+            throw th;
+        }
+    }
+
+    public synchronized String getDisplayName(SharedConfig.ProxyInfo proxyInfo) {
+        if (proxyInfo == null) {
+            return _UrlKt.FRAGMENT_ENCODE_SET;
+        }
+        String name = getName(proxyInfo);
+        if (TextUtils.isEmpty(name)) {
+            name = proxyInfo.address + ":" + proxyInfo.port;
+        }
+        return name;
+    }
+
+    public synchronized String getProxyTypeName(SharedConfig.ProxyInfo proxyInfo) {
+        try {
+        } catch (Throwable th) {
+            throw th;
+        }
+        return LocaleController.getString(isTelegramProxy(proxyInfo) ? R.string.UseProxyTelegram : R.string.UseProxySocks5);
+    }
+
+    public void requestProxyCountry(SharedConfig.ProxyInfo proxyInfo, final ProxyCountryCallback proxyCountryCallback) {
+        if (proxyCountryCallback == null) {
+            return;
+        }
+        final String string = LocaleController.getString(R.string.Unknown);
+        final String proxyCountryKey = getProxyCountryKey(proxyInfo);
+        if (TextUtils.isEmpty(proxyCountryKey)) {
+            AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.proxy.ProxyController$$ExternalSyntheticLambda2
+                @Override // java.lang.Runnable
+                public final void run() {
+                    proxyCountryCallback.onCountryResolved(string);
+                }
+            });
+        } else {
+            Utilities.globalQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.proxy.ProxyController$$ExternalSyntheticLambda3
+                @Override // java.lang.Runnable
+                public final void run() {
+                    ProxyController.this.lambda$requestProxyCountry$3(string, proxyCountryKey, proxyCountryCallback);
+                }
+            });
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestProxyCountry$3(String str, String str2, final ProxyCountryCallback proxyCountryCallback) {
+        String country = str;
+        try {
+            country = getCountryDisplayName(fetchProxyCountryCode(str2));
         } catch (Exception e) {
             FileLog.e(e);
         }
-        AndroidUtilities.runOnUIThread(new Runnable() { 
+        final String resolvedCountry = country;
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.proxy.ProxyController$$ExternalSyntheticLambda4
             @Override // java.lang.Runnable
             public final void run() {
-                proxyCountryCallback.onCountryResolved(str);
+                proxyCountryCallback.onCountryResolved(resolvedCountry);
             }
         });
     }
@@ -236,7 +388,170 @@ public final class ProxyController {
         }
     }
 
-    int lambda$sortProxyList$4(SharedConfig.ProxyInfo proxyInfo, boolean z, ArrayList arrayList, SharedConfig.ProxyInfo proxyInfo2, SharedConfig.ProxyInfo proxyInfo3) {
+    /* JADX WARN: Code duplicated, block: B:10:0x0012  */
+    public synchronized boolean isPinned(SharedConfig.ProxyInfo proxyInfo) {
+        boolean z;
+        if (proxyInfo == null) {
+            z = false;
+        } else if (isPinned(getProxyKey(proxyInfo))) {
+            z = true;
+        } else {
+            z = false;
+        }
+        return z;
+    }
+
+    public synchronized boolean isPinned(String str) {
+        ensureLoaded();
+        return !TextUtils.isEmpty(str) && this.pinnedProxies.contains(str);
+    }
+
+    public synchronized int getPinnedIndex(SharedConfig.ProxyInfo proxyInfo) {
+        ensureLoaded();
+        int iIndexOf = -1;
+        if (proxyInfo == null) {
+            return -1;
+        }
+        String proxyKey = getProxyKey(proxyInfo);
+        if (!TextUtils.isEmpty(proxyKey)) {
+            iIndexOf = this.pinnedProxyOrder.indexOf(proxyKey);
+        }
+        return iIndexOf;
+    }
+
+    public synchronized int getPinnedCount() {
+        ensureLoaded();
+        return this.pinnedProxyOrder.size();
+    }
+
+    public synchronized int getSelectedPinAction(List<SharedConfig.ProxyInfo> list) {
+        ensureLoaded();
+        Iterator<SharedConfig.ProxyInfo> it = list.iterator();
+        boolean z = false;
+        boolean z2 = false;
+        while (it.hasNext()) {
+            if (isPinned(it.next())) {
+                z = true;
+            } else {
+                z2 = true;
+            }
+            if (z && z2) {
+                return 0;
+            }
+        }
+        if (z) {
+            return 2;
+        }
+        return z2 ? 1 : 0;
+    }
+
+    public synchronized PinOperationResult applySelectedPinAction(List<SharedConfig.ProxyInfo> list) {
+        ensureLoaded();
+        int selectedPinAction = getSelectedPinAction(list);
+        if (selectedPinAction == 0) {
+            return PinOperationResult.NO_CHANGE;
+        }
+        boolean z = false;
+        if (selectedPinAction == 1) {
+            ArrayList arrayList = new ArrayList();
+            Iterator<SharedConfig.ProxyInfo> it = list.iterator();
+            while (it.hasNext()) {
+                String proxyKey = getProxyKey(it.next());
+                if (!TextUtils.isEmpty(proxyKey) && !this.pinnedProxies.contains(proxyKey) && !arrayList.contains(proxyKey)) {
+                    arrayList.add(proxyKey);
+                }
+            }
+            if (this.pinnedProxyOrder.size() + arrayList.size() > 10) {
+                return PinOperationResult.LIMIT_REACHED;
+            }
+            int size = arrayList.size();
+            int i = 0;
+            while (i < size) {
+                Object obj = arrayList.get(i);
+                i++;
+                String str = (String) obj;
+                if (this.pinnedProxies.add(str)) {
+                    this.pinnedProxyOrder.add(str);
+                    z = true;
+                }
+            }
+        } else {
+            Iterator<SharedConfig.ProxyInfo> it2 = list.iterator();
+            while (it2.hasNext()) {
+                String proxyKey2 = getProxyKey(it2.next());
+                if (!TextUtils.isEmpty(proxyKey2)) {
+                    if (this.pinnedProxies.remove(proxyKey2)) {
+                        z = true;
+                    }
+                    if (this.pinnedProxyOrder.remove(proxyKey2)) {
+                        z = true;
+                    }
+                }
+            }
+        }
+        if (z) {
+            save();
+            return PinOperationResult.CHANGED;
+        }
+        return PinOperationResult.NO_CHANGE;
+    }
+
+    public synchronized boolean movePinnedProxy(SharedConfig.ProxyInfo proxyInfo, SharedConfig.ProxyInfo proxyInfo2) {
+        ensureLoaded();
+        String proxyKey = getProxyKey(proxyInfo);
+        String proxyKey2 = getProxyKey(proxyInfo2);
+        if (!TextUtils.isEmpty(proxyKey) && !TextUtils.isEmpty(proxyKey2) && !TextUtils.equals(proxyKey, proxyKey2)) {
+            if (this.pinnedProxies.contains(proxyKey) && this.pinnedProxies.contains(proxyKey2)) {
+                int iIndexOf = this.pinnedProxyOrder.indexOf(proxyKey);
+                int iIndexOf2 = this.pinnedProxyOrder.indexOf(proxyKey2);
+                if (iIndexOf >= 0 && iIndexOf2 >= 0) {
+                    this.pinnedProxyOrder.remove(iIndexOf);
+                    this.pinnedProxyOrder.add(iIndexOf2, proxyKey);
+                    save();
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    public synchronized void removeProxy(SharedConfig.ProxyInfo proxyInfo) {
+        ensureLoaded();
+        String proxyKey = getProxyKey(proxyInfo);
+        if (TextUtils.isEmpty(proxyKey)) {
+            return;
+        }
+        if (this.pinnedProxyOrder.remove(proxyKey) | (this.proxyNames.remove(proxyKey) != null) | this.pinnedProxies.remove(proxyKey)) {
+            save();
+        }
+    }
+
+    public synchronized void clearAll() {
+        ensureLoaded();
+        if (this.pinnedProxies.isEmpty() && this.pinnedProxyOrder.isEmpty() && this.proxyNames.isEmpty()) {
+            return;
+        }
+        this.pinnedProxies.clear();
+        this.pinnedProxyOrder.clear();
+        this.proxyNames.clear();
+        save();
+    }
+
+    public synchronized void sortProxyList(List<SharedConfig.ProxyInfo> list, final boolean z, final SharedConfig.ProxyInfo proxyInfo) {
+        ensureLoaded();
+        final ArrayList arrayList = new ArrayList(list);
+        Collections.sort(list, new Comparator() { // from class: com.exteragram.messenger.proxy.ProxyController$$ExternalSyntheticLambda1
+            @Override // java.util.Comparator
+            public final int compare(Object obj, Object obj2) {
+                return ProxyController.this.lambda$sortProxyList$4(proxyInfo, z, arrayList, (SharedConfig.ProxyInfo) obj, (SharedConfig.ProxyInfo) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ int lambda$sortProxyList$4(SharedConfig.ProxyInfo proxyInfo, boolean z, ArrayList arrayList, SharedConfig.ProxyInfo proxyInfo2, SharedConfig.ProxyInfo proxyInfo3) {
         int pinnedIndex = getPinnedIndex(proxyInfo2);
         int pinnedIndex2 = getPinnedIndex(proxyInfo3);
         boolean z2 = pinnedIndex >= 0;
@@ -446,86 +761,54 @@ public final class ProxyController {
         SharedConfig.currentProxy = this.currentProxy;
     }
 
-    private String fetchProxyCountryCode(String str) throws Throwable {
-        HttpURLConnection httpURLConnection;
+    private String fetchProxyCountryCode(String str) {
         String strNormalizeProxyCountryKey = normalizeProxyCountryKey(str);
-        boolean zIsEmpty = TextUtils.isEmpty(strNormalizeProxyCountryKey);
-        String upperCase = _UrlKt.FRAGMENT_ENCODE_SET;
-        if (zIsEmpty) {
+        if (TextUtils.isEmpty(strNormalizeProxyCountryKey)) {
             return _UrlKt.FRAGMENT_ENCODE_SET;
         }
+        HttpURLConnection httpURLConnection = null;
+        BufferedReader bufferedReader = null;
         try {
             InetAddress byName = InetAddress.getByName(IDN.toASCII(strNormalizeProxyCountryKey));
             if (byName.isAnyLocalAddress() || byName.isLoopbackAddress() || byName.isLinkLocalAddress() || byName.isSiteLocalAddress()) {
                 return _UrlKt.FRAGMENT_ENCODE_SET;
             }
-            BufferedReader bufferedReader = null;
-            try {
-                httpURLConnection = (HttpURLConnection) new URL("https://ipwho.is/" + URLEncoder.encode(byName.getHostAddress(), "UTF-8")).openConnection();
-                try {
-                    httpURLConnection.setConnectTimeout(4000);
-                    httpURLConnection.setReadTimeout(4000);
-                    httpURLConnection.setInstanceFollowRedirects(true);
-                    httpURLConnection.setUseCaches(false);
-                    httpURLConnection.setRequestMethod("GET");
-                    if (httpURLConnection.getResponseCode() != 200) {
-                        httpURLConnection.disconnect();
-                        return _UrlKt.FRAGMENT_ENCODE_SET;
-                    }
-                    BufferedReader bufferedReader2 = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
-                    try {
-                        StringBuilder sb = new StringBuilder();
-                        while (true) {
-                            String line = bufferedReader2.readLine();
-                            if (line == null) {
-                                break;
-                            }
-                            sb.append(line);
-                        }
-                        JSONObject jSONObject = new JSONObject(sb.toString());
-                        if (!jSONObject.optBoolean("success", false)) {
-                            try {
-                                bufferedReader2.close();
-                            } catch (Exception unused) {
-                            }
-                            httpURLConnection.disconnect();
-                            return _UrlKt.FRAGMENT_ENCODE_SET;
-                        }
-                        String strTrim = jSONObject.optString("country_code", _UrlKt.FRAGMENT_ENCODE_SET).trim();
-                        if (strTrim.length() == 2) {
-                            upperCase = strTrim.toUpperCase(Locale.US);
-                        }
-                        try {
-                            bufferedReader2.close();
-                        } catch (Exception unused2) {
-                        }
-                        httpURLConnection.disconnect();
-                        return upperCase;
-                    } catch (Throwable th) {
-                        th = th;
-                        bufferedReader = bufferedReader2;
-                    }
-                } catch (Throwable th2) {
-                    th = th2;
-                }
-            } catch (Throwable th3) {
-                th = th3;
-                httpURLConnection = null;
+            httpURLConnection = (HttpURLConnection) new URL("https://ipwho.is/" + URLEncoder.encode(byName.getHostAddress(), "UTF-8")).openConnection();
+            httpURLConnection.setConnectTimeout(4000);
+            httpURLConnection.setReadTimeout(4000);
+            httpURLConnection.setInstanceFollowRedirects(true);
+            httpURLConnection.setUseCaches(false);
+            httpURLConnection.setRequestMethod("GET");
+            if (httpURLConnection.getResponseCode() != 200) {
+                return _UrlKt.FRAGMENT_ENCODE_SET;
             }
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (Exception unused3) {
-                }
+            bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line);
             }
-            if (httpURLConnection == null) {
-                throw th;
+            JSONObject jSONObject = new JSONObject(sb.toString());
+            if (!jSONObject.optBoolean("success", false)) {
+                return _UrlKt.FRAGMENT_ENCODE_SET;
             }
-            httpURLConnection.disconnect();
-            throw th;
+            String strTrim = jSONObject.optString("country_code", _UrlKt.FRAGMENT_ENCODE_SET).trim();
+            if (strTrim.length() == 2) {
+                return strTrim.toUpperCase(Locale.US);
+            }
+            return _UrlKt.FRAGMENT_ENCODE_SET;
         } catch (Exception e) {
             FileLog.e(e);
             return _UrlKt.FRAGMENT_ENCODE_SET;
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (Exception ignored) {}
+            }
+            if (httpURLConnection != null) {
+                httpURLConnection.disconnect();
+            }
         }
     }
 

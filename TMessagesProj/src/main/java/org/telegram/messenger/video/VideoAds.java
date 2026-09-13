@@ -247,6 +247,13 @@ public class VideoAds {
     private void show() {
         if (ads.isEmpty()) return;
         final TLRPC.TL_sponsoredMessage ad = ads.get(0);
+        if (com.exteragram.messenger.utils.network.RemoteUtils.getBooleanConfigValue("hide_ads", false).booleanValue()) {
+            ads.remove(0);
+            first = false;
+            lastTime = System.currentTimeMillis();
+            schedule();
+            return;
+        }
         final long showTime = System.currentTimeMillis() - currentBulletinPassedTime;
         bulletinShowTime = showTime;
 

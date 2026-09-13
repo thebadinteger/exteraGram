@@ -58,6 +58,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import com.exteragram.messenger.AvatarCornerType;
+import com.exteragram.messenger.ExteraConfig;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -505,7 +508,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
         this.canDrawInParent = canDrawInParent;
         this.themeDelegate = resourcesProvider;
         imageReceiver = new ImageReceiver(this);
-        imageReceiver.setRoundRadius(AndroidUtilities.roundMessageSize / 2);
+        imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(AndroidUtilities.roundMessageSize, true));
         avatarDrawable = new AvatarDrawable();
         TAG = DownloadController.getInstance(currentAccount).generateObserverTag();
 
@@ -681,7 +684,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
             } else {
                 StoriesUtilities.setImage(imageReceiver, storyItem);
             }
-            imageReceiver.setRoundRadius((int) (stickerSize / 2f));
+            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(stickerSize * 0.7f, true));
         } else if (messageObject.type == MessageObject.TYPE_ACTION_WALLPAPER) {
             TLRPC.PhotoSize strippedPhotoSize = null;
             if (messageObject.strippedThumb == null) {
@@ -722,7 +725,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
             } else {
                 wallpaperPreviewDrawable = null;
             }
-            imageReceiver.setRoundRadius((int) (stickerSize / 2f));
+            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(stickerSize * 0.7f, true));
 
             float uploadingInfoProgress = getUploadingInfoProgress(messageObject);
             if (uploadingInfoProgress == 1f) {
@@ -732,7 +735,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
                 radialProgress.setIcon(MediaActionDrawable.ICON_CANCEL, !messageIdChanged, !messageIdChanged);
             }
         } else if (messageObject.type == MessageObject.TYPE_SUGGEST_PHOTO) {
-            imageReceiver.setRoundRadius((int) (stickerSize / 2f));
+            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(stickerSize * 0.7f, true));
             imageReceiver.setAllowStartLottieAnimation(true);
             imageReceiver.setDelegate(null);
             TLRPC.TL_messageActionSuggestProfilePhoto action = (TLRPC.TL_messageActionSuggestProfilePhoto) messageObject.messageOwner.action;
@@ -985,7 +988,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
 
             imageReceiver.setAllowStartLottieAnimation(true);
             imageReceiver.setDelegate(null);
-            imageReceiver.setRoundRadius(dp(14));
+            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(52.0f, false, AvatarCornerType.COMMUNITY));
             imageReceiver.setAutoRepeatCount(1);
 
             avatarDrawable.setInfo(community);
@@ -993,7 +996,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
         } else if (messageObject.type == MessageObject.TYPE_ACTION_PHOTO) {
             imageReceiver.setAllowStartLottieAnimation(true);
             imageReceiver.setDelegate(null);
-            imageReceiver.setRoundRadius(AndroidUtilities.roundMessageSize / 2);
+            imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(AndroidUtilities.roundMessageSize, true));
             imageReceiver.setAutoRepeatCount(1);
             long id = messageObject.getDialogId();
             avatarDrawable.setInfo(id, null, null);
@@ -2756,6 +2759,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
                 if (messageObject.type == MessageObject.TYPE_GIFT_THEME_UPDATE || messageObject.type == MessageObject.TYPE_GIFT_OFFER || messageObject.type == MessageObject.TYPE_GIFT_OFFER_REJECTED || messageObject.type == MessageObject.TYPE_SHARING_OFFER) {
                     imageSize += dp(20);
                 }
+                imageReceiver.setRoundRadius(ExteraConfig.getAvatarCorners(imageSize, true, messageObject.type == MessageObject.TYPE_COMMUNITY_CHANGED ? AvatarCornerType.COMMUNITY : AvatarCornerType.DEFAULT));
             } else if (messageObject.type == MessageObject.TYPE_ACTION_PHOTO) {
                 imageReceiver.setImageCoords((previousWidth - stickerSize) / 2f, textY + textHeight + giftRectSize * 0.075f, stickerSize, stickerSize);
             } else if (messageObject.type == MessageObject.TYPE_GIFT_PREMIUM_CHANNEL) {

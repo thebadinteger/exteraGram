@@ -136,6 +136,12 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
     private ContactsAdapter listViewAdapter;
     private StickerEmptyView emptyView;
     private RecyclerListView listView;
+    private MainTabsActivityController mainTabsActivityController;
+
+    public void setMainTabsActivityController(MainTabsActivityController mainTabsActivityController) {
+        this.mainTabsActivityController = mainTabsActivityController;
+    }
+
     private RecyclerAnimationScrollHelper scrollHelper;
     private LinearLayoutManager layoutManager;
     private SearchAdapter searchListViewAdapter;

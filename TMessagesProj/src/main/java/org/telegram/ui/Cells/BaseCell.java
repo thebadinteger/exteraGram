@@ -148,8 +148,11 @@ public abstract class BaseCell extends ViewGroup implements SizeNotifierFrameLay
     }
 
     public static class RippleDrawableSafe extends RippleDrawable {
+        public Drawable mask;
+
         public RippleDrawableSafe(@NonNull ColorStateList color, @Nullable Drawable content, @Nullable Drawable mask) {
             super(color, content, mask);
+            this.mask = mask;
         }
 
         @Override

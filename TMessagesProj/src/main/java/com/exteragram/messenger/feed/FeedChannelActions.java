@@ -27,9 +27,19 @@ public abstract class FeedChannelActions {
         itemOptionsMakeOptions.add(z ? R.drawable.msg_channel : R.drawable.msg_discussion, LocaleController.getString(z ? R.string.OpenChannel2 : R.string.OpenGroup2), runnable).add(R.drawable.menu_hide_gift, LocaleController.getString(R.string.FeedHideChannel), new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                ChatActivity chatActivity2 = chatActivity;
-                TLRPC.Chat chat2 = chat;
-                chatActivity2.hideFeedChannelWithUndo(-chat2.id, chat2.title);
+                final long dialogId = -chat.id;
+                final int currentAccount = chatActivity.getCurrentAccount();
+                FeedConfig.getInstance(currentAccount).setExcluded(dialogId, true);
+                FeedController.getInstance(currentAccount).markConfigApplied();
+                FeedController.getInstance(currentAccount).getStore().setHidden(dialogId, true);
+                org.telegram.ui.Components.BulletinFactory.of(chatActivity).createUndoBulletin(org.telegram.messenger.AndroidUtilities.replaceTags(LocaleController.formatString(R.string.FeedChannelHidden, chat.title)), new Runnable() {
+                    @Override
+                    public void run() {
+                        FeedConfig.getInstance(currentAccount).setExcluded(dialogId, false);
+                        FeedController.getInstance(currentAccount).markConfigApplied();
+                        FeedController.getInstance(currentAccount).getStore().setHidden(dialogId, false);
+                    }
+                }, null).show();
             }
         }).addIf(canLeave(chat), R.drawable.msg_leave, (CharSequence) LocaleController.getString(chat.broadcast ? R.string.LeaveChannelMenu : R.string.LeaveMegaMenu), true, new Runnable() { 
             @Override // java.lang.Runnable

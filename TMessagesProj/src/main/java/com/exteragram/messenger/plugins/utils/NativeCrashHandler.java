@@ -36,7 +36,6 @@ public final class NativeCrashHandler {
     @JvmStatic
     public static final String getCrashFlagPath() {
         String absolutePath = new File(ApplicationLoader.getFilesDirFixed(), "native_crash.flag").getAbsolutePath();
-        "getAbsolutePath(...)";
         return absolutePath;
     }
 }

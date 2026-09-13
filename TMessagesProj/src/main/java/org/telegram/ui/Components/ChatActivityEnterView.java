@@ -14550,7 +14550,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
     }
 
-    private int getThemedColor(int key) {
+    public int getThemedColor(int key) {
         if (resourcesProvider != null) {
             return resourcesProvider.getColor(key);
         }

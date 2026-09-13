@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.icons.ExteraResources;
 import com.exteragram.messenger.icons.IconManager;
@@ -94,11 +95,35 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
         return this.fragmentView;
     }
 
+    private void updateAdapter() {
+        if (this.listView != null && this.listView.adapter != null) {
+            this.listView.adapter.update(true);
+        }
+    }
+
+    private void updateFilterChecks() {
+        for (int i = 0; i < this.filterItems.length; i++) {
+            ActionBarMenuSubItem item = this.filterItems[i];
+            if (item != null) {
+                item.setChecked(this.iconFilter == i);
+            }
+        }
+    }
+
+    private void setIconFilter(int filter) {
+        if (this.iconFilter == filter) {
+            return;
+        }
+        this.iconFilter = filter;
+        updateFilterChecks();
+        updateAdapter();
+    }
+
     public class AnonymousClass1 extends ActionBarMenuItem.ActionBarMenuItemSearchListener {
         public AnonymousClass1() {
         }
 
-        @Override // org.telegram.ui.ActionBar.ActionBarMenuItem.ActionBarMenuItemSearchListener
+        @Override
         public void onSearchExpand() {
             IconPacksEditorActivity.this.searching = true;
             if (IconPacksEditorActivity.this.otherItem != null) {
@@ -106,7 +131,7 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
             }
         }
 
-        @Override // org.telegram.ui.ActionBar.ActionBarMenuItem.ActionBarMenuItemSearchListener
+        @Override
         public void onSearchCollapse() {
             IconPacksEditorActivity.this.searching = false;
             IconPacksEditorActivity.this.query = null;
@@ -116,26 +141,37 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
             IconPacksEditorActivity.this.updateAdapter();
         }
 
-        @Override // org.telegram.ui.ActionBar.ActionBarMenuItem.ActionBarMenuItemSearchListener
+        @Override
         public void onTextChanged(final EditText editText) {
             if (IconPacksEditorActivity.this.searchRunnable != null) {
                 AndroidUtilities.cancelRunOnUIThread(IconPacksEditorActivity.this.searchRunnable);
             }
-            IconPacksEditorActivity.this.searchRunnable = new Runnable() { 
-                @Override // java.lang.Runnable
-                public final void run() {
-                    this.f$0.lambda$onTextChanged$0(editText);
-                }
+            IconPacksEditorActivity.this.searchRunnable = () -> {
+                IconPacksEditorActivity.this.query = editText.getText().toString();
+                IconPacksEditorActivity.this.updateAdapter();
             };
             AndroidUtilities.runOnUIThread(IconPacksEditorActivity.this.searchRunnable, 200L);
         }
+    }
 
-        public void lambda$createFilterLayout$0(View view) {
-        ActionBarMenuItem actionBarMenuItem = this.otherItem;
-        if (actionBarMenuItem == null || actionBarMenuItem.getPopupLayout() == null || this.otherItem.getPopupLayout().getSwipeBack() == null) {
-            return;
-        }
-        this.otherItem.getPopupLayout().getSwipeBack().closeForeground();
+    private ActionBarPopupWindow.ActionBarPopupWindowLayout createFilterLayout(Context context) {
+        ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(context, 0, getResourceProvider());
+        popupLayout.setFitItems(true);
+        ActionBarMenuSubItem backItem = ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_arrow_back, LocaleController.getString(R.string.Back), false, getResourceProvider());
+        backItem.setOnClickListener(v -> {
+            if (otherItem != null && otherItem.getPopupLayout() != null && otherItem.getPopupLayout().getSwipeBack() != null) {
+                otherItem.getPopupLayout().getSwipeBack().closeForeground();
+            }
+        });
+        View gap = ActionBarMenuItem.addGap(0, popupLayout);
+        LinearLayout.LayoutParams params = LayoutHelper.createLinear(-1, 8);
+        gap.setLayoutParams(params);
+        gap.setBackgroundColor(Theme.getColor(Theme.key_actionBarDefaultSubmenuSeparator));
+        createFilterItem(popupLayout, LocaleController.getString(R.string.IconPickerAllIcons), 0);
+        createFilterItem(popupLayout, LocaleController.getString(R.string.IconPickerReplacedIcons), 1);
+        createFilterItem(popupLayout, LocaleController.getString(R.string.IconPickerNotReplacedIcons), 2);
+        updateFilterChecks();
+        return popupLayout;
     }
 
     private void createFilterItem(ActionBarPopupWindow.ActionBarPopupWindowLayout actionBarPopupWindowLayout, String str, final int i) {
@@ -143,56 +179,37 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
         actionBarMenuSubItem.setTextAndIcon(str, 0);
         actionBarMenuSubItem.setMinimumWidth(AndroidUtilities.dp(196.0f));
         actionBarPopupWindowLayout.addView((View) actionBarMenuSubItem, LayoutHelper.createLinear(-1, 48));
-        actionBarMenuSubItem.setOnClickListener(new View.OnClickListener() { 
-            @Override // android.view.View.OnClickListener
-            public final void onClick(View view) {
-                this.f$0.lambda$createFilterItem$1(i, view);
-            }
-        });
+        actionBarMenuSubItem.setOnClickListener(view -> setIconFilter(i));
         this.filterItems[i] = actionBarMenuSubItem;
     }
 
-    public void lambda$loadIconsAsync$5() {
-        final ArrayList arrayList = new ArrayList(1500);
-        HashMap map = new HashMap(IconManager.INSTANCE.getSystemIcons());
-        if (map.isEmpty()) {
-            AndroidUtilities.runOnUIThread(new Runnable() { 
-                @Override // java.lang.Runnable
-                public final void run() {
-                    IconPacksEditorActivity.$r8$lambda$3Gala6xuNPg53I63ZSI5bu0JAkw();
-                }
-            });
+    private void loadIconsAsync() {
+        if ((isIconsLoaded && !cachedIconItems.isEmpty()) || isLoading) {
             return;
         }
-        for (Map.Entry entry : map.entrySet()) {
-            arrayList.add(EditorIconCell.Factory.asIcon(((Integer) entry.getValue()).intValue(), (CharSequence) entry.getKey(), null));
-        }
-        Collections.sort(arrayList, Comparator.comparing(new Function() { 
-            @Override // java.util.function.Function
-            public final Object apply(Object obj) {
-                return ((UItem) obj).text.toString();
+        isLoading = true;
+        Utilities.globalQueue.postRunnable(() -> {
+            final ArrayList<UItem> arrayList = new ArrayList<>(1500);
+            Map<String, Integer> map = IconManager.INSTANCE.getSystemIcons();
+            if (map.isEmpty()) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    isLoading = false;
+                    IconManager.INSTANCE.initialize(true);
+                });
+                return;
             }
-        }));
-        AndroidUtilities.runOnUIThread(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                this.f$0.lambda$loadIconsAsync$4(arrayList);
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                arrayList.add(EditorIconCell.Factory.asIcon(entry.getValue(), entry.getKey(), null));
             }
+            Collections.sort(arrayList, Comparator.comparing(uItem -> uItem.text.toString()));
+            AndroidUtilities.runOnUIThread(() -> {
+                cachedIconItems.clear();
+                cachedIconItems.addAll(arrayList);
+                isIconsLoaded = true;
+                isLoading = false;
+                updateAdapter();
+            });
         });
-    }
-
-    public static /* synthetic */ void $r8$lambda$3Gala6xuNPg53I63ZSI5bu0JAkw() {
-        isLoading = false;
-        IconManager.INSTANCE.initialize(true);
-    }
-
-    public /* synthetic */ void lambda$loadIconsAsync$4(ArrayList arrayList) {
-        ArrayList<UItem> arrayList2 = cachedIconItems;
-        arrayList2.clear();
-        arrayList2.addAll(arrayList);
-        isIconsLoaded = true;
-        isLoading = false;
-        updateAdapter();
     }
 
     @Override 
@@ -277,6 +294,57 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
             super(context, resourcesProvider);
         }
 
+        public void reset() {
+            getTextView().setText("");
+            if (getImageView() != null) {
+                getImageView().setVisibility(GONE);
+                getImageView().setImageDrawable(null);
+            }
+            if (getValueImageView() != null) {
+                getValueImageView().setVisibility(GONE);
+                getValueImageView().setImageDrawable(null);
+            }
+            if (getValueTextView() != null) {
+                getValueTextView().setVisibility(GONE);
+                getValueTextView().setText("", false);
+            }
+        }
+
+        public void setTextAndIconAndValueDrawable(CharSequence text, Drawable icon, Drawable valueDrawable, boolean divider) {
+            setOffsetFromImage(71);
+            setImageLeft(21);
+            getTextView().setText(text);
+            getTextView().setRightDrawable(null);
+            if (getValueTextView() != null) {
+                getValueTextView().setText(null, false);
+                getValueTextView().setVisibility(GONE);
+            }
+            if (getImageView() != null) {
+                getImageView().setColorFilter(null);
+                if (icon instanceof org.telegram.ui.Components.RLottieDrawable) {
+                    getImageView().setAnimation((org.telegram.ui.Components.RLottieDrawable) icon);
+                } else {
+                    getImageView().setImageDrawable(icon);
+                }
+                getImageView().setVisibility(VISIBLE);
+                getImageView().setPadding(0, AndroidUtilities.dp(6), 0, 0);
+            }
+            if (getValueImageView() != null) {
+                getValueImageView().setVisibility(VISIBLE);
+                getValueImageView().setImageDrawable(valueDrawable);
+            }
+            setWillNotDraw(!divider);
+        }
+
+        public void setIsIcon(boolean isIcon) {
+            if (getImageView() != null) {
+                getImageView().setScaleType(isIcon ? android.widget.ImageView.ScaleType.FIT_CENTER : android.widget.ImageView.ScaleType.CENTER);
+            }
+            if (getValueImageView() != null) {
+                getValueImageView().setScaleType(isIcon ? android.widget.ImageView.ScaleType.FIT_CENTER : android.widget.ImageView.ScaleType.CENTER);
+            }
+        }
+
         public static class Factory extends UItem.UItemFactory<EditorIconCell> {
             static {
                 UItem.UItemFactory.setup(new Factory());
@@ -359,3 +427,5 @@ public class IconPacksEditorActivity extends BasePreferencesActivity implements 
         return false;
     }
 }
+
+

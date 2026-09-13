@@ -1,4 +1,65 @@
-private ArrayList<Task> mTasks = new ArrayList<>();
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package androidx.recyclerview.widget;
+
+import android.annotation.SuppressLint;
+import android.view.View;
+
+import androidx.annotation.Nullable;
+import androidx.core.os.TraceCompat;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.FileLog;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.concurrent.TimeUnit;
+
+final class GapWorker implements Runnable {
+
+    static final ThreadLocal<GapWorker> sGapWorker = new ThreadLocal<>();
+
+    ArrayList<RecyclerView> mRecyclerViews = new ArrayList<>();
+    long mPostTimeNs;
+    long mFrameIntervalNs;
+
+    static class Task {
+        public boolean immediate;
+        public int viewVelocity;
+        public int distanceToItem;
+        public RecyclerView view;
+        public int position;
+
+        public void clear() {
+            immediate = false;
+            viewVelocity = 0;
+            distanceToItem = 0;
+            view = null;
+            position = 0;
+        }
+    }
+
+    /**
+     * Temporary storage for prefetch Tasks that execute in {@link #prefetch(long)}. Task objects
+     * are pooled in the ArrayList, and never removed to avoid allocations, but always cleared
+     * in between calls.
+     */
+    private ArrayList<Task> mTasks = new ArrayList<>();
 
     /**
      * Prefetch information associated with a specific RecyclerView.

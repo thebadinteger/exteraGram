@@ -171,14 +171,54 @@ public class RoundVideoEncoder {
         public final byte[][] data = new byte[10][];
         public final ByteBuffer[] buffer = new ByteBuffer[10];
         public final long[] startTimeNs = new long[10];
-        public final Runnable deliveryRunnable = new Runnable() { 
+        public final Runnable deliveryRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$AudioChunkBatch$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$0();
+                AudioChunkBatch.this.lambda$new$0();
             }
         };
 
-        public void lambda$new$0() {
+        /* JADX INFO: Access modifiers changed from: private */
+        public /* synthetic */ void lambda$new$0() {
+            RoundVideoEncoder.this.handleAudioBatch(this);
+        }
+
+        public AudioChunkBatch() {
+            for (int i = 0; i < 10; i++) {
+                byte[] bArr = new byte[2048];
+                this.data[i] = bArr;
+                this.buffer[i] = ByteBuffer.wrap(bArr).order(ByteOrder.nativeOrder());
+            }
+        }
+    }
+
+    public class AudioCaptureSession {
+        public final AudioRecord audioRecorder;
+        public final int generation;
+        public boolean recorderReleased;
+        public Thread thread;
+        public final AtomicBoolean stopRequested = new AtomicBoolean(false);
+        public final Object recorderLock = new Object();
+        public final Runnable stopRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$AudioCaptureSession$$ExternalSyntheticLambda0
+            @Override // java.lang.Runnable
+            public final void run() {
+                AudioCaptureSession.this.stopRecorder();
+            }
+        };
+        public final Runnable completionRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$AudioCaptureSession$$ExternalSyntheticLambda1
+            @Override // java.lang.Runnable
+            public final void run() {
+                AudioCaptureSession.this.lambda$new$0();
+            }
+        };
+
+        public AudioCaptureSession(AudioRecord audioRecord, int i) {
+            this.audioRecorder = audioRecord;
+            this.generation = i;
+        }
+
+        /* JADX INFO: Access modifiers changed from: private */
+        public /* synthetic */ void lambda$new$0() {
             RoundVideoEncoder.this.handleAudioCaptureFinished(this);
         }
 
@@ -194,6 +234,7 @@ public class RoundVideoEncoder {
             FileLog.e("RoundVideoEncoder unable to schedule AudioRecord stop");
         }
 
+        /* JADX INFO: Access modifiers changed from: private */
         public void stopRecorder() {
             synchronized (this.recorderLock) {
                 try {
@@ -237,10 +278,10 @@ public class RoundVideoEncoder {
 
     public void startRecording(final File file, final EGLContext eGLContext, final int i) {
         this.started = true;
-        this.encoderQueue.postRunnable(new Runnable() { 
+        this.encoderQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda3
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$startRecording$0(file, eGLContext, i);
+                RoundVideoEncoder.this.lambda$startRecording$0(file, eGLContext, i);
             }
         });
     }
@@ -254,10 +295,10 @@ public class RoundVideoEncoder {
                         return;
                     }
                     this.pendingFrameSet = true;
-                    this.encoderQueue.postRunnable(new Runnable() { 
+                    this.encoderQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda4
                         @Override // java.lang.Runnable
                         public final void run() {
-                            this.f$0.handleFrame();
+                            RoundVideoEncoder.this.handleFrame();
                         }
                     });
                 } catch (Throwable th) {
@@ -269,10 +310,10 @@ public class RoundVideoEncoder {
 
     public void pause(final File file) {
         AudioCaptureSession activeAudioCapture = getActiveAudioCapture();
-        this.encoderQueue.postRunnable(new Runnable() { 
+        this.encoderQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$pause$1(file);
+                RoundVideoEncoder.this.lambda$pause$1(file);
             }
         });
         requestAudioCaptureStop(activeAudioCapture);
@@ -281,20 +322,41 @@ public class RoundVideoEncoder {
     public void stop() {
         if (this.finishRequested.compareAndSet(false, true)) {
             AudioCaptureSession activeAudioCapture = getActiveAudioCapture();
-            this.encoderQueue.postRunnable(new Runnable() { 
+            this.encoderQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda0
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$stop$2();
+                    RoundVideoEncoder.this.lambda$stop$2();
                 }
             });
             requestAudioCaptureStop(activeAudioCapture);
         }
     }
 
-    public void lambda$cancel$3() {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$stop$2() {
+        handleFinish(false);
+    }
+
+    public void cancel() {
+        if (this.finishRequested.compareAndSet(false, true)) {
+            AudioCaptureSession activeAudioCapture = getActiveAudioCapture();
+            this.encoderQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda2
+                @Override // java.lang.Runnable
+                public final void run() {
+                    RoundVideoEncoder.this.lambda$cancel$3();
+                }
+            });
+            requestAudioCaptureStop(activeAudioCapture);
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$cancel$3() {
         handleFinish(true);
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: handleStart, reason: merged with bridge method [inline-methods] */
     public void lambda$startRecording$0(File file, EGLContext eGLContext, int i) {
         if (this.state == 4) {
             handleResume(eGLContext);
@@ -385,10 +447,10 @@ public class RoundVideoEncoder {
             createEncoderEgl(eGLContext);
             startAudioCapture();
             this.state = 2;
-            AndroidUtilities.runOnUIThread(new Runnable() { 
+            AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda7
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$handleStart$4();
+                    RoundVideoEncoder.this.lambda$handleStart$4();
                 }
             });
         } catch (Throwable th2) {
@@ -397,11 +459,492 @@ public class RoundVideoEncoder {
         }
     }
 
-    public void lambda$handleResume$5() {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$handleStart$4() {
+        this.callback.onRecordingStarted(false);
+    }
+
+    private void handleResume(EGLContext eGLContext) {
+        if (this.state != 4) {
+            return;
+        }
+        this.state = 1;
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("RoundVideoEncoder resume");
+        }
+        try {
+            this.sourceAnchorSet = false;
+            this.segmentFirstArrivalNs = -1L;
+            this.segmentVideoOriginNs = -1L;
+            this.audioSegmentBaseUs = -1L;
+            this.audioCapUs = this.maxDurationUs;
+            createEncoderEgl(eGLContext);
+            startAudioCapture();
+            this.state = 2;
+            AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda12
+                @Override // java.lang.Runnable
+                public final void run() {
+                    RoundVideoEncoder.this.lambda$handleResume$5();
+                }
+            });
+        } catch (Throwable th) {
+            FileLog.e(th);
+            fail();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$handleResume$5() {
         this.callback.onRecordingStarted(true);
     }
 
-    void lambda$finishPause$6(File file) {
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX WARN: Code duplicated, block: B:30:0x0058  */
+    public void handleFrame() {
+        long j;
+        synchronized (this.pendingFrameLock) {
+            try {
+                if (this.pendingFrameSet) {
+                    this.pendingFrameSet = false;
+                    this.currentFrame.copyFrom(this.pendingFrame);
+                    FrameSnapshot frameSnapshot = this.currentFrame;
+                    long j2 = frameSnapshot.sourceTimestampNs;
+                    long j3 = frameSnapshot.arrivalTimeNs;
+                    int i = frameSnapshot.cameraId;
+                    if (this.state != 2) {
+                        return;
+                    }
+                    try {
+                        drainEncoders();
+                        feedPendingAudio();
+                        boolean z = true;
+                        boolean z2 = i != this.lastCameraId;
+                        this.lastCameraId = i;
+                        long j4 = 0;
+                        if (j2 <= 0) {
+                            this.sourceAnchorSet = false;
+                            j = j3;
+                            j4 = 0;
+                        } else {
+                            if (!this.sourceAnchorSet || z2) {
+                                this.sourceAnchorSourceNs = j2;
+                                this.sourceAnchorMonotonicNs = j3;
+                                this.sourceAnchorSet = true;
+                                j = j3;
+                            } else {
+                                long j5 = this.lastSourceTimestampNs;
+                                if (j2 <= j5 || j2 - j5 > 1000000000) {
+                                    this.sourceAnchorSourceNs = j2;
+                                    this.sourceAnchorMonotonicNs = j3;
+                                    this.sourceAnchorSet = true;
+                                    j = j3;
+                                } else {
+                                    j = this.sourceAnchorMonotonicNs + (j2 - this.sourceAnchorSourceNs);
+                                    z = z2;
+                                }
+                            }
+                            this.lastSourceTimestampNs = j2;
+                        }
+                        if (this.segmentFirstArrivalNs == -1) {
+                            this.segmentFirstArrivalNs = j3;
+                        }
+                        if (j3 - this.segmentFirstArrivalNs < 200000000) {
+                            return;
+                        }
+                        long j6 = this.segmentVideoOriginNs;
+                        if (j6 != -1) {
+                            long j7 = this.segmentActiveBaseNs + (j - j6);
+                            long j8 = (((long) this.frameRate) * j7) / 1000000000;
+                            if (j8 > this.lastVideoFrameIndex && j7 / 1000 < this.maxDurationUs) {
+                                acceptFrame(j8, j7, z ? j4 : j7 - this.lastVideoActiveTimeNs);
+                                return;
+                            }
+                            return;
+                        }
+                        long jVideoFallbackFrameDurationNs = this.lastVideoFrameIndex < j4 ? j4 : this.lastVideoActiveTimeNs + videoFallbackFrameDurationNs();
+                        if (jVideoFallbackFrameDurationNs / 1000 >= this.maxDurationUs) {
+                            return;
+                        }
+                        long j9 = (((long) this.frameRate) * jVideoFallbackFrameDurationNs) / 1000000000;
+                        this.segmentVideoOriginNs = j;
+                        this.segmentActiveBaseNs = jVideoFallbackFrameDurationNs;
+                        if (BuildVars.LOGS_ENABLED) {
+                            FileLog.d("RoundVideoEncoder segment origin at " + jVideoFallbackFrameDurationNs + "ns slot " + j9);
+                        }
+                        if (acceptFrame(j9, jVideoFallbackFrameDurationNs, 0L)) {
+                            feedPendingAudio();
+                        }
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                        fail();
+                    }
+                }
+            } catch (Throwable th) {
+                throw th;
+            }
+        }
+    }
+
+    private boolean acceptFrame(long j, long j2, long j3) {
+        if (!makeEglCurrent()) {
+            fail();
+            return false;
+        }
+        try {
+            if (!this.renderer.onDrawEncoderFrame(j3, this.currentFrame)) {
+                return false;
+            }
+            EGLExt.eglPresentationTimeANDROID(this.eglDisplay, this.eglSurface, j2);
+            if (!EGL14.eglSwapBuffers(this.eglDisplay, this.eglSurface)) {
+                FileLog.e("RoundVideoEncoder eglSwapBuffers failed at frame " + j + ": " + GLUtils.getEGLErrorString(EGL14.eglGetError()));
+                fail();
+                return false;
+            }
+            if (this.lastVideoFrameIndex >= 0 && j3 > 0) {
+                long j4 = this.minVideoFrameDeltaNs;
+                if (j4 == 0 || j3 < j4) {
+                    this.minVideoFrameDeltaNs = j3;
+                }
+            }
+            this.lastVideoFrameIndex = j;
+            this.lastVideoActiveTimeNs = j2;
+            this.lastSubmittedVideoPtsUs = j2 / 1000;
+            return true;
+        } catch (Throwable th) {
+            FileLog.e(th);
+            fail();
+            return false;
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void handleAudioBatch(AudioChunkBatch audioChunkBatch) {
+        if (this.state == 2 || this.state == 3 || (this.state == 5 && this.waitingAudioTail)) {
+            this.pendingAudio.add(audioChunkBatch);
+            if (this.segmentVideoOriginNs == -1 && this.pendingAudio.size() > 24) {
+                recycleAudioBatch(this.pendingAudio.remove(0));
+            }
+            try {
+                drainEncoders();
+                feedPendingAudio();
+                return;
+            } catch (Exception e) {
+                FileLog.e(e);
+                fail();
+                return;
+            }
+        }
+        recycleAudioBatch(audioChunkBatch);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void handleAudioCaptureFinished(AudioCaptureSession audioCaptureSession) {
+        if (audioCaptureSession.generation != this.audioCaptureGeneration) {
+            return;
+        }
+        this.audioCaptureRunning = false;
+        int i = this.deferredAudioCleanup;
+        if (i != 0) {
+            this.deferredAudioCleanup = 0;
+            if (i == 1) {
+                finalizeCancel();
+                return;
+            } else {
+                finalizeFailure();
+                return;
+            }
+        }
+        if (this.state == 3) {
+            finishPause();
+            return;
+        }
+        if (this.state == 5 && this.waitingAudioTail) {
+            this.waitingAudioTail = false;
+            finalizeStop();
+        } else if (this.state == 2) {
+            FileLog.e("RoundVideoEncoder audio capture ended unexpectedly");
+            fail();
+        }
+    }
+
+    private void alignAudioSegment() {
+        while (!this.pendingAudio.isEmpty()) {
+            AudioChunkBatch audioChunkBatch = this.pendingAudio.get(0);
+            while (true) {
+                int i = audioChunkBatch.drained;
+                if (i < audioChunkBatch.results) {
+                    ByteBuffer byteBuffer = audioChunkBatch.buffer[i];
+                    int iRemaining = byteBuffer.remaining() / 2;
+                    if (iRemaining > 0) {
+                        long j = audioChunkBatch.startTimeNs[audioChunkBatch.drained];
+                        long j2 = ((((long) iRemaining) * 1000000000) / 48000) + j;
+                        long j3 = this.segmentVideoOriginNs;
+                        if (j2 > j3) {
+                            if (j < j3) {
+                                int i2 = (int) (((j3 - j) * 48000) / 1000000000);
+                                if (i2 < iRemaining) {
+                                    byteBuffer.position(byteBuffer.position() + (i2 * 2));
+                                    j += (((long) i2) * 1000000000) / 48000;
+                                }
+                            }
+                            this.audioSegmentBaseUs = Math.max((this.segmentActiveBaseNs + (j - this.segmentVideoOriginNs)) / 1000, this.audioTotalEndUs);
+                            this.audioSegmentFramesSubmitted = 0L;
+                            if (BuildVars.LOGS_ENABLED) {
+                                FileLog.d("RoundVideoEncoder audio segment base " + this.audioSegmentBaseUs + "us");
+                                return;
+                            }
+                            return;
+                        }
+                        continue;
+                    }
+                    audioChunkBatch.drained++;
+                } else {
+                    this.pendingAudio.remove(0);
+                    recycleAudioBatch(audioChunkBatch);
+                }
+            }
+        }
+    }
+
+    /* JADX WARN: Code duplicated, block: B:46:0x00c1  */
+    /* JADX WARN: Code duplicated, block: B:90:0x00bf A[SYNTHETIC] */
+    /* JADX WARN: Code duplicated, block: B:91:0x00d0 A[SYNTHETIC] */
+    /* JADX WARN: Code duplicated, block: B:93:0x00d3 A[SYNTHETIC] */
+    private void feedPendingAudio() {
+        long j;
+        long j2;
+        boolean z = false;
+        boolean z2 = false;
+        if (this.audioEncoder == null || this.audioEosQueued || this.segmentVideoOriginNs == -1) {
+            return;
+        }
+        if (this.audioSegmentBaseUs == -1) {
+            alignAudioSegment();
+            if (this.audioSegmentBaseUs == -1) {
+                return;
+            }
+        }
+        while (hasFeedablePendingAudio()) {
+            long j3 = 48000;
+            long j4 = 1000000;
+            long j5 = (((this.audioCapUs - this.audioSegmentBaseUs) * 48000) / 1000000) - this.audioSegmentFramesSubmitted;
+            if (j5 <= 0) {
+                recyclePendingAudio();
+                return;
+            }
+            try {
+                int iDequeueInputBuffer = this.audioEncoder.dequeueInputBuffer(0L);
+                if (iDequeueInputBuffer < 0) {
+                    return;
+                }
+                ByteBuffer inputBuffer = this.audioEncoder.getInputBuffer(iDequeueInputBuffer);
+                if (inputBuffer == null) {
+                    FileLog.e("RoundVideoEncoder audio input buffer was null");
+                    failIfActive();
+                    return;
+                }
+                inputBuffer.clear();
+                long j6 = this.audioSegmentBaseUs + ((this.audioSegmentFramesSubmitted * 1000000) / 48000);
+                boolean z3 = false;
+                int i = 0;
+                while (true) {
+                    if (this.pendingAudio.isEmpty() || z3) {
+                        j = j3;
+                        j2 = j4;
+                        break;
+                    }
+                    AudioChunkBatch audioChunkBatch = this.pendingAudio.get(0);
+                    while (true) {
+                        int i2 = audioChunkBatch.drained;
+                        j = j3;
+                        if (i2 < audioChunkBatch.results) {
+                            ByteBuffer byteBuffer = audioChunkBatch.buffer[i2];
+                            int iRemaining = byteBuffer.remaining();
+                            if (iRemaining <= 0) {
+                                j2 = j4;
+                            } else {
+                                z = true;
+                                j2 = j4;
+                                if (iRemaining / 2 > j5) {
+                                    byteBuffer.limit(byteBuffer.position() + (((int) j5) * 2));
+                                    iRemaining = byteBuffer.remaining();
+                                    if (iRemaining <= 0) {
+                                        z2 = true;
+                                        z3 = true;
+                                        break;
+                                    }
+                                    z3 = true;
+                                    if (inputBuffer.remaining() < iRemaining) {
+                                        z2 = false;
+                                        break;
+                                    }
+                                    inputBuffer.put(byteBuffer);
+                                    long j7 = iRemaining / 2;
+                                    this.audioSegmentFramesSubmitted += j7;
+                                    j5 -= j7;
+                                    i += iRemaining;
+                                    if (z3) {
+                                    }
+                                } else {
+                                    if (inputBuffer.remaining() < iRemaining) {
+                                        z2 = false;
+                                        break;
+                                    }
+                                    inputBuffer.put(byteBuffer);
+                                    long j8 = iRemaining / 2;
+                                    this.audioSegmentFramesSubmitted += j8;
+                                    j5 -= j8;
+                                    i += iRemaining;
+                                    if (z3) {
+                                    }
+                                }
+                            }
+                            audioChunkBatch.drained++;
+                            j3 = j;
+                            j4 = j2;
+                        } else {
+                            j2 = j4;
+                            z = true;
+                        }
+                        z2 = z;
+                        break;
+                    }
+                    if (!z2) {
+                        break;
+                    }
+                    if (audioChunkBatch.drained >= audioChunkBatch.results) {
+                        this.pendingAudio.remove(0);
+                        recycleAudioBatch(audioChunkBatch);
+                    }
+                    if (z3) {
+                        recyclePendingAudio();
+                    }
+                    j3 = j;
+                    j4 = j2;
+                }
+                int i3 = i;
+                this.audioTotalEndUs = this.audioSegmentBaseUs + ((this.audioSegmentFramesSubmitted * j2) / j);
+                MediaCodec mediaCodec = this.audioEncoder;
+                if (i3 > 0) {
+                    try {
+                        mediaCodec.queueInputBuffer(iDequeueInputBuffer, 0, i3, j6, 0);
+                        this.lastSubmittedAudioEndUs = this.audioTotalEndUs;
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                        failIfActive();
+                        return;
+                    }
+                } else {
+                    mediaCodec.queueInputBuffer(iDequeueInputBuffer, 0, 0, j6, 0);
+                    return;
+                }
+            } catch (Exception e2) {
+                FileLog.e(e2);
+                failIfActive();
+                return;
+            }
+        }
+    }
+
+    private void failIfActive() {
+        if (this.state == 1 || this.state == 2 || this.state == 3 || this.state == 4) {
+            fail();
+        }
+    }
+
+    private boolean hasFeedablePendingAudio() {
+        while (!this.pendingAudio.isEmpty()) {
+            AudioChunkBatch audioChunkBatch = this.pendingAudio.get(0);
+            for (int i = audioChunkBatch.drained; i < audioChunkBatch.results; i++) {
+                if (audioChunkBatch.buffer[i].remaining() > 0) {
+                    return true;
+                }
+            }
+            this.pendingAudio.remove(0);
+            recycleAudioBatch(audioChunkBatch);
+        }
+        return false;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: handlePause, reason: merged with bridge method [inline-methods] */
+    public void lambda$pause$1(File file) {
+        if (this.state != 2) {
+            return;
+        }
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("RoundVideoEncoder pause");
+        }
+        this.state = 3;
+        this.pausePreviewFile = file;
+        this.audioCapUs = Math.min(this.audioCapUs, videoEndTimeUs());
+        if (this.audioCaptureRunning) {
+            stopAudioCapture(false);
+        } else {
+            finishPause();
+        }
+    }
+
+    private void finishPause() {
+        feedPendingAudio();
+        try {
+            long jElapsedRealtime = SystemClock.elapsedRealtime() + 500;
+            while (SystemClock.elapsedRealtime() < jElapsedRealtime) {
+                drainVideoOnce(10000L);
+                drainAudioOnce(10000L);
+                feedPendingAudio();
+                if (!hasFeedablePendingAudio() && hasReachedPauseTargets()) {
+                    break;
+                }
+            }
+            recyclePendingAudio();
+            MP4Builder mP4Builder = this.mediaMuxer;
+            if (mP4Builder != null && this.pausePreviewFile != null) {
+                try {
+                    mP4Builder.setAllowSyncFiles(this.allowSendingWhileRecording);
+                    this.mediaMuxer.finishMovie(this.pausePreviewFile);
+                    this.mediaMuxer.setAllowSyncFiles(false);
+                } catch (Exception e) {
+                    FileLog.e(e);
+                    fail();
+                    return;
+                }
+            }
+            releaseEgl();
+            final File file = this.pausePreviewFile;
+            this.pausePreviewFile = null;
+            this.state = 4;
+            if (BuildVars.LOGS_ENABLED) {
+                FileLog.d("RoundVideoEncoder paused, video end " + videoEndTimeUs() + "us audio end " + this.audioTotalEndUs + "us");
+            }
+            int i = this.deferredFinish;
+            if (i != 0) {
+                boolean z = i == 2;
+                this.deferredFinish = 0;
+                this.pendingResumeContext = null;
+                handleFinish(z);
+                return;
+            }
+            EGLContext eGLContext = this.pendingResumeContext;
+            if (eGLContext != null) {
+                this.pendingResumeContext = null;
+                handleResume(eGLContext);
+            } else {
+                AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda5
+                    @Override // java.lang.Runnable
+                    public final void run() {
+                        RoundVideoEncoder.this.lambda$finishPause$6(file);
+                    }
+                });
+            }
+        } catch (Exception e2) {
+            FileLog.e(e2);
+            fail();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finishPause$6(File file) {
         this.callback.onPaused(file);
     }
 
@@ -420,10 +963,10 @@ public class RoundVideoEncoder {
             this.state = 6;
             scheduleQueueRecycle();
             final FinishReason finishReason = z ? FinishReason.CANCELLED : FinishReason.COMPLETED;
-            AndroidUtilities.runOnUIThread(new Runnable() { 
+            AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda8
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$handleFinish$7(finishReason);
+                    RoundVideoEncoder.this.lambda$handleFinish$7(finishReason);
                 }
             });
             return;
@@ -457,7 +1000,84 @@ public class RoundVideoEncoder {
         }
     }
 
-    public void lambda$finalizeStop$8(FinishReason finishReason) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$handleFinish$7(FinishReason finishReason) {
+        this.callback.onFinished(finishReason);
+    }
+
+    private void finalizeStop() {
+        if (this.segmentVideoOriginNs == -1 && this.audioSegmentBaseUs == -1) {
+            recyclePendingAudio();
+        }
+        boolean zDrainToEndOfStream = drainToEndOfStream();
+        releaseEgl();
+        releaseCodecs();
+        MP4Builder mP4Builder = this.mediaMuxer;
+        if (mP4Builder != null) {
+            try {
+                mP4Builder.setAllowSyncFiles(this.allowSendingWhileRecording);
+                this.mediaMuxer.finishMovie();
+            } catch (Exception e) {
+                FileLog.e(e);
+                zDrainToEndOfStream = false;
+            }
+            FileLog.d("RoundVideoEncoder finished muxer, video end " + videoEndTimeUs() + "us audio end " + this.audioTotalEndUs + "us");
+            if (this.writingToDifferentFile) {
+                if (this.videoFile.exists()) {
+                    try {
+                        this.videoFile.delete();
+                    } catch (Exception e2) {
+                        FileLog.e("RoundVideoEncoder copying fileToWrite to videoFile, deleting videoFile error " + this.videoFile);
+                        FileLog.e(e2);
+                    }
+                }
+                if (!this.fileToWrite.renameTo(this.videoFile)) {
+                    FileLog.e("RoundVideoEncoder unable to rename file, try move file");
+                    try {
+                        if (AndroidUtilities.copyFile(this.fileToWrite, this.videoFile)) {
+                            this.fileToWrite.delete();
+                        } else {
+                            FileLog.e("RoundVideoEncoder unable to copy file");
+                            zDrainToEndOfStream = false;
+                        }
+                    } catch (IOException e3) {
+                        FileLog.e(e3);
+                        FileLog.e("RoundVideoEncoder unable to move file");
+                    }
+                }
+            }
+        }
+        if (!zDrainToEndOfStream) {
+            File file = this.fileToWrite;
+            if (file != null) {
+                try {
+                    file.delete();
+                } catch (Throwable unused) {
+                }
+            }
+            File file2 = this.videoFile;
+            if (file2 != null && !file2.equals(this.fileToWrite)) {
+                try {
+                    this.videoFile.delete();
+                } catch (Throwable unused2) {
+                }
+            }
+        }
+        releaseInputSurface();
+        recyclePendingAudio();
+        this.state = zDrainToEndOfStream ? 6 : 7;
+        scheduleQueueRecycle();
+        final FinishReason finishReason = zDrainToEndOfStream ? FinishReason.COMPLETED : FinishReason.FAILED;
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda9
+            @Override // java.lang.Runnable
+            public final void run() {
+                RoundVideoEncoder.this.lambda$finalizeStop$8(finishReason);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finalizeStop$8(FinishReason finishReason) {
         this.callback.onFinished(finishReason);
     }
 
@@ -490,15 +1110,71 @@ public class RoundVideoEncoder {
         }
         this.state = 6;
         scheduleQueueRecycle();
-        AndroidUtilities.runOnUIThread(new Runnable() { 
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda11
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$finalizeCancel$9();
+                RoundVideoEncoder.this.lambda$finalizeCancel$9();
             }
         });
     }
 
-    public void lambda$finalizeFailure$10() {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finalizeCancel$9() {
+        this.callback.onFinished(FinishReason.CANCELLED);
+    }
+
+    private void fail() {
+        if (this.state == 6 || this.state == 7 || this.deferredAudioCleanup != 0) {
+            return;
+        }
+        FileLog.e("RoundVideoEncoder failed in state " + this.state);
+        this.state = 5;
+        if (!stopAudioCapture(true)) {
+            this.deferredAudioCleanup = 2;
+        } else {
+            finalizeFailure();
+        }
+    }
+
+    private void finalizeFailure() {
+        releaseEgl();
+        releaseCodecs();
+        releaseInputSurface();
+        recyclePendingAudio();
+        MP4Builder mP4Builder = this.mediaMuxer;
+        if (mP4Builder != null) {
+            try {
+                mP4Builder.finishMovie();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+        File file = this.fileToWrite;
+        if (file != null) {
+            try {
+                file.delete();
+            } catch (Throwable unused) {
+            }
+        }
+        File file2 = this.videoFile;
+        if (file2 != null) {
+            try {
+                file2.delete();
+            } catch (Throwable unused2) {
+            }
+        }
+        this.state = 7;
+        scheduleQueueRecycle();
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda6
+            @Override // java.lang.Runnable
+            public final void run() {
+                RoundVideoEncoder.this.lambda$finalizeFailure$10();
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finalizeFailure$10() {
         this.callback.onFinished(FinishReason.FAILED);
     }
 
@@ -513,7 +1189,7 @@ public class RoundVideoEncoder {
     private void scheduleQueueRecycle() {
         final DispatchQueue dispatchQueue = this.encoderQueue;
         Objects.requireNonNull(dispatchQueue);
-        dispatchQueue.postRunnable(new Runnable() { 
+        dispatchQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.camera.RoundVideoEncoder$$ExternalSyntheticLambda10
             @Override // java.lang.Runnable
             public final void run() {
                 dispatchQueue.recycle();
@@ -691,7 +1367,9 @@ public class RoundVideoEncoder {
             return false;
         } catch (Throwable th) {
             this.videoEncoder.releaseOutputBuffer(iDequeueOutputBuffer, false);
-            throw th;
+            if (th instanceof RuntimeException) throw (RuntimeException) th;
+            if (th instanceof Error) throw (Error) th;
+            throw new RuntimeException(th);
         }
     }
 
@@ -742,31 +1420,29 @@ public class RoundVideoEncoder {
             return false;
         } catch (Throwable th) {
             this.audioEncoder.releaseOutputBuffer(iDequeueOutputBuffer, false);
-            throw th;
+            if (th instanceof RuntimeException) throw (RuntimeException) th;
+            if (th instanceof Error) throw (Error) th;
+            throw new RuntimeException(th);
         }
     }
 
     private void createEncoderEgl(EGLContext eGLContext) {
         if (this.eglDisplay != EGL14.EGL_NO_DISPLAY) {
-            GlShader$$ExternalSyntheticBUOutline1.m("EGL already set up");
-            return;
+            throw new RuntimeException("EGL already set up");
         }
         EGLDisplay eGLDisplayEglGetDisplay = EGL14.eglGetDisplay(0);
         this.eglDisplay = eGLDisplayEglGetDisplay;
         if (eGLDisplayEglGetDisplay == EGL14.EGL_NO_DISPLAY) {
-            GlShader$$ExternalSyntheticBUOutline1.m("unable to get EGL14 display");
-            return;
+            throw new RuntimeException("unable to get EGL14 display");
         }
         int[] iArr = new int[2];
         if (!EGL14.eglInitialize(eGLDisplayEglGetDisplay, iArr, 0, iArr, 1)) {
             this.eglDisplay = EGL14.EGL_NO_DISPLAY;
-            GlShader$$ExternalSyntheticBUOutline1.m("unable to initialize EGL14");
-            return;
+            throw new RuntimeException("unable to initialize EGL14");
         }
         EGLConfig[] eGLConfigArr = new EGLConfig[1];
         if (!EGL14.eglChooseConfig(this.eglDisplay, new int[]{12324, 8, 12323, 8, 12322, 8, 12321, 8, 12352, 4, EglBase.EGL_RECORDABLE_ANDROID, 1, 12344}, 0, eGLConfigArr, 0, 1, new int[1], 0)) {
-            GlShader$$ExternalSyntheticBUOutline1.m("Unable to find a suitable EGLConfig");
-            return;
+            throw new RuntimeException("Unable to find a suitable EGLConfig");
         }
         EGLConfig eGLConfig = eGLConfigArr[0];
         this.eglConfig = eGLConfig;
@@ -774,23 +1450,21 @@ public class RoundVideoEncoder {
         this.eglContext = eGLContextEglCreateContext;
         if (eGLContextEglCreateContext == null || eGLContextEglCreateContext == EGL14.EGL_NO_CONTEXT) {
             this.eglContext = EGL14.EGL_NO_CONTEXT;
-            Instance$$ExternalSyntheticBUOutline0.m("eglCreateContext failed ", GLUtils.getEGLErrorString(EGL14.eglGetError()));
-            return;
+            throw new RuntimeException("eglCreateContext failed " + GLUtils.getEGLErrorString(EGL14.eglGetError()));
         }
         EGLSurface eGLSurfaceEglCreateWindowSurface = EGL14.eglCreateWindowSurface(this.eglDisplay, this.eglConfig, this.inputSurface, new int[]{12344}, 0);
         this.eglSurface = eGLSurfaceEglCreateWindowSurface;
         if (eGLSurfaceEglCreateWindowSurface == null || eGLSurfaceEglCreateWindowSurface == EGL14.EGL_NO_SURFACE) {
             this.eglSurface = EGL14.EGL_NO_SURFACE;
-            Instance$$ExternalSyntheticBUOutline0.m("eglCreateWindowSurface failed ", GLUtils.getEGLErrorString(EGL14.eglGetError()));
+            throw new RuntimeException("eglCreateWindowSurface failed " + GLUtils.getEGLErrorString(EGL14.eglGetError()));
         } else {
             if (!EGL14.eglMakeCurrent(this.eglDisplay, eGLSurfaceEglCreateWindowSurface, eGLSurfaceEglCreateWindowSurface, this.eglContext)) {
-                Instance$$ExternalSyntheticBUOutline0.m("eglMakeCurrent failed ", GLUtils.getEGLErrorString(EGL14.eglGetError()));
-                return;
+                throw new RuntimeException("eglMakeCurrent failed " + GLUtils.getEGLErrorString(EGL14.eglGetError()));
             }
             try {
                 this.renderer.onEncoderSurfaceCreated(this.videoWidth, this.videoHeight);
             } catch (Throwable th) {
-                Make$Map$$ExternalSyntheticBUOutline0.m("encoder renderer initialization failed", th);
+                throw new RuntimeException("encoder renderer initialization failed", th);
             }
         }
     }
@@ -910,6 +1584,7 @@ public class RoundVideoEncoder {
         this.audioBatchesPrepared = true;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public AudioChunkBatch obtainAudioBatch() throws InterruptedException {
         AudioChunkBatch audioChunkBatchPoll = this.audioBatchPool.poll(250L, TimeUnit.MILLISECONDS);
         if (audioChunkBatchPoll == null) {
@@ -920,6 +1595,7 @@ public class RoundVideoEncoder {
         return audioChunkBatchPoll;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void recycleAudioBatch(AudioChunkBatch audioChunkBatch) {
         if (this.audioBatchPool.offer(audioChunkBatch)) {
             return;
@@ -976,8 +1652,8 @@ public class RoundVideoEncoder {
                 throw th;
             }
         } catch (Throwable th3) {
-            th = th3;
             audioCaptureSession = null;
+            throw th3;
         }
     }
 
@@ -1015,6 +1691,7 @@ public class RoundVideoEncoder {
         return thread == null || !thread.isAlive();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void stopAudioRecorder(AudioRecord audioRecord) {
         try {
             if (audioRecord.getRecordingState() != 1) {
@@ -1025,6 +1702,7 @@ public class RoundVideoEncoder {
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void releaseAudioRecorder(AudioRecord audioRecord) {
         stopAudioRecorder(audioRecord);
         try {
@@ -1042,6 +1720,8 @@ public class RoundVideoEncoder {
             this.session = audioCaptureSession;
         }
 
+        /* JADX WARN: Code duplicated, block: B:106:0x01b2 A[Catch: all -> 0x01b8, TryCatch #1 {all -> 0x01b8, blocks: (B:104:0x01a8, B:106:0x01b2, B:109:0x01ba), top: B:120:0x01a8 }] */
+        /* JADX WARN: Code duplicated, block: B:120:0x01a8 A[EXC_TOP_SPLITTER, SYNTHETIC] */
         @Override // java.lang.Runnable
         public void run() {
             int i;
@@ -1202,6 +1882,7 @@ public class RoundVideoEncoder {
         }
     }
 
+    /* JADX WARN: Code duplicated, block: B:45:? A[RETURN, SYNTHETIC] */
     private void setBluetoothScoOn(boolean z) {
         AudioManager audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(MediaStreamTrack.AUDIO_TRACK_KIND);
         if (SharedConfig.recordViaSco && !PermissionRequest.hasPermission("android.permission.BLUETOOTH_CONNECT")) {

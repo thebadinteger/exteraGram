@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.widget.TextView;
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import java.io.File;
 import java.util.Locale;
 import java.util.Objects;
@@ -188,7 +188,7 @@ public abstract class VideoSubtitlesHelper {
 
     public static SubtitleLoadResult loadFromUri(Uri uri) {
         String path;
-        String strCopyFileToCache;
+        String strCopyFileToCache = null;
         if (uri == null) {
             return new SubtitleLoadResult(null, LoadError.LOAD_FAILED);
         }

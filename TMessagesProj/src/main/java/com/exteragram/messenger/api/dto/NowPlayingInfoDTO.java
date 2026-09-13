@@ -58,14 +58,6 @@ public final /* data */ class NowPlayingInfoDTO {
         this.username = str;
     }
 
-    public final NowPlayingServiceType getServiceType() {
-        return this.serviceType;
-    }
-
-    public final String getUsername() {
-        return this.username;
-    }
-
     public final void setUsername(String str) {
         this.username = str;
     }

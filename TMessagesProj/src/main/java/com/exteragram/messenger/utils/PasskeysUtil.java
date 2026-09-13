@@ -35,7 +35,6 @@ public final class PasskeysUtil {
 
     @JvmStatic
     public static final Bulletin showUnsupportedBulletin(BulletinFactory factory) {
-        "factory";
         Bulletin bulletinShow = factory.createSimpleBulletin(R.raw.error, LocaleController.getString(R.string.PasskeyUnsupportedTitle), AndroidUtilities.replaceMultipleTags(LocaleController.getString(R.string.PasskeyUnsupportedMessage), new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
@@ -47,43 +46,37 @@ public final class PasskeysUtil {
                 Browser.openUrl(ApplicationLoader.applicationContext, "https://github.com/Kunzisoft/KeePassDX");
             }
         })).show();
-        "show(...)";
         return bulletinShow;
     }
 
     @JvmStatic
     public static final byte[] computeClientDataHash(String clientDataJSON) throws NoSuchAlgorithmException {
-        "clientDataJSON";
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
         Charset charset = StandardCharsets.UTF_8;
-        "UTF_8";
         byte[] bytes = clientDataJSON.getBytes(charset);
-        "getBytes(...)";
         byte[] bArrDigest = messageDigest.digest(bytes);
-        "digest(...)";
         return bArrDigest;
     }
 
     @JvmStatic
     public static final String generateClientDataJSONRaw(boolean get, String challenge, String rpId) {
-        String string = new JSONObject().put("type", get ? "webauthn.get" : "webauthn.create").put("challenge", challenge).put("origin", rpId).toString();
-        "toString(...)";
-        return string;
+        try {
+            return new JSONObject().put("type", get ? "webauthn.get" : "webauthn.create").put("challenge", challenge).put("origin", rpId).toString();
+        } catch (org.json.JSONException e) {
+            org.telegram.messenger.FileLog.e(e);
+            return "";
+        }
     }
 
     @JvmStatic
     public static final void openSettings(Activity activity) {
-        "activity";
         if (Build.VERSION.SDK_INT < 34) {
             return;
         }
         try {
-            Result.Companion companion = Result.INSTANCE;
-            CredentialManager.INSTANCE.create(activity).createSettingsPendingIntent().send();
-            Result.m2315constructorimpl(Unit.INSTANCE);
+            CredentialManager.create(activity).createSettingsPendingIntent().send();
         } catch (Throwable th) {
-            Result.Companion companion2 = Result.INSTANCE;
-            Result.m2315constructorimpl(ResultKt.createFailure(th));
+            org.telegram.messenger.FileLog.e(th);
         }
     }
 }

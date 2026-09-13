@@ -3329,12 +3329,12 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 1.0f
             );
 
-            imageReceiver.setRoundRadius(isForum ? dp(18) : dp(54));
+            imageReceiver.setRoundRadius(com.exteragram.messenger.ExteraConfig.getAvatarCorners(rectF.width(), true, isForum));
             imageReceiver.setImageCoords(rectF);
             imageReceiver.draw(canvas);
 
             final float r = rectF.width() / 2f + dp(4);
-            final float rr = dp(isForum ? 22 : 58);
+            final float rr = com.exteragram.messenger.ExteraConfig.getAvatarCorners(2f * r, true, isForum);
             canvas.drawRoundRect(
                 rectF.centerX() - r,
                 rectF.centerY() - r,

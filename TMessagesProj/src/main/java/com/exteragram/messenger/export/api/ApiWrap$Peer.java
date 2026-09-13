@@ -38,8 +38,7 @@ public class ApiWrap$Peer {
         if (apiWrap$Chat != null) {
             return apiWrap$Chat.title;
         }
-        Segment$$ExternalSyntheticBUOutline1.m("both user and chat are null");
-        return null;
+        throw new IllegalStateException("both user and chat are null");
     }
 
     public int colorIndex() {
@@ -51,8 +50,7 @@ public class ApiWrap$Peer {
         if (apiWrap$Chat != null) {
             return apiWrap$Chat.colorIndex;
         }
-        Segment$$ExternalSyntheticBUOutline1.m("both user and chat are null");
-        return 0;
+        throw new IllegalStateException("both user and chat are null");
     }
 
     public long id() {
@@ -64,7 +62,6 @@ public class ApiWrap$Peer {
         if (apiWrap$Chat != null) {
             return apiWrap$Chat.bareId;
         }
-        Segment$$ExternalSyntheticBUOutline1.m("both user and chat are null");
-        return 0L;
+        throw new IllegalStateException("both user and chat are null");
     }
 }

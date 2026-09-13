@@ -57,7 +57,12 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.Adapters.FiltersView;
+import org.telegram.ui.DialogsActivity;
+
+import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.utils.ui.ChatHeaderUiHelper;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.ChatAvatarContainer;
@@ -195,6 +200,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private boolean glassMode;
     private boolean glassOnlyBack;
     private boolean glassModeIsForum;
+    private boolean glassModeHasAvatar;
+    private float glassDrawableLeftRadius;
 
     private ChatAvatarContainer chatAvatarContainer;
 
@@ -207,25 +214,37 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     public void setupGlass(BlurredBackgroundDrawableViewFactory factory, BlurredBackgroundColorProvider colorProvider) {
-        setupGlass(factory, colorProvider, false);
+        setupGlass(factory, colorProvider, false, false);
     }
 
     public void setupGlass(BlurredBackgroundDrawableViewFactory factory,
                            BlurredBackgroundColorProvider colorProvider,
                            boolean isForum) {
+        setupGlass(factory, colorProvider, false, isForum);
+    }
+
+    public void setupGlass(BlurredBackgroundDrawableViewFactory factory,
+                           BlurredBackgroundColorProvider colorProvider,
+                           boolean hasAvatar,
+                           boolean isForum) {
         setBackground(null);
         setClipChildren(false);
         glassMode = true;
         glassModeIsForum = isForum;
+        glassModeHasAvatar = hasAvatar;
+        float fDp = AndroidUtilities.dp(23.0f);
+        if (hasAvatar) {
+            boolean newChatHeaderStyle = ExteraConfig.getNewChatHeaderStyle();
+            int chatAvatarSizeDp = ChatHeaderUiHelper.getChatAvatarSizeDp();
+            this.glassDrawableLeftRadius = Math.min(fDp, ChatHeaderUiHelper.getAvatarRadius(chatAvatarSizeDp, isForum, false) + (newChatHeaderStyle ? AndroidUtilities.dp(3.33f) : (AndroidUtilities.dp(46.0f) - ChatHeaderUiHelper.getAvatarSizePx(chatAvatarSizeDp)) / 2.0f));
+        } else {
+            this.glassDrawableLeftRadius = isForum ? AndroidUtilities.dp(18.33f) : fDp;
+        }
 
         glassDrawable = factory.create(this)
             .setColorProvider(colorProvider)
             .setPadding(dp(6));
-        if (isForum) {
-            glassDrawable.setRadius(dp(18.33f), dp(23), dp(23), dp(18.33f));
-        } else {
-            glassDrawable.setRadius(dp(23));
-        }
+        glassDrawable.setRadius(glassDrawableLeftRadius, fDp, fDp, glassDrawableLeftRadius);
 
 
         glassDrawableBack = factory.create(this)
@@ -460,7 +479,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             return;
         }
         subtitleTextView = new SimpleTextView(getContext());
-        subtitleTextView.setGravity(Gravity.LEFT);
+        subtitleTextView.setGravity(getSubtitleGravity());
         subtitleTextView.setVisibility(GONE);
         subtitleTextView.setTextColor(getThemedColor(Theme.key_actionBarDefaultSubtitle));
         addView(subtitleTextView, 0, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP));
@@ -471,7 +490,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             return;
         }
         additionalSubtitleTextView = new SimpleTextView(getContext());
-        additionalSubtitleTextView.setGravity(Gravity.LEFT);
+        additionalSubtitleTextView.setGravity(getSubtitleGravity());
         additionalSubtitleTextView.setVisibility(GONE);
         additionalSubtitleTextView.setTextColor(getThemedColor(Theme.key_actionBarDefaultSubtitle));
         addView(additionalSubtitleTextView, 0, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP));
@@ -508,12 +527,54 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
     }
 
+    private boolean forceDisableCenterTitle;
+
+    private boolean shouldCenterTitle() {
+        if (forceDisableCenterTitle) {
+            return false;
+        }
+        return isCenterTitle || ExteraConfig.getCenterTitle();
+    }
+
+    private int getTitleGravity() {
+        return shouldCenterTitle() ? Gravity.CENTER : Gravity.LEFT | Gravity.CENTER_VERTICAL;
+    }
+
+    private int getSubtitleGravity() {
+        return shouldCenterTitle() ? Gravity.CENTER : Gravity.LEFT;
+    }
+
+    private void updateTitleGravity() {
+        int titleGravity = getTitleGravity();
+        int subtitleGravity = getSubtitleGravity();
+        for (SimpleTextView simpleTextView : titleTextView) {
+            if (simpleTextView != null) {
+                simpleTextView.setGravity(titleGravity);
+            }
+        }
+        if (subtitleTextView != null) {
+            subtitleTextView.setGravity(subtitleGravity);
+        }
+        if (additionalSubtitleTextView != null) {
+            additionalSubtitleTextView.setGravity(subtitleGravity);
+        }
+    }
+
+    public void setForceDisableCenterTitle(boolean value) {
+        if (forceDisableCenterTitle == value) {
+            return;
+        }
+        forceDisableCenterTitle = value;
+        updateTitleGravity();
+        requestLayout();
+    }
+
     private void createTitleTextView(int i) {
         if (titleTextView[i] != null) {
             return;
         }
         titleTextView[i] = new SimpleTextView(getContext());
-        titleTextView[i].setGravity(isCenterTitle ? Gravity.CENTER : Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        titleTextView[i].setGravity(getTitleGravity());
         if (titleColorToSet != 0) {
             titleTextView[i].setTextColor(titleColorToSet);
         } else {
@@ -535,21 +596,37 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public void centerTitle() {
         isCenterTitle = true;
-        if (titleTextView != null) {
-            for (int a = 0; a < titleTextView.length; a++) {
-                if (titleTextView[a] != null) {
-                    titleTextView[a].setGravity(Gravity.CENTER);
-                }
-            }
-        }
+        updateTitleGravity();
     }
 
     public void setTitleRightMargin(int value) {
         titleRightMargin = value;
     }
 
+    private boolean shouldUseDialogsDrawerTitleOffset() {
+        return (backButtonDrawable instanceof MenuDrawable) && ExteraConfig.getNavigationDrawer() && (parentFragment instanceof DialogsActivity);
+    }
+
     public void setTitle(CharSequence value) {
         setTitle(value, null);
+    }
+
+    public void setTitleAnimatedX(CharSequence charSequence, Drawable drawable, boolean z, int i) {
+        setTitle(charSequence, drawable);
+    }
+
+    public void refreshTitlePosition(boolean z) {
+        requestLayout();
+    }
+
+    private Drawable getVisibleTitleRightDrawable(Drawable drawable) {
+        if (drawable == null || ExteraConfig.getHideActionBarStatus() || !UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
+            return null;
+        }
+        if ((drawable instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) && ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) drawable).isEmpty()) {
+            return null;
+        }
+        return drawable;
     }
 
     public void setTitle(CharSequence value, Drawable rightDrawable) {
@@ -557,16 +634,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             createTitleTextView(0);
         }
         if (titleTextView[0] != null) {
+            titleTextView[0].setTypeface((value == null || !value.toString().equalsIgnoreCase("экстераграм")) ? AndroidUtilities.bold() : AndroidUtilities.getTypeface("fonts/impact.ttf"));
             titleTextView[0].setVisibility(value != null && !isSearchFieldVisible ? VISIBLE : INVISIBLE);
             titleTextView[0].setText(lastTitle = value);
             if (attached && lastRightDrawable instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
                 ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) lastRightDrawable).setParentView(null);
             }
-            titleTextView[0].setRightDrawable(lastRightDrawable = rightDrawable);
-            if (attached && lastRightDrawable instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
-                ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) lastRightDrawable).setParentView(titleTextView[0]);
+            lastRightDrawable = rightDrawable;
+            Drawable visibleTitleRightDrawable = getVisibleTitleRightDrawable(rightDrawable);
+            titleTextView[0].setRightDrawable(visibleTitleRightDrawable);
+            if (attached && visibleTitleRightDrawable instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
+                ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) visibleTitleRightDrawable).setParentView(titleTextView[0]);
             }
-            titleTextView[0].setRightDrawableOnClick(rightDrawableOnClickListener);
+            titleTextView[0].setRightDrawableOnClick(visibleTitleRightDrawable != null ? rightDrawableOnClickListener : null);
         }
         fromBottom = false;
     }
@@ -1369,6 +1449,22 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
 
+    private int getTitleLeft(boolean hasBackButton) {
+        if (!hasBackButton) {
+            if (glassMode) {
+                return dp(24);
+            }
+            return dp(AndroidUtilities.isTablet() ? 26 : 18);
+        }
+        if (glassMode) {
+            return dp(76);
+        }
+        if (shouldUseDialogsDrawerTitleOffset()) {
+            return dp(AndroidUtilities.isTablet() ? 68 : 56);
+        }
+        return dp(AndroidUtilities.isTablet() ? 80 : 72);
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
@@ -1391,9 +1487,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         int textLeft;
         if (backButtonImageView != null && backButtonImageView.getVisibility() != GONE) {
             backButtonImageView.measure(MeasureSpec.makeMeasureSpec(dp(54), MeasureSpec.EXACTLY), actionBarHeightSpec);
-            textLeft = dp(AndroidUtilities.isTablet() ? 80 : 72);
+            textLeft = getTitleLeft(true);
         } else {
-            textLeft = dp(AndroidUtilities.isTablet() ? 26 : 18);
+            textLeft = getTitleLeft(false);
         }
         // textLeft += additionalTextLeft;
 
@@ -1508,9 +1604,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         int textLeft;
         if (backButtonImageView != null && backButtonImageView.getVisibility() != GONE) {
             backButtonImageView.layout(0, additionalTop, backButtonImageView.getMeasuredWidth(), additionalTop + backButtonImageView.getMeasuredHeight());
-            textLeft = glassMode ? dp(76) : dp(AndroidUtilities.isTablet() ? 80 : 72);
+            textLeft = getTitleLeft(true);
         } else {
-            textLeft = glassMode ? dp(24) : dp(AndroidUtilities.isTablet() ? 26 : 18);
+            textLeft = getTitleLeft(false);
         }
         textLeft += additionalTextLeft;
 
@@ -2391,5 +2487,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         if (blurredBackground) {
             invalidate();
         }
+    }
+
+    public void setDrawGlassMiddlePill(boolean z) {
+        invalidate();
+    }
+
+    public void setGlassShadowAlpha(float f) {
+        invalidate();
     }
 }

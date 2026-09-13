@@ -28,6 +28,8 @@ import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
@@ -188,7 +190,7 @@ public abstract class GradientHeaderActivity extends BaseFragment {
                 if (view.getParent() != listView) return false;
                 final RecyclerView.ViewHolder viewHolder = listView.getChildViewHolder(view);
                 return !UniversalAdapter.isShadow(viewHolder.getItemViewType());
-            }, dp(12), dp(16), listView::drawBackgroundRect, true);
+            }, dp(12), dp(ExteraConfig.getSectionRadiusDp()), listView::drawBackgroundRect, true);
         } else {
             listView.setSections(true);
         }

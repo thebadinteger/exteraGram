@@ -23,6 +23,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.RawRes;
 import androidx.core.util.Consumer;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -184,6 +186,11 @@ public class DialogsEmptyCell extends LinearLayout {
             help = help.replace('\n', ' ');
         }
         subtitleView.setText(help, false);
+        if ((currentType == 0 || currentType == 1) && ExteraConfig.getHideFloatingButton()) {
+            subtitleView.setVisibility(GONE);
+        } else {
+            subtitleView.setVisibility(VISIBLE);
+        }
     }
 
     public boolean isUtyanAnimationTriggered() {

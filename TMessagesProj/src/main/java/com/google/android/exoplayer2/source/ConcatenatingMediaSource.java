@@ -1,3 +1,55 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.source;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.AbstractConcatenatedTimeline;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource.MediaSourceHolder;
+import com.google.android.exoplayer2.source.ShuffleOrder.DefaultShuffleOrder;
+import com.google.android.exoplayer2.upstream.Allocator;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Util;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Concatenates multiple {@link MediaSource}s. The list of {@link MediaSource}s can be modified
+ * during playback. It is valid for the same {@link MediaSource} instance to be present more than
+ * once in the concatenation. Access to this class is thread-safe.
+ */
 public final class ConcatenatingMediaSource extends CompositeMediaSource<MediaSourceHolder> {
 
   private static final int MSG_ADD = 0;

@@ -40,7 +40,7 @@ public class GoogleTranslator extends BaseTranslator {
     @Override 
     public void translate(String str, String str2, String str3, final TranslatorUtils.TranslateCallback translateCallback) {
         try {
-            client.newCall(new Request.Builder().url("https:
+            client.newCall(new Request.Builder().url("https://translate.googleapis.com/translate_a/single?dj=1&q=" + URLEncoder.encode(str, "UTF-8") + "&sl=" + str2 + "&tl=" + str3 + "&ie=UTF-8&oe=UTF-8&client=at&dt=t&otf=2").header("User-Agent", TranslatorUtils.formatUserAgent()).build()).enqueue(new Callback() {
                 @Override // okhttp3.Callback
                 public void onFailure(Call call, IOException iOException) {
                     FileLog.e(iOException);
@@ -54,7 +54,7 @@ public class GoogleTranslator extends BaseTranslator {
                     try {
                         ResponseBody responseBodyBody = response.body();
                         try {
-                            if (!response.getIsSuccessful()) {
+                            if (!response.isSuccessful()) {
                                 TranslatorUtils.TranslateCallback translateCallback2 = translateCallback;
                                 Objects.requireNonNull(translateCallback2);
                                 AndroidUtilities.runOnUIThread(new BaseTranslator$$ExternalSyntheticLambda0(translateCallback2));

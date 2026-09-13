@@ -1,6 +1,6 @@
 package com.exteragram.messenger.pillstack.ui.pills.crypto.utils;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;

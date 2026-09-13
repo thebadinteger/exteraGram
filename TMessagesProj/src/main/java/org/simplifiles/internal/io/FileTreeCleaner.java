@@ -37,14 +37,14 @@ public final class FileTreeCleaner {
                     public final Object invoke(Object obj) {
                         return Boolean.valueOf(FileTreeCleaner.deleteContents$lambda$0$0(root, (Path) obj));
                     }
-                }), new Comparator() { // from class: org.simplifiles.internal.io.FileTreeCleaner$deleteContents$lambda$0$$inlined$sortedByDescending$1
+                }), new Comparator<Path>() { // from class: org.simplifiles.internal.io.FileTreeCleaner$deleteContents$lambda$0$$inlined$sortedByDescending$1
                     @Override // java.util.Comparator
-                    public final int compare(T t, T t2) {
-                        return ComparisonsKt.compareValues(Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t2).getNameCount()), Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t).getNameCount()));
+                    public final int compare(Path t, Path t2) {
+                        return ComparisonsKt.compareValues(Integer.valueOf(t2.getNameCount()), Integer.valueOf(t.getNameCount()));
                     }
                 }).iterator();
                 while (it.hasNext()) {
-                    Files.deleteIfExists(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next()));
+                    Files.deleteIfExists((Path) it.next());
                 }
                 Unit unit = Unit.INSTANCE;
                 AutoCloseableKt.closeFinally(streamWalk, null);
@@ -67,14 +67,14 @@ public final class FileTreeCleaner {
         if (Files.exists(root, (LinkOption[]) Arrays.copyOf(new LinkOption[0], 0))) {
             Stream<Path> streamWalk = Files.walk(root, new FileVisitOption[0]);
             try {
-                Iterator it = SequencesKt.sortedWith(StreamsKt.asSequence(streamWalk), new Comparator() { // from class: org.simplifiles.internal.io.FileTreeCleaner$deleteRecursively$lambda$0$$inlined$sortedByDescending$1
+                Iterator it = SequencesKt.sortedWith(StreamsKt.asSequence(streamWalk), new Comparator<Path>() { // from class: org.simplifiles.internal.io.FileTreeCleaner$deleteRecursively$lambda$0$$inlined$sortedByDescending$1
                     @Override // java.util.Comparator
-                    public final int compare(T t, T t2) {
-                        return ComparisonsKt.compareValues(Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t2).getNameCount()), Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t).getNameCount()));
+                    public final int compare(Path t, Path t2) {
+                        return ComparisonsKt.compareValues(Integer.valueOf(t2.getNameCount()), Integer.valueOf(t.getNameCount()));
                     }
                 }).iterator();
                 while (it.hasNext()) {
-                    Files.deleteIfExists(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next()));
+                    Files.deleteIfExists((Path) it.next());
                 }
                 Unit unit = Unit.INSTANCE;
                 AutoCloseableKt.closeFinally(streamWalk, null);

@@ -1,6 +1,7 @@
 package com.exteragram.messenger.icons;
 
 import android.util.SparseIntArray;
+import java.util.Collections;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.Metadata;
@@ -23,7 +24,7 @@ public final class BaseIconPacks {
     private static final Lazy def = LazyKt.lazy(new Function0() { 
         @Override // kotlin.jvm.functions.Function0
         public final Object invoke() {
-            return BaseIconPacks.$r8$lambda$UmsreqakgE4F6Hi8cxVwZfIKEFc();
+            return BaseIconPacks.def_delegate$lambda$0();
         }
     });
 
@@ -613,7 +614,7 @@ public final class BaseIconPacks {
         return (SparseIntArray) def.getValue();
     }
 
-    public static SparseIntArray $r8$lambda$UmsreqakgE4F6Hi8cxVwZfIKEFc() {
+    public static final SparseIntArray def_delegate$lambda$0() {
         SparseIntArray sparseIntArray = new SparseIntArray(3);
         sparseIntArray.put(R.drawable.popup_fixed_alert, R.drawable.popup_fixed_alert4);
         sparseIntArray.put(R.drawable.popup_fixed_alert2, R.drawable.popup_fixed_alert4);
@@ -1196,22 +1197,18 @@ public final class BaseIconPacks {
     }
 
     public final IconPack getBasePack(String id) {
-        int iHashCode = id.hashCode();
-        if (iHashCode == -1879254548) {
-            if (id.equals("base.remix")) {
-                return new IconPack("base.remix", "Remix Icon", "[Remix-Design](https://github.com/Remix-Design/RemixIcon)", null, null, getRemix(), null, 88, null);
-            }
+        if (id == null) {
             return null;
         }
-        if (iHashCode == -1878034332) {
-            if (id.equals("base.solar")) {
-                return new IconPack("base.solar", "Solar Icon Set", "@Design480", null, null, getSolar(), null, 88, null);
-            }
-            return null;
+        switch (id) {
+            case "base.remix":
+                return new IconPack("base.remix", "Remix Icon", "[Remix-Design](https://github.com/Remix-Design/RemixIcon)", "1.0", Collections.emptyMap(), getRemix(), null);
+            case "base.solar":
+                return new IconPack("base.solar", "Solar Icon Set", "@Design480", "1.0", Collections.emptyMap(), getSolar(), null);
+            case "base.default":
+                return new IconPack("base.default", LocaleController.getString(R.string.Default), "Telegram", "1.0", Collections.emptyMap(), getDef(), null);
+            default:
+                return null;
         }
-        if (iHashCode == -1624208348 && id.equals("base.default")) {
-            return new IconPack("base.default", LocaleController.getString(R.string.Default), "Telegram", null, null, getDef(), null, 88, null);
-        }
-        return null;
     }
 }

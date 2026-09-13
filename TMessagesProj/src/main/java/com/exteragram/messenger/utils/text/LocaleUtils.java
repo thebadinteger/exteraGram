@@ -437,22 +437,23 @@ public abstract class LocaleUtils {
 
     public static CharSequence insertHexColorsPreview(CharSequence charSequence) {
         if (!TextUtils.isEmpty(charSequence) && containsHash(charSequence)) {
-            charSequence = charSequence instanceof Spannable ? (Spannable) charSequence : new SpannableString(charSequence);
-            for (ColorRectSpan colorRectSpan : (ColorRectSpan[]) charSequence.getSpans(0, charSequence.length(), ColorRectSpan.class)) {
-                charSequence.removeSpan(colorRectSpan);
+            Spannable spannable = charSequence instanceof Spannable ? (Spannable) charSequence : new SpannableString(charSequence);
+            for (ColorRectSpan colorRectSpan : (ColorRectSpan[]) spannable.getSpans(0, spannable.length(), ColorRectSpan.class)) {
+                spannable.removeSpan(colorRectSpan);
             }
-            Matcher matcher = HEX_PATTERN.matcher(charSequence);
+            Matcher matcher = HEX_PATTERN.matcher(spannable);
             while (matcher.find()) {
                 int iEnd = matcher.end();
                 int i = iEnd - 1;
-                if (!hasConflictingHexPreviewSpan(charSequence, i, iEnd)) {
+                if (!hasConflictingHexPreviewSpan(spannable, i, iEnd)) {
                     try {
-                        charSequence.setSpan(new ColorRectSpan(Color.parseColor(matcher.group())), i, iEnd, 33);
+                        spannable.setSpan(new ColorRectSpan(Color.parseColor(matcher.group())), i, iEnd, 33);
                     } catch (IllegalArgumentException unused) {
                         FileLog.e("Invalid HEX color: " + matcher.group());
                     }
                 }
             }
+            return spannable;
         }
         return charSequence;
     }

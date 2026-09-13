@@ -62,14 +62,6 @@ public final /* data */ class BadgeDTO {
         this.text = str;
     }
 
-    public final long getDocumentId() {
-        return this.documentId;
-    }
-
-    public final String getText() {
-        return this.text;
-    }
-
     public final void setText(String str) {
         this.text = str;
     }

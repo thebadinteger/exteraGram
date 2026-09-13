@@ -31,7 +31,7 @@ public class ProxyDns implements Dns {
     }
 
     @Override // okhttp3.Dns
-    public List<InetAddress> lookup(String str) {
+    public List<InetAddress> lookup(String str) throws java.net.UnknownHostException {
         try {
             List<String> listResolveDns = resolveDns(str);
             if (listResolveDns != null && !listResolveDns.isEmpty()) {
@@ -52,7 +52,7 @@ public class ProxyDns implements Dns {
         try {
             Response responseExecute = this.client.newCall(new Request.Builder().url(URL).post(RequestBody.create(buildDnsQuery(str), MediaType.parse("application/dns-message"))).addHeader("Accept", "application/dns-message").build()).execute();
             try {
-                if (!responseExecute.getIsSuccessful() || responseExecute.body() == null) {
+                if (!responseExecute.isSuccessful() || responseExecute.body() == null) {
                     responseExecute.close();
                     return null;
                 }
@@ -72,7 +72,6 @@ public class ProxyDns implements Dns {
         } catch (IOException unused) {
             return null;
         }
-        return null;
     }
 
     private byte[] buildDnsQuery(String str) {

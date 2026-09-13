@@ -6,9 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import kotlin.Metadata;
-import kotlin.jvm.functions.Function1;
 import kotlin.jvm.internal.DefaultConstructorMarker;
 import kotlin.jvm.internal.Intrinsics;
 import okhttp3.internal.url._UrlKt;
@@ -47,7 +45,6 @@ public final class HookFilter {
     private static final ConcurrentHashMap<String, Serializable> mvelExpressionCache = new ConcurrentHashMap<>();
 
     public HookFilter(String str) {
-        "filterType";
         this.filterType = str;
         this.typeId = INSTANCE.typeIdFor(str);
     }
@@ -98,15 +95,12 @@ public final class HookFilter {
 
     public final boolean execute(XC_MethodHook.MethodHookParam param, boolean isBefore) {
         Boolean bool;
-        "param";
         try {
             switch (this.typeId) {
                 case 1:
                     ArrayList<HookFilter> arrayList = this.orFilters;
                     if (arrayList != null) {
-                        "iterator(...)";
                         for (HookFilter hookFilter : arrayList) {
-                            "next(...)";
                             if (hookFilter.execute(param, isBefore)) {
                                 return true;
                             }
@@ -114,7 +108,7 @@ public final class HookFilter {
                     }
                     return false;
                 case 2:
-                    HashMap map = new HashMap(4);
+                    HashMap<String, Object> map = new HashMap<>(4);
                     map.put("param", param);
                     map.put("result", isBefore ? null : param.getResult());
                     map.put("object", this.object);
@@ -194,6 +188,7 @@ public final class HookFilter {
             }
         } catch (Exception e) {
             AppUtils.log(e);
+            return false;
         }
     }
 
@@ -203,22 +198,11 @@ public final class HookFilter {
             return serializable;
         }
         ConcurrentHashMap<String, Serializable> concurrentHashMap = mvelExpressionCache;
-        final HookFilter$getCompiledExpression$compiled$1 hookFilter$getCompiledExpression$compiled$1 = HookFilter$getCompiledExpression$compiled$1.INSTANCE;
-        Serializable serializableComputeIfAbsent = concurrentHashMap.computeIfAbsent(expression, new Function() { 
-            @Override // java.util.function.Function
-            public final Object apply(Object obj) {
-                return HookFilter.$r8$lambda$b3Fk1SAQnzbr65exfos3tMKC5EQ(hookFilter$getCompiledExpression$compiled$1, obj);
-            }
-        });
-        "computeIfAbsent(...)";
+        Serializable serializableComputeIfAbsent = concurrentHashMap.computeIfAbsent(expression, s -> MVEL.compileExpression(s));
         Serializable serializable2 = serializableComputeIfAbsent;
         this.compiledExpression = serializable2;
         this.compiledExpressionKey = expression;
         return serializable2;
-    }
-
-    public static Serializable $r8$lambda$b3Fk1SAQnzbr65exfos3tMKC5EQ(Function1 function1, Object obj) {
-        return (Serializable) function1.invoke(obj);
     }
 
     private final boolean valuesEqual(Object a2, Object b2) {
@@ -236,7 +220,6 @@ public final class HookFilter {
         return false;
     }
 
-    @Metadata(d1 = {"\u0000$\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\b\n\u0002\b\u0011\n\u0002\u0018\u0002\n\u0002\u0010\u000e\n\u0002\u0018\u0002\n\u0002\b\u0003\b\u0086\u0003\u0018\u00002\u00020\u0001B\t\b\u0002¢\u0006\u0004\b\u0002\u0010\u0003J\u0010\u0010\u001a\u001a\u00020\u00052\u0006\u0010\u001b\u001a\u00020\u0018H\u0002R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\t\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u000b\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\f\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\r\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u000e\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u000f\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0010\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0011\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0012\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0013\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0014\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u000e\u0010\u0015\u001a\u00020\u0005X\u0082T¢\u0006\u0002\n\u0000R\u001a\u0010\u0016\u001a\u000e\u0012\u0004\u0012\u00020\u0018\u0012\u0004\u0012\u00020\u00190\u0017X\u0082\u0004¢\u0006\u0002\n\u0000¨\u0006\u001c"}, d2 = {"Lcom/exteragram/messenger/plugins/hooks/HookFilter$Companion;", _UrlKt.FRAGMENT_ENCODE_SET, "<init>", "()V", "TYPE_UNKNOWN", _UrlKt.FRAGMENT_ENCODE_SET, "TYPE_OR", "TYPE_CONDITION", "TYPE_ARGUMENT_EQUAL", "TYPE_ARGUMENT_NOT_EQUAL", "TYPE_ARGUMENT_IS_INSTANCE_OF", "TYPE_ARGUMENT_IS_FALSE", "TYPE_ARGUMENT_IS_NULL", "TYPE_ARGUMENT_IS_TRUE", "TYPE_ARGUMENT_NOT_NULL", "TYPE_RESULT_EQUAL", "TYPE_RESULT_NOT_EQUAL", "TYPE_RESULT_IS_FALSE", "TYPE_RESULT_IS_INSTANCE_OF", "TYPE_RESULT_IS_NULL", "TYPE_RESULT_IS_TRUE", "TYPE_RESULT_NOT_NULL", "mvelExpressionCache", "Ljava/util/concurrent/ConcurrentHashMap;", _UrlKt.FRAGMENT_ENCODE_SET, "Ljava/io/Serializable;", "typeIdFor", "filterType", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
     public static final class Companion {
         public /* synthetic */ Companion(DefaultConstructorMarker defaultConstructorMarker) {
             this();
@@ -245,6 +228,7 @@ public final class HookFilter {
         private Companion() {
         }
 
+        /* JADX INFO: Access modifiers changed from: private */
         public final int typeIdFor(String filterType) {
             switch (filterType.hashCode()) {
                 case -1842277382:

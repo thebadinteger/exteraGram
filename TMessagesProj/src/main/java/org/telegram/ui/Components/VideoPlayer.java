@@ -56,9 +56,12 @@ import com.google.android.exoplayer2.audio.TeeAudioProcessor;
 import com.google.android.exoplayer2.mediacodec.MediaCodecDecoderException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
+import com.google.android.exoplayer2.text.CueGroup;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.MergingMediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
@@ -139,6 +142,9 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
         default void onSeekFinished(AnalyticsListener.EventTime eventTime) {
 
         }
+        default void onCues(CueGroup cueGroup) {
+
+        }
     }
 
     public interface AudioVisualizerDelegate {
@@ -176,6 +182,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     private Quality videoQualityToSelect;
     private ArrayList<VideoUri> manifestUris;
     private Uri videoUri, audioUri;
+    private long currentVideoByteOffset;
     private String videoType, audioType;
     private boolean loopingMediaSource;
     private boolean looping;
@@ -230,6 +237,37 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     public void setEGLContext(EGLContext ctx) {
         eglParentContext = ctx;
     }
+
+    public static final class ExternalSubtitle {
+        public final Uri uri;
+        public final String mimeType;
+        public final String label;
+
+        public ExternalSubtitle(Uri uri, String mimeType, String label) {
+            this.uri = uri;
+            this.mimeType = mimeType;
+            this.label = label;
+        }
+
+        public MediaItem.SubtitleConfiguration toSubtitleConfiguration() {
+            return new MediaItem.SubtitleConfiguration.Builder(this.uri)
+                    .setMimeType(this.mimeType)
+                    .setLabel(this.label)
+                    .setSelectionFlags(1)
+                    .build();
+        }
+    }
+
+    private ExternalSubtitle currentExternalSubtitle;
+
+    public void setExternalSubtitle(ExternalSubtitle externalSubtitle) {
+        this.currentExternalSubtitle = externalSubtitle;
+    }
+
+    public ExternalSubtitle getExternalSubtitle() {
+        return this.currentExternalSubtitle;
+    }
+
 
     private void ensurePlayerCreated() {
         DefaultLoadControl loadControl;
@@ -360,28 +398,76 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
                 () -> new OffsetDataSource(mediaDataSourceFactory.createDataSource(), videoByteOffset)
             ).createMediaSource(mediaItem);
         }
+        MediaSource source;
         switch (type) {
             case "dash":
                 if (dashMediaSourceFactory == null) {
                     dashMediaSourceFactory = new DashMediaSource.Factory(mediaDataSourceFactory);
                 }
-                return dashMediaSourceFactory.createMediaSource(mediaItem);
+                source = dashMediaSourceFactory.createMediaSource(mediaItem);
+                break;
             case "hls":
                 if (hlsMediaSourceFactory == null) {
                     hlsMediaSourceFactory = new HlsMediaSource.Factory(mediaDataSourceFactory);
                 }
-                return hlsMediaSourceFactory.createMediaSource(mediaItem);
+                source = hlsMediaSourceFactory.createMediaSource(mediaItem);
+                break;
             case "ss":
                 if (ssMediaSourceFactory == null) {
                     ssMediaSourceFactory = new SsMediaSource.Factory(mediaDataSourceFactory);
                 }
-                return ssMediaSourceFactory.createMediaSource(mediaItem);
+                source = ssMediaSourceFactory.createMediaSource(mediaItem);
+                break;
             default:
                 if (progressiveMediaSourceFactory == null) {
                     progressiveMediaSourceFactory = new ProgressiveMediaSource.Factory(mediaDataSourceFactory);
                 }
-                return progressiveMediaSourceFactory.createMediaSource(mediaItem);
+                source = progressiveMediaSourceFactory.createMediaSource(mediaItem);
+                break;
         }
+        return maybeWrapWithExternalSubtitle(source);
+    }
+
+    private MediaSource maybeWrapWithExternalSubtitle(MediaSource mediaSource) {
+        return this.currentExternalSubtitle == null ? mediaSource : new MergingMediaSource(mediaSource, new SingleSampleMediaSource.Factory(this.mediaDataSourceFactory).createMediaSource(this.currentExternalSubtitle.toSubtitleConfiguration(), -9223372036854775807L));
+    }
+
+    public boolean reloadCurrentSource() {
+        if (this.player == null) {
+            return false;
+        }
+        if (this.videoQualities != null) {
+            setSelectedQuality(false, this.videoQualityToSelect);
+            return true;
+        }
+        if (this.videoUri == null) {
+            return false;
+        }
+        boolean playWhenReady = getPlayWhenReady();
+        long jMax = Math.max(0L, getCurrentPosition());
+        if (this.loopingMediaSource && this.audioUri != null && this.audioPlayer != null) {
+            LoopingMediaSource loopingMediaSource = new LoopingMediaSource(mediaSourceFromUri(this.videoUri, this.currentVideoByteOffset, this.videoType));
+            LoopingMediaSource loopingMediaSource2 = new LoopingMediaSource(mediaSourceFromUri(this.audioUri, 0L, this.audioType));
+            this.player.setMediaSource(loopingMediaSource, false);
+            this.player.prepare();
+            this.audioPlayer.setMediaSource(loopingMediaSource2, false);
+            this.audioPlayer.prepare();
+            if (jMax > 0) {
+                this.player.seekTo(jMax);
+                this.audioPlayer.seekTo(jMax);
+            }
+            setPlayWhenReady(playWhenReady);
+            activePlayers.add(this.playerId);
+            return true;
+        }
+        this.player.setMediaSource(mediaSourceFromUri(this.videoUri, this.currentVideoByteOffset, this.videoType), false);
+        this.player.prepare();
+        if (jMax > 0) {
+            this.player.seekTo(jMax);
+        }
+        setPlayWhenReady(playWhenReady);
+        activePlayers.add(this.playerId);
+        return true;
     }
 
     public void preparePlayer(Uri uri, String type) {
@@ -703,6 +789,18 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
         Player.Listener.super.onTrackSelectionParametersChanged(parameters);
         if (onQualityChangeListener != null) {
             AndroidUtilities.runOnUIThread(onQualityChangeListener);
+        }
+    }
+
+    @Override
+    public void onCues(final CueGroup cueGroup) {
+        Player.Listener.super.onCues(cueGroup);
+        if (delegate != null) {
+            AndroidUtilities.runOnUIThread(() -> {
+                if (delegate != null) {
+                    delegate.onCues(cueGroup);
+                }
+            });
         }
     }
 

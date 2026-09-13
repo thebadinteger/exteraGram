@@ -42,7 +42,7 @@ public final class FileTreeCopier {
             long j = 0;
             long size = 0;
             while (it.hasNext()) {
-                Path pathM = DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next());
+                Path pathM = (Path) it.next();
                 j++;
                 if (j > options.getMaxFiles()) {
                     throw new FileOperationException("Directory exceeds copy limit of " + options.getMaxFiles() + " files: " + source);
@@ -72,14 +72,14 @@ public final class FileTreeCopier {
         validateDirectory(source, options);
         Stream<Path> streamWalk = Files.walk(source, new FileVisitOption[0]);
         try {
-            Iterator it = SequencesKt.sortedWith(StreamsKt.asSequence(streamWalk), new Comparator() { // from class: org.simplifiles.internal.io.FileTreeCopier$copyDirectory$lambda$0$$inlined$sortedBy$1
+            Iterator it = SequencesKt.sortedWith(StreamsKt.asSequence(streamWalk), new Comparator<Path>() { // from class: org.simplifiles.internal.io.FileTreeCopier$copyDirectory$lambda$0$$inlined$sortedBy$1
                 @Override // java.util.Comparator
-                public final int compare(T t, T t2) {
-                    return ComparisonsKt.compareValues(Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t).getNameCount()), Integer.valueOf(DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(t2).getNameCount()));
+                public final int compare(Path t, Path t2) {
+                    return ComparisonsKt.compareValues(Integer.valueOf(t.getNameCount()), Integer.valueOf(t2.getNameCount()));
                 }
             }).iterator();
             while (it.hasNext()) {
-                Path pathM = DirectoryEntriesReader$$ExternalSyntheticApiModelOutline0.m(it.next());
+                Path pathM = (Path) it.next();
                 Path pathResolve = target.resolve(source.relativize(pathM));
                 if (Files.isDirectory(pathM, new LinkOption[0])) {
                     if (Files.exists(pathResolve, new LinkOption[0]) && !Files.isDirectory(pathResolve, new LinkOption[0])) {

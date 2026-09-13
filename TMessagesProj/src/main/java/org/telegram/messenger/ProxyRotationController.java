@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.SystemClock;
 
 import org.telegram.tgnet.ConnectionsManager;
+import com.exteragram.messenger.proxy.ProxyController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +84,7 @@ public class ProxyRotationController implements NotificationCenter.NotificationC
             }
             editor.apply();
 
-            SharedConfig.currentProxy = info;
+            ProxyController.getInstance().setCurrentProxy(info);
             NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
             NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxyChangedByRotation);
             ConnectionsManager.setProxySettings(true, SharedConfig.currentProxy.address, SharedConfig.currentProxy.port, SharedConfig.currentProxy.username, SharedConfig.currentProxy.password, SharedConfig.currentProxy.secret);

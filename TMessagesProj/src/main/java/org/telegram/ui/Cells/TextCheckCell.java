@@ -32,6 +32,7 @@ import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.AvatarSpan;
 import org.telegram.ui.Components.AnimationProperties;
@@ -39,6 +40,8 @@ import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.Switch;
+
+import com.exteragram.messenger.components.VerticalImageSpan;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -62,7 +65,7 @@ public class TextCheckCell extends FrameLayout {
     private boolean drawCheckRipple;
     private int padding;
     private Theme.ResourcesProvider resourcesProvider;
-    ImageView imageView;
+    RLottieImageView imageView;
     private boolean isRTL;
 
     public static final Property<TextCheckCell, Float> ANIMATION_PROGRESS = new AnimationProperties.FloatProperty<TextCheckCell>("animationProgress") {
@@ -223,28 +226,40 @@ public class TextCheckCell extends FrameLayout {
         super.setPressed(pressed);
     }
 
-    public void setTextAndValueAndCheck(String text, String value, boolean checked, boolean multiline, boolean divider) {
+    public void setTextAndValueAndCheck(CharSequence text, String value, boolean checked, boolean multiline, boolean divider) {
+        if (value != null && value.contains("->")) {
+            valueTextView.setText(VerticalImageSpan.createSpan(getContext(), R.drawable.search_arrow, value, "->", Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider));
+        } else {
+            valueTextView.setText(value);
+        }
         AvatarSpan.checkSpansParent(text, this);
         textView.setText(text);
-        valueTextView.setText(value);
         checkBox.setVisibility(View.VISIBLE);
         checkBox.setChecked(checked, false);
         needDivider = divider;
         valueTextView.setVisibility(VISIBLE);
         isMultiline = multiline;
+        LayoutParams valueParams = (LayoutParams) valueTextView.getLayoutParams();
         if (multiline) {
             valueTextView.setLines(0);
             valueTextView.setMaxLines(0);
             valueTextView.setSingleLine(false);
             valueTextView.setEllipsize(null);
             valueTextView.setPadding(0, 0, 0, AndroidUtilities.dp(11));
+            valueParams.width = LayoutParams.MATCH_PARENT;
+            valueParams.rightMargin = LocaleController.isRTL ? padding : AndroidUtilities.dp(70);
+            valueParams.leftMargin = LocaleController.isRTL ? AndroidUtilities.dp(70) : padding;
         } else {
             valueTextView.setLines(1);
             valueTextView.setMaxLines(1);
             valueTextView.setSingleLine(true);
             valueTextView.setEllipsize(TextUtils.TruncateAt.END);
             valueTextView.setPadding(0, 0, 0, 0);
+            valueParams.width = LayoutParams.WRAP_CONTENT;
+            valueParams.rightMargin = LocaleController.isRTL ? padding : AndroidUtilities.dp(70);
+            valueParams.leftMargin = LocaleController.isRTL ? AndroidUtilities.dp(70) : padding;
         }
+        valueTextView.setLayoutParams(valueParams);
         LayoutParams layoutParams = (LayoutParams) textView.getLayoutParams();
         layoutParams.height = LayoutParams.WRAP_CONTENT;
         layoutParams.topMargin = AndroidUtilities.dp(10);
@@ -451,5 +466,51 @@ public class TextCheckCell extends FrameLayout {
         imageView.setImageResource(resId);
         imageView.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
         imageView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(9), color));
+    }
+
+    public void setIcon(int resId) {
+        if (imageView == null) {
+            imageView = new RLottieImageView(getContext());
+            imageView.setScaleType(ImageView.ScaleType.CENTER);
+            addView(imageView, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, 21, 0, 21, 0));
+        }
+        padding = AndroidUtilities.dp(71);
+        MarginLayoutParams layoutParams = (MarginLayoutParams) textView.getLayoutParams();
+        layoutParams.leftMargin = LocaleController.isRTL ? layoutParams.leftMargin : padding;
+        layoutParams.rightMargin = LocaleController.isRTL ? padding : layoutParams.rightMargin;
+        MarginLayoutParams layoutParams2 = (MarginLayoutParams) valueTextView.getLayoutParams();
+        layoutParams2.leftMargin = LocaleController.isRTL ? layoutParams2.leftMargin : padding;
+        layoutParams2.rightMargin = LocaleController.isRTL ? layoutParams2.rightMargin : padding;
+        imageView.setVisibility(VISIBLE);
+        imageView.setImageResource(resId);
+        imageView.setPadding(0, 0, 0, 0);
+        imageView.setBackground(null);
+        imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+        imageView.setAlpha(isEnabled() ? 1.0f : 0.5f);
+    }
+
+    public void reset() {
+        textView.setText("");
+        valueTextView.setText("");
+        valueTextView.setVisibility(GONE);
+        if (imageView != null) {
+            imageView.setVisibility(GONE);
+            imageView.setImageDrawable(null);
+            imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+            imageView.setBackground(null);
+        }
+        checkBox.setIcon(0);
+        isMultiline = false;
+        LayoutParams layoutParams = (LayoutParams) textView.getLayoutParams();
+        layoutParams.height = LayoutParams.MATCH_PARENT;
+        layoutParams.topMargin = 0;
+        textView.setLayoutParams(layoutParams);
+        padding = AndroidUtilities.dp(21);
+        MarginLayoutParams layoutParams2 = (MarginLayoutParams) textView.getLayoutParams();
+        layoutParams2.leftMargin = LocaleController.isRTL ? layoutParams2.leftMargin : padding;
+        layoutParams2.rightMargin = LocaleController.isRTL ? padding : layoutParams2.rightMargin;
+        MarginLayoutParams layoutParams3 = (MarginLayoutParams) valueTextView.getLayoutParams();
+        layoutParams3.leftMargin = LocaleController.isRTL ? layoutParams3.leftMargin : padding;
+        layoutParams3.rightMargin = LocaleController.isRTL ? layoutParams3.rightMargin : padding;
     }
 }

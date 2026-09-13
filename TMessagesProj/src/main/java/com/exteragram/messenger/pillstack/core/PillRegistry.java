@@ -2,7 +2,7 @@ package com.exteragram.messenger.pillstack.core;
 
 import android.content.Context;
 import androidx.annotation.Keep;
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import com.exteragram.messenger.pillstack.ui.pills.BasePill;
 import com.exteragram.messenger.pillstack.ui.pills.crypto.BtcPill;
 import com.exteragram.messenger.pillstack.ui.pills.crypto.GramPill;
@@ -114,7 +114,7 @@ public class PillRegistry {
             AndroidUtilities.runOnUIThread(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+                    NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
                 }
             });
         }
@@ -189,7 +189,7 @@ public class PillRegistry {
         AndroidUtilities.runOnUIThread(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
             }
         });
     }
@@ -203,7 +203,7 @@ public class PillRegistry {
             AndroidUtilities.runOnUIThread(new Runnable() { 
                 @Override // java.lang.Runnable
                 public final void run() {
-                    NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+                    NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
                 }
             });
         }
@@ -230,7 +230,7 @@ public class PillRegistry {
         AndroidUtilities.runOnUIThread(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                NotificationCenter.getGlobalInstance().lambda$postNotificationNameOnUIThread$1(NotificationCenter.pillStackLayoutChanged, new Object[0]);
+                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pillStackLayoutChanged, new Object[0]);
             }
         });
     }

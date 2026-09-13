@@ -9,6 +9,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import java.io.File;
 import okhttp3.internal.url._UrlKt;
+import org.telegram.messenger.FileLog;
 import org.webrtc.MediaStreamTrack;
 
 public abstract class AndroidPickerUtils {
@@ -99,35 +100,15 @@ public abstract class AndroidPickerUtils {
         return null;
     }
 
-    public static String getDataColumn(Context context, Uri uri, String str, String[] strArr) throws Throwable {
-        Throwable th;
-        Cursor cursor = null;
-        try {
-            Cursor cursorQuery = context.getContentResolver().query(uri, new String[]{"_data"}, str, strArr, null);
-            if (cursorQuery != null) {
-                try {
-                    if (cursorQuery.moveToFirst()) {
-                        String string = cursorQuery.getString(cursorQuery.getColumnIndexOrThrow("_data"));
-                        cursorQuery.close();
-                        return string;
-                    }
-                } catch (Throwable th2) {
-                    th = th2;
-                    cursor = cursorQuery;
-                    if (cursor != null) {
-                        cursor.close();
-                        throw th;
-                    }
-                    throw th;
-                }
+    public static String getDataColumn(Context context, Uri uri, String str, String[] strArr) {
+        try (Cursor cursor = context.getContentResolver().query(uri, new String[]{"_data"}, str, strArr, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndexOrThrow("_data"));
             }
-            if (cursorQuery != null) {
-                cursorQuery.close();
-            }
-            return null;
-        } catch (Throwable th3) {
-            th = th3;
+        } catch (Exception e) {
+            FileLog.e(e);
         }
+        return null;
     }
 
     public static boolean isExternalStorageDocument(Uri uri) {

@@ -19,8 +19,7 @@ public class ExportRequests$InvokeWithMessagesRange extends TLObject {
         } else if (i == 1910543603) {
             tL_messages_dialogs = new TLRPC.TL_messages_dialogsSlice();
         } else {
-            MathProcessor$$ExternalSyntheticBUOutline0.m("unknown constructor: ", i);
-            return null;
+            throw new RuntimeException("unknown constructor: " + i);
         }
         tL_messages_dialogs.readParams(inputSerializedData, z);
         return tL_messages_dialogs;

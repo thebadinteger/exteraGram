@@ -36,8 +36,7 @@ public interface ApiService {
 
     static /* synthetic */ Object getAllProfiles$default(ApiService apiService, String str, Continuation continuation, int i, Object obj) {
         if (obj != null) {
-            ByteString$$ExternalSyntheticBUOutline0.m("Super calls with default arguments not supported in this target, function: getAllProfiles");
-            return null;
+            throw new UnsupportedOperationException("Super calls with default arguments not supported in this target, function: getAllProfiles");
         }
         if ((i & 1) != 0) {
             str = null;

@@ -68,7 +68,7 @@ public class SupporterBottomSheet extends BottomSheet {
         Utilities.Callback callback = new Utilities.Callback() { 
             @Override 
             public final void run(Object obj) {
-                this.f$0.lambda$new$1(fFloatValue, str, baseFragment, featureCell, (ExchangeRates.State) obj);
+                SupporterBottomSheet.this.lambda$new$1(fFloatValue, str, baseFragment, featureCell, (ExchangeRates.State) obj);
             }
         };
         callback.run(ExchangeRates.getCached());
@@ -76,7 +76,7 @@ public class SupporterBottomSheet extends BottomSheet {
         linearLayout.addView(new FeatureCell(parentActivity, R.drawable.menu_feature_wallpaper, LocaleController.getString(R.string.SendProof), AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.SendProofInfo), Theme.key_chat_messageLinkIn, 0, new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$2(baseFragment);
+                SupporterBottomSheet.this.lambda$new$2(baseFragment);
             }
         })), LayoutHelper.createLinear(-1, -2, 0.0f, 0, 0, 16, 0, 0));
         linearLayout.addView(new FeatureCell(parentActivity, R.drawable.menu_feature_reactions, LocaleController.getString(R.string.ReceiveBadge), LocaleController.getString(R.string.ReceiveBadgeInfo)), LayoutHelper.createLinear(-1, -2, 0.0f, 0, 0, 16, 0, 0));
@@ -86,7 +86,7 @@ public class SupporterBottomSheet extends BottomSheet {
         buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$3(view);
+                SupporterBottomSheet.this.lambda$new$3(view);
             }
         });
         linearLayout.addView(buttonWithCounterView, LayoutHelper.createLinear(-1, 48, 0, 14, 22, 14, 14));
@@ -95,18 +95,36 @@ public class SupporterBottomSheet extends BottomSheet {
         setCustomView(scrollView);
     }
 
+    private void lambda$new$1(float f, String str, final BaseFragment baseFragment, FeatureCell featureCell, ExchangeRates.State state) {
+        double donate = state != null ? state.formatDonate("TON", 1.0d) : ((double) f) * 1.0d * ((((double) RemoteUtils.getIntConfigValue("donates_ton_markup_percent", 10).intValue()) / 100.0d) + 1.0d);
+        double donate2 = state != null ? state.formatDonate("RUB", 100.0d) : 100.0d * ((double) f);
+        String str2 = "TON " + ExchangeRates.State.formatter.format(donate);
+        String str3 = Math.round(donate2) + "₽";
+        SpannableStringBuilder spannableStringBuilderReplaceSingleTag = AndroidUtilities.replaceSingleTag(LocaleController.formatString(R.string.MakeDonationInfo, str, str2 + ", " + str3), Theme.key_chat_messageLinkIn, 0, new Runnable() {
+            @Override // java.lang.Runnable
+            public final void run() {
+                SupporterBottomSheet.this.lambda$new$0(baseFragment);
+            }
+        });
+        SpannableString spannableString = new SpannableString("TON");
+        ColoredImageSpan coloredImageSpan = new ColoredImageSpan(R.drawable.mini_gram_16);
+        coloredImageSpan.setWidth(AndroidUtilities.dp(13.0f));
+        spannableString.setSpan(coloredImageSpan, 0, spannableString.length(), 33);
+        featureCell.setSubtitle(AndroidUtilities.replaceCharSequence("TON", spannableStringBuilderReplaceSingleTag, spannableString));
+    }
+
     public void lambda$new$0(BaseFragment baseFragment) {
-        lambda$new$0();
+        dismiss();
         baseFragment.presentFragment(new OtherPreferencesActivity());
     }
 
     public /* synthetic */ void lambda$new$2(BaseFragment baseFragment) {
-        lambda$new$0();
+        dismiss();
         MessagesController.getInstance(this.currentAccount).openByUserName("exteraOwner", baseFragment, 1);
     }
 
     public /* synthetic */ void lambda$new$3(View view) {
-        lambda$new$0();
+        dismiss();
     }
 
     public static SupporterBottomSheet showAlert(BaseFragment baseFragment) {
@@ -121,6 +139,10 @@ public class SupporterBottomSheet extends BottomSheet {
         return supporterBottomSheet;
     }
 
+    public Theme.ResourcesProvider getResourceProvider() {
+        return this.resourcesProvider;
+    }
+
     public class FeatureCell extends FrameLayout {
         private final LinkSpanDrawable.LinksTextView tvSubtitle;
 
@@ -130,12 +152,12 @@ public class SupporterBottomSheet extends BottomSheet {
             ImageView imageView = new ImageView(getContext());
             Drawable drawableMutate = ContextCompat.getDrawable(getContext(), i).mutate();
             int i2 = Theme.key_windowBackgroundWhiteBlackText;
-            drawableMutate.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i2, ((BottomSheet) SupporterBottomSheet.this).resourcesProvider), PorterDuff.Mode.MULTIPLY));
+            drawableMutate.setColorFilter(new PorterDuffColorFilter(Theme.getColor(i2, SupporterBottomSheet.this.getResourceProvider()), PorterDuff.Mode.MULTIPLY));
             imageView.setImageDrawable(drawableMutate);
             addView(imageView, LayoutHelper.createFrame(24, 24.0f, z ? 5 : 3, z ? 0.0f : 27.0f, 6.0f, z ? 27.0f : 0.0f, 0.0f));
             TextView textView = new TextView(getContext());
             textView.setText(charSequence);
-            textView.setTextColor(Theme.getColor(i2, ((BottomSheet) SupporterBottomSheet.this).resourcesProvider));
+            textView.setTextColor(Theme.getColor(i2, SupporterBottomSheet.this.getResourceProvider()));
             textView.setTextSize(1, 14.0f);
             textView.setTypeface(AndroidUtilities.bold());
             addView(textView, LayoutHelper.createFrame(-2, -2.0f, z ? 5 : 3, z ? 27.0f : 68.0f, 0.0f, z ? 68.0f : 27.0f, 0.0f));
@@ -143,8 +165,8 @@ public class SupporterBottomSheet extends BottomSheet {
             this.tvSubtitle = linksTextView;
             linksTextView.setText(charSequence2);
             linksTextView.setTextSize(1, 14.0f);
-            linksTextView.setTextColor(Theme.getColor(Theme.key_dialogTextGray3, ((BottomSheet) SupporterBottomSheet.this).resourcesProvider));
-            linksTextView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, ((BottomSheet) SupporterBottomSheet.this).resourcesProvider));
+            linksTextView.setTextColor(Theme.getColor(Theme.key_dialogTextGray3, SupporterBottomSheet.this.getResourceProvider()));
+            linksTextView.setLinkTextColor(Theme.getColor(Theme.key_chat_messageLinkIn, SupporterBottomSheet.this.getResourceProvider()));
             linksTextView.setLineSpacing(AndroidUtilities.dp(2.0f), 1.0f);
             addView(linksTextView, LayoutHelper.createFrame(-2, -2.0f, z ? 5 : 3, z ? 27.0f : 68.0f, 20.0f, z ? 68.0f : 27.0f, 0.0f));
         }

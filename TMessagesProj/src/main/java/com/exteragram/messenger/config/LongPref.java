@@ -11,7 +11,17 @@ public final class LongPref extends BasePref<Long> {
         super(Long.valueOf(j), str);
     }
 
-    public /* synthetic */ void save(String str, Long l) {
+    public /* synthetic */ LongPref(long j, String str, int i, DefaultConstructorMarker defaultConstructorMarker) {
+        this(j, (i & 2) != 0 ? null : str);
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ Long fetch(String str, Long l) {
+        return fetch(str, l.longValue());
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ void save(String str, Long l) {
         save(str, l.longValue());
     }
 

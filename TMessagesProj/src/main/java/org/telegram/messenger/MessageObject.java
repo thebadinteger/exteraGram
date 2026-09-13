@@ -8496,7 +8496,7 @@ public class MessageObject {
         }
     }
 
-    private boolean applyEntities() {
+    public boolean applyEntities() {
         generateLinkDescription();
         spoilLoginCode();
 

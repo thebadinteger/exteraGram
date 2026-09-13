@@ -19,12 +19,12 @@ public class AdBlock {
         queue.postRunnable(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                AdBlock.$r8$lambda$izUs8blSAW4dbII3p0uS4hFwS4A();
+                AdBlock.initializeInner();
             }
         });
     }
 
-    public static void $r8$lambda$SrkwfasH49b3Koy0_f99c2F0mmE() {
+    public static void destroy() {
         synchronized (lock) {
             try {
                 long j = enginePtr;

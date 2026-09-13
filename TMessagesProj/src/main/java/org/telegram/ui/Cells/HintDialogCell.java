@@ -24,6 +24,8 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.Emoji;
@@ -80,7 +82,7 @@ public class HintDialogCell extends FrameLayout {
         this.drawCheckbox = drawCheckbox;
 
         imageView = new BackupImageView(context);
-        imageView.setRoundRadius(AndroidUtilities.dp(27));
+        imageView.setRoundRadius(ExteraConfig.getAvatarCorners(54.0f, false, false, drawCheckbox));
         addView(imageView, LayoutHelper.createFrame(54, 54, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 7, 0, 0));
 
         nameTextView = new TextView(context) {
@@ -301,7 +303,7 @@ public class HintDialogCell extends FrameLayout {
             int cy = imageView.getTop() + imageView.getMeasuredHeight() / 2;
             Theme.checkboxSquare_checkPaint.setColor(Theme.getColor(Theme.key_dialogRoundCheckBox));
             Theme.checkboxSquare_checkPaint.setAlpha((int) (checkBox.getProgress() * 255));
-            canvas.drawCircle(cx, cy, AndroidUtilities.dp(28), Theme.checkboxSquare_checkPaint);
+            canvas.drawRoundRect(cx - AndroidUtilities.dp(28.0f), cy - AndroidUtilities.dp(28.0f), cx + AndroidUtilities.dp(28.0f), cy + AndroidUtilities.dp(28.0f), ExteraConfig.getAvatarCorners(56.0f), ExteraConfig.getAvatarCorners(56.0f), Theme.checkboxSquare_checkPaint);
         }
     }
 

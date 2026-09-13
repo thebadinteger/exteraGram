@@ -1,3 +1,55 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.source;
+
+import static com.google.android.exoplayer2.util.Assertions.checkArgument;
+import static com.google.android.exoplayer2.util.Assertions.checkNotNull;
+import static com.google.android.exoplayer2.util.Assertions.checkState;
+import static com.google.android.exoplayer2.util.Assertions.checkStateNotNull;
+
+import android.content.Context;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Pair;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.upstream.Allocator;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Util;
+import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.IdentityHashMap;
+
+/**
+ * Concatenates multiple {@link MediaSource MediaSources}, combining everything in one single {@link
+ * Timeline.Window}.
+ *
+ * <p>This class can only be used under the following conditions:
+ *
+ * <ul>
+ *   <li>All sources must be non-empty.
+ *   <li>All {@link Timeline.Window Windows} defined by the sources, except the first, must have an
+ *       {@link Timeline.Window#getPositionInFirstPeriodUs() period offset} of zero. This excludes,
+ *       for example, live streams or {@link ClippingMediaSource} with a non-zero start position.
+ * </ul>
+ */
 public final class ConcatenatingMediaSource2 extends CompositeMediaSource<Integer> {
 
   /** A builder for {@link ConcatenatingMediaSource2} instances. */

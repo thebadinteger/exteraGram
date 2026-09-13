@@ -38,7 +38,7 @@ import org.telegram.ui.Components.UniversalRecyclerView;
 
 public abstract class BasePreferencesActivity extends BaseFragment {
     protected LinearLayoutManager layoutManager;
-    protected UniversalRecyclerView listView;
+    public UniversalRecyclerView listView;
 
     public abstract void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter);
 
@@ -72,7 +72,7 @@ public abstract class BasePreferencesActivity extends BaseFragment {
         this.actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         this.actionBar.setAllowOverlayTitle(false);
         this.actionBar.setTitle(getTitle());
-        this.actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { 
+        this.actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity.1
             @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
             public void onItemClick(int i) {
                 if (i == -1) {
@@ -86,20 +86,20 @@ public abstract class BasePreferencesActivity extends BaseFragment {
         if (actionBar.menu == null) {
             actionBar.createMenu();
         }
-        UniversalRecyclerView universalRecyclerView = new UniversalRecyclerView(this, new Utilities.Callback2() { 
-            @Override 
+        UniversalRecyclerView universalRecyclerView = new UniversalRecyclerView(this, new Utilities.Callback2() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda6
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.fillItems((ArrayList) obj, (UniversalAdapter) obj2);
+                BasePreferencesActivity.this.fillItems((ArrayList) obj, (UniversalAdapter) obj2);
             }
-        }, new Utilities.Callback5() { 
-            @Override 
+        }, new Utilities.Callback5() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda7
+            @Override // org.telegram.messenger.Utilities.Callback5
             public final void run(Object obj, Object obj2, Object obj3, Object obj4, Object obj5) {
-                this.f$0.onClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue());
+                BasePreferencesActivity.this.onClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue());
             }
-        }, new Utilities.Callback5Return() { 
-            @Override 
+        }, new Utilities.Callback5Return() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda8
+            @Override // org.telegram.messenger.Utilities.Callback5Return
             public final Object run(Object obj, Object obj2, Object obj3, Object obj4, Object obj5) {
-                return Boolean.valueOf(this.f$0.onLongClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue()));
+                return Boolean.valueOf(BasePreferencesActivity.this.onLongClick((UItem) obj, (View) obj2, ((Integer) obj3).intValue(), ((Float) obj4).floatValue(), ((Float) obj5).floatValue()));
             }
         });
         this.listView = universalRecyclerView;
@@ -122,7 +122,7 @@ public abstract class BasePreferencesActivity extends BaseFragment {
     public void onResume() {
         super.onResume();
         this.listView.adapter.update(false);
-        Bulletin.addDelegate(this, new Bulletin.Delegate() { 
+        Bulletin.addDelegate(this, new Bulletin.Delegate() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity.2
             @Override // org.telegram.ui.Components.Bulletin.Delegate
             public int getTopOffset(int i) {
                 if (BasePreferencesActivity.this.hasHeaderCell()) {
@@ -152,10 +152,10 @@ public abstract class BasePreferencesActivity extends BaseFragment {
         int iFindPositionByItemId = universalRecyclerView.findPositionByItemId(i);
         if (iFindPositionByItemId >= 0 && iFindPositionByItemId < this.listView.adapter.getItemCount()) {
             this.layoutManager.scrollToPositionWithOffset(iFindPositionByItemId, AndroidUtilities.dp(80.0f));
-            this.listView.highlightRow(new RecyclerListView.IntReturnCallback() { 
+            this.listView.highlightRow(new RecyclerListView.IntReturnCallback() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda2
                 @Override // org.telegram.ui.Components.RecyclerListView.IntReturnCallback
                 public final int run() {
-                    return this.f$0.lambda$scrollToItem$0(i);
+                    return BasePreferencesActivity.this.lambda$scrollToItem$0(i);
                 }
             });
         } else {
@@ -163,7 +163,42 @@ public abstract class BasePreferencesActivity extends BaseFragment {
         }
     }
 
-    public void lambda$showListDialog$1(boolean z, int i, PopupUtils.OnItemClickListener onItemClickListener, UItem uItem, CharSequence[] charSequenceArr, int i2) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ int lambda$scrollToItem$0(int i) {
+        return this.listView.findPositionByItemId(i);
+    }
+
+    public int[] unBox(Collection<Integer> collection) {
+        return collection.stream().mapToInt(new ToIntFunction() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda3
+            @Override // java.util.function.ToIntFunction
+            public final int applyAsInt(Object obj) {
+                return ((Integer) obj).intValue();
+            }
+        }).toArray();
+    }
+
+    public void showListDialog(UItem uItem, CharSequence[] charSequenceArr, String str, int i, PopupUtils.OnItemClickListener onItemClickListener) {
+        showListDialog(uItem, charSequenceArr, null, str, i, onItemClickListener);
+    }
+
+    public void showListDialog(UItem uItem, CharSequence[] charSequenceArr, int[] iArr, String str, int i, PopupUtils.OnItemClickListener onItemClickListener) {
+        showListDialog(uItem, charSequenceArr, iArr, str, i, onItemClickListener, iArr == null, true);
+    }
+
+    public void showListDialog(final UItem uItem, final CharSequence[] charSequenceArr, int[] iArr, String str, final int i, final PopupUtils.OnItemClickListener onItemClickListener, boolean z, final boolean z2) {
+        if (getParentActivity() == null) {
+            return;
+        }
+        PopupUtils.showDialog(charSequenceArr, iArr, str, i, getContext(), new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda0
+            @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
+            public final void onClick(int i2) {
+                BasePreferencesActivity.this.lambda$showListDialog$1(z2, i, onItemClickListener, uItem, charSequenceArr, i2);
+            }
+        }, getResourceProvider(), z);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showListDialog$1(boolean z, int i, PopupUtils.OnItemClickListener onItemClickListener, UItem uItem, CharSequence[] charSequenceArr, int i2) {
         if (z && i == i2) {
             return;
         }
@@ -176,22 +211,80 @@ public abstract class BasePreferencesActivity extends BaseFragment {
     }
 
     public void showRestartBulletin() {
-        BulletinFactory.of(this).createSimpleBulletin(R.raw.info, LocaleController.getString(R.string.RestartRequired), LocaleController.getString(R.string.BotUnblock), new Runnable() { 
+        BulletinFactory.of(this).createSimpleBulletin(R.raw.info, LocaleController.getString(R.string.RestartRequired), LocaleController.getString(R.string.BotUnblock), new Runnable() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$showRestartBulletin$2();
+                BasePreferencesActivity.this.lambda$showRestartBulletin$2();
             }
         }).show();
     }
 
-    public void lambda$showCopyLinkOptions$3(String str) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showRestartBulletin$2() {
+        Context context = getContext();
+        Intent launchIntentForPackage = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        Intent intentMakeRestartActivityTask = Intent.makeRestartActivityTask(launchIntentForPackage == null ? null : launchIntentForPackage.getComponent());
+        intentMakeRestartActivityTask.setPackage(context.getPackageName());
+        context.startActivity(intentMakeRestartActivityTask);
+        Runtime.getRuntime().exit(0);
+    }
+
+    public void toggleBooleanSettingAndRefresh(UItem uItem, Consumer<Boolean> consumer) {
+        boolean z = !uItem.checked;
+        consumer.accept(Boolean.valueOf(z));
+        uItem.setChecked(z);
+        View viewFindViewByItemId = this.listView.findViewByItemId(uItem.id);
+        if (viewFindViewByItemId instanceof CheckBoxCell) {
+            ((CheckBoxCell) viewFindViewByItemId).setChecked(z, true);
+        } else if (viewFindViewByItemId instanceof TextCheckCell) {
+            ((TextCheckCell) viewFindViewByItemId).setChecked(z);
+        }
+        this.listView.adapter.update(true);
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public boolean isLightStatusBar() {
+        if (hasWhiteActionBar()) {
+            return ColorUtils.calculateLuminance(getThemedColor(Theme.key_windowBackgroundWhite)) > 0.699999988079071d;
+        }
+        return super.isLightStatusBar();
+    }
+
+    /* JADX WARN: Multi-variable type inference failed */
+    public boolean onLongClick(UItem uItem, View view, int i, float f, float f2) {
+        String firstSettingLink = SettingsRegistry.getInstance().getFirstSettingLink(getClass(), uItem);
+        if (TextUtils.isEmpty(firstSettingLink)) {
+            return false;
+        }
+        showCopyLinkOptions(view, firstSettingLink);
+        return false;
+    }
+
+    public void showCopyLinkOptions(View view, final String str) {
+        view.performHapticFeedback(VibratorUtils.getType(3), 1);
+        ItemOptions.makeOptions(this, view).add(R.drawable.msg_copy, LocaleController.getString(R.string.CopyLink), new Runnable() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda4
+            @Override // java.lang.Runnable
+            public final void run() {
+                BasePreferencesActivity.this.lambda$showCopyLinkOptions$3(str);
+            }
+        }).add(R.drawable.msg_share, LocaleController.getString(R.string.ShareLink), new Runnable() { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity$$ExternalSyntheticLambda5
+            @Override // java.lang.Runnable
+            public final void run() {
+                BasePreferencesActivity.this.lambda$showCopyLinkOptions$4(str);
+            }
+        }).setScrimViewBackground(this.listView.getClipBackground(view)).show();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showCopyLinkOptions$3(String str) {
         if (AndroidUtilities.addToClipboard(str)) {
             BulletinFactory.of(this).createCopyBulletin(LocaleController.getString(R.string.LinkCopied)).show();
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public /* synthetic */ void lambda$showCopyLinkOptions$4(String str) {
-        showDialog(new ShareAlert(getContext(), null, str, false, str, false, getResourceProvider()) { 
+        showDialog(new ShareAlert(getContext(), null, str, false, str, false, getResourceProvider()) { // from class: com.exteragram.messenger.preferences.BasePreferencesActivity.3
             @Override // org.telegram.ui.Components.ShareAlert
             public void onSend(LongSparseArray<TLRPC.Dialog> longSparseArray, int i, TLRPC.TL_forumTopic tL_forumTopic, boolean z) {
                 String string;

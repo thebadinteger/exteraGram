@@ -1,9 +1,8 @@
 package de.robv.android.xposed;
 
-import a.a;
-import a.c;
+import dev.exterahook.runtime.bridge.HookBridge;
+import dev.exterahook.runtime.bridge.HookBridgeImpl;
 import android.util.Log;
-import androidx.p003lifecycle.LiveData$$ExternalSyntheticBUOutline0;
 import c.b;
 import c.d;
 import c.e;
@@ -31,9 +30,9 @@ import org.mvel2.util.Make$Map$$ExternalSyntheticBUOutline0;
 public class XposedBridge {
     private static final Object[] EMPTY_ARRAY = new Object[0];
     private static final String TAG = "exteraHook-XposedBridge";
-    private static final Method callbackMethod;
-    private static final a hookBridge;
-    private static final d hookRegistry;
+    private static Method callbackMethod;
+    private static HookBridge hookBridge;
+    private static d hookRegistry;
 
     public static final class CopyOnWriteSortedSet<E> {
         private volatile transient Object[] elements = XposedBridge.EMPTY_ARRAY;
@@ -147,11 +146,9 @@ public class XposedBridge {
                     boolean z = this.installFailed;
                     Member member = this.method;
                     if (z) {
-                        LiveData$$ExternalSyntheticBUOutline0.m("Hooking ", member, " failed, the original method is unavailable");
-                        return null;
+                        throw new IllegalStateException("Hooking " + member + " failed, the original method is unavailable");
                     }
-                    LiveData$$ExternalSyntheticBUOutline0.m("Backup method for ", member, " was not published within 1000ms");
-                    return null;
+                    throw new IllegalStateException("Backup method for " + member + " was not published within 1000ms");
                 } catch (Throwable th) {
                     throw th;
                 }
@@ -194,7 +191,7 @@ public class XposedBridge {
             return method != null ? method : awaitBackupMethodSlowPath();
         }
 
-        public Object callback(Object[] objArr) {
+        public Object callback(Object[] objArr) throws Throwable {
             return HookCallbackDispatcher.dispatch(this, objArr);
         }
 
@@ -251,9 +248,9 @@ public class XposedBridge {
     }
 
     public static Member m2305$r8$lambda$10kFl2JjBfEwcKLdb607Wxxs(Object obj, Member member) {
-        a aVarBridge = bridge();
+        HookBridge aVarBridge = bridge();
         Method method = callbackMethod;
-        c cVar = (c) aVarBridge;
+        HookBridgeImpl cVar = (HookBridgeImpl) aVarBridge;
         cVar.getClass();
         cVar.a();
         return JniBridgeBindings.hook0(obj, member, method);
@@ -269,21 +266,21 @@ public class XposedBridge {
         }
     }
 
-    private static a bridge() {
+    private static HookBridge bridge() {
         return hookBridge;
     }
 
     public static boolean deoptimizeMethod(Member member) {
         f.a(member);
-        c cVar = (c) bridge();
+        HookBridgeImpl cVar = (HookBridgeImpl) bridge();
         cVar.getClass();
         cVar.a();
         return JniBridgeBindings.deoptimize0(member);
     }
 
     public static boolean disableHiddenApiRestrictions() {
-        boolean zDisableHiddenApiRestrictions;
-        b.a aVar = ((c) bridge()).f8b;
+        boolean zDisableHiddenApiRestrictions = false;
+        dev.exterahook.runtime.internal.HookClassA aVar = ((HookBridgeImpl) bridge()).f8b;
         boolean z = true;
         if (aVar.f11b) {
             return true;
@@ -309,7 +306,7 @@ public class XposedBridge {
     }
 
     public static boolean disableProfileSaver() {
-        ((c) bridge()).a();
+        ((HookBridgeImpl) bridge()).a();
         return JniBridgeBindings.disableProfileSaver0();
     }
 
@@ -386,13 +383,13 @@ public class XposedBridge {
         if (objArr.length == 0) {
             objArr = null;
         }
-        c cVar = (c) bridge();
+        HookBridgeImpl cVar = (HookBridgeImpl) bridge();
         cVar.getClass();
         cVar.a();
         return JniBridgeBindings.invokeConstructor0(t, constructor, objArr);
     }
 
-    public static Object invokeOriginalMethod(Member member, Object obj, Object[] objArr) {
+    public static Object invokeOriginalMethod(Member member, Object obj, Object[] objArr) throws Throwable {
         HookInfo hookInfo;
         if (objArr == null) {
             objArr = EMPTY_ARRAY;
@@ -432,7 +429,7 @@ public class XposedBridge {
     }
 
     private static boolean isHooked0(Member member) {
-        c cVar = (c) bridge();
+        HookBridgeImpl cVar = (HookBridgeImpl) bridge();
         cVar.getClass();
         cVar.a();
         return JniBridgeBindings.isHooked0(member);
@@ -458,9 +455,9 @@ public class XposedBridge {
     @Deprecated
     public static void unhookMethod(Member member, XC_MethodHook xC_MethodHook) {
         d dVar = hookRegistry;
-        final a aVarBridge = bridge();
+        final HookBridge aVarBridge = bridge();
         Objects.requireNonNull(aVarBridge);
-        c.c cVar = new c.c() { // from class: de.robv.android.xposed.XposedBridge$$ExternalSyntheticLambda1
+        c.c unhookCallback = new c.c() { // from class: de.robv.android.xposed.XposedBridge$$ExternalSyntheticLambda1
             @Override // c.c
             public final boolean a(Member member2) {
                 return aVarBridge.a(member2);
@@ -476,7 +473,7 @@ public class XposedBridge {
                 hookInfo.getCallbacks().remove(xC_MethodHook);
                 if (hookInfo.getCallbacks().size() == 0) {
                     dVar.f13a.remove(member);
-                    cVar.a(member);
+                    unhookCallback.a(member);
                 }
                 Unit unit = Unit.INSTANCE;
             } catch (Throwable th) {
@@ -487,7 +484,7 @@ public class XposedBridge {
 
     public static <T> T allocateInstance(Class<T> cls) {
         if (cls != null) {
-            c cVar = (c) bridge();
+            HookBridgeImpl cVar = (HookBridgeImpl) bridge();
             cVar.getClass();
             cVar.a();
             return (T) JniBridgeBindings.allocateInstance0(cls);
@@ -498,7 +495,7 @@ public class XposedBridge {
 
     public static boolean makeClassInheritable(Class<?> cls) {
         if (cls != null) {
-            c cVar = (c) bridge();
+            HookBridgeImpl cVar = (HookBridgeImpl) bridge();
             cVar.getClass();
             cVar.a();
             return JniBridgeBindings.makeClassInheritable0(cls);

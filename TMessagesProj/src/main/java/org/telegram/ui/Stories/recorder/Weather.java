@@ -337,6 +337,64 @@ public class Weather {
         return cacheValue;
     }
 
+    public static void clearCache() {
+        cacheKey = null;
+    }
+
+    public static boolean isLocationPermissionGranted() {
+        android.content.Context context = org.telegram.messenger.ApplicationLoader.applicationContext;
+        return context.checkSelfPermission("android.permission.ACCESS_COARSE_LOCATION") == android.content.pm.PackageManager.PERMISSION_GRANTED
+                || context.checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static boolean isLocationEnabled() {
+        try {
+            android.location.LocationManager locationManager = (android.location.LocationManager)
+                    org.telegram.messenger.ApplicationLoader.applicationContext.getSystemService("location");
+            if (locationManager == null) {
+                return false;
+            }
+            if (Build.VERSION.SDK_INT >= 28) {
+                return locationManager.isLocationEnabled();
+            }
+            return locationManager.isProviderEnabled("gps")
+                    || locationManager.isProviderEnabled("network")
+                    || locationManager.isProviderEnabled("passive");
+        } catch (Exception e) {
+            org.telegram.messenger.FileLog.e(e);
+            return false;
+        }
+    }
+
+    public static void fetchExtera(Utilities.Callback<State> callback) {
+        if (com.exteragram.messenger.pillstack.core.PillStackConfig.getUseCurrentLocation()) {
+            if (!isLocationPermissionGranted()) {
+                callback.run(null);
+                return;
+            } else {
+                fetch(false, callback);
+                return;
+            }
+        }
+        double lat = 55.7558d;
+        double lng = 37.6173d;
+        if (com.exteragram.messenger.pillstack.core.PillStackConfig.getCustomWeatherLocation() != null) {
+            try {
+                org.telegram.tgnet.TLRPC.GeoPoint geoPoint = (org.telegram.tgnet.TLRPC.GeoPoint)
+                        com.exteragram.messenger.ExteraConfig.getGSON().fromJson(
+                                com.exteragram.messenger.pillstack.core.PillStackConfig.getCustomWeatherLocation(),
+                                org.telegram.tgnet.TLRPC.TL_geoPoint.class);
+                lat = geoPoint.lat;
+                lng = geoPoint._long;
+            } catch (Exception ignored) {
+            }
+        }
+        fetch(lat, lng, callback);
+    }
+
+
+
+
 //    public static Runnable fetch(double lat, double lng, Utilities.Callback<State> whenFetched) {
 //        if (whenFetched == null) return null;
 //

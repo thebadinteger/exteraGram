@@ -1,3 +1,160 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2;
+
+import static com.google.android.exoplayer2.util.Assertions.checkArgument;
+import static com.google.android.exoplayer2.util.Assertions.checkNotNull;
+import static com.google.android.exoplayer2.util.Assertions.checkState;
+
+import android.content.Context;
+import android.media.AudioDeviceInfo;
+import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.opengl.EGLContext;
+import android.os.Looper;
+import android.os.Process;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.TextureView;
+import androidx.annotation.IntRange;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
+import com.google.android.exoplayer2.analytics.AnalyticsCollector;
+import com.google.android.exoplayer2.analytics.AnalyticsListener;
+import com.google.android.exoplayer2.analytics.DefaultAnalyticsCollector;
+import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.audio.AudioSink;
+import com.google.android.exoplayer2.audio.AuxEffectInfo;
+import com.google.android.exoplayer2.audio.DefaultAudioSink;
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.decoder.DecoderCounters;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.metadata.MetadataRenderer;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ShuffleOrder;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.text.CueGroup;
+import com.google.android.exoplayer2.text.TextRenderer;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.util.Clock;
+import com.google.android.exoplayer2.util.PriorityTaskManager;
+import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
+import com.google.android.exoplayer2.video.VideoFrameMetadataListener;
+import com.google.android.exoplayer2.video.VideoSize;
+import com.google.android.exoplayer2.video.spherical.CameraMotionListener;
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+
+import org.telegram.messenger.DispatchQueue;
+
+import java.util.List;
+
+/**
+ * An extensible media player that plays {@link MediaSource}s. Instances can be obtained from {@link
+ * Builder}.
+ *
+ * <h2>Player components</h2>
+ *
+ * <p>ExoPlayer is designed to make few assumptions about (and hence impose few restrictions on) the
+ * type of the media being played, how and where it is stored, and how it is rendered. Rather than
+ * implementing the loading and rendering of media directly, ExoPlayer implementations delegate this
+ * work to components that are injected when a player is created or when it's prepared for playback.
+ * Components common to all ExoPlayer implementations are:
+ *
+ * <ul>
+ *   <li><b>{@link MediaSource MediaSources}</b> that define the media to be played, load the media,
+ *       and from which the loaded media can be read. MediaSources are created from {@link MediaItem
+ *       MediaItems} by the {@link MediaSource.Factory} injected into the player {@link
+ *       Builder#setMediaSourceFactory Builder}, or can be added directly by methods like {@link
+ *       #setMediaSource(MediaSource)}. The library provides a {@link DefaultMediaSourceFactory} for
+ *       progressive media files, DASH, SmoothStreaming and HLS, which also includes functionality
+ *       for side-loading subtitle files and clipping media.
+ *   <li><b>{@link Renderer}</b>s that render individual components of the media. The library
+ *       provides default implementations for common media types ({@link MediaCodecVideoRenderer},
+ *       {@link MediaCodecAudioRenderer}, {@link TextRenderer} and {@link MetadataRenderer}). A
+ *       Renderer consumes media from the MediaSource being played. Renderers are injected when the
+ *       player is created. The number of renderers and their respective track types can be obtained
+ *       by calling {@link #getRendererCount()} and {@link #getRendererType(int)}.
+ *   <li>A <b>{@link TrackSelector}</b> that selects tracks provided by the MediaSource to be
+ *       consumed by each of the available Renderers. The library provides a default implementation
+ *       ({@link DefaultTrackSelector}) suitable for most use cases. A TrackSelector is injected
+ *       when the player is created.
+ *   <li>A <b>{@link LoadControl}</b> that controls when the MediaSource buffers more media, and how
+ *       much media is buffered. The library provides a default implementation ({@link
+ *       DefaultLoadControl}) suitable for most use cases. A LoadControl is injected when the player
+ *       is created.
+ * </ul>
+ *
+ * <p>An ExoPlayer can be built using the default components provided by the library, but may also
+ * be built using custom implementations if non-standard behaviors are required. For example a
+ * custom LoadControl could be injected to change the player's buffering strategy, or a custom
+ * Renderer could be injected to add support for a video codec not supported natively by Android.
+ *
+ * <p>The concept of injecting components that implement pieces of player functionality is present
+ * throughout the library. The default component implementations listed above delegate work to
+ * further injected components. This allows many sub-components to be individually replaced with
+ * custom implementations. For example the default MediaSource implementations require one or more
+ * {@link DataSource} factories to be injected via their constructors. By providing a custom factory
+ * it's possible to load data from a non-standard source, or through a different network stack.
+ *
+ * <h2>Threading model</h2>
+ *
+ * <p>The figure below shows ExoPlayer's threading model.
+ *
+ * <p style="align:center"><img src="doc-files/exoplayer-threading-model.svg" alt="ExoPlayer's
+ * threading model">
+ *
+ * <ul>
+ *   <li>ExoPlayer instances must be accessed from a single application thread unless indicated
+ *       otherwise. For the vast majority of cases this should be the application's main thread.
+ *       Using the application's main thread is also a requirement when using ExoPlayer's UI
+ *       components or the IMA extension. The thread on which an ExoPlayer instance must be accessed
+ *       can be explicitly specified by passing a `Looper` when creating the player. If no `Looper`
+ *       is specified, then the `Looper` of the thread that the player is created on is used, or if
+ *       that thread does not have a `Looper`, the `Looper` of the application's main thread is
+ *       used. In all cases the `Looper` of the thread from which the player must be accessed can be
+ *       queried using {@link #getApplicationLooper()}.
+ *   <li>Registered listeners are called on the thread associated with {@link
+ *       #getApplicationLooper()}. Note that this means registered listeners are called on the same
+ *       thread which must be used to access the player.
+ *   <li>An internal playback thread is responsible for playback. Injected player components such as
+ *       Renderers, MediaSources, TrackSelectors and LoadControls are called by the player on this
+ *       thread.
+ *   <li>When the application performs an operation on the player, for example a seek, a message is
+ *       delivered to the internal playback thread via a message queue. The internal playback thread
+ *       consumes messages from the queue and performs the corresponding operations. Similarly, when
+ *       a playback event occurs on the internal playback thread, a message is delivered to the
+ *       application thread via a second message queue. The application thread consumes messages
+ *       from the queue, updating the application visible state and calling corresponding listener
+ *       methods.
+ *   <li>Injected player components may use additional background threads. For example a MediaSource
+ *       may use background threads to load data. These are implementation specific.
+ * </ul>
+ */
 public interface ExoPlayer extends Player {
 
     void setWorkerQueue(DispatchQueue dispatchQueue);

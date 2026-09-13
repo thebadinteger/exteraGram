@@ -7,4 +7,8 @@ public interface BlurredBackgroundColorProvider {
     @ColorInt int getBackgroundColor();
     @ColorInt int getStrokeColorTop();
     @ColorInt int getStrokeColorBottom();
+
+    default int getStrokeColorFull() {
+        return org.telegram.ui.ActionBar.Theme.getDividerColor(null);
+    }
 }

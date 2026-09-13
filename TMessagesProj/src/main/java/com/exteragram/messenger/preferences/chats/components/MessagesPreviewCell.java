@@ -10,7 +10,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.MotionEvent;
 import android.widget.LinearLayout;
-import androidx.mediarouter.media.GlobalMediaRouter;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.preferences.components.CustomPreferenceCell;
 import okhttp3.internal.url._UrlKt;
@@ -65,7 +64,7 @@ public class MessagesPreviewCell extends LinearLayout implements CustomPreferenc
         this.cancelProgress = new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$0();
+                MessagesPreviewCell.this.lambda$new$0();
             }
         };
         this.parentLayout = iNavigationLayout;
@@ -86,7 +85,8 @@ public class MessagesPreviewCell extends LinearLayout implements CustomPreferenc
             int i4 = iCurrentTimeMillis - 3590;
             tL_message.date = i4;
             tL_message.dialog_id = 1L;
-            tL_message.flags = GlobalMediaRouter.CallbackHandler.MSG_ROUTE_ADDED;
+            tL_message.flags = 0x101;
+
             TLRPC.TL_peerUser tL_peerUser = new TLRPC.TL_peerUser();
             tL_message.from_id = tL_peerUser;
             tL_peerUser.user_id = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
@@ -119,7 +119,8 @@ public class MessagesPreviewCell extends LinearLayout implements CustomPreferenc
             tL_message2.message = LocaleController.getString(R.string.StickerSizeDialogMessageReplyTo);
             tL_message2.date = i4;
             tL_message2.dialog_id = -1L;
-            tL_message2.flags = GlobalMediaRouter.CallbackHandler.MSG_ROUTE_CHANGED;
+            tL_message2.flags = 0x103;
+
             tL_message2.id = 2;
             tL_message2.media = new TLRPC.TL_messageMediaEmpty();
             tL_message2.out = false;
@@ -133,7 +134,8 @@ public class MessagesPreviewCell extends LinearLayout implements CustomPreferenc
             tL_message3.message = LocaleController.getString(R.string.StickerSizeDialogMessage);
             tL_message3.date = iCurrentTimeMillis - 3480;
             tL_message3.dialog_id = -1L;
-            tL_message3.flags = GlobalMediaRouter.CallbackHandler.MSG_ROUTE_CONNECTED;
+            tL_message3.flags = 0x109;
+
             tL_message3.id = 2;
             tL_message3.media = new TLRPC.TL_messageMediaEmpty();
             tL_message3.out = false;

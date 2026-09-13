@@ -74,45 +74,57 @@ public final class ArchiveSource {
     }
 
     public final ExtractedArchive extractTo(Path path) {
-        return extractTo(path, ArchiveExtractionOptions.INSTANCE.defaults());
+        try {
+            return extractTo(path, ArchiveExtractionOptions.INSTANCE.defaults());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public final ExtractedArchive extractTo(Path path, ArchiveExtractionOptions options) throws IOException {
-        ensureNotCanceled(options);
-        ValidationReport validationReportValidate = validate();
-        if (!validationReportValidate.isSafe()) {
-            throw new ArchiveValidationException(validationReportValidate);
+    public final ExtractedArchive extractTo(Path path, ArchiveExtractionOptions options) {
+        try {
+            ensureNotCanceled(options);
+            ValidationReport validationReportValidate = validate();
+            if (!validationReportValidate.isSafe()) {
+                throw new ArchiveValidationException(validationReportValidate);
+            }
+            ensureNotCanceled(options);
+            ArchiveFormat format = validationReportValidate.getFormat();
+            int i = format == null ? -1 : WhenMappings.$EnumSwitchMapping$0[format.ordinal()];
+            if (i == -1) {
+                throw new ArchiveValidationException(validationReportValidate);
+            }
+            if (i != 1) {
+                LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0.m();
+                return null;
+            }
+            return ZipArchiveExtractor.INSTANCE.extract(this.path, path, this.policy, false, validationReportValidate.getEntries(), options);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        ensureNotCanceled(options);
-        ArchiveFormat format = validationReportValidate.getFormat();
-        int i = format == null ? -1 : WhenMappings.$EnumSwitchMapping$0[format.ordinal()];
-        if (i == -1) {
-            throw new ArchiveValidationException(validationReportValidate);
-        }
-        if (i != 1) {
-            LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0.m();
-            return null;
-        }
-        return ZipArchiveExtractor.INSTANCE.extract(this.path, path, this.policy, false, validationReportValidate.getEntries(), options);
     }
 
     public final ExtractedArchive extractTo(File file) {
         return extractTo(Paths.get(file.getPath(), new String[0]));
     }
 
-    public final SimpliDirectory extractToDirectory(Path path, ArchiveExtractionOptions options) throws Exception {
-        ExtractedArchive extractedArchiveExtractTo = extractTo(path, options);
+    public final SimpliDirectory extractToDirectory(Path path, ArchiveExtractionOptions options) {
         try {
-            SimpliDirectory simpliDirectory = new SimpliDirectory(extractedArchiveExtractTo.getRoot());
-            AutoCloseableKt.closeFinally(extractedArchiveExtractTo, null);
-            return simpliDirectory;
-        } catch (Throwable th) {
+            ExtractedArchive extractedArchiveExtractTo = extractTo(path, options);
             try {
-                throw th;
-            } catch (Throwable th2) {
-                AutoCloseableKt.closeFinally(extractedArchiveExtractTo, th);
-                throw th2;
+                SimpliDirectory simpliDirectory = new SimpliDirectory(extractedArchiveExtractTo.getRoot());
+                AutoCloseableKt.closeFinally(extractedArchiveExtractTo, null);
+                return simpliDirectory;
+            } catch (Throwable th) {
+                try {
+                    throw th;
+                } catch (Throwable th2) {
+                    AutoCloseableKt.closeFinally(extractedArchiveExtractTo, th);
+                    throw th2;
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

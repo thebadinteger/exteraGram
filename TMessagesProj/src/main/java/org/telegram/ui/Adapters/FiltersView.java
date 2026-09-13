@@ -24,6 +24,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.ListUpdateCallback;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.exteragram.messenger.AvatarCornerType;
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
@@ -716,7 +719,7 @@ public class FiltersView extends RecyclerListView {
         }
 
         private void updateColors() {
-            setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(28), getThemedColor(Theme.key_groupcreate_spanBackground)));
+            setBackground(Theme.createRoundRectDrawable(ExteraConfig.getAvatarCorners(32.0f), getThemedColor(Theme.key_groupcreate_spanBackground)));
             titleView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
             if (thumbDrawable != null) {
                 if (data.filterType == FILTER_TYPE_ARCHIVE) {
@@ -754,12 +757,12 @@ public class FiltersView extends RecyclerListView {
                         Theme.setCombinedDrawableColor(combinedDrawable, getThemedColor(Theme.key_featuredStickers_buttonText), true);
                         avatarImageView.setImageDrawable(combinedDrawable);
                     } else {
-                        avatarImageView.getImageReceiver().setRoundRadius(AndroidUtilities.dp(16));
+                        avatarImageView.getImageReceiver().setRoundRadius(ExteraConfig.getAvatarCorners(32.0f));
                         avatarImageView.getImageReceiver().setForUserOrChat(user, thumbDrawable);
                     }
                 } else if (data.chat instanceof TLRPC.Chat) {
                     TLRPC.Chat chat = (TLRPC.Chat) data.chat;
-                    avatarImageView.getImageReceiver().setRoundRadius(AndroidUtilities.dp(ChatObject.isCommunity(chat) ? 10 : 16));
+                    avatarImageView.getImageReceiver().setRoundRadius(ExteraConfig.getAvatarCorners(32.0f, false, ChatObject.isCommunity(chat) ? AvatarCornerType.COMMUNITY : AvatarCornerType.DEFAULT));
                     avatarImageView.getImageReceiver().setForUserOrChat(chat, thumbDrawable);
                 }
             } else {

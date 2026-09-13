@@ -32,7 +32,7 @@ public class WeatherPill extends BasePill implements NotificationCenter.Notifica
     private boolean showingWeather;
     private final AnimatedTextView textView;
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public long getRefreshInterval() {
         return 1200000L;
     }
@@ -67,12 +67,12 @@ public class WeatherPill extends BasePill implements NotificationCenter.Notifica
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public int getPillId() {
         return PillType.WEATHER.getId();
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public void onPillClicked() {
         if (PillStackConfig.getUseCurrentLocation() && !this.showingWeather && (!Weather.isLocationPermissionGranted() || !Weather.isLocationEnabled())) {
             requestLocationAndUpdate();
@@ -81,18 +81,18 @@ public class WeatherPill extends BasePill implements NotificationCenter.Notifica
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public boolean onPillLongClicked() {
         final BaseFragment safeLastFragment = LaunchActivity.getSafeLastFragment();
         if (safeLastFragment == null) {
             return false;
         }
-        ItemOptions.makeOptions(safeLastFragment, this).add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), new Runnable() { 
+        ItemOptions.makeOptions(safeLastFragment, this).add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$onPillLongClicked$0();
+                WeatherPill.this.lambda$onPillLongClicked$0();
             }
-        }).add(R.drawable.msg_settings, LocaleController.getString(R.string.Settings), new Runnable() { 
+        }).add(R.drawable.msg_settings, LocaleController.getString(R.string.Settings), new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
                 safeLastFragment.presentFragment(new WeatherSettingsActivity());
@@ -101,26 +101,109 @@ public class WeatherPill extends BasePill implements NotificationCenter.Notifica
         return true;
     }
 
-    public void lambda$onUpdateData$4(final Weather.State state) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onPillLongClicked$0() {
+        onUpdateData(true);
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
+    public void onUpdateData(boolean z) {
+        if (PillStackConfig.getUseCurrentLocation()) {
+            if (!Weather.isLocationPermissionGranted()) {
+                setLocationState(R.string.WeatherLocationPermissionGrant, this.showingWeather);
+                return;
+            } else if (!Weather.isLocationEnabled()) {
+                setLocationState(R.string.WeatherLocationServicesEnable, this.showingWeather);
+                return;
+            }
+        }
+        if (z) {
+            Weather.clearCache();
+        }
+        startLoading();
+        Weather.fetchExtera(new Utilities.Callback() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda3
+            @Override // org.telegram.messenger.Utilities.Callback
+            public final void run(Object obj) {
+                WeatherPill.this.lambda$onUpdateData$4((Weather.State) obj);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$4(final Weather.State state) {
         if (state != null) {
             markDataUpdated();
-            postDelayed(new Runnable() { 
+            postDelayed(new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda4
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$onUpdateData$2(state);
+                    WeatherPill.this.lambda$onUpdateData$2(state);
                 }
             }, 300L);
         } else {
-            postDelayed(new Runnable() { 
+            postDelayed(new Runnable() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda5
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.lambda$onUpdateData$3();
+                    WeatherPill.this.lambda$onUpdateData$3();
                 }
             }, 300L);
         }
     }
 
-    public void lambda$requestLocationAndUpdate$5(Location location) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$2(Weather.State state) {
+        setData(state, true);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onUpdateData$3() {
+        setErrorState(true);
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill, android.view.ViewGroup, android.view.View
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (PillStackConfig.checkAndClearPendingUpdate(getPillId()) || Weather.getCached() == null || isRefreshDue()) {
+            onUpdateData(true);
+        }
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.pillStackSettingsChanged);
+    }
+
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill, android.view.ViewGroup, android.view.View
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.pillStackSettingsChanged);
+    }
+
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
+    public void didReceivedNotification(int i, int i2, Object... objArr) {
+        if (i == NotificationCenter.pillStackSettingsChanged && PillStackConfig.shouldUpdatePill(objArr, getPillId())) {
+            PillStackConfig.checkAndClearPendingUpdate(getPillId());
+            onUpdateData(true);
+        }
+    }
+
+    private void setLocationState(int i, boolean z) {
+        stopLoading();
+        if (z) {
+            animateSizeChange();
+        }
+        this.iconView.setImageResource(R.drawable.filled_location);
+        this.iconView.setVisibility(0);
+        this.textView.setText(LocaleController.getString(i), z);
+        this.showingWeather = false;
+    }
+
+    private void requestLocationAndUpdate() {
+        Weather.getUserLocation(true, new Utilities.Callback() { // from class: com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPill$$ExternalSyntheticLambda2
+            @Override // org.telegram.messenger.Utilities.Callback
+            public final void run(Object obj) {
+                WeatherPill.this.lambda$requestLocationAndUpdate$5((Location) obj);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestLocationAndUpdate$5(Location location) {
         if (location != null) {
             onUpdateData(true);
         }
@@ -214,7 +297,7 @@ public class WeatherPill extends BasePill implements NotificationCenter.Notifica
         linearLayout.drawableHotspotChanged(f - linearLayout.getLeft(), f2 - this.layout.getTop());
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.pillstack.ui.pills.BasePill
     public void updateColors() {
         int themedColor = getThemedColor(Theme.key_windowBackgroundWhiteBlackText, 0.75f);
         this.layout.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(14.0f), Theme.isCurrentThemeDark() ? getThemedColor(Theme.key_windowBackgroundWhite) : Theme.multAlpha(themedColor, 0.09f), Theme.multAlpha(themedColor, 0.1f)));

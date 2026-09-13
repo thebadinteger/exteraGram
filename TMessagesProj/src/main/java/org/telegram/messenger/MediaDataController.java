@@ -10091,4 +10091,35 @@ public class MediaDataController extends BaseController {
             }
         });
     }
+
+    public void setPlaceholderImageByIndex(final org.telegram.ui.Components.BackupImageView backupImageView, String str, final int i, final String str2) {
+        TLRPC.TL_inputStickerSetShortName tL_inputStickerSetShortName = new TLRPC.TL_inputStickerSetShortName();
+        tL_inputStickerSetShortName.short_name = str;
+        final String str3 = "sticker_" + str + "_" + i;
+        backupImageView.setTag(str3);
+        backupImageView.setImageDrawable(null);
+        getInstance(this.currentAccount).getStickerSet(tL_inputStickerSetShortName, 0, false, new Utilities.Callback<TLRPC.TL_messages_stickerSet>() {
+            @Override
+            public final void run(TLRPC.TL_messages_stickerSet tL_messages_stickerSet) {
+                if (str3.equals(backupImageView.getTag())) {
+                    if (tL_messages_stickerSet == null || tL_messages_stickerSet.documents == null || tL_messages_stickerSet.documents.isEmpty()) {
+                        backupImageView.setImageDrawable(null);
+                        return;
+                    }
+                    if (i >= 0 && i < tL_messages_stickerSet.documents.size()) {
+                        TLRPC.Document document = tL_messages_stickerSet.documents.get(i);
+                        if (document != null) {
+                            backupImageView.setImage(ImageLocation.getForDocument(document), str2, DocumentObject.getSvgThumb(document, Theme.key_windowBackgroundWhiteGrayIcon, 0.2f, 1.0f, null), 0, document);
+                            backupImageView.invalidate();
+                            return;
+                        } else {
+                            backupImageView.setImageDrawable(null);
+                            return;
+                        }
+                    }
+                    backupImageView.setImageDrawable(null);
+                }
+            }
+        });
+    }
 }

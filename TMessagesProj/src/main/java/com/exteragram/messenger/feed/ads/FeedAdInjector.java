@@ -1,6 +1,6 @@
 package com.exteragram.messenger.feed.ads;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import com.exteragram.messenger.feed.FeedChatIntegration;
 import com.exteragram.messenger.feed.FeedMessageUtils;
 import java.util.ArrayList;
@@ -135,7 +135,7 @@ public final class FeedAdInjector {
         }
         int baseEvery = feedAdController.getBaseEvery();
         int minTrailing = feedAdController.getMinTrailing();
-        TreeMap treeMap = new TreeMap();
+        TreeMap<Integer, MessageObject> treeMap = new TreeMap<>();
         for (MessageObject messageObject3 : this.adByAnchor.keySet()) {
             Integer num = (Integer) map.get(messageObject3);
             if (num != null) {
@@ -143,10 +143,10 @@ public final class FeedAdInjector {
             }
         }
         int i4 = Integer.MIN_VALUE;
-        for (Map.Entry entry : treeMap.entrySet()) {
-            int iIntValue = ((Integer) entry.getKey()).intValue();
+        for (Map.Entry<Integer, MessageObject> entry : treeMap.entrySet()) {
+            int iIntValue = entry.getKey().intValue();
             if (iIntValue < minTrailing || (i4 != Integer.MIN_VALUE && iIntValue - i4 < baseEvery)) {
-                MessageObject messageObject4 = (MessageObject) entry.getValue();
+                MessageObject messageObject4 = entry.getValue();
                 zRemoveAd |= removeAd(arrayList, this.adByAnchor.remove(messageObject4));
                 this.slotOrdinalByAnchor.remove(messageObject4);
             } else {

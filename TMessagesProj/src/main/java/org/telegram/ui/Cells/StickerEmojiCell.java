@@ -23,6 +23,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AccelerateInterpolator;
+
+import com.exteragram.messenger.ExteraConfig;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -100,6 +102,7 @@ public class StickerEmojiCell extends FrameLayout implements NotificationCenter.
         };
         imageView.setAspectFit(true);
         imageView.setAllowLoadingOnAttachedOnly(true);
+        imageView.setRoundRadius(ExteraConfig.getStickerShape() == 0 ? 0 : AndroidUtilities.dp(4.0f));
         imageView.setLayerNum(1);
 
         emojiTextView = new TextView(context);

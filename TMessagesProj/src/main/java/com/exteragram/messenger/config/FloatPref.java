@@ -11,7 +11,17 @@ public final class FloatPref extends BasePref<Float> {
         super(Float.valueOf(f), str);
     }
 
-    public /* synthetic */ void save(String str, Float f) {
+    public /* synthetic */ FloatPref(float f, String str, int i, DefaultConstructorMarker defaultConstructorMarker) {
+        this(f, (i & 2) != 0 ? null : str);
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ Float fetch(String str, Float f) {
+        return fetch(str, f.floatValue());
+    }
+
+    @Override // com.exteragram.messenger.config.BasePref
+    public /* bridge */ /* synthetic */ void save(String str, Float f) {
         save(str, f.floatValue());
     }
 

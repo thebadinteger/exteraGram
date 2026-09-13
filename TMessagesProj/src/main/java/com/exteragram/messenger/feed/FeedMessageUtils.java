@@ -76,7 +76,14 @@ public abstract class FeedMessageUtils {
             return false;
         }
         long jResolveRealDialogId = feedControllerPeekInstance.resolveRealDialogId(i2);
-        return jResolveRealDialogId != 0 && jResolveRealDialogId == messageObject.getDialogId() && feedControllerPeekInstance.resolveRealMessageId(jResolveRealDialogId, i2) == messageObject.getFeedRealId();
+        return jResolveRealDialogId != 0 && jResolveRealDialogId == messageObject.getDialogId() && feedControllerPeekInstance.resolveRealMessageId(jResolveRealDialogId, i2) == getFeedRealId(messageObject);
+    }
+
+    public static int getFeedRealId(MessageObject messageObject) {
+        if (messageObject == null) {
+            return 0;
+        }
+        return messageObject.searchType == 4 ? messageObject.getRealId() : messageObject.getId();
     }
 
     public static int getPlaybackScrollMessageId(boolean z, long j, MessageObject messageObject) {

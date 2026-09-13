@@ -20,7 +20,7 @@ final class FeedUnreadTracker {
     private final Runnable flushRunnable = new Runnable() { 
         @Override // java.lang.Runnable
         public final void run() {
-            this.f$0.flush();
+            FeedUnreadTracker.this.flush();
         }
     };
 

@@ -11,8 +11,8 @@ import android.os.SystemClock;
 import android.view.MotionEvent;
 import androidx.camera.core.Camera;
 import androidx.camera.core.ZoomState;
-import androidx.p003lifecycle.LiveData;
-import androidx.p003lifecycle.Observer;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import com.exteragram.messenger.ExteraConfig;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 
 @SuppressLint({"ViewConstructor"})
 public class InstantCameraZoomSlider extends CameraZoomSliderView {
-    public static final AnimationProperties.FloatProperty<InstantCameraZoomSlider> OPEN_ALPHA = new AnimationProperties.FloatProperty<InstantCameraZoomSlider>("openAlpha") { 
+    public static final AnimationProperties.FloatProperty<InstantCameraZoomSlider> OPEN_ALPHA = new AnimationProperties.FloatProperty<InstantCameraZoomSlider>("openAlpha") { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider.1
         @Override // org.telegram.ui.Components.AnimationProperties.FloatProperty
         public void setValue(InstantCameraZoomSlider instantCameraZoomSlider, float f) {
             instantCameraZoomSlider.setOpenAlpha(f);
@@ -90,32 +90,32 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         this.displayOneZoom = 1.0f;
         this.pendingZoom = Float.NaN;
         this.lastAppliedZoom = Float.NaN;
-        this.bindRunnable = new Runnable() { 
+        this.bindRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.tryBind();
+                InstantCameraZoomSlider.this.tryBind();
             }
         };
-        this.zoomFlushRunnable = new Runnable() { 
+        this.zoomFlushRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.flushPendingZoom();
+                InstantCameraZoomSlider.this.flushPendingZoom();
             }
         };
-        this.cameraXZoomObserver = new Observer() { 
-            @Override // androidx.p003lifecycle.Observer
+        this.cameraXZoomObserver = new Observer() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider$$ExternalSyntheticLambda2
+            @Override // androidx.lifecycle.Observer
             public final void onChanged(Object obj) {
-                this.f$0.onCameraXZoomStateChanged((ZoomState) obj);
+                InstantCameraZoomSlider.this.onCameraXZoomStateChanged((ZoomState) obj);
             }
         };
         this.blurCornerRadius = -1.0f;
         this.resourcesProvider = resourcesProvider;
         setVisibility(8);
         applyAppearProgress();
-        setOnZoomChangeListener(new CameraZoomSliderView.OnZoomChangeListener() { 
-            @Override 
+        setOnZoomChangeListener(new CameraZoomSliderView.OnZoomChangeListener() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider$$ExternalSyntheticLambda3
+            @Override // com.exteragram.messenger.camera.CameraZoomSliderView.OnZoomChangeListener
             public final void onZoomChanged(float f) {
-                this.f$0.applyZoom(f);
+                InstantCameraZoomSlider.this.applyZoom(f);
             }
         });
         applyTelegramColors();
@@ -132,6 +132,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void setAppearProgress(float f) {
         if (this.appearProgress != f) {
             this.appearProgress = f;
@@ -162,13 +163,13 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
             }
             ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(f, 1.0f);
             this.appearAnimator = valueAnimatorOfFloat;
-            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
+            valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider$$ExternalSyntheticLambda4
                 @Override // android.animation.ValueAnimator.AnimatorUpdateListener
                 public final void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    this.f$0.lambda$showAnimated$0(valueAnimator);
+                    InstantCameraZoomSlider.this.lambda$showAnimated$0(valueAnimator);
                 }
             });
-            valueAnimatorOfFloat.addListener(new AnimatorListenerAdapter() { 
+            valueAnimatorOfFloat.addListener(new AnimatorListenerAdapter() { // from class: com.exteragram.messenger.camera.InstantCameraZoomSlider.2
                 @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
                 public void onAnimationEnd(Animator animator) {
                     if (InstantCameraZoomSlider.this.appearAnimator == animator) {
@@ -183,7 +184,149 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         }
     }
 
-    public class AnonymousClass3 {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showAnimated$0(ValueAnimator valueAnimator) {
+        setAppearProgress(((Float) valueAnimator.getAnimatedValue()).floatValue());
+    }
+
+    private void hideImmediately() {
+        cancelAppearAnimation();
+        setAppearProgress(0.0f);
+        setVisibility(8);
+    }
+
+    private void cancelAppearAnimation() {
+        ValueAnimator valueAnimator = this.appearAnimator;
+        if (valueAnimator != null) {
+            this.appearAnimator = null;
+            valueAnimator.cancel();
+        }
+    }
+
+    private void applyTelegramColors() {
+        int color = Theme.getColor(Theme.key_chat_messagePanelBackground, this.resourcesProvider);
+        int color2 = Theme.getColor(Theme.key_featuredStickers_addButton, this.resourcesProvider);
+        int color3 = Theme.getColor(Theme.key_chats_actionIcon, this.resourcesProvider);
+        int color4 = Theme.getColor(Theme.key_chat_messagePanelText, this.resourcesProvider);
+        setColors(color, color4, color2, color2, color3);
+        setToggleTextColor(color4);
+    }
+
+    public void setBlurBackground(BlurredBackgroundDrawable blurredBackgroundDrawable) {
+        if (this.blurBackground != blurredBackgroundDrawable) {
+            this.blurBackground = blurredBackgroundDrawable;
+            this.blurCornerRadius = -1.0f;
+            invalidate();
+        }
+    }
+
+    @Override // com.exteragram.messenger.camera.CameraZoomSliderView
+    public boolean drawPillBackground(Canvas canvas, RectF rectF, float f) {
+        BlurredBackgroundDrawable blurredBackgroundDrawable = this.blurBackground;
+        if (blurredBackgroundDrawable == null) {
+            return false;
+        }
+        if (this.blurCornerRadius != f) {
+            this.blurCornerRadius = f;
+            blurredBackgroundDrawable.setRadius(f);
+        }
+        this.blurBackground.setBounds(Math.round(rectF.left), Math.round(rectF.top), Math.round(rectF.right), Math.round(rectF.bottom));
+        this.blurBackground.draw(canvas);
+        return true;
+    }
+
+    public void setOnCameraZoomChangeListener(OnCameraZoomChangeListener onCameraZoomChangeListener) {
+        this.cameraZoomChangeListener = onCameraZoomChangeListener;
+    }
+
+    public void bindSession(CameraXSession cameraXSession) {
+        boolean z = cameraXSession != null && getVisibility() == 0 && isLaidOut() && (this.switchingCamera || (this.backend == Backend.CAMERA_X && this.cameraXSession == cameraXSession));
+        this.switchingCamera = false;
+        if (z) {
+            prepareZoomConfigurationTransition();
+        }
+        resetBinding(!z);
+        if (cameraXSession == null) {
+            return;
+        }
+        this.backend = Backend.CAMERA_X;
+        this.cameraXSession = cameraXSession;
+        this.animateNextConfiguration = z;
+        if (z) {
+            setEnabled(false);
+            setExpanded(false, true);
+        }
+        tryBind();
+    }
+
+    public void bindSession(Camera2Session camera2Session) {
+        boolean z = camera2Session != null && this.switchingCamera;
+        this.switchingCamera = false;
+        resetBinding(!z);
+        if (camera2Session == null) {
+            return;
+        }
+        this.backend = Backend.CAMERA_2;
+        this.camera2Session = camera2Session;
+        this.animateNextConfiguration = z;
+        tryBind();
+    }
+
+    public void bindSession(CameraSession cameraSession, float f) {
+        boolean z = cameraSession != null && this.switchingCamera;
+        this.switchingCamera = false;
+        resetBinding(!z);
+        if (cameraSession == null) {
+            return;
+        }
+        this.backend = Backend.CAMERA_1;
+        this.camera1Session = cameraSession;
+        this.camera1LinearZoom = clamp(f, 0.0f, 1.0f);
+        this.animateNextConfiguration = z;
+        tryBind();
+    }
+
+    public void beginCameraSwitch() {
+        if (this.backend != Backend.NONE && getVisibility() == 0 && isLaidOut()) {
+            this.switchingCamera = true;
+            prepareZoomConfigurationTransition();
+            setEnabled(false);
+            setExpanded(false, true);
+        }
+    }
+
+    public void unbindSession() {
+        this.switchingCamera = false;
+        resetBinding(true);
+    }
+
+    private void resetBinding(boolean z) {
+        setExternalZoomGestureActive(false);
+        resetZoomThrottle();
+        this.backend = Backend.NONE;
+        detachCameraXZoomObserver();
+        setZoom(getZoom());
+        this.cameraXSession = null;
+        this.camera2Session = null;
+        this.camera1Session = null;
+        this.camera1ZoomRatios = new float[0];
+        this.camera1ZoomIndex = -1;
+        this.defaultZoom = 1.0f;
+        this.wideZoom = 1.0f;
+        this.displayOneZoom = 1.0f;
+        this.bindRetries = 0;
+        removeCallbacks(this.bindRunnable);
+        this.animateNextConfiguration = false;
+        if (z) {
+            cancelZoomConfigurationTransition();
+            setEnabled(true);
+            setExpanded(false, false);
+            hideImmediately();
+        }
+    }
+
+    /* JADX INFO: renamed from: com.exteragram.messenger.camera.InstantCameraZoomSlider$3, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass3 {
         static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$camera$InstantCameraZoomSlider$Backend;
 
         static {
@@ -296,6 +439,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         return this.displayOneZoom;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void tryBind() {
         float minZoomRatio;
         boolean zIsActiveCameraFrontface;
@@ -403,6 +547,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         hideImmediately();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void applyZoom(float f) {
         this.pendingZoom = f;
         scheduleZoomFlush();
@@ -416,6 +561,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         postOnAnimation(this.zoomFlushRunnable);
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void flushPendingZoom() {
         this.zoomFlushScheduled = false;
         float f = this.pendingZoom;
@@ -445,7 +591,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         if (backend == Backend.CAMERA_X && (cameraXSession = this.cameraXSession) != null) {
             recordingFrameRate = cameraXSession.getRecordingFrameRate();
         } else {
-            recordingFrameRate = (backend != Backend.CAMERA_2 || (camera2Session = this.camera2Session) == null) ? 0 : camera2Session.getRecordingFrameRate();
+            recordingFrameRate = 0;
         }
         if (recordingFrameRate <= 0) {
             recordingFrameRate = 30;
@@ -520,6 +666,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void onCameraXZoomStateChanged(ZoomState zoomState) {
         OnCameraZoomChangeListener onCameraZoomChangeListener;
         if (this.backend != Backend.CAMERA_X || zoomState == null || (onCameraZoomChangeListener = this.cameraZoomChangeListener) == null) {
@@ -529,34 +676,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
     }
 
     private static float[] readCamera1ZoomRatios(CameraSession cameraSession) {
-        try {
-            CameraInfo cameraInfo = cameraSession.cameraInfo;
-            android.hardware.Camera camera = cameraInfo != null ? cameraInfo.getCamera() : null;
-            if (camera == null) {
-                return null;
-            }
-            android.hardware.Camera.Parameters parameters = camera.getParameters();
-            if (parameters != null && parameters.isZoomSupported()) {
-                List<Integer> zoomRatios = parameters.getZoomRatios();
-                if (zoomRatios != null && zoomRatios.size() >= 2) {
-                    int size = zoomRatios.size();
-                    float[] fArr = new float[size];
-                    for (int i = 0; i < size; i++) {
-                        Integer num = zoomRatios.get(i);
-                        float fMax = 1.0f;
-                        if (num != null) {
-                            fMax = Math.max(1.0f, num.intValue() / 100.0f);
-                        }
-                        fArr[i] = fMax;
-                    }
-                    return fArr;
-                }
-                return new float[0];
-            }
-            return new float[0];
-        } catch (Exception unused) {
-            return null;
-        }
+        return null;
     }
 
     private float camera1RatioForLinearZoom(float f) {
@@ -659,7 +779,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.camera.CameraZoomSliderView, android.view.View
     @SuppressLint({"ClickableViewAccessibility"})
     public boolean onTouchEvent(MotionEvent motionEvent) {
         if (!isEnabled() || getAlpha() < 0.5f) {
@@ -678,7 +798,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         setTranslationY(((this.baseTranslationY + (this.textureViewSize / 2.0f)) + AndroidUtilities.dp(80.0f)) - (getMeasuredHeight() / 2.0f));
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.camera.CameraZoomSliderView, android.view.View
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (this.backend != Backend.NONE && (getVisibility() != 0 || !isEnabled() || this.animateNextConfiguration)) {
@@ -689,7 +809,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         }
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.camera.CameraZoomSliderView, android.view.View
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         removeCallbacks(this.bindRunnable);

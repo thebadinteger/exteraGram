@@ -1,0 +1,6 @@
+-keep class org.telegram.messenger.ApplicationLoader* { *; }
+-keep class org.telegram.messenger.NativeLoader* { *; }
+-keep class org.telegram.messenger.BuildVars* { *; }
+-keep class org.telegram.messenger.AnimatedFileDrawableStream* { *; }
+-keep class org.telegram.tgnet.** { *; }
+-keep class dev.exterahook.** { *; }

@@ -29,7 +29,6 @@ import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
 import java.util.Arrays;
 import java.util.Locale;
-import org.mvel2.MVEL;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.CubicBezierInterpolator;
@@ -106,7 +105,7 @@ public abstract class CameraZoomSliderView extends View {
     private static final PorterDuffXfermode XOR_XFERMODE = new PorterDuffXfermode(PorterDuff.Mode.XOR);
     private static final PorterDuffXfermode DST_OVER_XFERMODE = new PorterDuffXfermode(PorterDuff.Mode.DST_OVER);
     private static final PorterDuffXfermode DST_IN_XFERMODE = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
-    private static final FloatPropertyCompat<CameraZoomSliderView> CONTROL_WIDTH = new FloatPropertyCompat<CameraZoomSliderView>("controlWidth") { 
+    private static final FloatPropertyCompat<CameraZoomSliderView> CONTROL_WIDTH = new FloatPropertyCompat<CameraZoomSliderView>("controlWidth") { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.1
         @Override // androidx.dynamicanimation.animation.FloatPropertyCompat
         public float getValue(CameraZoomSliderView cameraZoomSliderView) {
             return cameraZoomSliderView.animatedControlWidth;
@@ -118,7 +117,7 @@ public abstract class CameraZoomSliderView extends View {
             cameraZoomSliderView.invalidate();
         }
     };
-    private static final FloatPropertyCompat<CameraZoomSliderView> SELECTOR_OFFSET = new FloatPropertyCompat<CameraZoomSliderView>("selectorOffset") { 
+    private static final FloatPropertyCompat<CameraZoomSliderView> SELECTOR_OFFSET = new FloatPropertyCompat<CameraZoomSliderView>("selectorOffset") { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.2
         @Override // androidx.dynamicanimation.animation.FloatPropertyCompat
         public float getValue(CameraZoomSliderView cameraZoomSliderView) {
             return cameraZoomSliderView.animatedSelectorOffset;
@@ -184,7 +183,7 @@ public abstract class CameraZoomSliderView extends View {
         this.lastDescribedZoom = Integer.MIN_VALUE;
         this.stickyTick = -1;
         this.dragPrimarySegment = Integer.MIN_VALUE;
-        this.longPressRunnable = new Runnable() { 
+        this.longPressRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.3
             @Override // java.lang.Runnable
             public void run() {
                 if (!CameraZoomSliderView.this.compactGestureDown || CameraZoomSliderView.this.movedPastSlop || CameraZoomSliderView.this.expanded) {
@@ -196,7 +195,7 @@ public abstract class CameraZoomSliderView extends View {
                 CameraZoomSliderView.this.setExpanded(true, true);
             }
         };
-        this.autoCollapseRunnable = new Runnable() { 
+        this.autoCollapseRunnable = new Runnable() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.4
             @Override // java.lang.Runnable
             public void run() {
                 if (!CameraZoomSliderView.this.expanded || CameraZoomSliderView.this.dragging || CameraZoomSliderView.this.externalZoomGesture) {
@@ -245,8 +244,7 @@ public abstract class CameraZoomSliderView extends View {
 
     public void setZoomConfiguration(float f, float f2, float[] fArr, float[] fArr2, float f3, boolean z) {
         if (!Float.isFinite(f) || !Float.isFinite(f2) || f <= 0.0f || f2 <= f) {
-            f$$ExternalSyntheticBUOutline1.m("Zoom range must satisfy 0 < minZoom < maxZoom");
-            return;
+            throw new IllegalArgumentException("Zoom range must satisfy 0 < minZoom < maxZoom");
         }
         float f4 = this.pendingConfigurationSelectorX;
         this.pendingConfigurationSelectorX = Float.NaN;
@@ -656,6 +654,7 @@ public abstract class CameraZoomSliderView extends View {
         return true;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void beginDrag(float f) {
         if (stopZoomAnimator()) {
             syncSelectedToggle(true);
@@ -884,13 +883,13 @@ public abstract class CameraZoomSliderView extends View {
         this.expandedAnimator = valueAnimatorOfFloat;
         valueAnimatorOfFloat.setDuration(217L);
         valueAnimatorOfFloat.setInterpolator(MORPH_INTERPOLATOR);
-        valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
+        valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView$$ExternalSyntheticLambda0
             @Override // android.animation.ValueAnimator.AnimatorUpdateListener
             public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                this.f$0.lambda$animateExpandedProgress$0(valueAnimator2);
+                CameraZoomSliderView.this.lambda$animateExpandedProgress$0(valueAnimator2);
             }
         });
-        valueAnimatorOfFloat.addListener(new AnimatorListenerAdapter() { 
+        valueAnimatorOfFloat.addListener(new AnimatorListenerAdapter() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.5
             @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
             public void onAnimationEnd(Animator animator) {
                 if (CameraZoomSliderView.this.expandedAnimator == animator) {
@@ -901,7 +900,263 @@ public abstract class CameraZoomSliderView extends View {
         valueAnimatorOfFloat.start();
     }
 
-    public void lambda$animateZoomTo$1(boolean z, boolean z2, ValueAnimator valueAnimator) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$animateExpandedProgress$0(ValueAnimator valueAnimator) {
+        this.expandedProgress = clamp(((Float) valueAnimator.getAnimatedValue()).floatValue(), 0.0f, 1.0f);
+        invalidate();
+    }
+
+    private void cancelTransientSprings() {
+        ValueAnimator valueAnimator = this.expandedAnimator;
+        if (valueAnimator != null) {
+            valueAnimator.cancel();
+            this.expandedAnimator = null;
+        }
+        this.widthSpring.cancel();
+        this.selectorSpring.cancel();
+    }
+
+    private void settleTransientAnimationValues() {
+        boolean z = this.expanded;
+        this.expandedProgress = z ? 1.0f : 0.0f;
+        this.animatedControlWidth = z ? getExpandedBackgroundWidth() : getCompactWidth();
+        this.animatedSelectorOffset = getSelectorOffset(this.selectedToggleIndex);
+    }
+
+    private void rebuildScale() {
+        double dLog = Math.log(this.maxZoom / this.minZoom);
+        double d = LOG_2;
+        float f = (float) (dLog / d);
+        float f2 = this.displayNormalizationFactor;
+        float f3 = this.minZoom;
+        if (f3 < f2 && this.maxZoom >= f2) {
+            this.oneXTick = Math.max(3, Math.round(((float) (Math.log(f2 / f3) / d)) * 5.0f));
+            float f4 = this.maxZoom;
+            this.intervalCount = this.oneXTick + (f4 > f2 ? Math.max(1, Math.round(((float) (Math.log(f4 / f2) / d)) * 5.0f)) : 0);
+        } else {
+            this.oneXTick = -1;
+            this.intervalCount = Math.max(1, Math.round(f * 5.0f));
+        }
+        this.primaryLabels.clear();
+        float[] fArr = this.rulerStops;
+        int[] iArr = new int[fArr.length];
+        int i = 0;
+        for (float f5 : fArr) {
+            if (f5 >= this.minZoom && f5 <= this.maxZoom) {
+                int iRound = Math.round(zoomToTick(f5));
+                this.primaryLabels.put(iRound, formatRuler(f5));
+                int i2 = 0;
+                while (true) {
+                    if (i2 < i) {
+                        if (iArr[i2] == iRound) {
+                            break;
+                        } else {
+                            i2++;
+                        }
+                    } else {
+                        iArr[i] = iRound;
+                        i++;
+                        break;
+                    }
+                }
+            }
+        }
+        int[] iArrCopyOf = Arrays.copyOf(iArr, i);
+        this.rebuiltPrimaryTickIndices = iArrCopyOf;
+        Arrays.sort(iArrCopyOf);
+    }
+
+    private void setTickInternal(float f, boolean z) {
+        setZoomInternal(tickToZoom(f), z, true);
+    }
+
+    private float tickToZoom(float f) {
+        double d;
+        double dExp;
+        float fClamp = clamp(f, 0.0f, this.intervalCount);
+        if (fClamp <= 0.0f) {
+            return this.minZoom;
+        }
+        int i = this.intervalCount;
+        if (fClamp >= i) {
+            return this.maxZoom;
+        }
+        int i2 = this.oneXTick;
+        if (i2 < 0) {
+            float f2 = fClamp / i;
+            float f3 = this.minZoom;
+            d = f3;
+            dExp = Math.exp(Math.log(this.maxZoom / f3) * ((double) f2));
+        } else {
+            if (fClamp == i2) {
+                return this.displayNormalizationFactor;
+            }
+            if (fClamp <= i2) {
+                float f4 = fClamp / i2;
+                float f5 = this.minZoom;
+                d = f5;
+                dExp = Math.exp(Math.log(this.displayNormalizationFactor / f5) * ((double) f4));
+            } else {
+                float f6 = (fClamp - i2) / (i - i2);
+                float f7 = this.displayNormalizationFactor;
+                d = f7;
+                dExp = Math.exp(Math.log(this.maxZoom / f7) * ((double) f6));
+            }
+        }
+        return (float) (d * dExp);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void setZoomInternal(float f, boolean z, boolean z2) {
+        OnZoomChangeListener onZoomChangeListener;
+        this.zoom = clamp(f, this.minZoom, this.maxZoom);
+        if (z2) {
+            syncSelectedToggle(!this.expanded);
+        }
+        updateAccessibilityDescription();
+        invalidate();
+        if (!z || (onZoomChangeListener = this.onZoomChangeListener) == null) {
+            return;
+        }
+        onZoomChangeListener.onZoomChanged(this.zoom);
+    }
+
+    private float zoomToTick(float f) {
+        float fLog;
+        int i;
+        float fClamp = clamp(f, this.minZoom, this.maxZoom);
+        float f2 = this.minZoom;
+        if (fClamp <= f2) {
+            return 0.0f;
+        }
+        if (fClamp >= this.maxZoom) {
+            return this.intervalCount;
+        }
+        int i2 = this.oneXTick;
+        if (i2 >= 0) {
+            float f3 = this.displayNormalizationFactor;
+            if (fClamp == f3) {
+                return i2;
+            }
+            if (fClamp <= f3) {
+                fLog = (float) (Math.log(fClamp / f2) / Math.log(this.displayNormalizationFactor / this.minZoom));
+                i = this.oneXTick;
+            } else {
+                float fLog2 = (float) (Math.log(fClamp / f3) / Math.log(this.maxZoom / this.displayNormalizationFactor));
+                int i3 = this.oneXTick;
+                return i3 + (fLog2 * (this.intervalCount - i3));
+            }
+        } else {
+            fLog = (float) (Math.log(fClamp / f2) / Math.log(this.maxZoom / this.minZoom));
+            i = this.intervalCount;
+        }
+        return fLog * i;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void syncSelectedToggle(boolean z) {
+        this.selectedShowsStopValue = false;
+        int iFindToggleSegment = findToggleSegment(this.zoom);
+        if (iFindToggleSegment < 0) {
+            this.selectedToggleIndex = -1;
+            this.animatedSelectorOffset = 0.0f;
+        } else if (this.selectedToggleIndex != iFindToggleSegment) {
+            this.selectedToggleIndex = iFindToggleSegment;
+            animateSelectorTo(iFindToggleSegment, z);
+        } else {
+            if (z) {
+                return;
+            }
+            this.selectorSpring.cancel();
+            this.animatedSelectorOffset = getSelectorOffset(iFindToggleSegment);
+        }
+    }
+
+    private int findToggleSegment(float f) {
+        if (this.toggleStops.length == 0) {
+            return -1;
+        }
+        int i = 1;
+        int i2 = 0;
+        while (true) {
+            float[] fArr = this.toggleStops;
+            if (i >= fArr.length || f < fArr[i]) {
+                break;
+            }
+            i2 = i;
+            i++;
+        }
+        return i2;
+    }
+
+    private void animateSelectorTo(int i, boolean z) {
+        float selectorOffset = getSelectorOffset(i);
+        if (!z || !isLaidOut()) {
+            this.selectorSpring.cancel();
+            this.animatedSelectorOffset = selectorOffset;
+            invalidate();
+            return;
+        }
+        this.selectorSpring.animateToFinalPosition(selectorOffset);
+    }
+
+    private void animateZoomTo(float f, boolean z) {
+        animateZoomTo(f, z, -1);
+    }
+
+    private void animateZoomTo(float f, final boolean z, int i) {
+        final boolean z2 = i >= 0 && i < this.toggleStops.length;
+        if (z2) {
+            stopZoomAnimator();
+        } else {
+            cancelZoomAnimator(true);
+        }
+        final float fClamp = clamp(f, this.minZoom, this.maxZoom);
+        if (z2) {
+            this.selectedToggleIndex = i;
+            this.selectedShowsStopValue = true;
+            animateSelectorTo(i, true);
+        }
+        if (Math.abs(fClamp - this.zoom) < 1.0E-4f) {
+            setZoomInternal(fClamp, z, !z2);
+            return;
+        }
+        float f2 = this.zoom;
+        long jMin = Math.min(500L, (long) Math.rint(((Math.max(f2, fClamp) / Math.min(f2, fClamp)) * 500.0f) / 3.0f));
+        ValueAnimator valueAnimatorOfFloat = ValueAnimator.ofFloat(f2, fClamp);
+        this.zoomAnimator = valueAnimatorOfFloat;
+        valueAnimatorOfFloat.setDuration(jMin);
+        valueAnimatorOfFloat.setInterpolator(ZOOM_INTERPOLATOR);
+        valueAnimatorOfFloat.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView$$ExternalSyntheticLambda1
+            @Override // android.animation.ValueAnimator.AnimatorUpdateListener
+            public final void onAnimationUpdate(ValueAnimator valueAnimator) {
+                CameraZoomSliderView.this.lambda$animateZoomTo$1(z, z2, valueAnimator);
+            }
+        });
+        valueAnimatorOfFloat.addListener(new AnimatorListenerAdapter() { // from class: com.exteragram.messenger.camera.CameraZoomSliderView.6
+            private boolean cancelled;
+
+            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
+            public void onAnimationCancel(Animator animator) {
+                this.cancelled = true;
+            }
+
+            @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
+            public void onAnimationEnd(Animator animator) {
+                if (!this.cancelled && Math.abs(CameraZoomSliderView.this.zoom - fClamp) > 1.0E-4f) {
+                    CameraZoomSliderView.this.setZoomInternal(fClamp, z, !z2);
+                }
+                if (CameraZoomSliderView.this.zoomAnimator == animator) {
+                    CameraZoomSliderView.this.zoomAnimator = null;
+                    CameraZoomSliderView.this.syncSelectedToggle(true);
+                }
+            }
+        });
+        valueAnimatorOfFloat.start();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$animateZoomTo$1(boolean z, boolean z2, ValueAnimator valueAnimator) {
         setZoomInternal(((Float) valueAnimator.getAnimatedValue()).floatValue(), z, !z2);
     }
 
@@ -1096,7 +1351,7 @@ public abstract class CameraZoomSliderView extends View {
             return String.format(locale, "%.0f", Float.valueOf(fNormalizeDisplayZoom));
         }
         String str = String.format(locale, "%.1f", Float.valueOf(fNormalizeDisplayZoom));
-        return str.startsWith(MVEL.VERSION_SUB) ? str.substring(1) : str;
+        return str.startsWith("0") ? str.substring(1) : str;
     }
 
     private float normalizeDisplayZoom(float f) {

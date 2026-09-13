@@ -377,7 +377,7 @@ public class PreferencesUtils {
             outputStreamWriter.write(getBackup(true));
             outputStreamWriter.flush();
             outputStreamWriter.close();
-            baseFragment.showDialog(new AnonymousClass1(baseFragment.getParentActivity(), null, null, file.getAbsolutePath(), null, null, false, null, null, false, false, false, null, null, baseFragment));
+            baseFragment.showDialog(new AnonymousClass1(baseFragment.getParentActivity(), null, null, file.getAbsolutePath(), null, false, null, null, false, false, false, null, null, baseFragment));
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -386,8 +386,8 @@ public class PreferencesUtils {
     public class AnonymousClass1 extends ShareAlert {
         final /* synthetic */ BaseFragment val$fragment;
 
-        public AnonymousClass1(Context context, ChatActivity chatActivity, ArrayList arrayList, String str, String str2, String str3, boolean z, String str4, String str5, boolean z2, boolean z3, boolean z4, Integer num, Theme.ResourcesProvider resourcesProvider, BaseFragment baseFragment) {
-            super(context, chatActivity, arrayList, str, str2, str3, z, str4, str5, z2, z3, z4, num, resourcesProvider);
+        public AnonymousClass1(Context context, ChatActivity chatActivity, ArrayList arrayList, String str, String str2, boolean z, String str4, String str5, boolean z2, boolean z3, boolean z4, Integer num, Theme.ResourcesProvider resourcesProvider, BaseFragment baseFragment) {
+            super(context, chatActivity, arrayList, str, str2, z, str4, str5, z2, z3, z4, num, resourcesProvider);
             this.val$fragment = baseFragment;
         }
 
@@ -445,10 +445,10 @@ public class PreferencesUtils {
             Theme.reloadAllResources(activity);
             iNavigationLayout.rebuildAllFragmentViews(false, false);
             NotificationCenter notificationCenter = AccountInstance.getInstance(UserConfig.selectedAccount).getNotificationCenter();
-            notificationCenter.lambda$postNotificationNameOnUIThread$1(NotificationCenter.reloadInterface, new Object[0]);
-            notificationCenter.lambda$postNotificationNameOnUIThread$1(NotificationCenter.updateInterfaces, Integer.valueOf(MessagesController.UPDATE_MASK_CHAT));
-            notificationCenter.lambda$postNotificationNameOnUIThread$1(NotificationCenter.mainUserInfoChanged, new Object[0]);
-            notificationCenter.lambda$postNotificationNameOnUIThread$1(NotificationCenter.dialogFiltersUpdated, new Object[0]);
+            notificationCenter.postNotificationNameOnUIThread(NotificationCenter.reloadInterface, new Object[0]);
+            notificationCenter.postNotificationNameOnUIThread(NotificationCenter.updateInterfaces, Integer.valueOf(MessagesController.UPDATE_MASK_CHAT));
+            notificationCenter.postNotificationNameOnUIThread(NotificationCenter.mainUserInfoChanged, new Object[0]);
+            notificationCenter.postNotificationNameOnUIThread(NotificationCenter.dialogFiltersUpdated, new Object[0]);
         }
     }
 

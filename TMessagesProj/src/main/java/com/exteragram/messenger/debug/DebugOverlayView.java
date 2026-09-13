@@ -85,7 +85,7 @@ public class DebugOverlayView extends AppCompatTextView {
         setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                this.f$0.lambda$new$0(view);
+                DebugOverlayView.this.lambda$new$0(view);
             }
         });
         setLongClickable(false);

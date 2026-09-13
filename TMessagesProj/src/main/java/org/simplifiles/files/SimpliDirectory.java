@@ -1,6 +1,7 @@
 package org.simplifiles.files;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -81,7 +82,11 @@ public final class SimpliDirectory {
     }
 
     public final SimpliDirectory create() {
-        Files.createDirectories(this.path, new FileAttribute[0]);
+        try {
+            Files.createDirectories(this.path, new FileAttribute[0]);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return this;
     }
 
@@ -98,12 +103,20 @@ public final class SimpliDirectory {
             create();
             return this;
         }
-        FileTreeCleaner.INSTANCE.deleteContents(this.path);
+        try {
+            FileTreeCleaner.INSTANCE.deleteContents(this.path);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return this;
     }
 
     public final Path resolveInside(String path) {
-        return SafePathResolver.INSTANCE.resolveInside(this.path, path);
+        try {
+            return SafePathResolver.INSTANCE.resolveInside(this.path, path);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliFile file(String path) {
@@ -119,11 +132,19 @@ public final class SimpliDirectory {
     }
 
     public final SimpliFile zipTo(Path target, OverwritePolicy overwritePolicy) {
-        return zipTo(target, ArchiveSaveOptions.INSTANCE.builder().overwritePolicy(overwritePolicy).build());
+        try {
+            return zipTo(target, ArchiveSaveOptions.INSTANCE.builder().overwritePolicy(overwritePolicy).build());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliFile zipTo(File target, ArchiveSaveOptions options) {
-        return zipTo(Paths.get(target.getPath(), new String[0]), options);
+        try {
+            return zipTo(Paths.get(target.getPath(), new String[0]), options);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliFile zipTo(File target, OverwritePolicy overwritePolicy) {
@@ -131,7 +152,11 @@ public final class SimpliDirectory {
     }
 
     public final SimpliDirectory copyTo(Path target, OverwritePolicy overwritePolicy) {
-        return copyTo(target, toDirectoryTransferOptions(overwritePolicy));
+        try {
+            return copyTo(target, toDirectoryTransferOptions(overwritePolicy));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliDirectory copyTo(Path target, DirectoryTransferOptions options) throws Exception {
@@ -163,7 +188,11 @@ public final class SimpliDirectory {
     }
 
     public final SimpliDirectory moveTo(Path target, OverwritePolicy overwritePolicy) {
-        return moveTo(target, toDirectoryTransferOptions(overwritePolicy));
+        try {
+            return moveTo(target, toDirectoryTransferOptions(overwritePolicy));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public final SimpliDirectory moveTo(Path target, DirectoryTransferOptions options) throws Exception {

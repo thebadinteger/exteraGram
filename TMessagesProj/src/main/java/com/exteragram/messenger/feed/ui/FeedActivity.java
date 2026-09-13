@@ -19,12 +19,14 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenu;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.INavigationLayout;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.ChatActivityContainer;
 import org.telegram.ui.Components.Bulletin;
@@ -64,10 +66,10 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
 
     public FeedActivity(Bundle bundle) {
         super(bundle);
-        this.loadNewPosts = new Runnable() { 
+        this.loadNewPosts = new Runnable() { // from class: com.exteragram.messenger.feed.ui.FeedActivity$$ExternalSyntheticLambda1
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$new$0();
+                FeedActivity.this.lambda$new$0();
             }
         };
     }
@@ -94,7 +96,177 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         rightActionBarLayout.presentFragment(new INavigationLayout.NavigationParams(new FeedActivity()).setNoAnimation(true).forceRightLayout());
     }
 
-    public WindowInsetsCompat lambda$createView$1(View view, WindowInsetsCompat windowInsetsCompat) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$new$0() {
+        ChatActivity chatActivity;
+        ChatActivityContainer chatActivityContainer = this.chatContainer;
+        if (chatActivityContainer == null || chatActivityContainer.chatActivity == null || !this.uiResumedHeld) {
+            return;
+        }
+        FeedController.getInstance(this.currentAccount).loadNewer(0, 0);
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public boolean onFragmentCreate() {
+        Bundle bundle = this.arguments;
+        boolean z = false;
+        if (bundle != null && bundle.getBoolean("hasMainTabs", false)) {
+            z = true;
+        }
+        this.hasMainTabs = z;
+        this.viewportFullyVisible = !z;
+        NotificationCenter.getInstance(this.currentAccount).addObserver(this, NotificationCenter.didReceiveNewMessages);
+        NotificationCenter.getInstance(this.currentAccount).addObserver(this, NotificationCenter.feedNeedReload);
+        this.lastConfigGeneration = FeedConfig.getInstance(this.currentAccount).getGeneration();
+        return super.onFragmentCreate();
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public void onFragmentDestroy() {
+        AndroidUtilities.cancelRunOnUIThread(this.loadNewPosts);
+        destroyEmbeddedChat();
+        if (this.uiResumedHeld) {
+            this.uiResumedHeld = false;
+            FeedController.getInstance(this.currentAccount).setUiResumed(false);
+        }
+        if (this.uiActiveHeld) {
+            this.uiActiveHeld = false;
+            FeedController.getInstance(this.currentAccount).setUiActive(false);
+        }
+        Bulletin.removeDelegate(this);
+        NotificationCenter.getInstance(this.currentAccount).removeObserver(this, NotificationCenter.didReceiveNewMessages);
+        NotificationCenter.getInstance(this.currentAccount).removeObserver(this, NotificationCenter.feedNeedReload);
+        super.onFragmentDestroy();
+    }
+
+    private void destroyEmbeddedChat() {
+        ChatActivityContainer chatActivityContainer = this.chatContainer;
+        if (chatActivityContainer != null && chatActivityContainer.chatActivity != null) {
+            if (this.embeddedChatCreated) {
+                this.chatContainer.chatActivity.onFragmentDestroy();
+            }
+        }
+        this.embeddedChatCreated = false;
+        this.chatContainer = null;
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public boolean onBackPressed(boolean z) {
+        ChatActivity chatActivity;
+        ChatActivityContainer chatActivityContainer = this.chatContainer;
+        if (chatActivityContainer == null || (chatActivity = chatActivityContainer.chatActivity) == null || chatActivity.getActionBar() == null || !this.chatContainer.chatActivity.getActionBar().isActionModeShowed()) {
+            return super.onBackPressed(z);
+        }
+        if (!z) {
+            return false;
+        }
+        this.chatContainer.chatActivity.clearSelectionMode();
+        return false;
+    }
+
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
+    public void didReceivedNotification(int i, int i2, Object... objArr) {
+        boolean z = false;
+        if (i == NotificationCenter.didReceiveNewMessages) {
+            if (((Boolean) objArr[2]).booleanValue() || this.chatContainer == null || !FeedController.getInstance(this.currentAccount).isIncludedChannelPost(((Long) objArr[0]).longValue())) {
+                return;
+            }
+            AndroidUtilities.cancelRunOnUIThread(this.loadNewPosts);
+            AndroidUtilities.runOnUIThread(this.loadNewPosts, 1000L);
+            return;
+        }
+        if (i == NotificationCenter.feedNeedReload) {
+            updateFeedSubtitle();
+        }
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public View createView(Context context) {
+        destroyEmbeddedChat();
+        this.lastWindowInsets = null;
+        this.actionBar.setAddToContainer(false);
+        this.actionBar.setVisibility(8);
+        FrameLayout frameLayout = new FrameLayout(context);
+        this.fragmentView = frameLayout;
+        frameLayout.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+        if (this.hasMainTabs) {
+            ViewCompat.setOnApplyWindowInsetsListener(frameLayout, new OnApplyWindowInsetsListener() { // from class: com.exteragram.messenger.feed.ui.FeedActivity$$ExternalSyntheticLambda2
+                @Override // androidx.core.view.OnApplyWindowInsetsListener
+                public final WindowInsetsCompat onApplyWindowInsets(View view, WindowInsetsCompat windowInsetsCompat) {
+                    return FeedActivity.this.lambda$createView$1(view, windowInsetsCompat);
+                }
+            });
+            frameLayout.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() { // from class: com.exteragram.messenger.feed.ui.FeedActivity.1
+                @Override // android.view.View.OnAttachStateChangeListener
+                public void onViewDetachedFromWindow(View view) {
+                }
+
+                @Override // android.view.View.OnAttachStateChangeListener
+                public void onViewAttachedToWindow(View view) {
+                    if (FeedActivity.this.lastWindowInsets != null) {
+                        ViewCompat.dispatchApplyWindowInsets(view, FeedActivity.this.lastWindowInsets);
+                    } else {
+                        view.requestApplyInsets();
+                    }
+                }
+            });
+        }
+        FrameLayout frameLayout2 = new FrameLayout(context);
+        frameLayout.addView(frameLayout2, LayoutHelper.createFrame(-1, -1, 119));
+        Bundle bundle = new Bundle();
+        bundle.putInt("chatMode", 7);
+        bundle.putInt("searchType", 4);
+        bundle.putBoolean("hasMainTabs", this.hasMainTabs);
+        ChatActivityContainer chatActivityContainer = new ChatActivityContainer(context, getParentLayout(), bundle) { // from class: com.exteragram.messenger.feed.ui.FeedActivity.2
+            boolean activityCreated = false;
+
+            @Override // org.telegram.ui.ChatActivityContainer
+            public void initChatActivity() {
+                FeedActivity feedActivity;
+                View view;
+                if (this.activityCreated) {
+                    return;
+                }
+                this.activityCreated = true;
+                FeedActivity.this.embeddedChatCreated = true;
+                super.initChatActivity();
+                FeedActivity.this.applyFloatingWindowLayout();
+                FeedActivity.this.setupChatActionBar();
+                FeedActivity.this.setupChatTitle();
+                if (FeedActivity.this.lastWindowInsets != null && (view = (feedActivity = FeedActivity.this).fragmentView) != null) {
+                    ViewCompat.dispatchApplyWindowInsets(view, feedActivity.lastWindowInsets);
+                }
+                FeedActivity.this.invalidateParentTabsGlass();
+            }
+        };
+        this.chatContainer = chatActivityContainer;
+        ChatActivity chatActivity = chatActivityContainer.chatActivity;
+        chatActivity.isInsideContainer = false;
+        updateFeedViewportActive(this.viewportFullyVisible);
+        if (!this.uiResumedHeld) {
+            this.chatContainer.onPause();
+        }
+        frameLayout2.addView(this.chatContainer, LayoutHelper.createFrame(-1, -1, 119));
+        if (!this.uiActiveHeld) {
+            this.uiActiveHeld = true;
+            FeedController.getInstance(this.currentAccount).setUiActive(true);
+        }
+        Bulletin.addDelegate(this, new Bulletin.Delegate() { // from class: com.exteragram.messenger.feed.ui.FeedActivity.3
+            @Override // org.telegram.ui.Components.Bulletin.Delegate
+            public int getTopOffset(int i) {
+                return AndroidUtilities.statusBarHeight + ActionBar.getCurrentActionBarHeight();
+            }
+
+            @Override // org.telegram.ui.Components.Bulletin.Delegate
+            public int getBottomOffset(int i) {
+                return 0;
+            }
+        });
+        return this.fragmentView;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ WindowInsetsCompat lambda$createView$1(View view, WindowInsetsCompat windowInsetsCompat) {
         this.lastWindowInsets = windowInsetsCompat;
         int iDp = AndroidUtilities.dp(MainTabsUiHelper.getTabsViewHeightDp());
         if (iDp == 0) {
@@ -107,9 +279,6 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
 
     @Override // org.telegram.ui.ActionBar.BaseFragment
     public void onResume() {
-        ChatActivityContainer chatActivityContainer;
-        ChatActivity chatActivity;
-        ChatActivity chatActivity2;
         View view;
         WindowInsetsCompat windowInsetsCompat;
         super.onResume();
@@ -129,15 +298,10 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         int generation = FeedConfig.getInstance(this.currentAccount).getGeneration();
         if (generation != this.lastConfigGeneration) {
             this.lastConfigGeneration = generation;
-            ChatActivityContainer chatActivityContainer3 = this.chatContainer;
-            if (chatActivityContainer3 != null && (chatActivity2 = chatActivityContainer3.chatActivity) != null) {
-                chatActivity2.applyFeedConfigChange();
-            }
-        } else if (this.resumedOnce && (chatActivityContainer = this.chatContainer) != null && (chatActivity = chatActivityContainer.chatActivity) != null) {
-            chatActivity.reconcileFeedList();
-            this.chatContainer.chatActivity.refreshFeedUnreadDivider();
+            FeedController.getInstance(this.currentAccount).applyConfigChange(null);
+        } else if (this.resumedOnce) {
             if (!FeedController.getInstance(this.currentAccount).getMessages().isEmpty()) {
-                this.chatContainer.chatActivity.loadNewerFeed(true);
+                FeedController.getInstance(this.currentAccount).loadNewer(0, 0);
             }
         }
         this.resumedOnce = true;
@@ -177,7 +341,6 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         }
     }
 
-    @Override // org.telegram.ui.MainTabsActivity.TabFragmentDelegate
     public void onParentBecomeFullyVisible() {
         reattachCurrentFeedVideoTexture();
     }
@@ -196,12 +359,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     }
 
     private void updateFeedViewportActive(boolean z) {
-        ChatActivity chatActivity;
-        ChatActivityContainer chatActivityContainer = this.chatContainer;
-        if (chatActivityContainer == null || (chatActivity = chatActivityContainer.chatActivity) == null) {
-            return;
-        }
-        chatActivity.setFeedViewportActive(z);
+        FeedController.getInstance(this.currentAccount).setUiActive(z);
     }
 
     @Override // org.telegram.ui.MainTabsActivity.TabFragmentDelegate
@@ -222,14 +380,9 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     }
 
     private void reattachCurrentFeedVideoTexture() {
-        ChatActivity chatActivity;
-        ChatActivityContainer chatActivityContainer = this.chatContainer;
-        if (chatActivityContainer == null || (chatActivity = chatActivityContainer.chatActivity) == null) {
-            return;
-        }
-        chatActivity.reattachCurrentFeedVideoTexture();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void setupChatActionBar() {
         ChatActivity chatActivity;
         final ActionBar actionBar;
@@ -248,7 +401,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
             applyMainTabsHeaderLayout();
         }
         final ActionBar.ActionBarMenuOnItemClick actionBarMenuOnItemClick = actionBar.getActionBarMenuOnItemClick();
-        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { 
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { // from class: com.exteragram.messenger.feed.ui.FeedActivity.4
             @Override // org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick
             public void onItemClick(int i) {
                 if (i == -1 && FeedActivity.this.hasMainTabs && !actionBar.isActionModeShowed()) {
@@ -276,6 +429,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         });
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void applyFloatingWindowLayout() {
         ChatActivityContainer chatActivityContainer;
         ChatActivity chatActivity;
@@ -313,6 +467,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void showMarkAllReadDialog() {
         if (getParentActivity() == null) {
             return;
@@ -320,17 +475,65 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), getResourceProvider());
         builder.setTitle(LocaleController.getString(R.string.FeedMarkAllRead));
         builder.setMessage(LocaleController.getString(R.string.FeedMarkAllReadConfirm));
-        builder.setPositiveButton(LocaleController.getString(R.string.MarkAsRead), new AlertDialog.OnButtonClickListener() { 
+        builder.setPositiveButton(LocaleController.getString(R.string.MarkAsRead), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.feed.ui.FeedActivity$$ExternalSyntheticLambda5
             @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
             public final void onClick(AlertDialog alertDialog, int i) {
-                this.f$0.lambda$showMarkAllReadDialog$2(alertDialog, i);
+                FeedActivity.this.lambda$showMarkAllReadDialog$2(alertDialog, i);
             }
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         showDialog(builder.create());
     }
 
-    public void lambda$updateFeedSubtitle$3(ArrayList arrayList, int i, boolean z, int i2) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$showMarkAllReadDialog$2(AlertDialog alertDialog, int i) {
+        markAllRead();
+        BulletinFactory.of(this).createSimpleBulletin(R.raw.contact_check, LocaleController.getString(R.string.FeedMarkAllReadDone)).show();
+    }
+
+    public void markAllRead() {
+        FeedController.getInstance(this.currentAccount).markAllRead();
+    }
+
+    @Override // org.telegram.ui.MainTabsActivity.TabFragmentDelegate
+    public void onParentScrollToTop() {
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void setupChatTitle() {
+        ChatActivity chatActivity;
+        ChatAvatarContainer chatAvatarContainer;
+        ChatActivityContainer chatActivityContainer = this.chatContainer;
+        if (chatActivityContainer == null || (chatActivity = chatActivityContainer.chatActivity) == null || (chatAvatarContainer = chatActivity.avatarContainer) == null) {
+            return;
+        }
+        chatAvatarContainer.setTitle(LocaleController.getString(R.string.Feed));
+        AvatarDrawable avatarDrawable = new AvatarDrawable();
+        avatarDrawable.setInfo(UserConfig.getInstance(this.currentAccount).getClientUserId());
+        avatarDrawable.setAvatarType(1);
+        if (Theme.avatarDrawables != null && Theme.avatarDrawables.length > 25) {
+            avatarDrawable.setCustomIcon(Theme.avatarDrawables[25]);
+        }
+        if (chatAvatarContainer.avatarImageView != null) {
+            chatAvatarContainer.avatarImageView.setImage(null, null, avatarDrawable, null);
+        }
+        updateFeedSubtitle();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void updateFeedSubtitle() {
+        FeedController feedController = FeedController.getInstance(this.currentAccount);
+        setFeedSubtitle(feedController.getIncludedChannelCount());
+        feedController.loadChannels(new FeedController.ChannelsCallback() { // from class: com.exteragram.messenger.feed.ui.FeedActivity$$ExternalSyntheticLambda0
+            @Override // com.exteragram.messenger.feed.FeedController.ChannelsCallback
+            public final void onChannels(ArrayList arrayList, int i, boolean z, int i2) {
+                FeedActivity.this.lambda$updateFeedSubtitle$3(arrayList, i, z, i2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$updateFeedSubtitle$3(ArrayList arrayList, int i, boolean z, int i2) {
         if (z) {
             return;
         }
@@ -353,19 +556,14 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
 
     @Override // org.telegram.ui.MainTabsActivity.TabFragmentDelegate
     public BlurredBackgroundSourceRenderNode getGlassSource() {
-        ChatActivity chatActivity;
-        ChatActivityContainer chatActivityContainer = this.chatContainer;
-        if (chatActivityContainer == null || (chatActivity = chatActivityContainer.chatActivity) == null) {
-            return null;
-        }
-        return chatActivity.getGlassSource();
+        return null;
     }
 
-    @Override // org.telegram.ui.MainTabsActivity.TabFragmentDelegate
     public void setParentTabsGlassInvalidationCallback(Runnable runnable) {
         this.parentTabsGlassInvalidationCallback = runnable;
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void invalidateParentTabsGlass() {
         Runnable runnable = this.parentTabsGlassInvalidationCallback;
         if (runnable != null) {

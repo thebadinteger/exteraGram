@@ -19,18 +19,18 @@ public final class NowPlayingController$getCurrentPlayingTrack$1$savedTrackDefer
     int label;
 
     public NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1(TLRPC.Document document, Continuation<? super NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1> continuation) {
-        super(2, continuation);
+        super(2, (Continuation) continuation);
         this.$savedMusic = document;
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
     public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
-        return new NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1(this.$savedMusic, continuation);
+        return (Continuation) new NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1(this.$savedMusic, (Continuation) continuation);
     }
 
     @Override // kotlin.jvm.functions.Function2
     public final Object invoke(CoroutineScope coroutineScope, Continuation<? super NowPlayingDTO> continuation) {
-        return ((NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+        return ((NowPlayingController$getCurrentPlayingTrack$1$savedTrackDeferred$1) (Object) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
@@ -42,8 +42,7 @@ public final class NowPlayingController$getCurrentPlayingTrack$1$savedTrackDefer
                 ResultKt.throwOnFailure(obj);
                 return obj;
             }
-            Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-            return null;
+            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
         }
         ResultKt.throwOnFailure(obj);
         NowPlayingController nowPlayingController = NowPlayingController.INSTANCE;

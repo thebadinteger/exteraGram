@@ -20,6 +20,8 @@ import static org.telegram.ui.Stories.HighlightMessageSheet.parseTiersString;
 import static org.telegram.ui.Stories.HighlightMessageSheet.tiersEqual;
 import static org.telegram.ui.Stories.HighlightMessageSheet.tiersToString;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import android.Manifest;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -711,6 +713,7 @@ public class MessagesController extends BaseController implements NotificationCe
     public String freezeAppealUrl;
     public int conferenceCallSizeLimit;
     public boolean callRequestsDisabled;
+    private final com.exteragram.messenger.plugins.hooks.PluginsHooks hooks = com.exteragram.messenger.plugins.PluginsController.getInstance();
     public int todoItemsMax;
     public int todoTitleLengthMax;
     public int todoItemLengthMax;
@@ -1274,6 +1277,7 @@ public class MessagesController extends BaseController implements NotificationCe
     public static class DialogFilter {
         public int id;
         public String name;
+        public String emoticon;
         public ArrayList<TLRPC.MessageEntity> entities = new ArrayList<>();
         public int unreadCount;
         public volatile int pendingUnreadCount;
@@ -9664,6 +9668,11 @@ public class MessagesController extends BaseController implements NotificationCe
         return SharedConfig.archiveHidden && dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null;
     }
 
+    public boolean hasArchivedChatsActual() {
+        ArrayList<TLRPC.Dialog> arrayList = this.dialogsByFolder.get(1);
+        return (arrayList == null || arrayList.isEmpty()) ? false : true;
+    }
+
 
     public static class CommunityPeerDialog {
         public final TL_communities.CommunityPeer peer;
@@ -9829,6 +9838,11 @@ public class MessagesController extends BaseController implements NotificationCe
 
 
     public ArrayList<TLRPC.Dialog> getDialogs(int folderId) {
+        if (ExteraConfig.getHideArchiveFolder() && folderId == 0 && this.dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null) {
+            removeFolder(1);
+        } else if (!ExteraConfig.getHideArchiveFolder() && folderId == 0 && this.dialogs_dict.get(DialogObject.makeFolderDialogId(1)) == null && (this.hasArchivedChats || getStoriesController().hasHiddenStories())) {
+            checkArchiveFolder();
+        }
         ArrayList<TLRPC.Dialog> dialogs = dialogsByFolder.get(folderId);
         if (dialogs == null) {
             return new ArrayList<>();
@@ -12291,6 +12305,13 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void checkArchiveFolder() {
+        if (ExteraConfig.getHideArchiveFolder()) {
+            if (this.dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null) {
+                removeFolder(1);
+            }
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, 0);
+            return;
+        }
         if (!hasArchivedChats && !getStoriesController().hasHiddenStories()) {
             removeFolder(1);
         } else {
@@ -17795,6 +17816,12 @@ public class MessagesController extends BaseController implements NotificationCe
 
     // must be run from Utilities.stageQueue
     public void processUpdates(final TLRPC.Updates updates, boolean fromQueue) {
+        if (this.hooks != null && updates != null) {
+            TLRPC.Updates hookedUpdates = this.hooks.executeUpdatesHook(updates.getClass().getSimpleName(), this.currentAccount, updates);
+            if (hookedUpdates == null) {
+                return;
+            }
+        }
         ArrayList<Long> needGetChannelsDiff = null;
         boolean needGetDiff = false;
         boolean needReceivedQueue = false;
@@ -18420,6 +18447,12 @@ public class MessagesController extends BaseController implements NotificationCe
 
         for (int c = 0, size3 = updates.size(); c < size3; c++) {
             TLRPC.Update baseUpdate = updates.get(c);
+            if (baseUpdate != null) {
+                baseUpdate = this.hooks.executeUpdateHook(baseUpdate.getClass().getSimpleName(), this.currentAccount, baseUpdate);
+                if (baseUpdate == null) {
+                    continue;
+                }
+            }
             if (BuildVars.LOGS_ENABLED && baseUpdate != null) {
                 FileLog.d("process update " + baseUpdate.getClass().getSimpleName());
             }

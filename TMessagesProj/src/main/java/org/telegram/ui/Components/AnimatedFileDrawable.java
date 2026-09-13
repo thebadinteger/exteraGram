@@ -55,6 +55,12 @@ public class AnimatedFileDrawable extends BitmapDrawable implements Animatable, 
     // clipPath not use antialias
     private final boolean USE_BITMAP_SHADER = Build.VERSION.SDK_INT < 29;
     private boolean PRERENDER_FRAME = true;
+    private boolean forceDisable;
+
+    @androidx.annotation.Keep
+    public void forceDisable() {
+        this.forceDisable = true;
+    }
 
     public final static int PARAM_NUM_SUPPORTED_VIDEO_CODEC = 0;
     public final static int PARAM_NUM_WIDTH = 1;

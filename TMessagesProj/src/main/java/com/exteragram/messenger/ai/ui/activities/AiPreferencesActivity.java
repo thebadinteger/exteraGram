@@ -97,7 +97,7 @@ public class AiPreferencesActivity extends BasePreferencesActivity {
                 AiController.clearHistory(this, getResourceProvider(), true, new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        this.f$0.lambda$onClick$0();
+                        AiPreferencesActivity.this.lambda$onClick$0();
                     }
                 });
                 break;
@@ -178,7 +178,7 @@ public class AiPreferencesActivity extends BasePreferencesActivity {
         UItem uItemAsIntSlideView = UItem.asIntSlideView(1, 0, AiConfig.getTemperature(), 20, new Utilities.CallbackReturn() { 
             @Override 
             public final Object run(Object obj) {
-                return this.f$0.formatTemperature(((Integer) obj).intValue());
+                return AiPreferencesActivity.this.formatTemperature(((Integer) obj).intValue());
             }
         }, new Utilities.Callback() { 
             @Override 

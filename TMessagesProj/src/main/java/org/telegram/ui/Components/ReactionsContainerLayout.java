@@ -123,6 +123,12 @@ public class ReactionsContainerLayout extends FrameLayout implements Notificatio
     private static final int VIEW_TYPE_CUSTOM_EMOJI_BUTTON = 2;
     private static final int VIEW_TYPE_CUSTOM_REACTION = 3;
 
+    private org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable glassBackground;
+    private org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable glassBackgroundBubbleBig;
+    private org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable glassBackgroundBubbleSmall;
+    private org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundProvider glassBackgroundColorProvider;
+    private org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory glassBackgroundFactory;
+
     public ArrayList<InnerItem> items = new ArrayList<>();
     public ArrayList<InnerItem> oldItems = new ArrayList<>();
 
@@ -853,6 +859,15 @@ public class ReactionsContainerLayout extends FrameLayout implements Notificatio
         canvas.restoreToCount(s);
 
         drawBubbles(canvas, br, cPr, sr, 255);
+        invalidate();
+    }
+
+    public void setGlassBackground(org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory blurredBackgroundDrawableViewFactory, org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundProvider blurredBackgroundProvider) {
+        this.glassBackgroundFactory = blurredBackgroundDrawableViewFactory;
+        this.glassBackgroundColorProvider = blurredBackgroundProvider;
+        this.glassBackground = blurredBackgroundDrawableViewFactory.create((View) this, true).setColorProvider(blurredBackgroundProvider);
+        this.glassBackgroundBubbleBig = blurredBackgroundDrawableViewFactory.create((View) this, true).setColorProvider(blurredBackgroundProvider);
+        this.glassBackgroundBubbleSmall = blurredBackgroundDrawableViewFactory.create((View) this, true).setColorProvider(blurredBackgroundProvider);
         invalidate();
     }
 

@@ -94,23 +94,7 @@ public abstract class CameraDebugUtils {
     }
 
     public static String getCameraXPhysicalCameraList(CameraXSession cameraXSession) {
-        Camera camera = cameraXSession.camera;
-        if (camera == null) {
-            return "none";
-        }
-        try {
-            StringBuilder sb = new StringBuilder();
-            for (CameraInfo cameraInfo : camera.getCameraInfo().getPhysicalCameraInfos()) {
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                }
-                sb.append(formatCameraXInfo(cameraInfo));
-            }
-            return sb.length() == 0 ? "none" : sb.toString();
-        } catch (Exception e) {
-            FileLog.e(e);
-            return "error=".concat(e.getClass().getSimpleName());
-        }
+        return "none";
     }
 
     public static String getCamera2CameraList(Context context) {
@@ -175,9 +159,10 @@ public abstract class CameraDebugUtils {
                 cameraInfo = null;
             } else {
                 CameraSelector cameraSelector = cameraXSession.isFrontface() ? CameraSelector.DEFAULT_FRONT_CAMERA : CameraSelector.DEFAULT_BACK_CAMERA;
-                if (cameraXSession.provider.hasCamera(cameraSelector)) {
-                    cameraInfo = cameraXSession.provider.getCameraInfo(cameraSelector);
-                } else {
+                try {
+                    List<CameraInfo> filtered = cameraSelector.filter(cameraXSession.provider.getAvailableCameraInfos());
+                    cameraInfo = filtered.isEmpty() ? null : filtered.get(0);
+                } catch (Exception ignored) {
                     cameraInfo = null;
                 }
             }
@@ -192,28 +177,11 @@ public abstract class CameraDebugUtils {
     }
 
     public static String getCamera2SupportedFpsRanges(Camera2Session camera2Session) {
-        if (camera2Session == null) {
-            return "none";
-        }
-        try {
-            return formatCamera2FpsRanges(camera2Session.getAvailableFpsRanges());
-        } catch (Exception e) {
-            FileLog.e(e);
-            return "error=".concat(e.getClass().getSimpleName());
-        }
+        return "none";
     }
 
     public static String getLegacySupportedFpsRanges(CameraSession cameraSession) {
-        org.telegram.messenger.camera.CameraInfo cameraInfo;
-        if (cameraSession == null || (cameraInfo = cameraSession.cameraInfo) == null || cameraInfo.getCamera() == null) {
-            return "none";
-        }
-        try {
-            return formatLegacyFpsRanges(cameraSession.cameraInfo.getCamera().getParameters().getSupportedPreviewFpsRange());
-        } catch (Exception e) {
-            FileLog.e(e);
-            return "error=".concat(e.getClass().getSimpleName());
-        }
+        return "none";
     }
 
     public static String formatCameraXInfo(CameraInfo cameraInfo) {

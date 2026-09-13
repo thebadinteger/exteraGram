@@ -7,6 +7,7 @@ import com.sun.jna.Callback;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -156,14 +157,14 @@ public final class IpAddressInfoController {
 
     @JvmStatic
     public static final String extractIpAddress(String url) {
-        String strSubstring;
+        String strSubstring = null;
         if (url == null || url.length() == 0) {
             return null;
         }
         try {
             strSubstring = Uri.parse(url).getHost();
             if (strSubstring == null) {
-                if (StringsKt.contains$default((CharSequence) url, (CharSequence) "://", false, 2, (Object) null)) {
+                if (url.contains("://")) {
                     strSubstring = null;
                 } else {
                     strSubstring = Uri.parse("http://" + url).getHost();
@@ -175,7 +176,7 @@ public final class IpAddressInfoController {
         if (strSubstring == null || strSubstring.length() == 0) {
             return null;
         }
-        if (StringsKt.startsWith$default(strSubstring, "[", false, 2, (Object) null) && StringsKt.endsWith$default(strSubstring, "]", false, 2, (Object) null) && strSubstring.length() > 2) {
+        if (strSubstring.startsWith("[") && strSubstring.endsWith("]") && strSubstring.length() > 2) {
             strSubstring = strSubstring.substring(1, strSubstring.length() - 1);
         }
         if (!INSTANCE.isIpAddress(strSubstring)) {
@@ -202,7 +203,7 @@ public final class IpAddressInfoController {
             callback.run(cachedInfo.getInfo());
             return null;
         }
-        HttpUrl httpUrl = HttpUrl.INSTANCE.parse("https://ipwho.is");
+        HttpUrl httpUrl = HttpUrl.parse("https://ipwho.is");
         HttpUrl httpUrlBuild = (httpUrl == null || (builderNewBuilder = httpUrl.newBuilder()) == null || (builderAddPathSegment = builderNewBuilder.addPathSegment(ipAddress)) == null) ? null : builderAddPathSegment.build();
         if (httpUrlBuild == null) {
             callback.run(null);
@@ -222,12 +223,12 @@ public final class IpAddressInfoController {
 
             @Override // okhttp3.Callback
             public void onResponse(Call call, Response response) {
-                IpAddressInfo ipAddressInfo;
+                IpAddressInfo ipAddressInfo = null;
                 String str = ipAddress;
                 Utilities.Callback<IpAddressInfo> callback2 = callback;
                 try {
                     try {
-                        ipAddressInfo = response.getIsSuccessful() ? IpAddressInfoController.INSTANCE.parseIpAddressInfo(str, response.body().string()) : null;
+                        ipAddressInfo = response.isSuccessful() ? IpAddressInfoController.INSTANCE.parseIpAddressInfo(str, response.body().string()) : null;
                     } catch (Exception e) {
                         FileLog.e(e);
                     }
@@ -254,13 +255,13 @@ public final class IpAddressInfoController {
         if (host == null || host.length() == 0) {
             return false;
         }
-        if (StringsKt.indexOf$default((CharSequence) host, ':', 0, false, 6, (Object) null) >= 0) {
+        if (host.indexOf(':') >= 0) {
             return ipv6CharsRegex.matches(host);
         }
         if (!ipv4Regex.matches(host)) {
             return false;
         }
-        List listSplit$default = StringsKt.split$default((CharSequence) host, new char[]{'.'}, false, 0, 6, (Object) null);
+        List listSplit$default = Arrays.asList(host.split("\\."));
         if ((listSplit$default instanceof Collection) && listSplit$default.isEmpty()) {
             return true;
         }
@@ -292,7 +293,7 @@ public final class IpAddressInfoController {
     public final void putCachedInfo(String ipAddress, IpAddressInfo info) {
         IpAddressInfoController$cache$1 ipAddressInfoController$cache$1 = cache;
         synchronized (ipAddressInfoController$cache$1) {
-            ipAddressInfoController$cache$1.put(ipAddress, new CacheEntry(info, SystemClock.elapsedRealtime(), info != null ? DurationKt.MILLIS_IN_DAY : 300000L));
+            ipAddressInfoController$cache$1.put(ipAddress, new CacheEntry(info, SystemClock.elapsedRealtime(), info != null ? 86400000L : 300000L));
             Unit unit = Unit.INSTANCE;
         }
     }
@@ -302,13 +303,18 @@ public final class IpAddressInfoController {
         String strOptString2;
         String strOptString3;
         String strOptString4;
-        JSONObject jSONObject = new JSONObject(response);
-        if (!jSONObject.optBoolean("success", false)) {
+        try {
+            JSONObject jSONObject = new JSONObject(response);
+            if (!jSONObject.optBoolean("success", false)) {
+                return null;
+            }
+            JSONObject jSONObjectOptJSONObject = jSONObject.optJSONObject("connection");
+            JSONObject jSONObjectOptJSONObject2 = jSONObject.optJSONObject("timezone");
+            return new IpAddressInfo(jSONObject.optString("ip", ipAddress), jSONObject.optString("country", _UrlKt.FRAGMENT_ENCODE_SET), jSONObject.optString("region", _UrlKt.FRAGMENT_ENCODE_SET), jSONObject.optString("city", _UrlKt.FRAGMENT_ENCODE_SET), (jSONObjectOptJSONObject == null || (strOptString4 = jSONObjectOptJSONObject.optString("isp", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString4, (jSONObjectOptJSONObject == null || (strOptString3 = jSONObjectOptJSONObject.optString("org", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString3, (jSONObjectOptJSONObject == null || (strOptString2 = jSONObjectOptJSONObject.optString("domain", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString2, (jSONObjectOptJSONObject2 == null || (strOptString = jSONObjectOptJSONObject2.optString("id", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString);
+        } catch (org.json.JSONException e) {
+            FileLog.e(e);
             return null;
         }
-        JSONObject jSONObjectOptJSONObject = jSONObject.optJSONObject("connection");
-        JSONObject jSONObjectOptJSONObject2 = jSONObject.optJSONObject("timezone");
-        return new IpAddressInfo(jSONObject.optString("ip", ipAddress), jSONObject.optString("country", _UrlKt.FRAGMENT_ENCODE_SET), jSONObject.optString("region", _UrlKt.FRAGMENT_ENCODE_SET), jSONObject.optString("city", _UrlKt.FRAGMENT_ENCODE_SET), (jSONObjectOptJSONObject == null || (strOptString4 = jSONObjectOptJSONObject.optString("isp", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString4, (jSONObjectOptJSONObject == null || (strOptString3 = jSONObjectOptJSONObject.optString("org", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString3, (jSONObjectOptJSONObject == null || (strOptString2 = jSONObjectOptJSONObject.optString("domain", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString2, (jSONObjectOptJSONObject2 == null || (strOptString = jSONObjectOptJSONObject2.optString("id", _UrlKt.FRAGMENT_ENCODE_SET)) == null) ? _UrlKt.FRAGMENT_ENCODE_SET : strOptString);
     }
 
     @JvmStatic
@@ -321,6 +327,6 @@ public final class IpAddressInfoController {
                 arrayList.add(str);
             }
         }
-        return CollectionsKt.joinToString$default(arrayList, ", ", null, null, 0, null, null, 62, null);
+        return android.text.TextUtils.join(", ", arrayList);
     }
 }

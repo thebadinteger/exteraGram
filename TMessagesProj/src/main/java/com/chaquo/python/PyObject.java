@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import retrofit2.Utils$$ExternalSyntheticBUOutline0;
 
 public class PyObject extends AbstractMap<String, PyObject> implements AutoCloseable {
     private static final Map<Long, WeakReference<PyObject>> cache = new HashMap();
@@ -242,8 +241,7 @@ public class PyObject extends AbstractMap<String, PyObject> implements AutoClose
             @Override // java.util.Iterator
             public Map.Entry<String, PyObject> next() {
                 if (!hasNext()) {
-                    Utils$$ExternalSyntheticBUOutline0.m();
-                    return null;
+                    throw new java.util.NoSuchElementException();
                 }
                 Map.Entry<String, PyObject> entry = new Map.Entry<String, PyObject>() { // from class: com.chaquo.python.PyObject.1.1.1
                     String key;

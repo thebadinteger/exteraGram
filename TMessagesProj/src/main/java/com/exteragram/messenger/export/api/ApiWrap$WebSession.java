@@ -1,6 +1,6 @@
 package com.exteragram.messenger.export.api;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import java.util.Objects;
 
 public final class ApiWrap$WebSession extends RecordTag {

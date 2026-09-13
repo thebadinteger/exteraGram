@@ -1,3 +1,46 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.util;
+
+import static com.google.android.exoplayer2.util.Assertions.checkState;
+
+import android.os.Looper;
+import android.os.Message;
+import androidx.annotation.CheckResult;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import java.util.ArrayDeque;
+import java.util.concurrent.CopyOnWriteArraySet;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
+/**
+ * A set of listeners.
+ *
+ * <p>Events are guaranteed to arrive in the order in which they happened even if a new event is
+ * triggered recursively from another listener.
+ *
+ * <p>Events are also guaranteed to be only sent to the listeners registered at the time the event
+ * was enqueued and haven't been removed since.
+ *
+ * <p>All methods must be called on the {@link Looper} passed to the constructor unless indicated
+ * otherwise.
+ *
+ * @param <T> The listener type.
+ */
 public final class ListenerSet<T extends @NonNull Object> {
 
   /**

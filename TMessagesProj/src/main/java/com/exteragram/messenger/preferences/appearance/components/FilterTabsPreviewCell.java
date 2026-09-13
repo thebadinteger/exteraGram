@@ -111,14 +111,10 @@ public class FilterTabsPreviewCell extends FrameLayout implements CustomPreferen
                 return ((Integer) FilterTabsPreviewCell.this.idsWithCounters.computeIfAbsent(Integer.valueOf(i), new Function() { 
                     @Override // java.util.function.Function
                     public final Object apply(Object obj) {
-                        return FilterTabsPreviewCell.AnonymousClass1.m1410$r8$lambda$LUTilU3rkOEUjmtXHG1chqCQuQ((Integer) obj);
+                        return 0;
                     }
                 })).intValue();
             }
-            return 0;
-        }
-
-        public static /* synthetic */ Integer m1410$r8$lambda$LUTilU3rkOEUjmtXHG1chqCQuQ(Integer num) {
             return 0;
         }
     }

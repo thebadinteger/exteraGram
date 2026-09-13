@@ -89,7 +89,7 @@ public class VoiceRecognitionController {
         ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap();
         this.providers = concurrentHashMap;
         this.executorService = Executors.newCachedThreadPool();
-        this.resultCache = Collections.synchronizedMap(new LinkedHashMap<String, RecognitionResult>(128, 0.75f, true) { 
+        this.resultCache = Collections.synchronizedMap(new LinkedHashMap<String, RecognitionResult>(128, 0.75f, true) { // from class: com.exteragram.messenger.speech.VoiceRecognitionController.1
             @Override // java.util.LinkedHashMap
             public boolean removeEldestEntry(Map.Entry<String, RecognitionResult> entry) {
                 return size() > 128;
@@ -118,10 +118,10 @@ public class VoiceRecognitionController {
                 if (scheduledFuture != null) {
                     scheduledFuture.cancel(false);
                 }
-                this.unloadTask = this.scheduledExecutorService.schedule(new Runnable() { 
+                this.unloadTask = this.scheduledExecutorService.schedule(new Runnable() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController$$ExternalSyntheticLambda1
                     @Override // java.lang.Runnable
                     public final void run() {
-                        this.f$0.checkAndUnloadInactiveModels();
+                        VoiceRecognitionController.this.checkAndUnloadInactiveModels();
                     }
                 }, 600000L, TimeUnit.MILLISECONDS);
             } catch (Throwable th) {
@@ -135,6 +135,7 @@ public class VoiceRecognitionController {
         scheduleUnloadCheck();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void checkAndUnloadInactiveModels() {
         boolean z;
         this.providersLock.readLock().lock();
@@ -215,7 +216,7 @@ public class VoiceRecognitionController {
             if (recognitionProvider == null) {
                 throw new IllegalArgumentException("Provider not found: " + str);
             }
-            this.executorService.submit(new Runnable() { 
+            this.executorService.submit(new Runnable() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController$$ExternalSyntheticLambda3
                 @Override // java.lang.Runnable
                 public final void run() {
                     VoiceRecognitionController.$r8$lambda$JxOvM9s4rG4qZVYDNPkcgl8XC2s(recognitionProvider, str2, downloadModelCallback);
@@ -228,7 +229,35 @@ public class VoiceRecognitionController {
         }
     }
 
-    public static void $r8$lambda$NYTEfqg_7Hus9R4pu_m5rNBQCmE(RecognitionProvider recognitionProvider, String str, DeleteModelCallback deleteModelCallback) {
+    public static /* synthetic */ void $r8$lambda$JxOvM9s4rG4qZVYDNPkcgl8XC2s(RecognitionProvider recognitionProvider, String str, DownloadModelCallback downloadModelCallback) {
+        try {
+            recognitionProvider.downloadModel(str, downloadModelCallback);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+    }
+
+    public void deleteModel(String str, final String str2, final DeleteModelCallback deleteModelCallback) {
+        this.providersLock.readLock().lock();
+        try {
+            final RecognitionProvider recognitionProvider = this.providers.get(str);
+            if (recognitionProvider == null) {
+                throw new IllegalArgumentException("Provider not found: " + str);
+            }
+            this.executorService.submit(new Runnable() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController$$ExternalSyntheticLambda2
+                @Override // java.lang.Runnable
+                public final void run() {
+                    VoiceRecognitionController.$r8$lambda$NYTEfqg_7Hus9R4pu_m5rNBQCmE(recognitionProvider, str2, deleteModelCallback);
+                }
+            });
+            this.providersLock.readLock().unlock();
+        } catch (Throwable th) {
+            this.providersLock.readLock().unlock();
+            throw th;
+        }
+    }
+
+    public static /* synthetic */ void $r8$lambda$NYTEfqg_7Hus9R4pu_m5rNBQCmE(RecognitionProvider recognitionProvider, String str, DeleteModelCallback deleteModelCallback) {
         try {
             recognitionProvider.deleteModel(str);
             deleteModelCallback.onCompleted();
@@ -239,33 +268,113 @@ public class VoiceRecognitionController {
     }
 
     public void startRecognition(final String str, final String str2, final String str3, final String str4, final RecognitionCallback recognitionCallback) {
-        this.executorService.submit(new Runnable() { 
+        this.executorService.submit(new Runnable() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController$$ExternalSyntheticLambda0
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$startRecognition$2(str4, str, str3, str2, recognitionCallback);
+                VoiceRecognitionController.this.lambda$startRecognition$2(str4, str, str3, str2, recognitionCallback);
             }
         });
     }
 
-    public void lambda$onCompleted$0(String str, RecognitionCallback recognitionCallback, String str2) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$startRecognition$2(String str, String str2, String str3, String str4, RecognitionCallback recognitionCallback) {
+        this.providersLock.readLock().lock();
+        try {
+            RecognitionProvider recognitionProvider = this.providers.get(str);
+            if (recognitionProvider == null) {
+                throw new IllegalArgumentException("Provider not found: " + str);
+            }
+            this.providersLock.readLock().unlock();
+            updateLastRecognitionTime();
+            ArrayList arrayList = new ArrayList();
+            this.chunkCache.put(str2, arrayList);
+            try {
+                recognitionProvider.recognize(str3, str4, new AnonymousClass2(arrayList, recognitionCallback, str2));
+            } catch (Exception e) {
+                this.chunkCache.remove(str2);
+                recognitionCallback.onError(e);
+            }
+        } catch (Throwable th) {
+            this.providersLock.readLock().unlock();
+            throw th;
+        }
+    }
+
+    /* JADX INFO: renamed from: com.exteragram.messenger.speech.VoiceRecognitionController$2, reason: invalid class name */
+    public class AnonymousClass2 implements RecognitionCallback {
+        final /* synthetic */ RecognitionCallback val$callback;
+        final /* synthetic */ List val$chunks;
+        final /* synthetic */ String val$key;
+
+        public AnonymousClass2(List list, RecognitionCallback recognitionCallback, String str) {
+            this.val$chunks = list;
+            this.val$callback = recognitionCallback;
+            this.val$key = str;
+        }
+
+        @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionCallback
+        public void onChunk(String str) {
+            if (!str.isEmpty()) {
+                this.val$chunks.add(str);
+            }
+            this.val$callback.onChunk(TextUtils.join(" ", this.val$chunks));
+        }
+
+        @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionCallback
+        public void onCompleted(String str) {
+            if (!str.isEmpty()) {
+                this.val$chunks.add(str);
+            }
+            final String strM = TextUtils.join(" ", this.val$chunks);
+            final String str2 = this.val$key;
+            final RecognitionCallback recognitionCallback = this.val$callback;
+            final Utilities.Callback callback = new Utilities.Callback() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController$2$$ExternalSyntheticLambda0
+                @Override // org.telegram.messenger.Utilities.Callback
+                public final void run(Object obj) {
+                    AnonymousClass2.this.lambda$onCompleted$0(str2, recognitionCallback, (String) obj);
+                }
+            };
+            if (!strM.isEmpty() && ExteraConfig.getPostprocessingWithAi() && AiController.canUseAI()) {
+                VoiceRecognitionController.this.client.getResponse(strM, new GenerationCallback() { // from class: com.exteragram.messenger.speech.VoiceRecognitionController.2.1
+                    @Override // com.exteragram.messenger.ai.network.GenerationCallback
+                    public void onChunk(String str3) {
+                    }
+
+                    @Override // com.exteragram.messenger.ai.network.GenerationCallback
+                    public void onResponse(String str3) {
+                        callback.run(str3);
+                    }
+
+                    @Override // com.exteragram.messenger.ai.network.GenerationCallback
+                    public void onError(int i, String str3) {
+                        callback.run(strM);
+                    }
+                });
+            } else {
+                callback.run(strM);
+            }
+        }
+
+        /* JADX INFO: Access modifiers changed from: private */
+        public /* synthetic */ void lambda$onCompleted$0(String str, RecognitionCallback recognitionCallback, String str2) {
             VoiceRecognitionController.this.resultCache.put(str, new RecognitionResult(str2));
             VoiceRecognitionController.this.chunkCache.remove(str);
             recognitionCallback.onCompleted(str2);
         }
 
-        @Override 
+        @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionCallback
         public void onError(Exception exc) {
             VoiceRecognitionController.this.chunkCache.remove(this.val$key);
             this.val$callback.onError(exc);
         }
 
-        @Override 
+        @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionCallback
         public void onLanguageNotDownloaded(String str) {
             VoiceRecognitionController.this.chunkCache.remove(this.val$key);
             this.val$callback.onLanguageNotDownloaded(str);
         }
 
-        @Override 
+        @Override // com.exteragram.messenger.speech.VoiceRecognitionController.RecognitionCallback
         public void onLanguageNotSupported(String str) {
             VoiceRecognitionController.this.chunkCache.remove(this.val$key);
             this.val$callback.onLanguageNotSupported(str);

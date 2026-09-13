@@ -1,8 +1,6 @@
 package com.exteragram.messenger.export.controllers;
 
 import android.util.Log;
-import com.android.dx.AppDataDirGuesser;
-import com.android.dx.io.Opcodes;
 import com.exteragram.messenger.export.ExportSettings;
 import com.exteragram.messenger.export.api.ApiWrap$Chat;
 import com.exteragram.messenger.export.api.ApiWrap$ChatProcess;
@@ -45,10 +43,12 @@ import com.exteragram.messenger.export.api.ExportRequests$InitTakeoutSession;
 import com.exteragram.messenger.export.api.ExportRequests$InvokeWithMessagesRange;
 import com.exteragram.messenger.export.api.ExportRequests$InvokeWithTakeoutWrapper;
 import com.exteragram.messenger.export.api.ExportRequests$Takeout;
+import com.exteragram.messenger.export.api.ExportRequests$SavedContact;
+import com.exteragram.messenger.export.api.ExportRequests$getSplitRanges;
+import com.exteragram.messenger.export.api.ExportRequests$TL_contacts_getSaved;
 import com.exteragram.messenger.export.api.ExportRequests$getLeftChannels;
 import com.exteragram.messenger.export.output.OutputFile;
 import com.exteragram.messenger.export.output.html.HtmlWriter;
-import com.google.android.gms.cast.CastStatusCodes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -92,7 +92,7 @@ public class ExportRequestsController {
     public int index = 0;
     private final Set<Long> _unresolvedCustomEmoji = new HashSet();
     private final HashMap<Long, ApiWrap$Document> _resolvedCustomEmoji = new HashMap<>();
-    private final ApiWrap$LoadedFileCache _fileCache = new ApiWrap$LoadedFileCache(AppDataDirGuesser.PER_USER_RANGE);
+    private final ApiWrap$LoadedFileCache _fileCache = new ApiWrap$LoadedFileCache(100000);
     public ArrayList<TLRPC.TL_messageRange> splits = new ArrayList<>();
 
     public static class StartInfo {
@@ -147,13 +147,12 @@ public class ExportRequestsController {
             j = ((TLRPC.TL_inputPeerUser) inputPeer).user_id;
         } else {
             if (!(inputPeer instanceof TLRPC.TL_inputPeerSelf)) {
-                DexMaker$$ExternalSyntheticBUOutline0.m("wtf is it: ", inputPeer);
-                return null;
+                throw new IllegalStateException("wtf is it: " + inputPeer);
             }
             j = 0;
         }
         ApiWrap$DialogsInfo apiWrap$DialogsInfo = new ApiWrap$DialogsInfo();
-        ArrayList<T> arrayList = vector.objects;
+        ArrayList<TLObject> arrayList = vector.objects;
         int size = arrayList.size();
         int i = 0;
         while (i < size) {
@@ -177,8 +176,7 @@ public class ExportRequestsController {
         } else if (inputPeer instanceof TLRPC.TL_inputPeerChannel) {
             j = ((TLRPC.TL_inputPeerChannel) inputPeer).channel_id;
         } else {
-            DexMaker$$ExternalSyntheticBUOutline0.m("illegal type: ", inputPeer);
-            return null;
+            throw new IllegalArgumentException("illegal type: " + inputPeer);
         }
         ApiWrap$DialogsInfo apiWrap$DialogsInfo = new ApiWrap$DialogsInfo();
         ArrayList<TLRPC.Chat> arrayList = messages_chats.chats;
@@ -216,7 +214,7 @@ public class ExportRequestsController {
         if ((this._settings.types & 2048) != 0) {
             this._startProcess.steps.add(StartProcess.Step.StoriesCount);
         }
-        if ((this._settings.types & CastStatusCodes.DEVICE_CONNECTION_SUSPENDED) != 0) {
+        if ((this._settings.types & 2016) != 0) {
             this._startProcess.steps.add(StartProcess.Step.SplitRanges);
             this._startProcess.steps.add(StartProcess.Step.DialogsCount);
         }
@@ -224,14 +222,15 @@ public class ExportRequestsController {
         if ((exportSettings2.types & 1920) != 0 && !exportSettings2.onlySinglePeer()) {
             this._startProcess.steps.add(StartProcess.Step.LeftChannelsCount);
         }
-        startMainSession(new Runnable() { 
+        startMainSession(new Runnable() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda6
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.sendNextStartRequest();
+                ExportRequestsController.this.sendNextStartRequest();
             }
         });
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void sendNextStartRequest() {
         ArrayList<StartProcess.Step> arrayList = this._startProcess.steps;
         if (arrayList.isEmpty()) {
@@ -262,9 +261,96 @@ public class ExportRequestsController {
         }
     }
 
-    public static void lambda$startMainSession$1(ExportRequests$InitTakeoutSession exportRequests$InitTakeoutSession, final Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: renamed from: com.exteragram.messenger.export.controllers.ExportRequestsController$1, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass1 {
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step;
+
+        static {
+            int[] iArr = new int[StartProcess.Step.values().length];
+            $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step = iArr;
+            try {
+                iArr[StartProcess.Step.UserpicsCount.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step[StartProcess.Step.StoriesCount.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step[StartProcess.Step.SplitRanges.ordinal()] = 3;
+            } catch (NoSuchFieldError unused3) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step[StartProcess.Step.DialogsCount.ordinal()] = 4;
+            } catch (NoSuchFieldError unused4) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$controllers$ExportRequestsController$StartProcess$Step[StartProcess.Step.LeftChannelsCount.ordinal()] = 5;
+            } catch (NoSuchFieldError unused5) {
+            }
+        }
+    }
+
+    public void finishStartProcess() {
+        StartProcess startProcess = this._startProcess;
+        startProcess.done.run(startProcess.info);
+    }
+
+    /* JADX WARN: Code duplicated, block: B:12:0x0022  */
+    private void startMainSession(final Runnable runnable) {
+        boolean z;
+        ExportSettings.MediaSettings mediaSettings = this._settings.media;
+        long j = mediaSettings.sizeLimit;
+        if (!mediaSettings.isEnabled() || j <= 0) {
+            int i = this._settings.types;
+            if ((i & 2) == 0 && (i & 2048) == 0) {
+                z = false;
+            } else {
+                z = true;
+            }
+        } else {
+            z = true;
+        }
+        final ExportRequests$InitTakeoutSession exportRequests$InitTakeoutSession = new ExportRequests$InitTakeoutSession();
+        if (z) {
+            exportRequests$InitTakeoutSession.files = true;
+            if (j < SaveToGallerySettingsHelper.MAX_VIDEO_LIMIT) {
+                exportRequests$InitTakeoutSession.file_max_size = j;
+            }
+        }
+        int i2 = this._settings.types;
+        if ((i2 & 4) != 0) {
+            exportRequests$InitTakeoutSession.contacts = true;
+        }
+        if ((i2 & 32) != 0 || (i2 & 64) != 0) {
+            exportRequests$InitTakeoutSession.message_users = true;
+        }
+        if ((i2 & 128) != 0) {
+            exportRequests$InitTakeoutSession.message_megagroups = true;
+            exportRequests$InitTakeoutSession.message_chats = true;
+        }
+        if ((i2 & 256) != 0) {
+            exportRequests$InitTakeoutSession.message_megagroups = true;
+        }
+        if ((i2 & 512) != 0 || (i2 & 1024) != 0) {
+            exportRequests$InitTakeoutSession.message_channels = true;
+        }
+        TLRPC.TL_users_getUsers tL_users_getUsers = new TLRPC.TL_users_getUsers();
+        TLRPC.TL_inputUser tL_inputUser = new TLRPC.TL_inputUser();
+        tL_inputUser.user_id = UserConfig.getInstance(this.selectedAcc).clientUserId;
+        tL_users_getUsers.id = new ArrayList<>(Collections.singletonList(tL_inputUser));
+        ConnectionsManager.getInstance(this.selectedAcc).sendRequest(tL_users_getUsers, new RequestDelegate() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda38
+            @Override // org.telegram.tgnet.RequestDelegate
+            public final void run(TLObject tLObject, TLRPC.TL_error tL_error) {
+                ExportRequestsController.this.lambda$startMainSession$1(exportRequests$InitTakeoutSession, runnable, tLObject, tL_error);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$startMainSession$1(ExportRequests$InitTakeoutSession exportRequests$InitTakeoutSession, final Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tLObject instanceof Vector) {
-            ArrayList<T> arrayList = ((Vector) tLObject).objects;
+            ArrayList<TLObject> arrayList = ((Vector) tLObject).objects;
             int size = arrayList.size();
             int i = 0;
             while (i < size) {
@@ -278,16 +364,41 @@ public class ExportRequestsController {
                     }
                 }
             }
-            ConnectionsManager.getInstance(this.selectedAcc).sendRequest(exportRequests$InitTakeoutSession, new RequestDelegate() { 
+            ConnectionsManager.getInstance(this.selectedAcc).sendRequest(exportRequests$InitTakeoutSession, new RequestDelegate() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda52
                 @Override // org.telegram.tgnet.RequestDelegate
                 public final void run(TLObject tLObject3, TLRPC.TL_error tL_error2) {
-                    this.f$0.lambda$startMainSession$0(runnable, tLObject3, tL_error2);
+                    ExportRequestsController.this.lambda$startMainSession$0(runnable, tLObject3, tL_error2);
                 }
             });
         }
     }
 
-    public void lambda$requestUserpicsCount$2(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$startMainSession$0(Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null && tL_error.text != null) {
+            ExportController.showError(tL_error);
+        } else if (tLObject instanceof ExportRequests$Takeout) {
+            this._takeoutId = ((ExportRequests$Takeout) tLObject).id;
+            runnable.run();
+        }
+    }
+
+    private void requestUserpicsCount() {
+        TLRPC.TL_photos_getUserPhotos tL_photos_getUserPhotos = new TLRPC.TL_photos_getUserPhotos();
+        tL_photos_getUserPhotos.user_id = new TLRPC.TL_inputUserSelf();
+        tL_photos_getUserPhotos.offset = 0;
+        tL_photos_getUserPhotos.max_id = 0L;
+        tL_photos_getUserPhotos.limit = 0;
+        mainRequest(tL_photos_getUserPhotos, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda17
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestUserpicsCount$2((TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestUserpicsCount$2(TLObject tLObject, TLRPC.TL_error tL_error) {
         int size;
         if (tLObject instanceof TLRPC.photos_Photos) {
             TLRPC.photos_Photos photos_photos = (TLRPC.photos_Photos) tLObject;
@@ -306,19 +417,75 @@ public class ExportRequestsController {
         tL_stories_getStoriesArchive.peer = new TLRPC.TL_inputPeerSelf();
         tL_stories_getStoriesArchive.limit = 0;
         tL_stories_getStoriesArchive.offset_id = 0;
-        mainRequest(tL_stories_getStoriesArchive, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_stories_getStoriesArchive, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda31
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestStoriesCount$3((TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$requestStoriesCount$3((TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestSessions$5(final Utilities.Callback callback, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestStoriesCount$3(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof TL_stories.TL_stories_stories) {
+            this._startProcess.info.storiesCount = ((TL_stories.TL_stories_stories) tLObject).count;
+        }
+        sendNextStartRequest();
+    }
+
+    public void vectorToRanges(TLObject tLObject, ArrayList<TLRPC.TL_messageRange> arrayList) {
+        if (tLObject instanceof Vector) {
+            ArrayList<TLObject> arrayList2 = ((Vector) tLObject).objects;
+            int size = arrayList2.size();
+            int i = 0;
+            while (i < size) {
+                Object obj = arrayList2.get(i);
+                i++;
+                TLObject tLObject2 = (TLObject) obj;
+                if (tLObject2 instanceof TLRPC.TL_messageRange) {
+                    arrayList.add((TLRPC.TL_messageRange) tLObject2);
+                }
+            }
+        }
+    }
+
+    public void requestDialogsList(Utilities.CallbackReturn<Integer, Boolean> callbackReturn, Utilities.Callback<ApiWrap$DialogsInfo> callback) {
+        ApiWrap$DialogsProcess apiWrap$DialogsProcess = new ApiWrap$DialogsProcess();
+        this._dialogsProcess = apiWrap$DialogsProcess;
+        apiWrap$DialogsProcess.splitIndexPlusOne = this.splits.size();
+        ApiWrap$DialogsProcess apiWrap$DialogsProcess2 = this._dialogsProcess;
+        apiWrap$DialogsProcess2.progress = callbackReturn;
+        apiWrap$DialogsProcess2.done = callback;
+        requestDialogsSlice();
+    }
+
+    public void requestMessages(ApiWrap$DialogInfo apiWrap$DialogInfo, Utilities.CallbackReturn<ApiWrap$DialogInfo, Boolean> callbackReturn, Utilities.CallbackReturn<ApiWrap$DownloadProgress, Boolean> callbackReturn2, Utilities.CallbackReturn<ApiWrap$MessagesSlice, Boolean> callbackReturn3, Runnable runnable) {
+        ApiWrap$ChatProcess apiWrap$ChatProcess = new ApiWrap$ChatProcess();
+        this._chatProcess = apiWrap$ChatProcess;
+        apiWrap$ChatProcess.context.selfPeerId = this._selfId;
+        apiWrap$ChatProcess.info = apiWrap$DialogInfo;
+        apiWrap$ChatProcess.start = callbackReturn;
+        apiWrap$ChatProcess.fileProgress = callbackReturn2;
+        apiWrap$ChatProcess.handleSlice = callbackReturn3;
+        apiWrap$ChatProcess.done = runnable;
+        requestMessagesCount(0);
+    }
+
+    public void requestSessions(final Utilities.Callback<ApiWrap$SessionsList> callback) {
+        mainRequest(new TL_account.getAuthorizations(), new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda12
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestSessions$5(callback, (TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestSessions$5(final Utilities.Callback callback, TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tLObject instanceof TL_account.authorizations) {
             final ApiWrap$SessionsList apiWrap$SessionsListParseSessionsList = DataTypesUtils.ParseSessionsList((TL_account.authorizations) tLObject);
-            mainRequest(new TL_account.getWebAuthorizations(), new Utilities.Callback2() { 
-                @Override 
+            mainRequest(new TL_account.getWebAuthorizations(), new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda28
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
                     ExportRequestsController.$r8$lambda$zUhnSPX6kGtTskTPxh0MMvePxT4(apiWrap$SessionsListParseSessionsList, callback, (TLObject) obj, (TLRPC.TL_error) obj2);
                 }
@@ -326,7 +493,23 @@ public class ExportRequestsController {
         }
     }
 
-    public static void lambda$requestLeftChannelsCount$6() {
+    public static /* synthetic */ void $r8$lambda$zUhnSPX6kGtTskTPxh0MMvePxT4(ApiWrap$SessionsList apiWrap$SessionsList, Utilities.Callback callback, TLObject tLObject, TLRPC.TL_error tL_error) {
+        apiWrap$SessionsList.webList = DataTypesUtils.ParseWebSessionsList((TL_account.webAuthorizations) tLObject).webList;
+        callback.run(apiWrap$SessionsList);
+    }
+
+    private void requestLeftChannelsCount() {
+        this._leftChannelsProcess = new ApiWrap$LeftChannelsProcess();
+        requestLeftChannelsSliceGeneric(new Runnable() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda37
+            @Override // java.lang.Runnable
+            public final void run() {
+                ExportRequestsController.this.lambda$requestLeftChannelsCount$6();
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestLeftChannelsCount$6() {
         this._startProcess.info.dialogsCount += this._leftChannelsProcess.fullCount;
         sendNextStartRequest();
     }
@@ -334,15 +517,55 @@ public class ExportRequestsController {
     private void requestLeftChannelsSliceGeneric(final Runnable runnable) {
         ExportRequests$getLeftChannels exportRequests$getLeftChannels = new ExportRequests$getLeftChannels();
         exportRequests$getLeftChannels.offset = this._leftChannelsProcess.offset;
-        mainRequest(exportRequests$getLeftChannels, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(exportRequests$getLeftChannels, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda49
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestLeftChannelsSliceGeneric$7(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$requestLeftChannelsSliceGeneric$7(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestMessagesCount$8(int i, TLRPC.messages_Messages messages_messages) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestLeftChannelsSliceGeneric$7(Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
+        int size;
+        if (tLObject instanceof TLRPC.messages_Chats) {
+            TLRPC.messages_Chats messages_chats = (TLRPC.messages_Chats) tLObject;
+            ApiWrap$LeftChannelsProcess apiWrap$LeftChannelsProcess = this._leftChannelsProcess;
+            boolean zIsEmpty = true;
+            appendChatsSlice(apiWrap$LeftChannelsProcess, apiWrap$LeftChannelsProcess.info.left, DataTypesUtils.ParseLeftChannelsInfo(messages_chats).left, this.splits.size() - 1);
+            ApiWrap$LeftChannelsProcess apiWrap$LeftChannelsProcess2 = this._leftChannelsProcess;
+            apiWrap$LeftChannelsProcess2.offset += messages_chats.chats.size();
+            if (messages_chats instanceof TLRPC.TL_messages_chats) {
+                size = ((TLRPC.TL_messages_chats) messages_chats).chats.size();
+            } else if (messages_chats instanceof TLRPC.TL_messages_chatsSlice) {
+                TLRPC.TL_messages_chatsSlice tL_messages_chatsSlice = (TLRPC.TL_messages_chatsSlice) messages_chats;
+                int i = tL_messages_chatsSlice.count;
+                zIsEmpty = tL_messages_chatsSlice.chats.isEmpty();
+                size = i;
+            } else {
+                zIsEmpty = false;
+                size = 0;
+            }
+            apiWrap$LeftChannelsProcess2.fullCount = size;
+            apiWrap$LeftChannelsProcess2.finished = zIsEmpty;
+            Utilities.CallbackReturn<Integer, Boolean> callbackReturn = apiWrap$LeftChannelsProcess2.progress;
+            if (callbackReturn == null || callbackReturn.run(Integer.valueOf(apiWrap$LeftChannelsProcess2.info.left.size())).booleanValue()) {
+                runnable.run();
+            }
+        }
+    }
+
+    private void requestMessagesCount(final int i) {
+        requestChatMessages(this._chatProcess.info.splits.get(i).intValue(), 0, 0, 1, new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda5
+            @Override // org.telegram.messenger.Utilities.Callback
+            public final void run(Object obj) {
+                ExportRequestsController.this.lambda$requestMessagesCount$8(i, (TLRPC.messages_Messages) obj);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestMessagesCount$8(int i, TLRPC.messages_Messages messages_messages) {
         int size;
         if (messages_messages instanceof TLRPC.TL_messages_messages) {
             size = ((TLRPC.TL_messages_messages) messages_messages).messages.size();
@@ -354,7 +577,7 @@ public class ExportRequestsController {
             size = messages_messages instanceof TLRPC.TL_messages_messagesNotModified ? -1 : 0;
         }
         if (size < 0) {
-            Segment$$ExternalSyntheticBUOutline1.m("Unexpected messagesNotModified received");
+            throw new IllegalStateException("Unexpected messagesNotModified received");
         } else if (!DataTypesUtils.SingleMessageAfter(messages_messages, this._settings.singlePeerFrom)) {
             messagesCountLoaded(i, 0);
         } else {
@@ -366,19 +589,55 @@ public class ExportRequestsController {
         if (this._settings.singlePeerTill <= 0) {
             messagesCountLoaded(i, i2);
         } else {
-            requestChatMessages(this._chatProcess.info.splits.get(i).intValue(), 1, -1, 1, new Utilities.Callback() { 
-                @Override 
+            requestChatMessages(this._chatProcess.info.splits.get(i).intValue(), 1, -1, 1, new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda21
+                @Override // org.telegram.messenger.Utilities.Callback
                 public final void run(Object obj) {
-                    this.f$0.lambda$checkFirstMessageDate$9(i, i2, (TLRPC.messages_Messages) obj);
+                    ExportRequestsController.this.lambda$checkFirstMessageDate$9(i, i2, (TLRPC.messages_Messages) obj);
                 }
             });
         }
     }
 
-    public void lambda$requestMessagesSlice$10(TLRPC.messages_Messages messages_messages) {
-        if (messages_messages instanceof TLRPC.TL_messages_messagesNotModified) {
-            Segment$$ExternalSyntheticBUOutline1.m("Unexpected messagesNotModified received.");
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$checkFirstMessageDate$9(int i, int i2, TLRPC.messages_Messages messages_messages) {
+        if (!DataTypesUtils.SingleMessageBefore(messages_messages, this._settings.singlePeerTill)) {
+            i2 = 0;
+        }
+        messagesCountLoaded(i, i2);
+    }
+
+    private void messagesCountLoaded(int i, int i2) {
+        this._chatProcess.info.messagesCountPerSplit.set(i, Integer.valueOf(i2));
+        int i3 = i + 1;
+        if (i3 < this._chatProcess.info.splits.size()) {
+            requestMessagesCount(i3);
             return;
+        }
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        if (apiWrap$ChatProcess.start.run(apiWrap$ChatProcess.info).booleanValue()) {
+            requestMessagesSlice();
+        }
+    }
+
+    private void requestMessagesSlice() {
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        if (apiWrap$ChatProcess.info.messagesCountPerSplit.get(apiWrap$ChatProcess.localSplitIndex).intValue() == 0) {
+            loadMessagesFiles(new ApiWrap$MessagesSlice());
+        } else {
+            ApiWrap$ChatProcess apiWrap$ChatProcess2 = this._chatProcess;
+            requestChatMessages(apiWrap$ChatProcess2.info.splits.get(apiWrap$ChatProcess2.localSplitIndex).intValue(), this._chatProcess.largestIdPlusOne, -100, 100, new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda30
+                @Override // org.telegram.messenger.Utilities.Callback
+                public final void run(Object obj) {
+                    ExportRequestsController.this.lambda$requestMessagesSlice$10((TLRPC.messages_Messages) obj);
+                }
+            });
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestMessagesSlice$10(TLRPC.messages_Messages messages_messages) {
+        if (messages_messages instanceof TLRPC.TL_messages_messagesNotModified) {
+            throw new IllegalStateException("Unexpected messagesNotModified received.");
         }
         if (messages_messages instanceof TLRPC.TL_messages_messages) {
             this._chatProcess.lastSlice = true;
@@ -422,7 +681,7 @@ public class ExportRequestsController {
             }
             Iterator<ApiWrap$Reaction> it = apiWrap$Message2.reactions.iterator();
             if (it.hasNext()) {
-                MediaSessionCompat$$ExternalSyntheticThrowCCEIfNotNull0.m(it.next());
+                it.next();
                 throw null;
             }
         }
@@ -441,23 +700,192 @@ public class ExportRequestsController {
             arrayList.add((Long) arrayList2.get(iMax));
             this._unresolvedCustomEmoji.remove(arrayList2.get(iMax));
         }
-        final Runnable runnable = new Runnable() { 
+        final Runnable runnable = new Runnable() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda44
             @Override // java.lang.Runnable
             public final void run() {
-                this.f$0.lambda$resolveCustomEmoji$11(arrayList);
+                ExportRequestsController.this.lambda$resolveCustomEmoji$11(arrayList);
             }
         };
         TLRPC.TL_messages_getCustomEmojiDocuments tL_messages_getCustomEmojiDocuments = new TLRPC.TL_messages_getCustomEmojiDocuments();
         tL_messages_getCustomEmojiDocuments.document_id = arrayList;
-        mainRequest(tL_messages_getCustomEmojiDocuments, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_messages_getCustomEmojiDocuments, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda45
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$resolveCustomEmoji$12(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$resolveCustomEmoji$12(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$loadFilePart$13(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$resolveCustomEmoji$11(ArrayList arrayList) {
+        int size = arrayList.size();
+        int i = 0;
+        while (i < size) {
+            Object obj = arrayList.get(i);
+            i++;
+            Long l = (Long) obj;
+            if (!this._resolvedCustomEmoji.containsKey(l)) {
+                ApiWrap$Document apiWrap$Document = new ApiWrap$Document();
+                ApiWrap$File apiWrap$File = new ApiWrap$File();
+                apiWrap$Document.file = apiWrap$File;
+                apiWrap$File.skipReason = ApiWrap$File.SkipReason.Unavailable;
+                this._resolvedCustomEmoji.put(l, apiWrap$Document);
+            }
+        }
+        resolveCustomEmoji();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$resolveCustomEmoji$12(Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null) {
+            FileLog.e("Export Error: Failed to get documents for emoji.");
+            runnable.run();
+            return;
+        }
+        if (tLObject instanceof Vector) {
+            ArrayList<TLObject> arrayList = ((Vector) tLObject).objects;
+            int size = arrayList.size();
+            int i = 0;
+            while (i < size) {
+                Object obj = arrayList.get(i);
+                i++;
+                ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+                ApiWrap$Document apiWrap$DocumentParseDocument = DataTypesUtils.ParseDocument(apiWrap$ChatProcess.context, (TLRPC.Document) ((TLObject) obj), apiWrap$ChatProcess.info.relativePath, 0);
+                this._resolvedCustomEmoji.put(Long.valueOf(apiWrap$DocumentParseDocument.id), apiWrap$DocumentParseDocument);
+            }
+            runnable.run();
+        }
+    }
+
+    private void loadNextMessageFile() {
+        ArrayList<ApiWrap$Message> arrayList = this._chatProcess.slice.list;
+        while (this._chatProcess.fileIndex < arrayList.size()) {
+            ApiWrap$Message apiWrap$Message = arrayList.get(this._chatProcess.fileIndex);
+            if (!DataTypesUtils.SkipMessageByDate(apiWrap$Message, this._settings)) {
+                if (!this.messageCustomEmojiReady(apiWrap$Message)) {
+                    return;
+                }
+                if (!processFileLoad(arrayList.get(this._chatProcess.fileIndex).getFile(), this.currentFileMessageOrigin(), new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+                    @Override
+                    public Boolean run(ApiWrap$FileProgress progress) {
+                        return ExportRequestsController.this.loadMessageFileProgress(progress);
+                    }
+                }, new Utilities.Callback<String>() {
+                    @Override
+                    public void run(String obj) {
+                        ExportRequestsController.this.loadMessageFileDone(obj);
+                    }
+                }, this.currentFileMessage(), null) || !processFileLoad(apiWrap$Message.getFile(), this.currentFileMessageOrigin(), new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+                    @Override
+                    public Boolean run(ApiWrap$FileProgress progress) {
+                        return ExportRequestsController.this.loadMessageFileProgress(progress);
+                    }
+                }, new Utilities.Callback<String>() {
+                    @Override
+                    public void run(String obj) {
+                        ExportRequestsController.this.loadMessageThumbDone(obj);
+                    }
+                }, this.currentFileMessage(), null)) {
+                    return;
+                }
+            }
+            this._chatProcess.fileIndex++;
+        }
+        this.finishMessagesSlice();
+    }
+
+    private ApiWrap$FileOrigin currentFileMessageOrigin() {
+        int size;
+        TLRPC.InputPeer inputPeer;
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        Integer num = apiWrap$ChatProcess.info.splits.get(apiWrap$ChatProcess.localSplitIndex);
+        if (num.intValue() >= 0) {
+            size = num.intValue();
+        } else {
+            size = this._chatProcess.info.splits.size() + num.intValue();
+        }
+        int i = size;
+        int iIntValue = num.intValue();
+        ApiWrap$ChatProcess apiWrap$ChatProcess2 = this._chatProcess;
+        if (iIntValue >= 0) {
+            inputPeer = apiWrap$ChatProcess2.info.input;
+        } else {
+            inputPeer = apiWrap$ChatProcess2.info.migratedFromInput;
+        }
+        return new ApiWrap$FileOrigin(i, inputPeer, currentFileMessage().id, 0, 0L);
+    }
+
+    private ApiWrap$Message currentFileMessage() {
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        return apiWrap$ChatProcess.slice.list.get(apiWrap$ChatProcess.fileIndex);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public boolean loadMessageFileProgress(ApiWrap$FileProgress apiWrap$FileProgress) {
+        ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+        return this._chatProcess.fileProgress.run(new ApiWrap$DownloadProgress(apiWrap$FileProcess.randomId, apiWrap$FileProcess.relativePath, this._chatProcess.fileIndex, apiWrap$FileProgress.ready(), apiWrap$FileProgress.total())).booleanValue();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void loadMessageThumbDone(String str) {
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        ApiWrap$File apiWrap$File = apiWrap$ChatProcess.slice.list.get(apiWrap$ChatProcess.fileIndex).media.getThumb().file;
+        if (str.contains("null")) {
+            throw new IllegalStateException("zdes 1");
+        }
+        apiWrap$File.relativePath = str;
+        if (str.isEmpty()) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.Unavailable;
+        }
+        loadNextMessageFile();
+    }
+
+    private void loadFile(ApiWrap$File apiWrap$File, ApiWrap$FileOrigin apiWrap$FileOrigin, Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean> callbackReturn, Utilities.Callback<String> callback) {
+        ApiWrap$FileProcess apiWrap$FileProcessPrepareFileProcess = prepareFileProcess(apiWrap$File, apiWrap$FileOrigin);
+        this._fileProcess = apiWrap$FileProcessPrepareFileProcess;
+        apiWrap$FileProcessPrepareFileProcess.progress = callbackReturn;
+        apiWrap$FileProcessPrepareFileProcess.done = callback;
+        if (callbackReturn == null || callbackReturn.run(new ApiWrap$FileProgress(apiWrap$FileProcessPrepareFileProcess.file.size(), this._fileProcess.size)).booleanValue()) {
+            loadFilePart();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void loadMessageFileDone(String str) {
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        ApiWrap$File file = apiWrap$ChatProcess.slice.list.get(apiWrap$ChatProcess.fileIndex).getFile();
+        file.relativePath = str;
+        if (str.isEmpty()) {
+            file.skipReason = ApiWrap$File.SkipReason.Unavailable;
+        }
+        loadNextMessageFile();
+    }
+
+    private void loadFilePart() {
+        ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+        if (apiWrap$FileProcess == null || apiWrap$FileProcess.requestId != 0 || apiWrap$FileProcess.requests.size() >= 2) {
+            return;
+        }
+        ApiWrap$FileProcess apiWrap$FileProcess2 = this._fileProcess;
+        long j = apiWrap$FileProcess2.size;
+        if (j <= 0 || apiWrap$FileProcess2.offset < j) {
+            final long j2 = apiWrap$FileProcess2.offset;
+            ApiWrap$FileProcess.Request request = new ApiWrap$FileProcess.Request();
+            request.offset = j2;
+            this._fileProcess.requests.add(request);
+            ApiWrap$FileProcess apiWrap$FileProcess3 = this._fileProcess;
+            apiWrap$FileProcess3.requestId = fileRequest(apiWrap$FileProcess3.location, apiWrap$FileProcess3.offset, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda39
+                @Override // org.telegram.messenger.Utilities.Callback2
+                public final void run(Object obj, Object obj2) {
+                    ExportRequestsController.this.lambda$loadFilePart$13(j2, (TLObject) obj, (TLRPC.TL_error) obj2);
+                }
+            });
+            this._fileProcess.offset += 1048576;
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$loadFilePart$13(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
         this._fileProcess.requestId = 0L;
         filePartDone(j, tLObject);
     }
@@ -468,10 +896,10 @@ public class ExportRequestsController {
             TL_stories.TL_stories_getStoriesByID tL_stories_getStoriesByID = new TL_stories.TL_stories_getStoriesByID();
             tL_stories_getStoriesByID.peer = new TLRPC.TL_inputPeerSelf();
             tL_stories_getStoriesByID.id = new ArrayList<>(Collections.singletonList(Integer.valueOf(apiWrap$FileOrigin.storyId())));
-            this._fileProcess.requestId = mainRequest(tL_stories_getStoriesByID, new Utilities.Callback2() { 
-                @Override 
+            this._fileProcess.requestId = mainRequest(tL_stories_getStoriesByID, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda53
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.lambda$filePartRefreshReference$14(j, (TLObject) obj, (TLRPC.TL_error) obj2);
+                    ExportRequestsController.this.lambda$filePartRefreshReference$14(j, (TLObject) obj, (TLRPC.TL_error) obj2);
                 }
             });
         } else if (apiWrap$FileOrigin.messageId() == 0) {
@@ -493,25 +921,88 @@ public class ExportRequestsController {
                 tL_inputChannelFromMessage.channel_id = apiWrap$FileOrigin.peer().channel_id;
                 tL_channels_getMessages.channel = tL_inputChannelFromMessage;
             }
-            this._fileProcess.requestId = mainRequest(tL_channels_getMessages, new Utilities.Callback2() { 
-                @Override 
+            this._fileProcess.requestId = mainRequest(tL_channels_getMessages, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda54
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.lambda$filePartRefreshReference$15(j, (TLObject) obj, (TLRPC.TL_error) obj2);
+                    ExportRequestsController.this.lambda$filePartRefreshReference$15(j, (TLObject) obj, (TLRPC.TL_error) obj2);
                 }
             });
             return;
         }
         TLRPC.TL_messages_getMessages tL_messages_getMessages = new TLRPC.TL_messages_getMessages();
         tL_messages_getMessages.id = new ArrayList<>(Collections.singletonList(Integer.valueOf(apiWrap$FileOrigin.messageId())));
-        this._fileProcess.requestId = splitRequest(apiWrap$FileOrigin.split(), tL_messages_getMessages, new Utilities.Callback2() { 
-            @Override 
+        this._fileProcess.requestId = splitRequest(apiWrap$FileOrigin.split(), tL_messages_getMessages, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda55
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$filePartRefreshReference$16(j, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$filePartRefreshReference$16(j, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$filePartExtractReference$17(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$filePartRefreshReference$14(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null) {
+            ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+            apiWrap$FileProcess.requestId = 0L;
+            apiWrap$FileProcess.done.run(_UrlKt.FRAGMENT_ENCODE_SET);
+        } else if (tLObject instanceof TL_stories.TL_stories_stories) {
+            this._fileProcess.requestId = 0L;
+            filePartExtractReference(j, (TL_stories.TL_stories_stories) tLObject);
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$filePartRefreshReference$15(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null) {
+            this._fileProcess.requestId = 0L;
+            FileLog.w("Export Error: File unavailable.");
+            this._fileProcess.done.run(_UrlKt.FRAGMENT_ENCODE_SET);
+        } else if (tLObject instanceof TLRPC.TL_messages_messages) {
+            this._fileProcess.requestId = 0L;
+            filePartExtractReference(j, (TLRPC.TL_messages_messages) tLObject);
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$filePartRefreshReference$16(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null) {
+            this._fileProcess.requestId = 0L;
+            Log.w("exteraGram", "Export Error: File unavailable.");
+            this._fileProcess.done.run(_UrlKt.FRAGMENT_ENCODE_SET);
+        } else if (tLObject instanceof TLRPC.messages_Messages) {
+            this._fileProcess.requestId = 0L;
+            filePartExtractReference(j, (TLRPC.messages_Messages) tLObject);
+        }
+    }
+
+    private void filePartExtractReference(final long j, TL_stories.TL_stories_stories tL_stories_stories) {
+        int i = 0;
+        ArrayList<ApiWrap$Story> arrayList = DataTypesUtils.ParseStoriesSlice(tL_stories_stories.stories, 0).list;
+        int size = arrayList.size();
+        while (i < size) {
+            ApiWrap$Story apiWrap$Story = arrayList.get(i);
+            i++;
+            ApiWrap$Story apiWrap$Story2 = apiWrap$Story;
+            if (apiWrap$Story2.id == this._fileProcess.origin.storyId()) {
+                boolean zRefreshFileReference = DataTypesUtils.RefreshFileReference(this._fileProcess.location.data, apiWrap$Story2.file().location.data);
+                boolean zRefreshFileReference2 = DataTypesUtils.RefreshFileReference(this._fileProcess.location.data, apiWrap$Story2.thumb().file.location.data);
+                if (zRefreshFileReference || zRefreshFileReference2) {
+                    ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+                    apiWrap$FileProcess.requestId = fileRequest(apiWrap$FileProcess.location, j, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda0
+                        @Override // org.telegram.messenger.Utilities.Callback2
+                        public final void run(Object obj, Object obj2) {
+                            ExportRequestsController.this.lambda$filePartExtractReference$17(j, (TLObject) obj, (TLRPC.TL_error) obj2);
+                        }
+                    });
+                    return;
+                }
+            }
+        }
+        this._fileProcess.done.run(_UrlKt.FRAGMENT_ENCODE_SET);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$filePartExtractReference$17(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tLObject instanceof TLRPC.TL_upload_file) {
             this._fileProcess.requestId = 0L;
             filePartDone(j, (TLRPC.TL_upload_file) tLObject);
@@ -520,8 +1011,7 @@ public class ExportRequestsController {
 
     private void filePartExtractReference(final long j, TLRPC.messages_Messages messages_messages) {
         if (messages_messages instanceof TLRPC.TL_messages_messagesNotModified) {
-            Segment$$ExternalSyntheticBUOutline1.m("wtf, TL_messages_messagesNotModified received!");
-            return;
+            throw new IllegalStateException("wtf, TL_messages_messagesNotModified received!");
         }
         ApiWrap$ParseMediaContext apiWrap$ParseMediaContext = new ApiWrap$ParseMediaContext();
         apiWrap$ParseMediaContext.selfPeerId = this._selfId;
@@ -537,10 +1027,10 @@ public class ExportRequestsController {
                 boolean zRefreshFileReference2 = DataTypesUtils.RefreshFileReference(this._fileProcess.location.data, apiWrap$Message2.media.getThumb().file.location.data);
                 if (zRefreshFileReference || zRefreshFileReference2) {
                     ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
-                    apiWrap$FileProcess.requestId = fileRequest(apiWrap$FileProcess.location, j, new Utilities.Callback2() { 
-                        @Override 
+                    apiWrap$FileProcess.requestId = fileRequest(apiWrap$FileProcess.location, j, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda3
+                        @Override // org.telegram.messenger.Utilities.Callback2
                         public final void run(Object obj, Object obj2) {
-                            this.f$0.lambda$filePartExtractReference$18(j, (TLObject) obj, (TLRPC.TL_error) obj2);
+                            ExportRequestsController.this.lambda$filePartExtractReference$18(j, (TLObject) obj, (TLRPC.TL_error) obj2);
                         }
                     });
                     return;
@@ -551,7 +1041,181 @@ public class ExportRequestsController {
         this._fileProcess.done.run(_UrlKt.FRAGMENT_ENCODE_SET);
     }
 
-    public void lambda$requestUserpics$19(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$filePartExtractReference$18(long j, TLObject tLObject, TLRPC.TL_error tL_error) {
+        this._fileProcess.requestId = 0L;
+        filePartDone(j, tLObject);
+    }
+
+    private void filePartDone(long j, TLObject tLObject) {
+        if (tLObject instanceof TLRPC.TL_upload_fileCdnRedirect) {
+            throw new IllegalArgumentException("TL_upload_fileCdnRedirect received! not supported.");
+        }
+        if (tLObject instanceof TLRPC.TL_upload_file) {
+            TLRPC.TL_upload_file tL_upload_file = (TLRPC.TL_upload_file) tLObject;
+            int limit = tL_upload_file.bytes.limit();
+            ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+            if (limit == 0) {
+                if (apiWrap$FileProcess.size > 0) {
+                    throw new IllegalStateException("received data has 0 length and fileProcess size is not 0!!!");
+                }
+                if (!apiWrap$FileProcess.file.writeBlock("").isSuccess()) {
+                    throw new IllegalStateException("writing empty block was not successful!");
+                }
+            } else {
+                ApiWrap$FileProcess.Request req = null;
+                for (ApiWrap$FileProcess.Request request : apiWrap$FileProcess.requests) {
+                    if (request.offset == j) {
+                        req = request;
+                        break;
+                    }
+                }
+                if (req == null) {
+                    throw new IllegalStateException("req not found!");
+                }
+                req.bytes = tL_upload_file.bytes;
+                while (!this._fileProcess.requests.isEmpty()) {
+                    ApiWrap$FileProcess.Request first = this._fileProcess.requests.getFirst();
+                    if (first.bytes == null || first.bytes.limit() == 0) {
+                        break;
+                    }
+                    if (!this._fileProcess.file.writeBlock(first.bytes).isSuccess()) {
+                        throw new IllegalStateException("wtf! tried to write: " + first.bytes.buffer.get());
+                    }
+                    this._fileProcess.requests.removeFirst();
+                }
+                if (this._fileProcess.progress != null) {
+                    this._fileProcess.progress.run(new ApiWrap$FileProgress(this._fileProcess.file.size(), this._fileProcess.size));
+                }
+                if (this._fileProcess.requests.isEmpty() && this._fileProcess.size != 0 && this._fileProcess.size <= this._fileProcess.offset) {
+                    // fall through
+                } else {
+                    loadFilePart();
+                    return;
+                }
+            }
+        }
+        ApiWrap$FileProcess apiWrap$FileProcess2 = this._fileProcess;
+        this._fileCache.save(apiWrap$FileProcess2.location, apiWrap$FileProcess2.relativePath);
+        apiWrap$FileProcess2.done.run(apiWrap$FileProcess2.relativePath);
+    }
+
+    private ApiWrap$FileProcess prepareFileProcess(ApiWrap$File apiWrap$File, ApiWrap$FileOrigin apiWrap$FileOrigin) {
+        String strPrepareRelativePath = OutputFile.PrepareRelativePath(this._settings.path, apiWrap$File.suggestedPath);
+        ApiWrap$FileProcess apiWrap$FileProcess = new ApiWrap$FileProcess(this._settings.path + "/" + strPrepareRelativePath, this._stats);
+        apiWrap$FileProcess.relativePath = strPrepareRelativePath;
+        apiWrap$FileProcess.location = apiWrap$File.location;
+        apiWrap$FileProcess.size = apiWrap$File.size;
+        apiWrap$FileProcess.origin = apiWrap$FileOrigin;
+        apiWrap$FileProcess.randomId = Utilities.random.nextLong();
+        return apiWrap$FileProcess;
+    }
+
+    private boolean processFileLoad(ApiWrap$File apiWrap$File, ApiWrap$FileOrigin apiWrap$FileOrigin, Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean> callbackReturn, Utilities.Callback<String> callback, ApiWrap$Message apiWrap$Message, ApiWrap$Story apiWrap$Story) {
+        Object objFile;
+        int i;
+        long j;
+        byte[] bArr;
+        if (!apiWrap$File.relativePath.isEmpty() || apiWrap$File.skipReason != ApiWrap$File.SkipReason.None) {
+            return true;
+        }
+        if (apiWrap$File.location == null && ((bArr = apiWrap$File.content) == null || bArr.length == 0)) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.Unavailable;
+            return true;
+        }
+        if (writePreloadedFile(apiWrap$File, apiWrap$FileOrigin)) {
+            return !apiWrap$File.relativePath.isEmpty();
+        }
+        if (apiWrap$Message != null) {
+            objFile = apiWrap$Message.media;
+        } else {
+            objFile = apiWrap$Story != null ? apiWrap$Story.file() : null;
+        }
+        if (objFile instanceof ApiWrap$Media) {
+            Object obj = ((ApiWrap$Media) objFile).content;
+            if (obj instanceof ApiWrap$Document) {
+                ApiWrap$Document apiWrap$Document = (ApiWrap$Document) obj;
+                if (apiWrap$Document.isSticker) {
+                    i = 16;
+                } else if (apiWrap$Document.isVideoMessage) {
+                    i = 8;
+                } else if (apiWrap$Document.isVoiceMessage) {
+                    i = 4;
+                } else if (apiWrap$Document.isAnimated) {
+                    i = 32;
+                } else {
+                    i = apiWrap$Document.isVideoFile ? 2 : 64;
+                }
+            } else {
+                i = 1;
+            }
+        } else {
+            i = 0;
+        }
+        if (apiWrap$Message != null) {
+            j = apiWrap$Message.getFile().size;
+        } else if (apiWrap$Story != null) {
+            j = apiWrap$Story.file().size;
+        } else {
+            j = apiWrap$File.size;
+        }
+        if (apiWrap$Message != null && DataTypesUtils.SkipMessageByDate(apiWrap$Message, this._settings)) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.DateLimits;
+            return true;
+        }
+        if (apiWrap$Story == null && (this._settings.media.type & i) != i) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.FileType;
+            return true;
+        }
+        if (apiWrap$Story == null && j > this._settings.media.sizeLimit) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.FileSize;
+            return true;
+        }
+        loadFile(apiWrap$File, apiWrap$FileOrigin, callbackReturn, callback);
+        return false;
+    }
+
+    private boolean writePreloadedFile(ApiWrap$File apiWrap$File, ApiWrap$FileOrigin apiWrap$FileOrigin) {
+        String strFind = this._fileCache.find(apiWrap$File.location);
+        if (strFind != null) {
+            apiWrap$File.relativePath = strFind;
+            return true;
+        }
+        byte[] bArr = apiWrap$File.content;
+        if (bArr == null || bArr.length == 0) {
+            return false;
+        }
+        ApiWrap$FileProcess apiWrap$FileProcessPrepareFileProcess = prepareFileProcess(apiWrap$File, apiWrap$FileOrigin);
+        if (apiWrap$FileProcessPrepareFileProcess.file.writeBlock(apiWrap$File.content).isSuccess()) {
+            String str = apiWrap$FileProcessPrepareFileProcess.relativePath;
+            apiWrap$File.relativePath = str;
+            this._fileCache.save(apiWrap$File.location, str);
+        }
+        return true;
+    }
+
+    public void requestUserpics(Utilities.CallbackReturn<ApiWrap$UserpicsInfo, Boolean> callbackReturn, Utilities.CallbackReturn<ApiWrap$DownloadProgress, Boolean> callbackReturn2, Utilities.CallbackReturn<ArrayList<HtmlWriter.Photo>, Boolean> callbackReturn3, Runnable runnable) {
+        ApiWrap$UserpicsProcess apiWrap$UserpicsProcess = new ApiWrap$UserpicsProcess();
+        this._userpicsProcess = apiWrap$UserpicsProcess;
+        apiWrap$UserpicsProcess.start = callbackReturn;
+        apiWrap$UserpicsProcess.fileProgress = callbackReturn2;
+        apiWrap$UserpicsProcess.handleSlice = callbackReturn3;
+        apiWrap$UserpicsProcess.finish = runnable;
+        TLRPC.TL_photos_getUserPhotos tL_photos_getUserPhotos = new TLRPC.TL_photos_getUserPhotos();
+        tL_photos_getUserPhotos.limit = 100;
+        tL_photos_getUserPhotos.user_id = new TLRPC.TL_inputUserSelf();
+        tL_photos_getUserPhotos.offset = 0;
+        tL_photos_getUserPhotos.max_id = this._userpicsProcess.maxId;
+        mainRequest(tL_photos_getUserPhotos, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda13
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestUserpics$19((TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestUserpics$19(TLObject tLObject, TLRPC.TL_error tL_error) {
         ApiWrap$UserpicsInfo apiWrap$UserpicsInfo;
         if (tLObject instanceof TLRPC.photos_Photos) {
             TLRPC.photos_Photos photos_photos = (TLRPC.photos_Photos) tLObject;
@@ -584,25 +1248,109 @@ public class ExportRequestsController {
         tL_stories_getStoriesArchive.peer = new TLRPC.TL_inputPeerSelf();
         tL_stories_getStoriesArchive.limit = 100;
         tL_stories_getStoriesArchive.offset_id = this._storiesProcess.offsetId;
-        mainRequest(tL_stories_getStoriesArchive, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_stories_getStoriesArchive, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda14
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestStories$20((TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$requestStories$20((TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$finishStoriesSlice$21(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestStories$20(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof TL_stories.TL_stories_stories) {
+            TL_stories.TL_stories_stories tL_stories_stories = (TL_stories.TL_stories_stories) tLObject;
+            if (this._storiesProcess.start.run(Integer.valueOf(tL_stories_stories.count)).booleanValue()) {
+                loadStoriesFiles(DataTypesUtils.ParseStoriesSlice(tL_stories_stories.stories, this._storiesProcess.processed));
+            }
+        }
+    }
+
+    private void loadStoriesFiles(ApiWrap$StoriesSlice apiWrap$StoriesSlice) {
+        if (apiWrap$StoriesSlice.lastId == 0) {
+            this._storiesProcess.lastSlice = true;
+        }
+        ApiWrap$StoriesProcess apiWrap$StoriesProcess = this._storiesProcess;
+        apiWrap$StoriesProcess.slice = apiWrap$StoriesSlice;
+        apiWrap$StoriesProcess.fileIndex = 0;
+        loadNextStory();
+    }
+
+    private void loadNextStory() {
+        ArrayList<ApiWrap$Story> arrayList = this._storiesProcess.slice.list;
+        while (this._storiesProcess.fileIndex < arrayList.size()) {
+            ApiWrap$Story apiWrap$Story = arrayList.get(this._storiesProcess.fileIndex);
+            ApiWrap$FileOrigin apiWrap$FileOrigin = new ApiWrap$FileOrigin(0, null, 0, apiWrap$Story.id, 0L);
+            if (!processFileLoad(apiWrap$Story.file(), apiWrap$FileOrigin, new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+                @Override
+                public Boolean run(ApiWrap$FileProgress obj) {
+                    return ExportRequestsController.this.loadStoryProgress(obj);
+                }
+            }, new Utilities.Callback<String>() {
+                @Override
+                public void run(String obj) {
+                    ExportRequestsController.this.loadStoryDone(obj);
+                }
+            }, null, apiWrap$Story) || !processFileLoad(apiWrap$Story.thumb().file, apiWrap$FileOrigin, new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+                @Override
+                public Boolean run(ApiWrap$FileProgress obj) {
+                    return ExportRequestsController.this.loadStoryProgress(obj);
+                }
+            }, new Utilities.Callback<String>() {
+                @Override
+                public void run(String obj) {
+                    ExportRequestsController.this.loadStoryThumbDone(obj);
+                }
+            }, null, apiWrap$Story)) {
+                return;
+            }
+            this._storiesProcess.fileIndex++;
+        }
+        this.finishStoriesSlice();
+    }
+
+    private void finishStoriesSlice() {
+        ApiWrap$StoriesProcess apiWrap$StoriesProcess = this._storiesProcess;
+        ApiWrap$StoriesSlice apiWrap$StoriesSlice = apiWrap$StoriesProcess.slice;
+        if (apiWrap$StoriesSlice.lastId != 0) {
+            apiWrap$StoriesProcess.processed += apiWrap$StoriesSlice.list.size();
+            ApiWrap$StoriesProcess apiWrap$StoriesProcess2 = this._storiesProcess;
+            apiWrap$StoriesProcess2.offsetId = apiWrap$StoriesSlice.lastId;
+            if (!apiWrap$StoriesProcess2.handleSlice.run(apiWrap$StoriesSlice).booleanValue()) {
+                return;
+            }
+        }
+        ApiWrap$StoriesProcess apiWrap$StoriesProcess3 = this._storiesProcess;
+        if (apiWrap$StoriesProcess3.lastSlice) {
+            apiWrap$StoriesProcess3.finish.run();
+            return;
+        }
+        TL_stories.TL_stories_getStoriesArchive tL_stories_getStoriesArchive = new TL_stories.TL_stories_getStoriesArchive();
+        tL_stories_getStoriesArchive.peer = new TLRPC.TL_inputPeerSelf();
+        tL_stories_getStoriesArchive.limit = 100;
+        tL_stories_getStoriesArchive.offset_id = this._storiesProcess.offsetId;
+        mainRequest(tL_stories_getStoriesArchive, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda40
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$finishStoriesSlice$21((TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finishStoriesSlice$21(TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tLObject instanceof TL_stories.TL_stories_stories) {
             loadStoriesFiles(DataTypesUtils.ParseStoriesSlice(((TL_stories.TL_stories_stories) tLObject).stories, this._storiesProcess.processed));
         }
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public boolean loadStoryProgress(ApiWrap$FileProgress apiWrap$FileProgress) {
         ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
         return this._storiesProcess.fileProgress.run(new ApiWrap$DownloadProgress(apiWrap$FileProcess.randomId, apiWrap$FileProcess.relativePath, this._storiesProcess.fileIndex, apiWrap$FileProgress.ready(), apiWrap$FileProgress.total())).booleanValue();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void loadStoryThumbDone(String str) {
         ApiWrap$StoriesProcess apiWrap$StoriesProcess = this._storiesProcess;
         ApiWrap$File apiWrap$File = apiWrap$StoriesProcess.slice.list.get(apiWrap$StoriesProcess.fileIndex).thumb().file;
@@ -613,6 +1361,7 @@ public class ExportRequestsController {
         loadNextStory();
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void loadStoryDone(String str) {
         ApiWrap$StoriesProcess apiWrap$StoriesProcess = this._storiesProcess;
         ApiWrap$File apiWrap$FileFile = apiWrap$StoriesProcess.slice.list.get(apiWrap$StoriesProcess.fileIndex).file();
@@ -627,42 +1376,82 @@ public class ExportRequestsController {
         ApiWrap$ContactsProcess apiWrap$ContactsProcess = new ApiWrap$ContactsProcess();
         this._contactsProcess = apiWrap$ContactsProcess;
         apiWrap$ContactsProcess.done = callback;
-        mainRequest(new TLObject() { 
-            @Override // org.telegram.tgnet.TLObject
-            public TLObject deserializeResponse(InputSerializedData inputSerializedData, int i, boolean z) {
-                Vector vector = new Vector(new ExportRequests$InvokeWithTakeoutWrapper$$ExternalSyntheticLambda1());
-                vector.readParams(inputSerializedData, z);
-                return vector;
-            }
-
-            @Override // org.telegram.tgnet.TLObject
-            public void serializeToStream(OutputSerializedData outputSerializedData) {
-                outputSerializedData.writeInt32(-2098076769);
-            }
-        }, new Utilities.Callback2() { 
-            @Override 
-            public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestContacts$24((TLObject) obj, (TLRPC.TL_error) obj2);
+        mainRequest(new ExportRequests$TL_contacts_getSaved(), new Utilities.Callback2() {
+            @Override
+            public void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestContacts$24((TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestContacts$23(final Integer num, final Utilities.Callback2 callback2) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestContacts$24(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof Vector) {
+            this._contactsProcess.result = DataTypesUtils.ParseContactsList((Vector) tLObject);
+            new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda16
+                @Override // org.telegram.messenger.Utilities.Callback2
+                public final void run(Object obj, Object obj2) {
+                    ExportRequestsController.this.lambda$requestContacts$23((Integer) obj, (Utilities.Callback2) obj2);
+                }
+            };
+            requestTopPeersSlice();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestContacts$23(final Integer num, final Utilities.Callback2 callback2) {
         if (num.intValue() == this._contactsProcess.result.list.size()) {
             requestTopPeersSlice();
             return;
         }
         TLRPC.TL_contacts_resolvePhone tL_contacts_resolvePhone = new TLRPC.TL_contacts_resolvePhone();
         tL_contacts_resolvePhone.phone = this._contactsProcess.result.list.get(num.intValue()).phoneNumber;
-        mainRequest(tL_contacts_resolvePhone, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_contacts_resolvePhone, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda42
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestContacts$22(num, callback2, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$requestContacts$22(num, callback2, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestTopPeersSlice$25(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestContacts$22(Integer num, Utilities.Callback2 callback2, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (!(tLObject instanceof TLRPC.TL_contacts_resolvedPeer)) {
+            if (tL_error != null) {
+                callback2.run(Integer.valueOf(num.intValue() + 1), callback2);
+                return;
+            }
+            return;
+        }
+        ApiWrap$ContactInfo apiWrap$ContactInfo = this._contactsProcess.result.list.get(num.intValue());
+        TLRPC.Peer peer = ((TLRPC.TL_contacts_resolvedPeer) tLObject).peer;
+        if (peer instanceof TLRPC.TL_peerUser) {
+            apiWrap$ContactInfo.userId = Long.valueOf(((TLRPC.TL_peerUser) peer).user_id);
+        } else {
+            apiWrap$ContactInfo.userId = 0L;
+        }
+        this._contactsProcess.result.list.set(num.intValue(), apiWrap$ContactInfo);
+        callback2.run(Integer.valueOf(num.intValue() + 1), callback2);
+    }
+
+    private void requestTopPeersSlice() {
+        TLRPC.TL_contacts_getTopPeers tL_contacts_getTopPeers = new TLRPC.TL_contacts_getTopPeers();
+        tL_contacts_getTopPeers.correspondents = true;
+        tL_contacts_getTopPeers.bots_inline = true;
+        tL_contacts_getTopPeers.phone_calls = true;
+        tL_contacts_getTopPeers.offset = this._contactsProcess.topPeersOffset;
+        tL_contacts_getTopPeers.limit = 100;
+        tL_contacts_getTopPeers.hash = 0L;
+        mainRequest(tL_contacts_getTopPeers, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda41
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestTopPeersSlice$25((TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestTopPeersSlice$25(TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tLObject instanceof TLRPC.contacts_TopPeers) {
             TLRPC.contacts_TopPeers contacts_toppeers = (TLRPC.contacts_TopPeers) tLObject;
             DataTypesUtils.AppendTopPeers(this._contactsProcess.result, contacts_toppeers);
@@ -711,22 +1500,20 @@ public class ExportRequestsController {
     private void loadNextUserpic() {
         ArrayList<HtmlWriter.Photo> arrayList = this._userpicsProcess.slice;
         while (this._userpicsProcess.fileIndex < arrayList.size()) {
-            ExportRequestsController exportRequestsController = this;
-            if (!exportRequestsController.processFileLoad(arrayList.get(this._userpicsProcess.fileIndex).image.file, new ApiWrap$FileOrigin(), new Utilities.CallbackReturn() { 
-                @Override 
-                public final Object run(Object obj) {
-                    return Boolean.valueOf(this.f$0.loadUserpicProgress((ApiWrap$FileProgress) obj));
+            if (!processFileLoad(arrayList.get(this._userpicsProcess.fileIndex).image.file, new ApiWrap$FileOrigin(), new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+                @Override
+                public Boolean run(ApiWrap$FileProgress obj) {
+                    return ExportRequestsController.this.loadUserpicProgress(obj);
                 }
-            }, new Utilities.Callback() { 
-                @Override 
-                public final void run(Object obj) {
-                    this.f$0.loadUserpicDone((String) obj);
+            }, new Utilities.Callback<String>() {
+                @Override
+                public void run(String obj) {
+                    ExportRequestsController.this.loadUserpicDone(obj);
                 }
             }, null, null)) {
                 return;
             }
-            exportRequestsController._userpicsProcess.fileIndex++;
-            this = exportRequestsController;
+            this._userpicsProcess.fileIndex++;
         }
         this.finishUserpicsSlice();
     }
@@ -750,19 +1537,244 @@ public class ExportRequestsController {
         tL_photos_getUserPhotos.offset = 0;
         tL_photos_getUserPhotos.max_id = this._userpicsProcess.maxId;
         tL_photos_getUserPhotos.limit = 100;
-        mainRequest(tL_photos_getUserPhotos, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_photos_getUserPhotos, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda46
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$finishUserpicsSlice$26((TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.this.lambda$finishUserpicsSlice$26((TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestChatMessages$28(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$finishUserpicsSlice$26(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof TLRPC.photos_Photos) {
+            handleUserpicsSlice((TLRPC.photos_Photos) tLObject);
+        }
+    }
+
+    public boolean loadUserpicProgress(ApiWrap$FileProgress apiWrap$FileProgress) {
+        ApiWrap$FileProcess apiWrap$FileProcess = this._fileProcess;
+        return this._userpicsProcess.fileProgress.run(new ApiWrap$DownloadProgress(apiWrap$FileProcess.randomId, apiWrap$FileProcess.relativePath, this._userpicsProcess.fileIndex, apiWrap$FileProgress.ready(), apiWrap$FileProgress.total())).booleanValue();
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public void loadUserpicDone(String str) {
+        ApiWrap$UserpicsProcess apiWrap$UserpicsProcess = this._userpicsProcess;
+        ApiWrap$File apiWrap$File = apiWrap$UserpicsProcess.slice.get(apiWrap$UserpicsProcess.fileIndex).image.file;
+        apiWrap$File.relativePath = str;
+        if (str.isEmpty()) {
+            apiWrap$File.skipReason = ApiWrap$File.SkipReason.Unavailable;
+        }
+        loadNextUserpic();
+    }
+
+    public boolean messageCustomEmojiReady(ApiWrap$Message apiWrap$Message) {
+        ArrayList<ApiWrap$TextPart> arrayList = apiWrap$Message.text;
+        int size = arrayList.size();
+        int i = 0;
+        while (i < size) {
+            ApiWrap$TextPart apiWrap$TextPart = arrayList.get(i);
+            i++;
+            ApiWrap$TextPart apiWrap$TextPart2 = apiWrap$TextPart;
+            if (apiWrap$TextPart2.type == ApiWrap$TextPart.Type.CustomEmoji) {
+                String customEmoji = getCustomEmoji(apiWrap$TextPart2.additional);
+                if (customEmoji == null || customEmoji.isEmpty()) {
+                    return false;
+                }
+                apiWrap$TextPart2.additional = customEmoji;
+            }
+        }
+        Iterator<ApiWrap$Reaction> it = apiWrap$Message.reactions.iterator();
+        if (!it.hasNext()) {
+            return true;
+        }
+        it.next();
+        throw null;
+    }
+
+    private String getCustomEmoji(String str) {
+        Long l = Utilities.parseLong(str);
+        if (l.longValue() == 0) {
+            return str;
+        }
+        ApiWrap$Document apiWrap$Document = this._resolvedCustomEmoji.get(l);
+        if (apiWrap$Document == null) {
+            return ApiWrap$TextPart.UnavailableEmoji();
+        }
+        ApiWrap$File apiWrap$File = apiWrap$Document.file;
+        ApiWrap$FileOrigin apiWrap$FileOrigin = new ApiWrap$FileOrigin(0, null, 0, 0, l.longValue());
+        final long jLongValue = l.longValue();
+        if (!processFileLoad(apiWrap$File, apiWrap$FileOrigin, new Utilities.CallbackReturn<ApiWrap$FileProgress, Boolean>() {
+            @Override
+            public Boolean run(ApiWrap$FileProgress progress) {
+                return ExportRequestsController.this.loadMessageFileProgress(progress);
+            }
+        }, new Utilities.Callback<String>() {
+            @Override
+            public void run(String obj) {
+                ExportRequestsController.this.lambda$getCustomEmoji$27(jLongValue, obj);
+            }
+        }, null, null)) {
+            return null;
+        }
+        ApiWrap$File.SkipReason skipReason = apiWrap$File.skipReason;
+        if (skipReason == ApiWrap$File.SkipReason.Unavailable) {
+            return ApiWrap$TextPart.UnavailableEmoji();
+        }
+        if (skipReason == ApiWrap$File.SkipReason.FileType || skipReason == ApiWrap$File.SkipReason.FileSize) {
+            return _UrlKt.FRAGMENT_ENCODE_SET;
+        }
+        return apiWrap$File.relativePath;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    /* JADX INFO: renamed from: loadMessageEmojiDone, reason: merged with bridge method [inline-methods] */
+    public void lambda$getCustomEmoji$27(long j, String str) {
+        ApiWrap$Document apiWrap$Document = this._resolvedCustomEmoji.get(Long.valueOf(j));
+        if (apiWrap$Document != null) {
+            apiWrap$Document.file.relativePath = str;
+            if (str.isEmpty()) {
+                apiWrap$Document.file.skipReason = ApiWrap$File.SkipReason.Unavailable;
+            }
+        }
+        loadNextMessageFile();
+    }
+
+    private void finishMessagesSlice() {
+        ApiWrap$MessagesSlice apiWrap$MessagesSliceAdjustMigrateMessageIds = this._chatProcess.slice;
+        if (!apiWrap$MessagesSliceAdjustMigrateMessageIds.list.isEmpty()) {
+            ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+            ArrayList<ApiWrap$Message> arrayList = apiWrap$MessagesSliceAdjustMigrateMessageIds.list;
+            apiWrap$ChatProcess.largestIdPlusOne = arrayList.get(arrayList.size() - 1).id + 1;
+            ApiWrap$ChatProcess apiWrap$ChatProcess2 = this._chatProcess;
+            if (apiWrap$ChatProcess2.info.splits.get(apiWrap$ChatProcess2.localSplitIndex).intValue() < 0) {
+                apiWrap$MessagesSliceAdjustMigrateMessageIds = DataTypesUtils.AdjustMigrateMessageIds(apiWrap$MessagesSliceAdjustMigrateMessageIds);
+            }
+            if (!this._chatProcess.handleSlice.run(apiWrap$MessagesSliceAdjustMigrateMessageIds).booleanValue()) {
+                return;
+            }
+        }
+        ApiWrap$ChatProcess apiWrap$ChatProcess3 = this._chatProcess;
+        if (apiWrap$ChatProcess3.lastSlice) {
+            int i = apiWrap$ChatProcess3.localSplitIndex + 1;
+            apiWrap$ChatProcess3.localSplitIndex = i;
+            if (i < apiWrap$ChatProcess3.info.splits.size()) {
+                ApiWrap$ChatProcess apiWrap$ChatProcess4 = this._chatProcess;
+                apiWrap$ChatProcess4.lastSlice = false;
+                apiWrap$ChatProcess4.largestIdPlusOne = 1;
+            }
+        }
+        if (!this._chatProcess.lastSlice) {
+            requestMessagesSlice();
+        } else {
+            finishMessages();
+        }
+    }
+
+    private void finishMessages() {
+        this._chatProcess.done.run();
+    }
+
+    private void requestChatMessages(final int i, final int i2, final int i3, final int i4, Utilities.Callback<TLRPC.messages_Messages> callback) {
+        TLRPC.InputPeer inputPeer;
+        TLRPC.InputPeer tL_inputPeerSelf;
+        this._chatProcess.requestDone = callback;
+        int size = this.splits.size();
+        ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+        if (i >= 0) {
+            inputPeer = apiWrap$ChatProcess.info.input;
+        } else {
+            inputPeer = apiWrap$ChatProcess.info.migratedFromInput;
+        }
+        final TLRPC.InputPeer inputPeer2 = inputPeer;
+        int i5 = i >= 0 ? i : size + i;
+        ApiWrap$DialogInfo apiWrap$DialogInfo = this._chatProcess.info;
+        if (apiWrap$DialogInfo.isMonoforum) {
+            tL_inputPeerSelf = apiWrap$DialogInfo.monoforumBroadcastInput;
+        } else {
+            tL_inputPeerSelf = new TLRPC.TL_inputPeerSelf();
+        }
+        if (this._chatProcess.info.onlyMyMessages) {
+            TLRPC.TL_messages_search tL_messages_search = new TLRPC.TL_messages_search();
+            tL_messages_search.flags = 1;
+            tL_messages_search.peer = inputPeer2;
+            tL_messages_search.q = _UrlKt.FRAGMENT_ENCODE_SET;
+            tL_messages_search.from_id = tL_inputPeerSelf;
+            tL_messages_search.saved_peer_id = new TLRPC.TL_inputPeerEmpty();
+            tL_messages_search.top_msg_id = 0;
+            tL_messages_search.filter = new TLRPC.TL_inputMessagesFilterEmpty();
+            tL_messages_search.offset_id = i2;
+            tL_messages_search.add_offset = i3;
+            tL_messages_search.limit = i4;
+            splitRequest(i5, tL_messages_search, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda22
+                @Override // org.telegram.messenger.Utilities.Callback2
+                public final void run(Object obj, Object obj2) {
+                    ExportRequestsController.this.lambda$requestChatMessages$28((TLObject) obj, (TLRPC.TL_error) obj2);
+                }
+            });
+            return;
+        }
+        TLRPC.TL_messages_getHistory tL_messages_getHistory = new TLRPC.TL_messages_getHistory();
+        tL_messages_getHistory.peer = inputPeer2;
+        tL_messages_getHistory.offset_id = i2;
+        tL_messages_getHistory.add_offset = i3;
+        tL_messages_getHistory.limit = i4;
+        splitRequest(i5, tL_messages_getHistory, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda23
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestChatMessages$29(inputPeer2, i, i2, i3, i4, (TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestChatMessages$28(TLObject tLObject, TLRPC.TL_error tL_error) {
         this._chatProcess.requestDone.run((TLRPC.messages_Messages) tLObject);
     }
 
-    public void lambda$requestDialogsSlice$30(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestChatMessages$29(TLRPC.InputPeer inputPeer, int i, int i2, int i3, int i4, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null) {
+            if ("CHANNEL_PRIVATE".equals(tL_error.text)) {
+                Log.d("exteraGram", "caught channel private");
+                if (inputPeer instanceof TLRPC.TL_inputPeerChannel) {
+                    ApiWrap$ChatProcess apiWrap$ChatProcess = this._chatProcess;
+                    ApiWrap$DialogInfo apiWrap$DialogInfo = apiWrap$ChatProcess.info;
+                    if (apiWrap$DialogInfo.onlyMyMessages) {
+                        return;
+                    }
+                    apiWrap$DialogInfo.onlyMyMessages = true;
+                    requestChatMessages(i, i2, i3, i4, apiWrap$ChatProcess.requestDone);
+                    return;
+                }
+                return;
+            }
+            return;
+        }
+        this._chatProcess.requestDone.run((TLRPC.messages_Messages) tLObject);
+    }
+
+    public void requestDialogsSlice() {
+        if (this._settings.onlySinglePeer()) {
+            requestSinglePeerDialog();
+            return;
+        }
+        TLRPC.TL_messages_getDialogs tL_messages_getDialogs = new TLRPC.TL_messages_getDialogs();
+        ApiWrap$DialogsProcess apiWrap$DialogsProcess = this._dialogsProcess;
+        tL_messages_getDialogs.offset_peer = apiWrap$DialogsProcess.offsetPeer;
+        tL_messages_getDialogs.limit = 100;
+        tL_messages_getDialogs.offset_date = apiWrap$DialogsProcess.offsetDate;
+        tL_messages_getDialogs.offset_id = apiWrap$DialogsProcess.offsetId;
+        splitRequest(apiWrap$DialogsProcess.splitIndexPlusOne - 1, tL_messages_getDialogs, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda15
+            @Override // org.telegram.messenger.Utilities.Callback2
+            public final void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestDialogsSlice$30((TLObject) obj, (TLRPC.TL_error) obj2);
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestDialogsSlice$30(TLObject tLObject, TLRPC.TL_error tL_error) {
         ApiWrap$DialogInfo apiWrap$DialogInfo;
         int i;
         if (tLObject instanceof TLRPC.TL_messages_dialogsNotModified) {
@@ -788,6 +1800,7 @@ public class ExportRequestsController {
             apiWrap$DialogsProcess3.offsetId = apiWrap$DialogInfo.topMessageId;
             apiWrap$DialogsProcess3.offsetDate = i;
             apiWrap$DialogsProcess3.offsetPeer = apiWrap$DialogInfo.input;
+            requestDialogsSlice();
         } else {
             if (!useOnlyLastSplit()) {
                 ApiWrap$DialogsProcess apiWrap$DialogsProcess4 = this._dialogsProcess;
@@ -797,25 +1810,25 @@ public class ExportRequestsController {
                     apiWrap$DialogsProcess4.offsetId = 0;
                     apiWrap$DialogsProcess4.offsetDate = 0;
                     apiWrap$DialogsProcess4.offsetPeer = new TLRPC.TL_inputPeerEmpty();
+                    requestDialogsSlice();
+                    return;
                 }
             }
             requestLeftChannelsIfNeeded();
-            return;
         }
-        requestDialogsSlice();
     }
 
     private void requestSinglePeerDialog() {
-        final Utilities.Callback callback = new Utilities.Callback() { 
-            @Override 
+        final Utilities.Callback callback = new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda34
+            @Override // org.telegram.messenger.Utilities.Callback
             public final void run(Object obj) {
-                this.f$0.lambda$requestSinglePeerDialog$31((TLObject) obj);
+                ExportRequestsController.this.lambda$requestSinglePeerDialog$31((TLObject) obj);
             }
         };
-        Utilities.Callback callback2 = new Utilities.Callback() { 
-            @Override 
+        Utilities.Callback callback2 = new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda35
+            @Override // org.telegram.messenger.Utilities.Callback
             public final void run(Object obj) {
-                this.f$0.lambda$requestSinglePeerDialog$33(callback, (TLRPC.InputUser) obj);
+                ExportRequestsController.this.lambda$requestSinglePeerDialog$33(callback, (TLRPC.InputUser) obj);
             }
         };
         TLRPC.InputPeer inputPeer = this._settings.singlePeer;
@@ -829,9 +1842,9 @@ public class ExportRequestsController {
         }
         if (inputPeer instanceof TLRPC.TL_inputPeerChat) {
             TLRPC.TL_messages_getChats tL_messages_getChats = new TLRPC.TL_messages_getChats();
-            tL_messages_getChats.id = new ArrayList<>(java.util.Arrays.asList(Long.valueOf(((TLRPC.TL_inputPeerChat) inputPeer).chat_id)));
-            mainRequest(tL_messages_getChats, new Utilities.Callback2() { 
-                @Override 
+            tL_messages_getChats.id = new ArrayList<>(Collections.singletonList(Long.valueOf(((TLRPC.TL_inputPeerChat) inputPeer).chat_id)));
+            mainRequest(tL_messages_getChats, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda36
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
                     callback.run((TLObject) obj);
                 }
@@ -842,20 +1855,30 @@ public class ExportRequestsController {
                 return;
             }
             if (inputPeer instanceof TLRPC.TL_inputPeerUserFromMessage) {
-                Segment$$ExternalSyntheticBUOutline1.m("From message peer in requestSinglePeerDialog.");
+                throw new IllegalStateException("From message peer in requestSinglePeerDialog.");
             } else if (inputPeer instanceof TLRPC.TL_inputPeerChannelFromMessage) {
-                Segment$$ExternalSyntheticBUOutline1.m("From message peer in requestSinglePeerDialog.");
+                throw new IllegalStateException("From message peer in requestSinglePeerDialog.");
             } else if (inputPeer instanceof TLRPC.TL_inputPeerEmpty) {
-                Segment$$ExternalSyntheticBUOutline1.m("Empty peer in requestSinglePeerDialog.");
+                throw new IllegalStateException("Empty peer in requestSinglePeerDialog.");
             }
         }
     }
 
-    public void lambda$requestSinglePeerDialog$33(final Utilities.Callback callback, TLRPC.InputUser inputUser) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestSinglePeerDialog$31(TLObject tLObject) {
+        if (tLObject instanceof Vector) {
+            appendSinglePeerDialogs(ParseDialogsInfo(this._settings.singlePeer, (Vector) tLObject));
+        } else if (tLObject instanceof TLRPC.messages_Chats) {
+            appendSinglePeerDialogs(ParseDialogsInfo(this._settings.singlePeer, (TLRPC.messages_Chats) tLObject));
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestSinglePeerDialog$33(final Utilities.Callback callback, TLRPC.InputUser inputUser) {
         TLRPC.TL_users_getUsers tL_users_getUsers = new TLRPC.TL_users_getUsers();
-        tL_users_getUsers.id = new ArrayList<>(java.util.Arrays.asList(inputUser));
-        mainRequest(tL_users_getUsers, new Utilities.Callback2() { 
-            @Override 
+        tL_users_getUsers.id = new ArrayList<>(Collections.singletonList(inputUser));
+        mainRequest(tL_users_getUsers, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda51
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
                 callback.run((TLObject) obj);
             }
@@ -863,15 +1886,15 @@ public class ExportRequestsController {
     }
 
     private void appendSinglePeerDialogs(ApiWrap$DialogsInfo apiWrap$DialogsInfo) {
-        Utilities.CallbackReturn callbackReturn = new Utilities.CallbackReturn() { 
-            @Override 
+        Utilities.CallbackReturn callbackReturn = new Utilities.CallbackReturn() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda47
+            @Override // org.telegram.messenger.Utilities.CallbackReturn
             public final Object run(Object obj) {
                 ApiWrap$DialogInfo.Type type = (ApiWrap$DialogInfo.Type) obj;
                 return Boolean.valueOf(type == ApiWrap$DialogInfo.Type.PrivateSupergroup || type == ApiWrap$DialogInfo.Type.PublicSupergroup);
             }
         };
-        Utilities.CallbackReturn callbackReturn2 = new Utilities.CallbackReturn() { 
-            @Override 
+        Utilities.CallbackReturn callbackReturn2 = new Utilities.CallbackReturn() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda48
+            @Override // org.telegram.messenger.Utilities.CallbackReturn
             public final Object run(Object obj) {
                 ApiWrap$DialogInfo.Type type = (ApiWrap$DialogInfo.Type) obj;
                 return Boolean.valueOf(type == ApiWrap$DialogInfo.Type.PrivateChannel || type == ApiWrap$DialogInfo.Type.PublicChannel);
@@ -917,23 +1940,88 @@ public class ExportRequestsController {
             tL_inputChannel.access_hash = tL_inputPeerChannel.access_hash;
             TLRPC.TL_channels_getFullChannel tL_channels_getFullChannel = new TLRPC.TL_channels_getFullChannel();
             tL_channels_getFullChannel.channel = tL_inputChannel;
-            return mainRequest(tL_channels_getFullChannel, new Utilities.Callback2() { 
-                @Override 
+            return mainRequest(tL_channels_getFullChannel, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda58
+                @Override // org.telegram.messenger.Utilities.Callback2
                 public final void run(Object obj, Object obj2) {
-                    this.f$0.lambda$requestSinglePeerMigrated$37((TLObject) obj, (TLRPC.TL_error) obj2);
+                    ExportRequestsController.this.lambda$requestSinglePeerMigrated$37((TLObject) obj, (TLRPC.TL_error) obj2);
                 }
             });
         }
-        Buffer$$ExternalSyntheticBUOutline4.m("unexpected peer type: ", apiWrap$DialogInfo.input);
-        return 0;
+        throw new IllegalArgumentException("unexpected peer type: " + apiWrap$DialogInfo.input);
     }
 
-    public Boolean lambda$requestLeftChannelsIfNeeded$38(Integer num) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestSinglePeerMigrated$37(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof TLRPC.TL_messages_chatFull) {
+            TLRPC.TL_messages_chatFull tL_messages_chatFull = (TLRPC.TL_messages_chatFull) tLObject;
+            TLRPC.ChatFull chatFull = tL_messages_chatFull.full_chat;
+            long j = chatFull instanceof TLRPC.TL_channelFull ? ((TLRPC.TL_channelFull) chatFull).migrated_from_chat_id : 0L;
+            if (j != 0) {
+                TLRPC.TL_inputPeerChat tL_inputPeerChat = new TLRPC.TL_inputPeerChat();
+                tL_inputPeerChat.chat_id = j;
+                TLRPC.TL_messages_chats tL_messages_chats = new TLRPC.TL_messages_chats();
+                tL_messages_chats.chats = tL_messages_chatFull.chats;
+                appendSinglePeerDialogs(ParseDialogsInfo(tL_inputPeerChat, tL_messages_chats));
+                return;
+            }
+            appendSinglePeerDialogs(new ApiWrap$DialogsInfo());
+        }
+    }
+
+    public void requestLeftChannelsIfNeeded() {
+        if ((this._settings.types & 1920) != 0) {
+            requestLeftChannelsList(new Utilities.CallbackReturn() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda19
+                @Override // org.telegram.messenger.Utilities.CallbackReturn
+                public final Object run(Object obj) {
+                    return ExportRequestsController.this.lambda$requestLeftChannelsIfNeeded$38((Integer) obj);
+                }
+            }, new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda20
+                @Override // org.telegram.messenger.Utilities.Callback
+                public final void run(Object obj) {
+                    ExportRequestsController.this.lambda$requestLeftChannelsIfNeeded$39((ApiWrap$DialogsInfo) obj);
+                }
+            });
+        } else {
+            finishDialogsList();
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ Boolean lambda$requestLeftChannelsIfNeeded$38(Integer num) {
         ApiWrap$DialogsProcess apiWrap$DialogsProcess = this._dialogsProcess;
         return apiWrap$DialogsProcess.progress.run(Integer.valueOf(apiWrap$DialogsProcess.processedCount + num.intValue()));
     }
 
-    public void lambda$requestLeftChannelsSlice$40() {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestLeftChannelsIfNeeded$39(ApiWrap$DialogsInfo apiWrap$DialogsInfo) {
+        this._dialogsProcess.info.left = apiWrap$DialogsInfo.left;
+        finishDialogsList();
+    }
+
+    private void finishDialogsList() {
+        DataTypesUtils.FinalizeDialogsInfo(this._dialogsProcess.info, this._settings);
+        ApiWrap$DialogsProcess apiWrap$DialogsProcess = this._dialogsProcess;
+        apiWrap$DialogsProcess.done.run(apiWrap$DialogsProcess.info);
+    }
+
+    private void requestLeftChannelsList(Utilities.CallbackReturn<Integer, Boolean> callbackReturn, Utilities.Callback<ApiWrap$DialogsInfo> callback) {
+        ApiWrap$LeftChannelsProcess apiWrap$LeftChannelsProcess = this._leftChannelsProcess;
+        apiWrap$LeftChannelsProcess.progress = callbackReturn;
+        apiWrap$LeftChannelsProcess.done = callback;
+        requestLeftChannelsSlice();
+    }
+
+    private void requestLeftChannelsSlice() {
+        requestLeftChannelsSliceGeneric(new Runnable() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda50
+            @Override // java.lang.Runnable
+            public final void run() {
+                ExportRequestsController.this.lambda$requestLeftChannelsSlice$40();
+            }
+        });
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestLeftChannelsSlice$40() {
         ApiWrap$LeftChannelsProcess apiWrap$LeftChannelsProcess = this._leftChannelsProcess;
         if (apiWrap$LeftChannelsProcess.finished) {
             apiWrap$LeftChannelsProcess.done.run(apiWrap$LeftChannelsProcess.info);
@@ -1076,15 +2164,75 @@ public class ExportRequestsController {
     public void requestPersonalInfo(final Utilities.Callback<ApiWrap$ExportPersonalInfo> callback) {
         TLRPC.TL_users_getFullUser tL_users_getFullUser = new TLRPC.TL_users_getFullUser();
         tL_users_getFullUser.id = new TLRPC.TL_inputUserSelf();
-        mainRequest(tL_users_getFullUser, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(tL_users_getFullUser, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda10
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                ExportRequestsController.m1071$r8$lambda$K6Z8Dxak9YlqZ3WIvUBpQOpswQ(callback, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.lambda$requestPersonalInfo$44(callback, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public static void lambda$fileRequest$44(long j, Utilities.Callback2 callback2, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: renamed from: $r8$lambda$K6Z8Dxak9YlqZ-3WIvUBpQOpswQ, reason: not valid java name */
+    public static void lambda$requestPersonalInfo$44(Utilities.Callback callback, TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tLObject instanceof TLRPC.TL_users_userFull) {
+            TLRPC.TL_users_userFull tL_users_userFull = (TLRPC.TL_users_userFull) tLObject;
+            if (!tL_users_userFull.users.isEmpty()) {
+                callback.run(DataTypesUtils.ParsePersonalInfo(tL_users_userFull));
+            } else {
+                throw new IllegalArgumentException("got 0 users in requestPersonalInfo!");
+            }
+        }
+    }
+
+    private int mainRequest(TLObject tLObject, final Utilities.Callback2<TLObject, TLRPC.TL_error> callback2) {
+        ExportRequests$InvokeWithTakeoutWrapper exportRequests$InvokeWithTakeoutWrapper = new ExportRequests$InvokeWithTakeoutWrapper();
+        exportRequests$InvokeWithTakeoutWrapper.query = tLObject;
+        exportRequests$InvokeWithTakeoutWrapper.takeout_id = this._takeoutId;
+        return ConnectionsManager.getInstance(this.selectedAcc).sendRequest(exportRequests$InvokeWithTakeoutWrapper, new RequestDelegate() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda7
+            @Override // org.telegram.tgnet.RequestDelegate
+            public final void run(TLObject tLObject2, TLRPC.TL_error tL_error) {
+                ExportController.exportQueue.postRunnable(new Runnable() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda29
+                    @Override // java.lang.Runnable
+                    public final void run() {
+                        callback2.run(tLObject2, tL_error);
+                    }
+                });
+            }
+        });
+    }
+
+    public int splitRequest(int i, TLObject tLObject, Utilities.Callback2<TLObject, TLRPC.TL_error> callback2) {
+        ExportRequests$InvokeWithMessagesRange exportRequests$InvokeWithMessagesRange = new ExportRequests$InvokeWithMessagesRange();
+        exportRequests$InvokeWithMessagesRange.query = tLObject;
+        if (i < 0) {
+            exportRequests$InvokeWithMessagesRange.range = new TLRPC.TL_messageRange();
+        } else {
+            exportRequests$InvokeWithMessagesRange.range = this.splits.get(i);
+        }
+        return mainRequest(exportRequests$InvokeWithMessagesRange, callback2);
+    }
+
+    private int fileRequest(ApiWrap$FileLocation apiWrap$FileLocation, final long j, final Utilities.Callback2<TLObject, TLRPC.TL_error> callback2) {
+        TLRPC.TL_upload_getFile tL_upload_getFile = new TLRPC.TL_upload_getFile();
+        tL_upload_getFile.location = apiWrap$FileLocation.data;
+        tL_upload_getFile.offset = j;
+        tL_upload_getFile.limit = 1048576;
+        tL_upload_getFile.cdn_supported = false;
+        tL_upload_getFile.precise = false;
+        tL_upload_getFile.flags = 0;
+        ExportRequests$InvokeWithTakeoutWrapper exportRequests$InvokeWithTakeoutWrapper = new ExportRequests$InvokeWithTakeoutWrapper();
+        exportRequests$InvokeWithTakeoutWrapper.query = tL_upload_getFile;
+        exportRequests$InvokeWithTakeoutWrapper.takeout_id = this._takeoutId;
+        return ConnectionsManager.getInstance(this.selectedAcc).sendRequestSync(exportRequests$InvokeWithTakeoutWrapper, new RequestDelegate() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda43
+            @Override // org.telegram.tgnet.RequestDelegate
+            public final void run(TLObject tLObject, TLRPC.TL_error tL_error) {
+                ExportRequestsController.this.lambda$fileRequest$44(j, callback2, tLObject, tL_error);
+            }
+        }, null, null, 0, apiWrap$FileLocation.dcId, 65538, true);
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$fileRequest$44(long j, Utilities.Callback2 callback2, TLObject tLObject, TLRPC.TL_error tL_error) {
         if (tL_error != null) {
             this._fileProcess.requestId = 0L;
             if (Objects.equals(tL_error.text, "TAKEOUT_FILE_EMPTY") && this._otherDataProcess != null) {
@@ -1099,35 +2247,49 @@ public class ExportRequestsController {
             } else {
                 StringBuilder sb = new StringBuilder("wtf! fileRequest, response: ");
                 sb.append(tLObject);
-                OkHttpClient$Builder$$ExternalSyntheticBUOutline0.m(sb, " error: ", tL_error.text);
-                return;
+                sb.append(" error: ");
+                sb.append(tL_error.text);
+                throw new IllegalStateException(sb.toString());
             }
         }
         callback2.run(tLObject, tL_error);
     }
 
     public void requestSplitRanges() {
-        mainRequest(new TLObject() { 
-            @Override // org.telegram.tgnet.TLObject
-            public TLObject deserializeResponse(InputSerializedData inputSerializedData, int i, boolean z) {
-                Vector vector = new Vector(new ExportRequests$InvokeWithTakeoutWrapper$$ExternalSyntheticLambda0());
-                vector.readParams(inputSerializedData, z);
-                return vector;
-            }
-
-            @Override // org.telegram.tgnet.TLObject
-            public void serializeToStream(OutputSerializedData outputSerializedData) {
-                outputSerializedData.writeInt32(486505992);
-            }
-        }, new Utilities.Callback2() { 
-            @Override 
-            public final void run(Object obj, Object obj2) {
-                this.f$0.lambda$requestSplitRanges$45((TLObject) obj, (TLRPC.TL_error) obj2);
+        mainRequest(new ExportRequests$getSplitRanges(), new Utilities.Callback2() {
+            @Override
+            public void run(Object obj, Object obj2) {
+                ExportRequestsController.this.lambda$requestSplitRanges$45((TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public void lambda$requestDialogsCount$46(TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestSplitRanges$45(TLObject tLObject, TLRPC.TL_error tL_error) {
+        vectorToRanges(tLObject, this.splits);
+        this.index = useOnlyLastSplit() ? this.splits.size() - 1 : 0;
+        sendNextStartRequest();
+    }
+
+    public void requestDialogsCount() {
+        if (this._settings.onlySinglePeer()) {
+            this._startProcess.info.dialogsCount = 1;
+            sendNextStartRequest();
+        } else {
+            TLRPC.TL_messages_getDialogs tL_messages_getDialogs = new TLRPC.TL_messages_getDialogs();
+            tL_messages_getDialogs.offset_peer = new TLRPC.TL_inputPeerEmpty();
+            tL_messages_getDialogs.limit = 1;
+            splitRequest(this.index, tL_messages_getDialogs, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda27
+                @Override // org.telegram.messenger.Utilities.Callback2
+                public final void run(Object obj, Object obj2) {
+                    ExportRequestsController.this.lambda$requestDialogsCount$46((TLObject) obj, (TLRPC.TL_error) obj2);
+                }
+            });
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$requestDialogsCount$46(TLObject tLObject, TLRPC.TL_error tL_error) {
         int size;
         if (tLObject instanceof TLRPC.TL_messages_dialogs) {
             size = ((TLRPC.TL_messages_dialogs) tLObject).dialogs.size();
@@ -1135,8 +2297,7 @@ public class ExportRequestsController {
             size = tLObject instanceof TLRPC.TL_messages_dialogsSlice ? ((TLRPC.TL_messages_dialogsSlice) tLObject).count : -1;
         }
         if (size < 0) {
-            Segment$$ExternalSyntheticBUOutline1.m("unexpected TL_messages_dialogsNotModified received");
-            return;
+            throw new IllegalStateException("unexpected TL_messages_dialogsNotModified received");
         }
         StartProcess startProcess = this._startProcess;
         startProcess.info.dialogsCount += size;
@@ -1156,25 +2317,26 @@ public class ExportRequestsController {
         ApiWrap$File apiWrap$File = apiWrap$OtherDataProcess.file;
         apiWrap$File.suggestedPath = str;
         apiWrap$File.location = new ApiWrap$FileLocation();
-        this._otherDataProcess.file.location.data = new TLRPC.InputFileLocation() { 
+        this._otherDataProcess.file.location.data = new TLRPC.InputFileLocation() { // from class: com.exteragram.messenger.export.api.ExportRequests$TL_inputTakeoutFileLocation
             @Override // org.telegram.tgnet.TLObject
             public void serializeToStream(OutputSerializedData outputSerializedData) {
                 outputSerializedData.writeInt32(700340377);
             }
         };
-        loadFile(this._otherDataProcess.file, new ApiWrap$FileOrigin(), new Utilities.CallbackReturn() { 
-            @Override 
+        loadFile(this._otherDataProcess.file, new ApiWrap$FileOrigin(), new Utilities.CallbackReturn() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda8
+            @Override // org.telegram.messenger.Utilities.CallbackReturn
             public final Object run(Object obj) {
                 return Boolean.TRUE;
             }
-        }, new Utilities.Callback() { 
-            @Override 
+        }, new Utilities.Callback() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda9
+            @Override // org.telegram.messenger.Utilities.Callback
             public final void run(Object obj) {
-                this.f$0.otherDataDone((String) obj);
+                ExportRequestsController.this.otherDataDone((String) obj);
             }
         });
     }
 
+    /* JADX INFO: Access modifiers changed from: private */
     public void otherDataDone(String str) {
         this._otherDataProcess.file.relativePath = str;
         if (str.isEmpty()) {
@@ -1185,21 +2347,22 @@ public class ExportRequestsController {
     }
 
     public boolean useOnlyLastSplit() {
-        return (this._settings.types & Opcodes.SHL_INT_LIT8) == 0;
+        return (this._settings.types & 226) == 0;
     }
 
     public void invokeFinish(boolean z, final Runnable runnable) {
         ExportRequests$FinishTakeoutSession exportRequests$FinishTakeoutSession = new ExportRequests$FinishTakeoutSession();
         exportRequests$FinishTakeoutSession.success = !z;
-        mainRequest(exportRequests$FinishTakeoutSession, new Utilities.Callback2() { 
-            @Override 
+        mainRequest(exportRequests$FinishTakeoutSession, new Utilities.Callback2() { // from class: com.exteragram.messenger.export.controllers.ExportRequestsController$$ExternalSyntheticLambda4
+            @Override // org.telegram.messenger.Utilities.Callback2
             public final void run(Object obj, Object obj2) {
-                ExportRequestsController.m1070$r8$lambda$K5E2oN2LAwJDAki5Obw5XGaixo(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
+                ExportRequestsController.lambda$invokeFinish$51(runnable, (TLObject) obj, (TLRPC.TL_error) obj2);
             }
         });
     }
 
-    public static /* synthetic */ void m1070$r8$lambda$K5E2oN2LAwJDAki5Obw5XGaixo(Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
+    /* JADX INFO: renamed from: $r8$lambda$K5E2oN2LAwJDAki5Obw5-XGaixo, reason: not valid java name */
+    public static void lambda$invokeFinish$51(Runnable runnable, TLObject tLObject, TLRPC.TL_error tL_error) {
         runnable.run();
         if (tLObject instanceof TLRPC.TL_boolTrue) {
             Log.w("exteraGram", "finished successfully!!!");

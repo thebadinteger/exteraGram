@@ -1,4 +1,138 @@
-private class AudioTrackThread extends Thread {
+/*
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
+package org.webrtc.voiceengine;
+
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.os.Build;
+import android.os.Process;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+
+import org.telegram.messenger.FileLog;
+import org.webrtc.ContextUtils;
+import org.webrtc.Logging;
+import org.webrtc.ThreadUtils;
+
+import java.nio.ByteBuffer;
+
+public class WebRtcAudioTrack {
+  private static final boolean DEBUG = false;
+
+  private static final String TAG = "WebRtcAudioTrack";
+
+  // Default audio data format is PCM 16 bit per sample.
+  // Guaranteed to be supported by all devices.
+  private static final int BITS_PER_SAMPLE = 16;
+
+  // Requested size of each recorded buffer provided to the client.
+  private static final int CALLBACK_BUFFER_SIZE_MS = 10;
+
+  // Average number of callbacks per second.
+  private static final int BUFFERS_PER_SECOND = 1000 / CALLBACK_BUFFER_SIZE_MS;
+
+  // The AudioTrackThread is allowed to wait for successful call to join()
+  // but the wait times out afther this amount of time.
+  private static final long AUDIO_TRACK_THREAD_JOIN_TIMEOUT_MS = 2000;
+
+  // By default, WebRTC creates audio tracks with a usage attribute
+  // corresponding to voice communications, such as telephony or VoIP.
+  private static final int DEFAULT_USAGE = getDefaultUsageAttribute();
+  private static int usageAttribute = DEFAULT_USAGE;
+  private static int streamType = AudioManager.STREAM_VOICE_CALL;
+
+  // This method overrides the default usage attribute and allows the user
+  // to set it to something else than AudioAttributes.USAGE_VOICE_COMMUNICATION.
+  // NOTE: calling this method will most likely break existing VoIP tuning.
+  // TODO(bugs.webrtc.org/8491): Remove NoSynchronizedMethodCheck suppression.
+  @SuppressWarnings("NoSynchronizedMethodCheck")
+  public static synchronized void setAudioTrackUsageAttribute(int usage) {
+    Logging.w(TAG, "Default usage attribute is changed from: "
+        + DEFAULT_USAGE + " to " + usage);
+    usageAttribute = usage;
+  }
+
+  public static synchronized void setAudioStreamType(int type) {
+    streamType = type;
+  }
+
+  private static int getDefaultUsageAttribute() {
+    if (Build.VERSION.SDK_INT >= 21) {
+      return AudioAttributes.USAGE_VOICE_COMMUNICATION;
+    } else {
+      // Not used on SDKs lower than 21.
+      return 0;
+    }
+  }
+
+  private final long nativeAudioTrack;
+  private final AudioManager audioManager;
+  private final ThreadUtils.ThreadChecker threadChecker = new ThreadUtils.ThreadChecker();
+
+  private ByteBuffer byteBuffer;
+
+  private @Nullable AudioTrack audioTrack;
+  private @Nullable AudioTrackThread audioThread;
+
+  // Samples to be played are replaced by zeros if |speakerMute| is set to true.
+  // Can be used to ensure that the speaker is fully muted.
+  private static volatile boolean speakerMute;
+  private byte[] emptyBytes;
+
+  // Audio playout/track error handler functions.
+  public enum AudioTrackStartErrorCode {
+    AUDIO_TRACK_START_EXCEPTION,
+    AUDIO_TRACK_START_STATE_MISMATCH,
+  }
+
+  @Deprecated
+  public static interface WebRtcAudioTrackErrorCallback {
+    void onWebRtcAudioTrackInitError(String errorMessage);
+    void onWebRtcAudioTrackStartError(String errorMessage);
+    void onWebRtcAudioTrackError(String errorMessage);
+  }
+
+  // TODO(henrika): upgrade all clients to use this new interface instead.
+  public static interface ErrorCallback {
+    void onWebRtcAudioTrackInitError(String errorMessage);
+    void onWebRtcAudioTrackStartError(AudioTrackStartErrorCode errorCode, String errorMessage);
+    void onWebRtcAudioTrackError(String errorMessage);
+  }
+
+  private static @Nullable WebRtcAudioTrackErrorCallback errorCallbackOld;
+  private static @Nullable ErrorCallback errorCallback;
+
+  @Deprecated
+  public static void setErrorCallback(WebRtcAudioTrackErrorCallback errorCallback) {
+    Logging.d(TAG, "Set error callback (deprecated");
+    WebRtcAudioTrack.errorCallbackOld = errorCallback;
+  }
+
+  public static void setErrorCallback(ErrorCallback errorCallback) {
+    Logging.d(TAG, "Set extended error callback");
+    WebRtcAudioTrack.errorCallback = errorCallback;
+  }
+
+  /**
+   * Audio thread which keeps calling AudioTrack.write() to stream audio.
+   * Data is periodically acquired from the native WebRTC layer using the
+   * nativeGetPlayoutData callback function.
+   * This thread uses a Process.THREAD_PRIORITY_URGENT_AUDIO priority.
+   */
+  private class AudioTrackThread extends Thread {
     private volatile boolean keepAlive = true;
 
     private long writtenFrames = 0;

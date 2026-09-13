@@ -3,8 +3,7 @@ package com.exteragram.messenger.utils.network;
 import android.content.SharedPreferences;
 import com.exteragram.messenger.utils.AppUtils;
 import com.exteragram.messenger.utils.chats.ChatUtils;
-import com.google.android.gms.cast.MediaError;
-import j$.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -22,10 +21,48 @@ import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 
 public abstract class RemoteUtils {
-    private static final long CONFIG_REFRESH_INTERVAL = Duration.ofMinutes(10).toMillis();
+    private static final long CONFIG_REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(10);
     private static final Object messagesRequestLock = new Object();
     private static ArrayList<Utilities.Callback2<TLRPC.messages_Messages, TLRPC.TL_error>> pendingMessagesCallbacks;
     public static SharedPreferences sharedPreferences;
+
+    public static void initCached() {
+        if (sharedPreferences == null) {
+            sharedPreferences = ApplicationLoader.applicationContext.getSharedPreferences("exteraremoteconfig", 0);
+        }
+    }
+
+    public static void init() {
+        initCached();
+        long jCurrentTimeMillis = System.currentTimeMillis();
+        if (Math.abs(jCurrentTimeMillis - sharedPreferences.getLong("__last_fetch_attempt_time", 0L)) < CONFIG_REFRESH_INTERVAL) {
+            return;
+        }
+        sharedPreferences.edit().putLong("__last_fetch_attempt_time", jCurrentTimeMillis).apply();
+        loadConfig();
+    }
+
+    public static void forceRefresh() {
+        initCached();
+        sharedPreferences.edit().putLong("__last_fetch_attempt_time", System.currentTimeMillis()).apply();
+        loadConfig();
+    }
+
+    private static void loadConfig() {
+        getMessages(new Utilities.Callback2<TLRPC.messages_Messages, TLRPC.TL_error>() {
+            @Override
+            public final void run(TLRPC.messages_Messages obj, TLRPC.TL_error obj2) {
+                RemoteUtils.$r8$lambda$LmfFRuJdEdEVAug9vbi59pl5km0(obj, obj2);
+            }
+        });
+    }
+
+    private static SharedPreferences getPrefs() {
+        if (sharedPreferences == null) {
+            initCached();
+        }
+        return sharedPreferences;
+    }
 
     public static void $r8$lambda$LmfFRuJdEdEVAug9vbi59pl5km0(TLRPC.messages_Messages messages_messages, TLRPC.TL_error tL_error) {
         if (tL_error != null || messages_messages == null) {
@@ -177,6 +214,17 @@ public abstract class RemoteUtils {
         }
     }
 
+    public static void $r8$lambda$eNTNmIzDWEebkWIkwoFUzANQvM8() {
+    }
+
+    public static void $r8$lambda$V4VBJH1NEvfcBnItgWjxPBLnJKs(TLObject tLObject, TLRPC.TL_error tL_error) {
+        if (tL_error != null || tLObject == null) {
+            deliverMessagesResult(null, tL_error);
+        } else {
+            deliverMessagesResult((TLRPC.messages_Messages) tLObject, null);
+        }
+    }
+
     public static void m1510$r8$lambda$wpFmLdCTd4P2BQcJG8DkR6gPJ8(TLRPC.TL_messages_getHistory tL_messages_getHistory, Runnable runnable, TLRPC.Chat chat) {
         if (chat != null && chat.id == -2227431611L) {
             TLRPC.TL_inputPeerChannel tL_inputPeerChannel = new TLRPC.TL_inputPeerChannel();
@@ -187,9 +235,31 @@ public abstract class RemoteUtils {
             return;
         }
         TLRPC.TL_error tL_error = new TLRPC.TL_error();
-        tL_error.code = MediaError.DetailedErrorCode.MANIFEST_UNKNOWN;
+        tL_error.code = 400;
         tL_error.text = "CHANNEL_RESOLVE_FAILED";
         deliverMessagesResult(null, tL_error);
+    }
+
+    public static void m1508$r8$lambda$UB_3HLxwoCbba6lUHVL1F5wfA(AtomicBoolean atomicBoolean, Utilities.Callback2 callback2) {
+        if (atomicBoolean.compareAndSet(false, true)) {
+            TLRPC.TL_error tL_error = new TLRPC.TL_error();
+            tL_error.code = 408;
+            tL_error.text = "REQUEST_TIMEOUT";
+            callback2.run(null, tL_error);
+        }
+    }
+
+    public static void m1509$r8$lambda$XRVIe9RERxrqY2e8aTEDV9B8B8(final AtomicBoolean atomicBoolean, AtomicInteger atomicInteger, AtomicInteger atomicInteger2, AccountInstance accountInstance, TLRPC.TL_messages_search tL_messages_search, final AtomicReference atomicReference, final Utilities.Callback2 callback2) {
+        if (atomicBoolean.get()) {
+            return;
+        }
+        atomicInteger.incrementAndGet();
+        atomicInteger2.set(accountInstance.getConnectionsManager().sendRequest(tL_messages_search, new RequestDelegate() { 
+            @Override // org.telegram.tgnet.RequestDelegate
+            public final void run(TLObject tLObject, TLRPC.TL_error tL_error) {
+                RemoteUtils.m1507$r8$lambda$DT1VPJLc_jQIEOnKaPDKhvhjOA(atomicBoolean, atomicReference, callback2, tLObject, tL_error);
+            }
+        }));
     }
 
     private static void deliverMessagesResult(TLRPC.messages_Messages messages_messages, TLRPC.TL_error tL_error) {
@@ -298,7 +368,7 @@ public abstract class RemoteUtils {
         }
         if (atomicBoolean.compareAndSet(false, true)) {
             TLRPC.TL_error tL_error = new TLRPC.TL_error();
-            tL_error.code = MediaError.DetailedErrorCode.MANIFEST_UNKNOWN;
+            tL_error.code = 400;
             tL_error.text = "CHANNEL_RESOLVE_FAILED";
             callback2.run(null, tL_error);
         }
@@ -323,6 +393,7 @@ public abstract class RemoteUtils {
             return Integer.valueOf(i);
         } catch (Exception e) {
             AppUtils.log("Error getting int config value for key: " + str, e);
+            return Integer.valueOf(i);
         }
     }
 
@@ -348,6 +419,7 @@ public abstract class RemoteUtils {
             return Float.valueOf(f);
         } catch (Exception e) {
             AppUtils.log("Error getting value for key: " + str, e);
+            return Float.valueOf(f);
         }
     }
 

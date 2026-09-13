@@ -19,19 +19,19 @@ public final class IconManager$saveIconPackMetadata$savedPack$1 extends SuspendL
     final /* synthetic */ IconPack $iconPack;
     int label;
 
-    public IconManager$saveIconPackMetadata$savedPack$1(IconPack iconPack, Continuation<? super IconManager$saveIconPackMetadata$savedPack$1> continuation) {
+    public IconManager$saveIconPackMetadata$savedPack$1(IconPack iconPack, Continuation continuation) {
         super(2, continuation);
         this.$iconPack = iconPack;
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
     public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
-        return new IconManager$saveIconPackMetadata$savedPack$1(this.$iconPack, continuation);
+        return (Continuation<Unit>) (Continuation<?>) new IconManager$saveIconPackMetadata$savedPack$1(this.$iconPack, continuation);
     }
 
     @Override // kotlin.jvm.functions.Function2
     public final Object invoke(CoroutineScope coroutineScope, Continuation<? super IconPack> continuation) {
-        return ((IconManager$saveIconPackMetadata$savedPack$1) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+        return ((IconManager$saveIconPackMetadata$savedPack$1) (Object) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
     }
 
     @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
@@ -39,8 +39,7 @@ public final class IconManager$saveIconPackMetadata$savedPack$1 extends SuspendL
         IconPack iconPackCopy$default;
         IntrinsicsKt.getCOROUTINE_SUSPENDED();
         if (this.label != 0) {
-            Segment$$ExternalSyntheticBUOutline1.m("call to 'resume' before 'invoke' with coroutine");
-            return null;
+            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
         }
         ResultKt.throwOnFailure(obj);
         IconPackStorage iconPackStorage = IconPackStorage.INSTANCE;

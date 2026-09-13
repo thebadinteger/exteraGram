@@ -444,6 +444,37 @@ public class Camera2Session {
         }
     }
 
+    private int recordingFrameRate = 30;
+
+    public Range<Integer>[] getAvailableFpsRanges() {
+        if (cameraCharacteristics == null) {
+            return null;
+        }
+        return (Range<Integer>[]) cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+    }
+
+    public int getRecordingFrameRate() {
+        return recordingFrameRate;
+    }
+
+    private Range<Integer> selectExtendedFpsRange() {
+        Range<Integer>[] availableFpsRanges = getAvailableFpsRanges();
+        Range<Integer> range = null;
+        if (availableFpsRanges != null) {
+            for (Range<Integer> range2 : availableFpsRanges) {
+                if (range2 != null && range2.getLower() <= 60 && range2.getUpper() == 60) {
+                    if (range2.getLower() == 60 && range2.getUpper() == 60) {
+                        return range2;
+                    }
+                    if (range == null || range2.getLower() > range.getLower() || (range2.getLower().equals(range.getLower()) && range2.getUpper() < range.getUpper())) {
+                        range = range2;
+                    }
+                }
+            }
+        }
+        return range;
+    }
+
     private boolean recordingVideo;
     public void setRecordingVideo(boolean recording) {
         if (recordingVideo != recording) {
@@ -490,8 +521,21 @@ public class Camera2Session {
             captureRequestBuilder.set(CaptureRequest.FLASH_MODE, flashing ? (recordingVideo ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_SINGLE) : CaptureRequest.FLASH_MODE_OFF);
 
             if (recordingVideo) {
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<Integer>(30, 60));
-                captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, 1);
+                recordingFrameRate = 30;
+                Range<Integer> extendedFps;
+                if (com.exteragram.messenger.ExteraConfig.getExtendedFramesPerSecond() && (extendedFps = selectExtendedFpsRange()) != null) {
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, extendedFps);
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                    recordingFrameRate = 60;
+                } else {
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<Integer>(30, 60));
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                }
+                if (com.exteragram.messenger.ExteraConfig.getCameraStabilization()) {
+                    chooseStabilizationMode(captureRequestBuilder);
+                }
+                chooseFocusMode(captureRequestBuilder);
             }
 
             if (sensorSize != null && Math.abs(currentZoom - 1f) >= 0.01f) {
@@ -565,6 +609,45 @@ public class Camera2Session {
         }
     }
 
+    private void chooseStabilizationMode(CaptureRequest.Builder builder) {
+        int[] iArr = (int[]) this.cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION);
+        if (iArr != null) {
+            for (int i : iArr) {
+                if (i == 1) {
+                    builder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, 1);
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, 0);
+                    FileLog.d("Using optical stabilization.");
+                    return;
+                }
+            }
+        }
+        int[] vArr = (int[]) this.cameraCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES);
+        if (vArr != null) {
+            for (int i2 : vArr) {
+                if (i2 == 1) {
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, 1);
+                    builder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, 0);
+                    FileLog.d("Using video stabilization.");
+                    return;
+                }
+            }
+        }
+        FileLog.d("Stabilization not available.");
+    }
+
+    private void chooseFocusMode(CaptureRequest.Builder builder) {
+        int[] afModes = (int[]) this.cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+        if (afModes != null) {
+            for (int i : afModes) {
+                if (i == 3) {
+                    builder.set(CaptureRequest.CONTROL_AF_MODE, 3);
+                    FileLog.d("Using continuous video auto-focus.");
+                    return;
+                }
+            }
+        }
+        FileLog.d("Auto-focus is not available.");
+    }
 
     public static Size chooseOptimalSize(Size[] choices, int width, int height, boolean notBigger) {
         List<Size> bigEnoughWithAspectRatio = new ArrayList<>(choices.length);

@@ -8,7 +8,6 @@ import com.exteragram.messenger.ai.data.Role;
 import com.exteragram.messenger.ai.data.Service;
 import com.exteragram.messenger.ai.data.Suggestions;
 import com.exteragram.messenger.utils.chats.ChatUtils;
-import com.google.android.gms.cast.MediaError;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +53,7 @@ public class AiController {
             builder.setMessage(AndroidUtilities.replaceTags(LocaleController.getString(R.string.ClearConversationHistoryInfo)));
             builder.setTitle(LocaleController.getString(R.string.ClearHistory));
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), new AlertDialog.OnButtonClickListener() { 
+            builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), new AlertDialog.OnButtonClickListener() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda4
                 @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
                 public final void onClick(AlertDialog alertDialog, int i) {
                     AiController.m840$r8$lambda$k4Ykokjerf7UwZXWV7hhEULXCk(runnable, baseFragment, alertDialog, i);
@@ -76,7 +75,107 @@ public class AiController {
         BulletinFactory.of(baseFragment).createSimpleBulletin(R.raw.ic_delete, LocaleController.getString(R.string.HistoryCleared)).show();
     }
 
-    public static boolean $r8$lambda$ml9V0PZBMdpgTeM8PwcrlItS8AE(Role role) {
+    /* JADX INFO: renamed from: $r8$lambda$k4Ykokjerf7UwZXW-V7hhEULXCk, reason: not valid java name */
+    public static /* synthetic */ void m840$r8$lambda$k4Ykokjerf7UwZXWV7hhEULXCk(Runnable runnable, BaseFragment baseFragment, AlertDialog alertDialog, int i) {
+        AiConfig.clearConversationHistory();
+        if (runnable != null) {
+            runnable.run();
+        }
+        BulletinFactory.of(baseFragment).createSimpleBulletin(R.raw.ic_delete, LocaleController.getString(R.string.HistoryCleared)).show();
+    }
+
+    public static void showErrorBulletin(ViewGroup viewGroup, Theme.ResourcesProvider resourcesProvider, int i) {
+        showErrorBulletin(null, viewGroup, resourcesProvider, i);
+    }
+
+    public static void showErrorBulletin(BaseFragment baseFragment, int i) {
+        showErrorBulletin(baseFragment, null, null, i);
+    }
+
+    private static void showErrorBulletin(BaseFragment baseFragment, ViewGroup viewGroup, Theme.ResourcesProvider resourcesProvider, int i) {
+        final int i2;
+        final int i3;
+        int i4Val;
+        final BulletinFactory bulletinFactoryOf;
+        if (i == 408) {
+            i2 = R.string.AIError408;
+            i3 = R.string.AIError408Info;
+            i4Val = 5;
+        } else if (i != 429) {
+            i4Val = 3;
+            if (i == 502) {
+                i2 = R.string.AIError502;
+                i3 = R.string.AIError502Info;
+            } else if (i != 503) {
+                switch (i) {
+                    case 400:
+                        i2 = R.string.AIError400;
+                        i3 = R.string.AIError400Info;
+                        i4Val = 2;
+                        break;
+                    case 401:
+                        i2 = R.string.AIError401;
+                        i3 = R.string.AIError401Info;
+                        break;
+                    case 402:
+                        i2 = R.string.AIError402;
+                        i3 = R.string.AIError402Info;
+                        i4Val = 8;
+                        break;
+                    case 403:
+                        i2 = R.string.AIError403;
+                        i3 = R.string.AIError403Info;
+                        i4Val = 9;
+                        break;
+                    default:
+                        i2 = R.string.AIError;
+                        i3 = R.string.AIErrorInfo;
+                        break;
+                }
+            } else {
+                i2 = R.string.AIError503;
+                i3 = R.string.AIError503Info;
+            }
+        } else {
+            i2 = R.string.AIError429;
+            i3 = R.string.AIError429Info;
+            i4Val = 6;
+        }
+        final int i4 = i4Val;
+        if (viewGroup != null) {
+            bulletinFactoryOf = BulletinFactory.of((FrameLayout) viewGroup, resourcesProvider);
+        } else {
+            bulletinFactoryOf = baseFragment != null ? BulletinFactory.of(baseFragment) : BulletinFactory.global();
+        }
+        AndroidUtilities.runOnUIThread(new Runnable() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda5
+            @Override // java.lang.Runnable
+            public final void run() {
+                bulletinFactoryOf.createSimpleBulletin(LocaleController.getString(i2), LocaleController.getString(i3), i4).show();
+            }
+        });
+    }
+
+    public static AiController getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    public static boolean canUseAI() {
+        return !TextUtils.isEmpty(getInstance().getSelected().getKey());
+    }
+
+    public void loadRoles() {
+        ArrayList<Role> roles = AiConfig.getRoles();
+        this.roles.clear();
+        this.roles.addAll(roles);
+        this.roles.removeIf(new Predicate() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda2
+            @Override // java.util.function.Predicate
+            public final boolean test(Object obj) {
+                return AiController.$r8$lambda$ml9V0PZBMdpgTeM8PwcrlItS8AE((Role) obj);
+            }
+        });
+    }
+
+    public static /* synthetic */ boolean $r8$lambda$ml9V0PZBMdpgTeM8PwcrlItS8AE(Role role) {
         return role == null || role.getName() == null || role.getPrompt() == null;
     }
 
@@ -85,7 +184,7 @@ public class AiController {
     }
 
     public List<Role> getSuggestedRoles() {
-        return (List) Arrays.stream(Suggestions.values()).map(new Function() { 
+        return (List) Arrays.stream(Suggestions.values()).map(new Function() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda3
             @Override // java.util.function.Function
             public final Object apply(Object obj) {
                 return ((Suggestions) obj).getRole();
@@ -198,7 +297,7 @@ public class AiController {
     }
 
     public Service getSelected() {
-        Optional<Service> optionalFindFirst = this.services.stream().filter(new Predicate() { 
+        Optional<Service> optionalFindFirst = this.services.stream().filter(new Predicate() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda1
             @Override // java.util.function.Predicate
             public final boolean test(Object obj) {
                 return ((Service) obj).isSelected();
@@ -211,7 +310,7 @@ public class AiController {
     }
 
     public void saveServices() {
-        this.services.sort(Comparator.comparing(new Function() { 
+        this.services.sort(Comparator.comparing(new Function() { // from class: com.exteragram.messenger.ai.AiController$$ExternalSyntheticLambda0
             @Override // java.util.function.Function
             public final Object apply(Object obj) {
                 return ((Service) obj).getModel();

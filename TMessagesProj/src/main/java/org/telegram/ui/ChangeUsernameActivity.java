@@ -28,6 +28,8 @@ import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+
+import com.exteragram.messenger.ExteraConfig;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -526,7 +528,7 @@ public class ChangeUsernameActivity extends BaseFragment {
                 listView.forcedSections = new ArrayList<>();
             }
             if (usernames.size() > 0) {
-                listView.forcedSections.add(AndroidUtilities.pack(3, 3 + usernames.size()));
+                listView.forcedSections.add(AndroidUtilities.pack(ExteraConfig.getSectionsSeparatedHeaders() ? 4 : 3, 3 + usernames.size()));
             }
         }
 

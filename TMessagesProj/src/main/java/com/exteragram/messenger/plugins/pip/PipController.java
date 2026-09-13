@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -139,12 +140,220 @@ public final class PipController {
     }
 
     public final void setPythonVersion(String str) {
-        "<set-?>";
         pythonVersion = str;
     }
 
-    @Metadata(d1 = {"\u0000\"\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\u000e\n\u0002\b\r\n\u0002\u0010\u000b\n\u0002\b\u0002\n\u0002\u0010\b\n\u0002\b\u0002\b\u0082\b\u0018\u00002\u00020\u0001B!\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\u0006\u0010\u0004\u001a\u00020\u0003\u0012\b\u0010\u0005\u001a\u0004\u0018\u00010\u0003¢\u0006\u0004\b\u0006\u0010\u0007J\t\u0010\f\u001a\u00020\u0003HÆ\u0003J\t\u0010\r\u001a\u00020\u0003HÆ\u0003J\u000b\u0010\u000e\u001a\u0004\u0018\u00010\u0003HÆ\u0003J)\u0010\u000f\u001a\u00020\u00002\b\b\u0002\u0010\u0002\u001a\u00020\u00032\b\b\u0002\u0010\u0004\u001a\u00020\u00032\n\b\u0002\u0010\u0005\u001a\u0004\u0018\u00010\u0003HÆ\u0001J\u0013\u0010\u0010\u001a\u00020\u00112\b\u0010\u0012\u001a\u0004\u0018\u00010\u0001HÖ\u0003J\t\u0010\u0013\u001a\u00020\u0014HÖ\u0001J\t\u0010\u0015\u001a\u00020\u0003HÖ\u0001R\u0011\u0010\u0002\u001a\u00020\u0003¢\u0006\b\n\u0000\u001a\u0004\b\b\u0010\tR\u0011\u0010\u0004\u001a\u00020\u0003¢\u0006\b\n\u0000\u001a\u0004\b\n\u0010\tR\u0013\u0010\u0005\u001a\u0004\u0018\u00010\u0003¢\u0006\b\n\u0000\u001a\u0004\b\u000b\u0010\t¨\u0006\u0016"}, d2 = {"Lcom/exteragram/messenger/plugins/pip/PipController$WheelCandidate;", _UrlKt.FRAGMENT_ENCODE_SET, "version", _UrlKt.FRAGMENT_ENCODE_SET, "downloadUrl", "expectedSha256", "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", "getVersion", "()Ljava/lang/String;", "getDownloadUrl", "getExpectedSha256", "component1", "component2", "component3", "copy", "equals", _UrlKt.FRAGMENT_ENCODE_SET, "other", "hashCode", _UrlKt.FRAGMENT_ENCODE_SET, "toString", "TMessagesProj"}, k = 1, mv = {2, 2, 0}, xi = 48)
+    public static final class WheelCandidate {
+        private final String downloadUrl;
+        private final String expectedSha256;
+        private final String version;
+
+        public WheelCandidate(String version, String downloadUrl, String expectedSha256) {
+            this.version = version;
+            this.downloadUrl = downloadUrl;
+            this.expectedSha256 = expectedSha256;
+        }
+
+        public final String getVersion() {
+            return this.version;
+        }
+
+        public final String getDownloadUrl() {
+            return this.downloadUrl;
+        }
+
+        public final String getExpectedSha256() {
+            return this.expectedSha256;
+        }
+
+        public final String component1() {
+            return this.version;
+        }
+
+        public final String component2() {
+            return this.downloadUrl;
+        }
+
+        public final String component3() {
+            return this.expectedSha256;
+        }
+
+        public final WheelCandidate copy(String version, String downloadUrl, String expectedSha256) {
+            return new WheelCandidate(version, downloadUrl, expectedSha256);
+        }
+
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof WheelCandidate)) return false;
+            WheelCandidate o = (WheelCandidate) other;
+            return Objects.equals(this.version, o.version) && Objects.equals(this.downloadUrl, o.downloadUrl) && Objects.equals(this.expectedSha256, o.expectedSha256);
+        }
+
+        public int hashCode() {
+            return Objects.hash(this.version, this.downloadUrl, this.expectedSha256);
+        }
+
+        public String toString() {
+            return "WheelCandidate(version=" + this.version + ", downloadUrl=" + this.downloadUrl + ", expectedSha256=" + this.expectedSha256 + ')';
+        }
+    }
+
+    public static final class ParsedVersion {
+        private final int epoch;
+        private final List<String> parts;
+        private final String publicVersion;
+
+        public ParsedVersion(int epoch, String publicVersion, List<String> parts) {
+            this.epoch = epoch;
+            this.publicVersion = publicVersion;
+            this.parts = parts;
+        }
+
+        public final int getEpoch() {
+            return this.epoch;
+        }
+
+        public final String getPublicVersion() {
+            return this.publicVersion;
+        }
+
+        public final List<String> getParts() {
+            return this.parts;
+        }
+
+        public final int component1() {
+            return this.epoch;
+        }
+
+        public final String component2() {
+            return this.publicVersion;
+        }
+
+        public final List<String> component3() {
+            return this.parts;
+        }
+
+        public final ParsedVersion copy(int epoch, String publicVersion, List<String> parts) {
+            return new ParsedVersion(epoch, publicVersion, parts);
+        }
+
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof ParsedVersion)) return false;
+            ParsedVersion o = (ParsedVersion) other;
+            return this.epoch == o.epoch && Objects.equals(this.publicVersion, o.publicVersion) && Objects.equals(this.parts, o.parts);
+        }
+
+        public int hashCode() {
+            return Objects.hash(this.epoch, this.publicVersion, this.parts);
+        }
+
+        public String toString() {
+            return "ParsedVersion(epoch=" + this.epoch + ", publicVersion=" + this.publicVersion + ", parts=" + this.parts + ')';
+        }
+    }
+
+    private final String normalizePackageName(String name) {
+        String lowerCase = name.toLowerCase(Locale.ROOT);
+        return REGEX_NORMALIZE.replace(lowerCase, "-");
+    }
+
+    private final synchronized void loadRegistry() {
+        Object objM2315constructorimpl;
+        if (!getRegistryFile().exists()) {
+            registry.clear();
+            return;
+        }
+        try {
+            Object objFromJson = gson.fromJson(SimpliFile.readText$default(SimpliFiles.file(getRegistryFile()), 4194304L, null, 2, null), new TypeToken<Map<String, ? extends Map<String, ? extends Set<? extends String>>>>() {
+            }.getType());
+            registry.clear();
+            for (Map.Entry entry : ((Map<String, Map<String, Set<String>>>) objFromJson).entrySet()) {
+                String str = (String) entry.getKey();
+                Map map = (Map) entry.getValue();
+                String strNormalizePackageName = INSTANCE.normalizePackageName(str);
+                ConcurrentHashMap<String, Set<String>> concurrentHashMap = new ConcurrentHashMap<>();
+                for (Map.Entry entry2 : ((Map<String, Set<String>>) map).entrySet()) {
+                    String str2 = (String) entry2.getKey();
+                    Set set = (Set) entry2.getValue();
+                    ConcurrentHashMap.KeySetView keySetViewNewKeySet = ConcurrentHashMap.newKeySet();
+                    keySetViewNewKeySet.addAll(set);
+                    concurrentHashMap.put(str2, keySetViewNewKeySet);
+                }
+                registry.put(strNormalizePackageName, concurrentHashMap);
+            }
+        } catch (Exception e) {
+            FileLog.e("PipController: Failed to load registry", e);
+            registry.clear();
+            try {
+                SimpliFiles.file(getRegistryFile()).moveTo(new File(getLibsDir(), "registry.json.bak"), OverwritePolicy.REPLACE);
+            } catch (Throwable th) {
+                FileLog.e("PipController: Failed to backup invalid registry", th);
+            }
+        }
+    }
+
+    private final synchronized Map<String, Map<String, Set<String>>> snapshotRegistry() {
+        LinkedHashMap linkedHashMap;
+        try {
+            ConcurrentHashMap<String, ConcurrentHashMap<String, Set<String>>> concurrentHashMap = registry;
+            linkedHashMap = new LinkedHashMap(MapsKt.mapCapacity(concurrentHashMap.size()));
+            for (Object obj : concurrentHashMap.entrySet()) {
+                Object key = ((Map.Entry) obj).getKey();
+                ConcurrentHashMap concurrentHashMap2 = (ConcurrentHashMap) ((Map.Entry) obj).getValue();
+                LinkedHashMap linkedHashMap2 = new LinkedHashMap(MapsKt.mapCapacity(concurrentHashMap2.size()));
+                for (Object obj2 : concurrentHashMap2.entrySet()) {
+                    linkedHashMap2.put(((Map.Entry) obj2).getKey(), CollectionsKt.toSet((Set) ((Map.Entry) obj2).getValue()));
+                }
+                linkedHashMap.put(key, linkedHashMap2);
+            }
+        } catch (Throwable th) {
+            throw th;
+        }
+        return linkedHashMap;
+    }
+
+    private final synchronized void restoreRegistry(Map<String, ? extends Map<String, ? extends Set<String>>> snapshot) {
+        try {
+            registry.clear();
+            for (Map.Entry<String, ? extends Map<String, ? extends Set<String>>> entry : snapshot.entrySet()) {
+                String key = entry.getKey();
+                Map<String, ? extends Set<String>> value = entry.getValue();
+                ConcurrentHashMap<String, Set<String>> concurrentHashMap = new ConcurrentHashMap<>();
+                for (Map.Entry<String, ? extends Set<String>> entry2 : value.entrySet()) {
+                    String key2 = entry2.getKey();
+                    Set<String> value2 = entry2.getValue();
+                    ConcurrentHashMap.KeySetView keySetViewNewKeySet = ConcurrentHashMap.newKeySet();
+                    keySetViewNewKeySet.addAll(value2);
+                    concurrentHashMap.put(key2, keySetViewNewKeySet);
+                }
+                registry.put(key, concurrentHashMap);
+            }
+        } catch (Throwable th) {
+            throw th;
+        }
+    }
+
+    private final synchronized void saveRegistry() {
+        try {
+            SimpliFile simpliFileFile = SimpliFiles.file(getRegistryFile());
+            String json = gson.toJson(snapshotRegistry());
+            SimpliFile.writeTextAtomic$default(simpliFileFile, json, null, 2, null);
+        } catch (Exception e) {
+            FileLog.e("PipController: Failed to save registry", e);
+        }
+    }
+
+    public final void cleanup() {
+        try {
+            cleanupInternal();
+        } catch (IOException e) {
+            FileLog.e("PipController: Cleanup failed", e);
+        }
+    }
+
     public static final List installDependencies$default(PipController pipController, List list, String str, InstallerDelegate installerDelegate, int i, Object obj) {
+
         if ((i & 4) != 0) {
             installerDelegate = null;
         }
@@ -152,13 +361,8 @@ public final class PipController {
     }
 
     public final List<String> installDependencies(List<String> requirements, String pluginId, InstallerDelegate delegate) {
-        PipController pipController;
-        String str;
-        Exception exc;
-        "requirements";
-        "pluginId";
-        ArrayList arrayList = new ArrayList();
-        LinkedHashSet linkedHashSet = new LinkedHashSet();
+        ArrayList<String> arrayList = new ArrayList<>();
+        LinkedHashSet<Pair<String, String>> linkedHashSet = new LinkedHashSet<>();
         Map<String, Map<String, Set<String>>> mapSnapshotRegistry = snapshotRegistry();
         try {
             try {
@@ -169,13 +373,10 @@ public final class PipController {
                                 throw new IOException("Installation cancelled");
                             }
                         } catch (Exception e) {
-                            exc = e;
-                            pipController = this;
-                            str = pluginId;
-                            FileLog.e("PipController: Failed to install dependencies for " + str + ": " + requirements, exc);
-                            pipController.restoreRegistry(mapSnapshotRegistry);
-                            pipController.removeOrphanedDirectories();
-                            throw exc;
+                            FileLog.e("PipController: Failed to install dependencies for " + pluginId + ": " + requirements, e);
+                            restoreRegistry(mapSnapshotRegistry);
+                            removeOrphanedDirectories();
+                            throw e;
                         }
                     }
                     if (!StringsKt.isBlank(str2)) {
@@ -184,34 +385,23 @@ public final class PipController {
                         List<Pair<String, String>> listComponent2 = requirement.component2();
                         String strNormalizePackageName = this.normalizePackageName(strComponent1);
                         if (!PREINSTALLED_PACKAGES.contains(strNormalizePackageName)) {
-                            pipController = this;
-                            str = pluginId;
-                            InstallerDelegate installerDelegate = delegate;
                             try {
-                                pipController.resolveAndInstall(strNormalizePackageName, listComponent2, linkedHashSet, str, installerDelegate);
-                                this = pipController;
-                                pluginId = str;
-                                delegate = installerDelegate;
+                                resolveAndInstall(strNormalizePackageName, listComponent2, linkedHashSet, pluginId, delegate);
                             } catch (Exception e2) {
-                                e = e2;
-                                exc = e;
-                                FileLog.e("PipController: Failed to install dependencies for " + str + ": " + requirements, exc);
-                                pipController.restoreRegistry(mapSnapshotRegistry);
-                                pipController.removeOrphanedDirectories();
-                                throw exc;
+                                FileLog.e("PipController: Failed to install dependencies for " + pluginId + ": " + requirements, e2);
+                                restoreRegistry(mapSnapshotRegistry);
+                                removeOrphanedDirectories();
+                                throw e2;
                             }
                         }
                     }
                 }
-                pipController = this;
-                str = pluginId;
-                pipController.updateRegistryForPlugin(str, linkedHashSet);
+                updateRegistryForPlugin(pluginId, linkedHashSet);
                 for (Pair<String, String> pair : linkedHashSet) {
-                    String absolutePath = pipController.getLibPath(pair.component1(), pair.component2()).getAbsolutePath();
-                    "getAbsolutePath(...)";
+                    String absolutePath = getLibPath(pair.component1(), pair.component2()).getAbsolutePath();
                     arrayList.add(absolutePath);
                 }
-                pipController.saveRegistry();
+                saveRegistry();
                 installLocks.clear();
                 return arrayList;
             } catch (Throwable th) {
@@ -219,9 +409,7 @@ public final class PipController {
                 throw th;
             }
         } catch (Exception e3) {
-            e = e3;
-            pipController = this;
-            str = pluginId;
+            throw (e3 instanceof RuntimeException) ? (RuntimeException) e3 : new RuntimeException(e3);
         }
     }
 
@@ -237,8 +425,7 @@ public final class PipController {
         String str = pluginId;
         InstallerDelegate installerDelegate = delegate;
         if (installerDelegate != null && installerDelegate.isCancelled()) {
-            Model$$ExternalSyntheticBUOutline0.m("Installation cancelled");
-            return;
+            throw new IOException("Installation cancelled");
         }
         ConcurrentHashMap<String, Object> concurrentHashMap = installLocks;
         final Function1 function1 = new Function1() { 
@@ -253,7 +440,6 @@ public final class PipController {
                 return function1.invoke(obj2);
             }
         });
-        "computeIfAbsent(...)";
         synchronized (objComputeIfAbsent) {
             if (installerDelegate != null) {
                 try {
@@ -269,7 +455,7 @@ public final class PipController {
             if (concurrentHashMap2 == null || (setEntrySet = concurrentHashMap2.entrySet()) == null) {
                 entry = null;
             } else {
-                Iterator<T> it = setEntrySet.iterator();
+                Iterator<Map.Entry<String, Set<String>>> it = setEntrySet.iterator();
                 do {
                     if (!it.hasNext()) {
                         next = null;
@@ -277,25 +463,17 @@ public final class PipController {
                     } else {
                         next = it.next();
                         value = ((Map.Entry) next).getValue();
-                        "<get-value>(...)";
                     }
                 } while (((Collection) value).isEmpty());
                 entry = (Map.Entry) next;
             }
             if (entry != null) {
                 Object key = entry.getKey();
-                "<get-key>(...)";
                 strInstallPackage = (String) key;
                 Object value2 = entry.getValue();
-                "<get-value>(...)";
-                String strJoinToString$default = CollectionsKt.joinToString$default((Iterable) value2, ", ", null, null, 0, null, null, 62, null);
+                String strJoinToString$default = CollectionsKt.joinToString((Iterable) value2, ", ", "", "", -1, "...", null);
                 if (!INSTANCE.checkVersionSatisfies(strInstallPackage, specs)) {
-                    throw new IOException("Dependency conflict for '" + pkg + "': Active version " + strInstallPackage + " (used by " + strJoinToString$default + ") does not satisfy requirement '" + (!specs.isEmpty() ? CollectionsKt.joinToString$default(specs, ",", null, null, 0, null, new Function1() { 
-                        @Override // kotlin.jvm.functions.Function1
-                        public final Object invoke(Object obj2) {
-                            return PipController.resolveAndInstall$lambda$2$1((Pair) obj2);
-                        }
-                    }, 30, null) : "(latest)") + "'.");
+                    throw new IOException("Dependency conflict for '" + pkg + "': Active version " + strInstallPackage + " (used by " + strJoinToString$default + ") does not satisfy requirement '" + (!specs.isEmpty() ? CollectionsKt.joinToString(specs, ",", "", "", -1, "...", new Function1<Pair<String, String>, CharSequence>() { @Override public CharSequence invoke(Pair<String, String> p) { return PipController.resolveAndInstall$lambda$2$1(p); } }) : "(latest)") + "'.");
                 }
                 FileLog.d("PipController: Reusing active version " + strInstallPackage + " of " + pkg + " (used by " + strJoinToString$default + ") for " + str);
             } else {
@@ -314,13 +492,13 @@ public final class PipController {
                 }
             }
         }
-        for (Object obj2 : set) {
-            if (Intrinsics.areEqual(((Pair) obj2).getFirst(), pkg)) {
-                obj = obj2;
+        Pair<String, String> pair = null;
+        for (Pair<String, String> obj2 : installedAccumulator) {
+            if (Intrinsics.areEqual(obj2.getFirst(), pkg)) {
+                pair = obj2;
                 break;
             }
         }
-        Pair pair = (Pair) obj;
         if (pair != null) {
             String str2 = (String) pair.getSecond();
             if (VersionComparator.INSTANCE.compare(strInstallPackage, str2) <= 0) {
@@ -361,25 +539,18 @@ public final class PipController {
         }
         for (String str3 : pipController.parseDependenciesFromMetadata(fileFindMetadataFile)) {
             if (installerDelegate != null && installerDelegate.isCancelled()) {
-                Model$$ExternalSyntheticBUOutline0.m("Installation cancelled");
-                return;
+                throw new IOException("Installation cancelled");
             }
             Pair<String, List<Pair<String, String>>> requirement = pipController.parseRequirement(str3);
-            pipController.resolveAndInstall(pipController.normalizePackageName(requirement.component1()), requirement.component2(), set, str, installerDelegate);
-            pipController = this;
-            set = installedAccumulator;
-            str = pluginId;
-            installerDelegate = delegate;
+            resolveAndInstall(normalizePackageName(requirement.component1()), requirement.component2(), installedAccumulator, pluginId, delegate);
         }
     }
 
     public static Object $r8$lambda$nM3N8RYnbiCU76VyVnmjZ3F9qY8(String str) {
-        "it";
         return new Object();
     }
 
     public static final CharSequence resolveAndInstall$lambda$2$1(Pair pair) {
-        "it";
         return ((String) pair.getFirst()) + ((String) pair.getSecond());
     }
 
@@ -388,7 +559,6 @@ public final class PipController {
     }
 
     public static ConcurrentHashMap m1329$r8$lambda$cKu7WIfB65dGzootwJY_PzblQ(String str) {
-        "it";
         return new ConcurrentHashMap();
     }
 
@@ -397,7 +567,6 @@ public final class PipController {
     }
 
     public static Set $r8$lambda$ba_CzsM0FMRcDjro_ht7norbT1M(String str) {
-        "it";
         return Collections.newSetFromMap(new ConcurrentHashMap());
     }
 
@@ -476,8 +645,7 @@ public final class PipController {
         for (Map.Entry<String, ConcurrentHashMap<String, Set<String>>> entry : registry.entrySet()) {
             String key = entry.getKey();
             Set<String> setKeySet = entry.getValue().keySet();
-            "<get-keys>(...)";
-            Iterator<T> it = setKeySet.iterator();
+            Iterator it = setKeySet.iterator();
             while (it.hasNext()) {
                 try {
                     linkedHashSet.add(INSTANCE.getLibPath(key, (String) it.next()).getCanonicalPath());
@@ -521,7 +689,6 @@ public final class PipController {
     }
 
     public final void uninstallDependencies(String pluginId) {
-        "pluginId";
         ArrayList arrayList = new ArrayList();
         int i = 0;
         boolean z = false;
@@ -554,7 +721,11 @@ public final class PipController {
             if (concurrentHashMap3 != null && concurrentHashMap3.isEmpty()) {
                 concurrentHashMap.remove(str);
             }
-            INSTANCE.deletePackage(str, str2);
+            try {
+                INSTANCE.deletePackage(str, str2);
+            } catch (IOException e) {
+                FileLog.e("PipController: Failed to delete package " + str + " " + str2, e);
+            }
         }
         if (z) {
             saveRegistry();
@@ -562,25 +733,25 @@ public final class PipController {
     }
 
     public static CharSequence m1330$r8$lambda$iez_jkcSyBPRjplKRoDAzlgN2I(Pair pair) {
-        "it";
         return ((String) pair.getFirst()) + ((String) pair.getSecond());
     }
 
     private final String installPackage(String pkg, List<Pair<String, String>> specs, final InstallerDelegate delegate) throws IOException {
         Object objM2315constructorimpl;
         Object objM2315constructorimpl2;
-        FileLog.d("PipController: Installing " + pkg + ' ' + (!specs.isEmpty() ? CollectionsKt.joinToString$default(specs, ",", null, null, 0, null, new Function1() { 
+        FileLog.d("PipController: Installing " + pkg + ' ' + (!specs.isEmpty() ? CollectionsKt.joinToString(specs, ",", "", "", -1, "...", new Function1() { 
             @Override // kotlin.jvm.functions.Function1
             public final Object invoke(Object obj) {
                 return PipController.m1330$r8$lambda$iez_jkcSyBPRjplKRoDAzlgN2I((Pair) obj);
             }
-        }, 30, null) : "(latest)"));
+        }) : "(latest)"));
         if (delegate != null) {
             delegate.onProgress("Resolving " + pkg + "...");
         }
+        WheelCandidate wheelCandidate = null;
         Response responseExecuteWithRetry = executeWithRetry(new Request.Builder().url("https://pypi.org/pypi/" + pkg + "/json").build(), delegate);
         try {
-            if (!responseExecuteWithRetry.getIsSuccessful()) {
+            if (!responseExecuteWithRetry.isSuccessful()) {
                 if (responseExecuteWithRetry.code() == 404) {
                     throw new IOException("Package " + pkg + " not found on PyPI");
                 }
@@ -595,7 +766,6 @@ public final class PipController {
                 throw new IOException("No releases found for " + pkg + " on PyPI");
             }
             Set<String> setKeySet = asJsonObject.keySet();
-            "keySet(...)";
             List list = CollectionsKt.toList(setKeySet);
             PipController pipController = INSTANCE;
             ArrayList arrayList = new ArrayList();
@@ -613,7 +783,7 @@ public final class PipController {
             List<Pair<String, String>> list2 = specs;
             boolean z = false;
             if (!(list2 instanceof Collection) || !list2.isEmpty()) {
-                Iterator<T> it = list2.iterator();
+                Iterator it = list2.iterator();
                 while (it.hasNext()) {
                     Pair pair = (Pair) it.next();
                     if (Intrinsics.areEqual(pair.getFirst(), "==") || Intrinsics.areEqual(pair.getFirst(), "===")) {
@@ -622,12 +792,11 @@ public final class PipController {
                     }
                 }
             }
-            WheelCandidate wheelCandidate = null;
+            wheelCandidate = null;
             for (String str : listSortedWith) {
                 JsonArray asJsonArray = asJsonObject.getAsJsonArray(str);
                 if (asJsonArray != null) {
                     Iterator<JsonElement> it2 = asJsonArray.iterator();
-                    "iterator(...)";
                     while (it2.hasNext()) {
                         WheelCandidate wheelCandidateSelectWheelCandidate = INSTANCE.selectWheelCandidate(str, it2.next().getAsJsonObject(), z);
                         if (wheelCandidateSelectWheelCandidate != null) {
@@ -650,92 +819,72 @@ public final class PipController {
                     }
                 }
             }
-            Unit unit = Unit.INSTANCE;
-            CloseableKt.closeFinally(responseExecuteWithRetry, null);
-            if (wheelCandidate == null) {
-                throw new IOException("No pure-Python wheel found for " + pkg + ". Binary packages are not supported.");
-            }
-            File libPath = getLibPath(pkg, wheelCandidate.getVersion());
-            File file = SimpliFiles.directory(new File(getLibsDir(), "tmp_" + pkg + '_' + System.currentTimeMillis())).create().getFile();
-            File file2 = new File(file, "extracted");
-            try {
-                if (delegate != null) {
-                    try {
-                        delegate.onProgress("Downloading " + pkg + ' ' + wheelCandidate.getVersion() + "...");
-                    } catch (Exception e) {
-                        FileLog.e("PipController: Failed to download/install " + pkg, e);
-                        throw e;
-                    }
-                }
-                File file3 = new File(file, "package.whl");
-                Response responseExecuteWithRetry2 = executeWithRetry(new Request.Builder().url(wheelCandidate.getDownloadUrl()).build(), delegate);
+        } finally {
+            responseExecuteWithRetry.close();
+        }
+        if (wheelCandidate == null) {
+            throw new IOException("No pure-Python wheel found for " + pkg + ". Binary packages are not supported.");
+        }
+        File libPath = getLibPath(pkg, wheelCandidate.getVersion());
+        File file = SimpliFiles.directory(new File(getLibsDir(), "tmp_" + pkg + '_' + System.currentTimeMillis())).create().getFile();
+        File file2 = new File(file, "extracted");
+        try {
+            if (delegate != null) {
                 try {
-                    if (!responseExecuteWithRetry2.getIsSuccessful()) {
-                        throw new IOException("Download failed: " + responseExecuteWithRetry2.code());
-                    }
-                    long contentLength = responseExecuteWithRetry2.body().getContentLength();
-                    if (contentLength > MAX_WHEEL_BYTES) {
-                        throw new IOException("Wheel for " + pkg + " is too large: " + contentLength + " bytes (limit 262144000)");
-                    }
-                    SimpliFile.writeFrom$default(SimpliFiles.file(file3), new SizeLimitedInputStream(responseExecuteWithRetry2.body().byteStream(), MAX_WHEEL_BYTES), 0L, 2, null);
-                    CloseableKt.closeFinally(responseExecuteWithRetry2, null);
-                    if (wheelCandidate.getExpectedSha256() != null && !StringsKt.equals(calculateSha256(file3), wheelCandidate.getExpectedSha256(), true)) {
-                        throw new IOException("Checksum mismatch");
-                    }
-                    if (delegate != null) {
-                        delegate.onProgress("Extracting " + pkg + ' ' + wheelCandidate.getVersion() + "...");
-                    }
-                    SimpliFiles.archive(file3).withPolicy(wheelArchivePolicy).extractToDirectory(file2, ArchiveExtractionOptions.INSTANCE.builder().cancellationToken(new CancellationToken() { 
-                        @Override // org.simplifiles.archive.CancellationToken
-                        public final boolean isCancellationRequested() {
-                            return PipController.$r8$lambda$WCaEarcnhdtxiKzUVomzfeStLN0(delegate);
-                        }
-                    }).targetPolicy(ExtractionTargetPolicy.REPLACE).build());
-                    if (libPath.exists()) {
-                        SimpliFiles.directory(libPath).deleteRecursively();
-                    }
-                    SimpliFiles.directory(file2).moveTo(libPath, OverwritePolicy.REPLACE);
-                    try {
-                        Result.Companion companion = Result.INSTANCE;
-                        objM2315constructorimpl2 = Result.m2315constructorimpl(Boolean.valueOf(SimpliFiles.directory(file).deleteRecursively()));
-                    } catch (Throwable th) {
-                        Result.Companion companion2 = Result.INSTANCE;
-                        objM2315constructorimpl2 = Result.m2315constructorimpl(ResultKt.createFailure(th));
-                    }
-                    Throwable thM2318exceptionOrNullimpl = Result.m2318exceptionOrNullimpl(objM2315constructorimpl2);
-                    if (thM2318exceptionOrNullimpl != null) {
-                        FileLog.e("PipController: Failed to delete temp package directory", thM2318exceptionOrNullimpl);
-                    }
-                    return wheelCandidate.getVersion();
-                } catch (Throwable th2) {
-                    try {
-                        throw th2;
-                    } catch (Throwable th3) {
-                        CloseableKt.closeFinally(responseExecuteWithRetry2, th2);
-                        throw th3;
-                    }
+                    delegate.onProgress("Downloading " + pkg + ' ' + wheelCandidate.getVersion() + "...");
+                } catch (Exception e) {
+                    FileLog.e("PipController: Failed to download/install " + pkg, e);
+                    throw e;
                 }
-            } catch (Throwable th4) {
-                try {
-                    Result.Companion companion3 = Result.INSTANCE;
-                    objM2315constructorimpl = Result.m2315constructorimpl(Boolean.valueOf(SimpliFiles.directory(file).deleteRecursively()));
-                } catch (Throwable th5) {
-                    Result.Companion companion4 = Result.INSTANCE;
-                    objM2315constructorimpl = Result.m2315constructorimpl(ResultKt.createFailure(th5));
-                }
-                Throwable thM2318exceptionOrNullimpl2 = Result.m2318exceptionOrNullimpl(objM2315constructorimpl);
-                if (thM2318exceptionOrNullimpl2 == null) {
-                    throw th4;
-                }
-                FileLog.e("PipController: Failed to delete temp package directory", thM2318exceptionOrNullimpl2);
-                throw th4;
             }
-        } catch (Throwable th6) {
+            File file3 = new File(file, "package.whl");
+            Response responseExecuteWithRetry2 = executeWithRetry(new Request.Builder().url(wheelCandidate.getDownloadUrl()).build(), delegate);
             try {
-                throw th6;
-            } catch (Throwable th7) {
-                CloseableKt.closeFinally(responseExecuteWithRetry, th6);
-                throw th7;
+                if (!responseExecuteWithRetry2.isSuccessful()) {
+                    throw new IOException("Download failed: " + responseExecuteWithRetry2.code());
+                }
+                long contentLength = responseExecuteWithRetry2.body().contentLength();
+                if (contentLength > MAX_WHEEL_BYTES) {
+                    throw new IOException("Wheel for " + pkg + " is too large: " + contentLength + " bytes (limit 262144000)");
+                }
+                SimpliFile.writeFrom$default(SimpliFiles.file(file3), new SizeLimitedInputStream(responseExecuteWithRetry2.body().byteStream(), MAX_WHEEL_BYTES), 0L, 2, null);
+            } finally {
+                responseExecuteWithRetry2.close();
+            }
+            try {
+                if (wheelCandidate.getExpectedSha256() != null && !StringsKt.equals(calculateSha256(file3), wheelCandidate.getExpectedSha256(), true)) {
+                    throw new IOException("Checksum mismatch");
+                }
+            } catch (NoSuchAlgorithmException e) {
+                throw new IOException("SHA-256 algorithm not available", e);
+            }
+            if (delegate != null) {
+                delegate.onProgress("Extracting " + pkg + ' ' + wheelCandidate.getVersion() + "...");
+            }
+            SimpliFiles.archive(file3).withPolicy(wheelArchivePolicy).extractToDirectory(file2, ArchiveExtractionOptions.INSTANCE.builder().cancellationToken(new CancellationToken() { 
+                @Override // org.simplifiles.archive.CancellationToken
+                public final boolean isCancellationRequested() {
+                    return PipController.$r8$lambda$WCaEarcnhdtxiKzUVomzfeStLN0(delegate);
+                }
+            }).targetPolicy(ExtractionTargetPolicy.REPLACE).build());
+            if (libPath.exists()) {
+                try {
+                    SimpliFiles.directory(libPath).deleteRecursively();
+                } catch (Exception e) {
+                    FileLog.e("PipController: Failed to delete existing libPath", e);
+                }
+            }
+            try {
+                SimpliFiles.directory(file2).moveTo(libPath, OverwritePolicy.REPLACE);
+            } catch (Exception e) {
+                throw new IOException("Failed to move package directory to libPath", e);
+            }
+            return wheelCandidate.getVersion();
+        } finally {
+            try {
+                SimpliFiles.directory(file).deleteRecursively();
+            } catch (Throwable th) {
+                FileLog.e("PipController: Failed to delete temp package directory", th);
             }
         }
     }
@@ -781,20 +930,17 @@ public final class PipController {
             return null;
         }
         try {
-            Result.Companion companion = Result.INSTANCE;
-            objM2315constructorimpl = Result.m2315constructorimpl(Boolean.valueOf(jsonElement.getAsBoolean()));
+            return Boolean.valueOf(jsonElement.getAsBoolean());
         } catch (Throwable th) {
-            Result.Companion companion2 = Result.INSTANCE;
-            objM2315constructorimpl = Result.m2315constructorimpl(ResultKt.createFailure(th));
+            return null;
         }
-        return (Boolean) (Result.m2321isFailureimpl(objM2315constructorimpl) ? null : objM2315constructorimpl);
     }
 
     private final boolean isPurePythonWheelCompatible(String filename) {
-        if (!StringsKt.endsWith$default(filename, ".whl", false, 2, (Object) null)) {
+        if (!filename.endsWith(".whl")) {
             return false;
         }
-        List listSplit$default = StringsKt.split$default((CharSequence) StringsKt.removeSuffix(filename, (CharSequence) ".whl"), new String[]{"-"}, false, 0, 6, (Object) null);
+        List listSplit$default = StringsKt.split(StringsKt.removeSuffix(filename, ".whl"), new String[]{"-"}, false, 0);
         if (listSplit$default.size() < 5) {
             return false;
         }
@@ -802,7 +948,7 @@ public final class PipController {
         String str2 = (String) listSplit$default.get(listSplit$default.size() - 2);
         String str3 = (String) listSplit$default.get(listSplit$default.size() - 1);
         if (Intrinsics.areEqual(str2, "none") && Intrinsics.areEqual(str3, "any")) {
-            List listSplit$default2 = StringsKt.split$default((CharSequence) str, new String[]{"."}, false, 0, 6, (Object) null);
+            List listSplit$default2 = StringsKt.split(str, new String[]{"."}, false, 0);
             if ((listSplit$default2 instanceof Collection) && listSplit$default2.isEmpty()) {
                 return false;
             }
@@ -819,7 +965,7 @@ public final class PipController {
     private final boolean isPythonTagCompatible(String tag) {
         Integer intOrNull;
         Integer intOrNull2;
-        List listSplit$default = StringsKt.split$default((CharSequence) pythonVersion, new String[]{"."}, false, 0, 6, (Object) null);
+        List listSplit$default = StringsKt.split(pythonVersion, new String[]{"."}, false, 0);
         String str = (String) CollectionsKt.getOrNull(listSplit$default, 0);
         if (str != null && (intOrNull = StringsKt.toIntOrNull(str)) != null) {
             int iIntValue = intOrNull.intValue();
@@ -827,7 +973,6 @@ public final class PipController {
             if (str2 != null && (intOrNull2 = StringsKt.toIntOrNull(str2)) != null) {
                 int iIntValue2 = intOrNull2.intValue();
                 String lowerCase = tag.toLowerCase(Locale.ROOT);
-                "toLowerCase(...)";
                 if (Intrinsics.areEqual(lowerCase, "py" + iIntValue)) {
                     return true;
                 }
@@ -848,8 +993,7 @@ public final class PipController {
         IOException e = null;
         while (i < 3) {
             if (delegate != null && delegate.isCancelled()) {
-                Model$$ExternalSyntheticBUOutline0.m("Installation cancelled");
-                return null;
+                throw new IOException("Installation cancelled");
             }
             try {
                 return client.newCall(request).execute();
@@ -864,8 +1008,7 @@ public final class PipController {
             }
         }
         if (delegate != null && delegate.isCancelled()) {
-            Model$$ExternalSyntheticBUOutline0.m("Installation cancelled");
-            return null;
+            throw new IOException("Installation cancelled");
         }
         if (e != null) {
             throw e;
@@ -879,7 +1022,7 @@ public final class PipController {
         Sequence map;
         Sequence sequenceFilter2;
         List<String> list;
-        final String str = pkg + SignatureVisitor.SUPER;
+        final String str = pkg + '-';
         File[] fileArrListFiles = getLibsDir().listFiles();
         if (fileArrListFiles == null || (sequenceAsSequence = ArraysKt.asSequence(fileArrListFiles)) == null || (sequenceFilter = SequencesKt.filter(sequenceAsSequence, new Function1() { 
             @Override // kotlin.jvm.functions.Function1
@@ -905,8 +1048,7 @@ public final class PipController {
     public static boolean m1325$r8$lambda$3qb6Nezx6TG2Tac1y7Xa35y3cA(String str, File file) {
         if (file.isDirectory()) {
             String name = file.getName();
-            "getName(...)";
-            if (StringsKt.startsWith$default(name, str, false, 2, (Object) null)) {
+            if (name.startsWith(str)) {
                 return true;
             }
         }
@@ -915,14 +1057,11 @@ public final class PipController {
 
     public static String m1328$r8$lambda$LmFvS3nVC4K08Dx0OuVVeARUQM(String str, File file) {
         String name = file.getName();
-        "getName(...)";
         String strSubstring = name.substring(str.length());
-        "substring(...)";
         return strSubstring;
     }
 
     public static boolean m1327$r8$lambda$GBc8aKnKaBWkdqFW6gQZ9PEPeQ(List list, String str) {
-        "version";
         return str.length() > 0 && INSTANCE.checkVersionSatisfies(str, list);
     }
 
@@ -932,7 +1071,6 @@ public final class PipController {
             return null;
         }
         Set<String> setKeySet = concurrentHashMap.keySet();
-        "<get-keys>(...)";
         ArrayList arrayList = new ArrayList();
         for (Object obj : setKeySet) {
             if (INSTANCE.checkVersionSatisfies((String) obj, specs)) {
@@ -943,10 +1081,10 @@ public final class PipController {
     }
 
     private final File getLibPath(String pkg, String version) throws IOException {
-        if (StringsKt.contains$default((CharSequence) version, (CharSequence) "/", false, 2, (Object) null) || StringsKt.contains$default((CharSequence) version, (CharSequence) "\\", false, 2, (Object) null) || StringsKt.contains$default((CharSequence) version, (CharSequence) "..", false, 2, (Object) null)) {
+        if (version.contains("/") || version.contains("\\") || version.contains("..")) {
             throw new IOException("Invalid version: " + version);
         }
-        return new File(getLibsDir(), pkg + SignatureVisitor.SUPER + version);
+        return new File(getLibsDir(), pkg + '-' + version);
     }
 
     private final void deletePackage(String pkg, String version) throws IOException {
@@ -954,24 +1092,17 @@ public final class PipController {
         File libPath = getLibPath(pkg, version);
         if (libPath.exists()) {
             try {
-                Result.Companion companion = Result.INSTANCE;
                 SimpliFiles.directory(libPath).deleteRecursively();
                 FileLog.d("PipController: Deleted package " + libPath.getName());
-                objM2315constructorimpl = Result.m2315constructorimpl(Unit.INSTANCE);
             } catch (Throwable th) {
-                Result.Companion companion2 = Result.INSTANCE;
-                objM2315constructorimpl = Result.m2315constructorimpl(ResultKt.createFailure(th));
-            }
-            Throwable thM2318exceptionOrNullimpl = Result.m2318exceptionOrNullimpl(objM2315constructorimpl);
-            if (thM2318exceptionOrNullimpl != null) {
-                FileLog.e("PipController: Failed to delete package " + libPath.getName(), thM2318exceptionOrNullimpl);
+                FileLog.e("PipController: Failed to delete package " + libPath.getName(), th);
             }
         }
     }
 
     private final Pair<String, List<Pair<String, String>>> parseRequirement(String req) {
-        String string = StringsKt.trim((CharSequence) REGEX_REQ_PAREN.replace(StringsKt.trim((CharSequence) REGEX_REQ_EXTRA.replace(StringsKt.trim((CharSequence) StringsKt.split$default((CharSequence) req, new String[]{";"}, false, 0, 6, (Object) null).get(0)).toString(), "")).toString(), "")).toString();
-        MatchResult matchResultFind$default = Regex.find$default(REGEX_REQ_PARSE, string, 0, 2, null);
+        String string = StringsKt.trim((CharSequence) REGEX_REQ_PAREN.replace(StringsKt.trim((CharSequence) REGEX_REQ_EXTRA.replace(StringsKt.trim((CharSequence) StringsKt.split(req, new String[]{";"}, false, 0).get(0)).toString(), "")).toString(), "")).toString();
+        MatchResult matchResultFind$default = REGEX_REQ_PARSE.find(string, 0);
         if (matchResultFind$default == null) {
             return TuplesKt.to(string, CollectionsKt.emptyList());
         }
@@ -982,9 +1113,9 @@ public final class PipController {
     private final List<Pair<String, String>> parseSpecs(String specsString) {
         ArrayList arrayList = new ArrayList();
         if (!StringsKt.isBlank(specsString)) {
-            Iterator it = StringsKt.split$default((CharSequence) specsString, new String[]{","}, false, 0, 6, (Object) null).iterator();
+            Iterator it = StringsKt.split(specsString, new String[]{","}, false, 0).iterator();
             while (it.hasNext()) {
-                MatchResult matchResultFind$default = Regex.find$default(REGEX_REQ_SPECS, StringsKt.trim((CharSequence) it.next()).toString(), 0, 2, null);
+                MatchResult matchResultFind$default = REGEX_REQ_SPECS.find(StringsKt.trim((CharSequence) it.next()).toString(), 0);
                 if (matchResultFind$default != null) {
                     MatchResult.Destructured destructured = matchResultFind$default.getDestructured();
                     arrayList.add(TuplesKt.to(destructured.getMatch().getGroupValues().get(1), StringsKt.trim((CharSequence) destructured.getMatch().getGroupValues().get(2)).toString()));
@@ -1011,13 +1142,11 @@ public final class PipController {
     }
 
     public static Unit $r8$lambda$3nEd9lhKtncIBzZ9CAoypYcXEk4(List list, String str) {
-        "line";
-        if (StringsKt.startsWith$default(str, "Requires-Dist:", false, 2, (Object) null)) {
+        if (str.startsWith("Requires-Dist:")) {
             String strSubstring = str.substring(14);
-            "substring(...)";
             String string = StringsKt.trim((CharSequence) strSubstring).toString();
-            if (StringsKt.contains$default((CharSequence) string, (CharSequence) ";", false, 2, (Object) null)) {
-                List listSplit$default = StringsKt.split$default((CharSequence) string, new String[]{";"}, false, 2, 2, (Object) null);
+            if (string.contains(";")) {
+                List listSplit$default = StringsKt.split(string, new String[]{";"}, false, 2);
                 if (!INSTANCE.isMarkerCompatible(StringsKt.trim((CharSequence) listSplit$default.get(1)).toString())) {
                     return Unit.INSTANCE;
                 }
@@ -1034,15 +1163,19 @@ public final class PipController {
     }
 
     private final File findMetadataFile(String pkg, String version) {
-        File[] fileArrListFiles = getLibPath(pkg, version).listFiles(new FilenameFilter() { 
-            @Override // java.io.FilenameFilter
-            public final boolean accept(File file, String str) {
-                return StringsKt.endsWith$default(str, ".dist-info", false, 2, (Object) null);
+        try {
+            File[] fileArrListFiles = getLibPath(pkg, version).listFiles(new FilenameFilter() { 
+                @Override // java.io.FilenameFilter
+                public final boolean accept(File file, String str) {
+                    return str.endsWith(".dist-info");
+                }
+            });
+            File file = fileArrListFiles != null ? (File) ArraysKt.firstOrNull(fileArrListFiles) : null;
+            if (file != null) {
+                return new File(file, "METADATA");
             }
-        });
-        File file = fileArrListFiles != null ? (File) ArraysKt.firstOrNull(fileArrListFiles) : null;
-        if (file != null) {
-            return new File(file, "METADATA");
+        } catch (IOException e) {
+            FileLog.e("PipController: Failed to find metadata file for " + pkg + " " + version, e);
         }
         return null;
     }
@@ -1053,8 +1186,7 @@ public final class PipController {
         private final List<String> tokens;
 
         public MarkerParser(String str) {
-            "marker";
-            this.tokens = SequencesKt.toList(SequencesKt.map(Regex.findAll$default(PipController.REGEX_MARKER_TOKEN, str, 0, 2, null), new Function1() { 
+            this.tokens = SequencesKt.toList(SequencesKt.map(PipController.REGEX_MARKER_TOKEN.findAll(str, 0), new Function1() { 
                 @Override // kotlin.jvm.functions.Function1
                 public final Object invoke(Object obj) {
                     return PipController.MarkerParser.$r8$lambda$2nxjO8cTPCazwOsauAZxX68kyv8((MatchResult) obj);
@@ -1063,7 +1195,6 @@ public final class PipController {
         }
 
         public static String $r8$lambda$2nxjO8cTPCazwOsauAZxX68kyv8(MatchResult matchResult) {
-            "it";
             return matchResult.getValue();
         }
 
@@ -1074,7 +1205,7 @@ public final class PipController {
             try {
                 return parseOr();
             } catch (Exception e) {
-                FileLog.e("PipController: Failed to evaluate marker: " + CollectionsKt.joinToString$default(this.tokens, " ", null, null, 0, null, null, 62, null), e);
+                FileLog.e("PipController: Failed to evaluate marker: " + CollectionsKt.joinToString(this.tokens, " ", "", "", -1, "...", null), e);
                 return true;
             }
         }
@@ -1116,21 +1247,15 @@ public final class PipController {
 
         private final String nextOperator() {
             String lowerCase;
-            String strPeek$default = peek$default(this, 0, 1, null);
-            if (strPeek$default == null) {
+            String strPeek = peek(0);
+            if (strPeek == null) {
                 return null;
             }
             Locale locale = Locale.ROOT;
-            String lowerCase2 = strPeek$default.toLowerCase(locale);
-            "toLowerCase(...)";
+            String lowerCase2 = strPeek.toLowerCase(locale);
             if (Intrinsics.areEqual(lowerCase2, "not")) {
-                String strPeek = peek(1);
-                if (strPeek != null) {
-                    lowerCase = strPeek.toLowerCase(locale);
-                    "toLowerCase(...)";
-                } else {
-                    lowerCase = null;
-                }
+                String strPeek1 = peek(1);
+                lowerCase = strPeek1 != null ? strPeek1.toLowerCase(locale) : null;
                 if (Intrinsics.areEqual(lowerCase, "in")) {
                     this.position += 2;
                     return "not in";
@@ -1144,11 +1269,109 @@ public final class PipController {
             return lowerCase2;
         }
 
-        String peek$default(MarkerParser markerParser, int i, int i2, Object obj) {
-            if ((i2 & 1) != 0) {
-                i = 0;
+        private final boolean evaluateComparison(String left, String op, String right) {
+            String leftVar = markerVariableName(left);
+            String rightVar = markerVariableName(right);
+            String leftVal = leftVar != null ? markerValue(leftVar) : unquote(left);
+            String rightVal = rightVar != null ? markerValue(rightVar) : unquote(right);
+            if ((leftVar != null && leftVal == null) || (rightVar != null && rightVal == null)) {
+                return false;
             }
-            return markerParser.peek(i);
+            if (leftVal == null || rightVal == null) {
+                return false;
+            }
+            if (leftVar != null && (leftVar.equals("python_version") || leftVar.equals("python_full_version"))) {
+                return PipController.INSTANCE.checkVersionSatisfies(leftVal, CollectionsKt.listOf(TuplesKt.to(op, rightVal)));
+            }
+            if (rightVar != null && (rightVar.equals("python_version") || rightVar.equals("python_full_version"))) {
+                return PipController.INSTANCE.checkVersionSatisfies(rightVal, CollectionsKt.listOf(TuplesKt.to(invertVersionOperator(op), leftVal)));
+            }
+            switch (op) {
+                case "==":
+                case "===":
+                    return leftVal.equalsIgnoreCase(rightVal);
+                case "!=":
+                    return !leftVal.equalsIgnoreCase(rightVal);
+                case "in":
+                    return rightVal.contains(leftVal);
+                case "not in":
+                    return !rightVal.contains(leftVal);
+                default:
+                    return false;
+            }
+        }
+
+        private final String markerVariableName(String token) {
+            if (!token.startsWith("'") && !token.startsWith("\"")) {
+                String lower = token.toLowerCase(Locale.ROOT);
+                if (new Regex("[a-z_][a-z0-9_]*").matches(lower)) {
+                    return lower;
+                }
+            }
+            return null;
+        }
+
+        private final String markerValue(String name) {
+            if (name == null) return null;
+            switch (name) {
+                case "os_name": return "posix";
+                case "sys_platform": return "linux";
+                case "platform_system": return "Linux";
+                case "platform_python_implementation": return "CPython";
+                case "implementation_name": return "cpython";
+                case "python_version":
+                    return CollectionsKt.joinToString(CollectionsKt.take(StringsKt.split(PipController.INSTANCE.getPythonVersion(), new String[]{"."}, false, 0), 2), ".", "", "", -1, "...", null);
+                case "python_full_version":
+                    return PipController.INSTANCE.getPythonVersion();
+                case "extra": return "";
+                default: return null;
+            }
+        }
+
+        private final String invertVersionOperator(String operator) {
+            switch (operator) {
+                case "<": return ">";
+                case "<=": return ">=";
+                case ">": return "<";
+                case ">=": return "<=";
+                default: return operator;
+            }
+        }
+
+        private final String unquote(String value) {
+            if (value.length() >= 2) {
+                char first = value.charAt(0);
+                char last = value.charAt(value.length() - 1);
+                if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+                    return value.substring(1, value.length() - 1);
+                }
+            }
+            return value;
+        }
+
+        private final boolean match(String expected) {
+            if (!Intrinsics.areEqual(peek(0), expected)) {
+                return false;
+            }
+            this.position++;
+            return true;
+        }
+
+        private final boolean matchKeyword(String expected) {
+            String peekVal = peek(0);
+            String lower = peekVal != null ? peekVal.toLowerCase(Locale.ROOT) : null;
+            if (!Intrinsics.areEqual(lower, expected)) {
+                return false;
+            }
+            this.position++;
+            return true;
+        }
+
+        private final String next() {
+            String val = peek(0);
+            if (val == null) return null;
+            this.position++;
+            return val;
         }
 
         private final String peek(int offset) {
@@ -1157,78 +1380,70 @@ public final class PipController {
     }
 
     public final boolean checkVersionSatisfies(String version, List<Pair<String, String>> specs) {
-        boolean zMatchesVersionWildcard;
         if (specs.isEmpty()) {
             return true;
         }
         for (Pair<String, String> pair : specs) {
-            String strComponent1 = pair.component1();
-            String strComponent2 = pair.component2();
+            String op = pair.component1();
+            String specVersion = pair.component2();
             VersionComparator versionComparator = VersionComparator.INSTANCE;
-            int iCompare = versionComparator.compare(version, strComponent2);
-            int iHashCode = strComponent1.hashCode();
-            if (iHashCode != 60) {
-                if (iHashCode != 62) {
-                    if (iHashCode != 1084) {
-                        if (iHashCode != 1921) {
-                            if (iHashCode != 1952) {
-                                if (iHashCode != 1983) {
-                                    if (iHashCode != 3967) {
-                                        if (iHashCode == 60573 && strComponent1.equals("===")) {
-                                            zMatchesVersionWildcard = Intrinsics.areEqual(version, strComponent2);
-                                        }
-                                    } else if (strComponent1.equals("~=")) {
-                                        if (iCompare >= 0) {
-                                            List mutableList = CollectionsKt.toMutableList((Collection) StringsKt.split$default((CharSequence) strComponent2, new String[]{"."}, false, 0, 6, (Object) null));
-                                            if (mutableList.size() >= 2) {
-                                                mutableList.remove(CollectionsKt.getLastIndex(mutableList));
-                                                int lastIndex = CollectionsKt.getLastIndex(mutableList);
-                                                Integer intOrNull = StringsKt.toIntOrNull((String) mutableList.get(lastIndex));
-                                                if (intOrNull != null) {
-                                                    mutableList.set(lastIndex, String.valueOf(intOrNull.intValue() + 1));
-                                                    if (versionComparator.compare(version, CollectionsKt.joinToString$default(mutableList, ".", null, null, 0, null, null, 62, null)) < 0) {
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        zMatchesVersionWildcard = false;
-                                    }
-                                    zMatchesVersionWildcard = true;
-                                } else if (strComponent1.equals(">=") && iCompare < 0) {
-                                    zMatchesVersionWildcard = false;
-                                } else {
-                                    zMatchesVersionWildcard = true;
-                                }
-                            } else if (!strComponent1.equals("==")) {
-                                zMatchesVersionWildcard = true;
-                            } else if (isWildcardVersionSpec(strComponent2)) {
-                                zMatchesVersionWildcard = matchesVersionWildcard(version, strComponent2);
-                            } else if (iCompare == 0) {
-                                zMatchesVersionWildcard = true;
-                            } else {
-                                zMatchesVersionWildcard = false;
-                            }
-                        } else if (strComponent1.equals("<=") && iCompare > 0) {
-                            zMatchesVersionWildcard = false;
-                        } else {
-                            zMatchesVersionWildcard = true;
-                        }
-                    } else if (strComponent1.equals("!=") && (!isWildcardVersionSpec(strComponent2) ? iCompare == 0 : matchesVersionWildcard(version, strComponent2))) {
-                        zMatchesVersionWildcard = false;
+            int iCompare = versionComparator.compare(version, specVersion);
+            boolean satisfies;
+            switch (op) {
+                case "<":
+                    satisfies = iCompare < 0;
+                    break;
+                case "<=":
+                    satisfies = iCompare <= 0;
+                    break;
+                case ">":
+                    satisfies = iCompare > 0;
+                    break;
+                case ">=":
+                    satisfies = iCompare >= 0;
+                    break;
+                case "==":
+                    if (isWildcardVersionSpec(specVersion)) {
+                        satisfies = matchesVersionWildcard(version, specVersion);
                     } else {
-                        zMatchesVersionWildcard = true;
+                        satisfies = iCompare == 0;
                     }
-                } else if (strComponent1.equals(">") && iCompare <= 0) {
-                    zMatchesVersionWildcard = false;
-                } else {
-                    zMatchesVersionWildcard = true;
-                }
-            } else if (strComponent1.equals("<") && iCompare >= 0) {
-                zMatchesVersionWildcard = false;
-            } else {
-                zMatchesVersionWildcard = true;
+                    break;
+                case "!=":
+                    if (isWildcardVersionSpec(specVersion)) {
+                        satisfies = !matchesVersionWildcard(version, specVersion);
+                    } else {
+                        satisfies = iCompare != 0;
+                    }
+                    break;
+                case "===":
+                    satisfies = Intrinsics.areEqual(version, specVersion);
+                    break;
+                case "~=":
+                    if (iCompare >= 0) {
+                        List mutableList = CollectionsKt.toMutableList((Collection) StringsKt.split(specVersion, new String[]{"."}, false, 0));
+                        if (mutableList.size() >= 2) {
+                            mutableList.remove(CollectionsKt.getLastIndex(mutableList));
+                            int lastIndex = CollectionsKt.getLastIndex(mutableList);
+                            Integer intOrNull = StringsKt.toIntOrNull((String) mutableList.get(lastIndex));
+                            if (intOrNull != null) {
+                                mutableList.set(lastIndex, String.valueOf(intOrNull.intValue() + 1));
+                                satisfies = versionComparator.compare(version, CollectionsKt.joinToString(mutableList, ".", "", "", -1, "...", null)) < 0;
+                            } else {
+                                satisfies = false;
+                            }
+                        } else {
+                            satisfies = false;
+                        }
+                    } else {
+                        satisfies = false;
+                    }
+                    break;
+                default:
+                    satisfies = true;
+                    break;
             }
-            if (!zMatchesVersionWildcard) {
+            if (!satisfies) {
                 return false;
             }
         }
@@ -1260,7 +1475,7 @@ public final class PipController {
         if ((list instanceof Collection) && list.isEmpty()) {
             return false;
         }
-        Iterator<T> it = list.iterator();
+        Iterator it = list.iterator();
         while (it.hasNext()) {
             if (INSTANCE.isPreReleaseVersion((String) ((Pair) it.next()).component2())) {
                 return true;
@@ -1281,42 +1496,35 @@ public final class PipController {
                         return true;
                     }
                     break;
-                    break;
                 case 98:
                     if (str.equals("b")) {
                         return true;
                     }
-                    break;
                     break;
                 case 99:
                     if (str.equals("c")) {
                         return true;
                     }
                     break;
-                    break;
                 case 3633:
                     if (str.equals("rc")) {
                         return true;
                     }
-                    break;
                     break;
                 case 99349:
                     if (str.equals("dev")) {
                         return true;
                     }
                     break;
-                    break;
                 case 3020272:
                     if (str.equals("beta")) {
                         return true;
                     }
                     break;
-                    break;
                 case 92909918:
                     if (str.equals("alpha")) {
                         return true;
                     }
-                    break;
                     break;
             }
         }
@@ -1324,10 +1532,10 @@ public final class PipController {
     }
 
     private final boolean matchesVersionWildcard(String version, String spec) {
-        String strTrimEnd = StringsKt.trimEnd(StringsKt.removeSuffix(StringsKt.removeSuffix(StringsKt.removeSuffix(StringsKt.substringBefore$default(StringsKt.trim((CharSequence) spec).toString(), "+", (String) null, 2, (Object) null), (CharSequence) ".*"), (CharSequence) "-*"), (CharSequence) "_*"), '.', SignatureVisitor.SUPER, '_');
+        String strTrimEnd = StringsKt.trimEnd(StringsKt.removeSuffix(StringsKt.removeSuffix(StringsKt.removeSuffix(StringsKt.substringBefore(spec.trim(), "+", spec.trim()), (CharSequence) ".*"), (CharSequence) "-*"), (CharSequence) "_*"), '.', '-', '_');
         ParsedVersion version2 = parseVersion(strTrimEnd);
         ParsedVersion version3 = parseVersion(version);
-        if (StringsKt.contains$default((CharSequence) strTrimEnd, (CharSequence) "!", false, 2, (Object) null) && version2.getEpoch() != version3.getEpoch()) {
+        if (strTrimEnd.contains("!") && version2.getEpoch() != version3.getEpoch()) {
             return false;
         }
         List<Integer> versionReleaseParts = parseVersionReleaseParts(strTrimEnd);
@@ -1355,7 +1563,7 @@ public final class PipController {
     private final List<Integer> parseVersionReleaseParts(String version) {
         List<String> listSplit = new Regex("[.\\-_]").split(parseVersion(version).getPublicVersion(), 0);
         ArrayList arrayList = new ArrayList();
-        Iterator<T> it = listSplit.iterator();
+        Iterator it = listSplit.iterator();
         while (it.hasNext()) {
             Integer intOrNull = StringsKt.toIntOrNull((String) it.next());
             if (intOrNull != null) {
@@ -1372,7 +1580,6 @@ public final class PipController {
         private long total;
 
         public SizeLimitedInputStream(InputStream inputStream, long j) {
-            "delegate";
             this.delegate = inputStream;
             this.maxBytes = j;
         }
@@ -1398,13 +1605,12 @@ public final class PipController {
         }
 
         @Override // java.io.InputStream
-        public int read(byte[] b2, int off, int len) {
-            "b";
+        public int read(byte[] b2, int off, int len) throws IOException {
             return track(this.delegate.read(b2, off, len));
         }
 
         @Override // java.io.InputStream
-        public int available() {
+        public int available() throws IOException {
             return this.delegate.available();
         }
 
@@ -1414,52 +1620,38 @@ public final class PipController {
         }
     }
 
-    private final String calculateSha256(File file) throws NoSuchAlgorithmException {
+    private final String calculateSha256(File file) throws NoSuchAlgorithmException, IOException {
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-        FileInputStream fileInputStream = new FileInputStream(file);
-        try {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
             byte[] bArr = new byte[8192];
             while (true) {
                 int i = fileInputStream.read(bArr);
-                if (i != -1) {
-                    messageDigest.update(bArr, 0, i);
-                } else {
-                    Unit unit = Unit.INSTANCE;
-                    CloseableKt.closeFinally(fileInputStream, null);
-                    byte[] bArrDigest = messageDigest.digest();
-                    "digest(...)";
-                    return ArraysKt.joinToString$default(bArrDigest, (CharSequence) "", (CharSequence) null, (CharSequence) null, 0, (CharSequence) null, new Function1() { 
-                        @Override // kotlin.jvm.functions.Function1
-                        public final Object invoke(Object obj) {
-                            return PipController.$r8$lambda$7CZkhP2Pq3JYvkGUBl8vqtaliPk(((Byte) obj).byteValue());
-                        }
-                    }, 30, (Object) null);
+                if (i == -1) {
+                    break;
                 }
+                messageDigest.update(bArr, 0, i);
             }
-        } catch (Throwable th) {
-            try {
-                throw th;
-            } catch (Throwable th2) {
-                CloseableKt.closeFinally(fileInputStream, th);
-                throw th2;
+            byte[] bArrDigest = messageDigest.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bArrDigest) {
+                sb.append(String.format("%02x", b));
             }
+            return sb.toString();
         }
     }
 
     public static CharSequence $r8$lambda$7CZkhP2Pq3JYvkGUBl8vqtaliPk(byte b2) {
         String str = String.format("%02x", Arrays.copyOf(new Object[]{Byte.valueOf(b2)}, 1));
-        "format(...)";
         return str;
     }
 
     public final ParsedVersion parseVersion(String version) {
         Integer intOrNull;
         String lowerCase = StringsKt.trim((CharSequence) version).toString().toLowerCase(Locale.ROOT);
-        "toLowerCase(...)";
-        List listSplit$default = StringsKt.split$default((CharSequence) StringsKt.substringBefore$default(StringsKt.removePrefix(lowerCase, (CharSequence) "v"), "+", (String) null, 2, (Object) null), new String[]{"!"}, false, 2, 2, (Object) null);
+        List listSplit$default = StringsKt.split((CharSequence) StringsKt.substringBefore(StringsKt.removePrefix(lowerCase, "v"), "+", StringsKt.removePrefix(lowerCase, "v")), new String[]{"!"}, false, 2);
         int iIntValue = (listSplit$default.size() != 2 || (intOrNull = StringsKt.toIntOrNull((String) listSplit$default.get(0))) == null) ? 0 : intOrNull.intValue();
         String str = (String) (listSplit$default.size() == 2 ? listSplit$default.get(1) : listSplit$default.get(0));
-        return new ParsedVersion(iIntValue, str, SequencesKt.toList(SequencesKt.map(Regex.findAll$default(REGEX_VERSION_SPLIT, str, 0, 2, null), new Function1() { 
+        return new ParsedVersion(iIntValue, str, SequencesKt.toList(SequencesKt.map(REGEX_VERSION_SPLIT.findAll(str, 0), new Function1() { 
             @Override // kotlin.jvm.functions.Function1
             public final Object invoke(Object obj) {
                 return PipController.m1324$r8$lambda$0MJ3GR4HlLQMQMAksazHxJXIE((MatchResult) obj);
@@ -1468,7 +1660,6 @@ public final class PipController {
     }
 
     public static String m1324$r8$lambda$0MJ3GR4HlLQMQMAksazHxJXIE(MatchResult matchResult) {
-        "it";
         return matchResult.getValue();
     }
 
@@ -1481,8 +1672,6 @@ public final class PipController {
 
         @Override // java.util.Comparator
         public int compare(String v1, String v2) {
-            "v1";
-            "v2";
             PipController pipController = PipController.INSTANCE;
             ParsedVersion version = pipController.parseVersion(v1);
             ParsedVersion version2 = pipController.parseVersion(v2);

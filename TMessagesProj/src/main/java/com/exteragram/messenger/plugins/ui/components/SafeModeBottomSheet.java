@@ -62,7 +62,7 @@ public final class SafeModeBottomSheet extends BottomSheet {
         buttonWithCounterView.setOnClickListener(new View.OnClickListener() { 
             @Override // android.view.View.OnClickListener
             public final void onClick(View view) {
-                SafeModeBottomSheet.m1362$r8$lambda$akwXYwH2g7Yc4GuPo7nIqbaSJU(this.f$0, view);
+                SafeModeBottomSheet.m1362$r8$lambda$akwXYwH2g7Yc4GuPo7nIqbaSJU(SafeModeBottomSheet.this, view);
             }
         });
         linearLayout.addView(buttonWithCounterView, LayoutHelper.createFrame(-1, 48.0f, 0, 16.0f, 28.0f, 16.0f, 16.0f));
@@ -70,7 +70,7 @@ public final class SafeModeBottomSheet extends BottomSheet {
     }
 
     public static void m1362$r8$lambda$akwXYwH2g7Yc4GuPo7nIqbaSJU(SafeModeBottomSheet safeModeBottomSheet, View view) {
-        safeModeBottomSheet.lambda$new$0();
+        safeModeBottomSheet.dismiss();
         SharedPreferences.Editor editor = ExteraConfig.getEditor();
         ExteraConfig.setPluginsSafeMode(false);
         Unit unit = Unit.INSTANCE;

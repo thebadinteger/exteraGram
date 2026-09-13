@@ -1,5 +1,6 @@
 package org.simplifiles.internal.archive.zip;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -44,7 +45,7 @@ public final class ZipArchiveReader {
                     throw th2;
                 }
             }
-        } catch (ZipException e) {
+        } catch (IOException e) {
             throw new CorruptedArchiveException(path, e);
         }
     }

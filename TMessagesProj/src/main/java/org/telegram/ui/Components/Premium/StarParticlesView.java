@@ -200,6 +200,7 @@ public class StarParticlesView extends View {
         public float speedScale = 1f;
 
         public final int count;
+        public Integer color;
         public boolean useGradient;
         public int size1 = 14, size2 = 12, size3 = 10;
         public float k1 = 0.85f, k2 = 0.85f, k3 = 0.9f;
@@ -467,6 +468,9 @@ public class StarParticlesView extends View {
         }
 
         protected int getPathColor(int i) {
+            if (color != null) {
+                return color;
+            }
             if (type == 100) {
                 return ColorUtils.setAlphaComponent(Theme.getColor(colorKey, resourcesProvider), 200);
             } else {

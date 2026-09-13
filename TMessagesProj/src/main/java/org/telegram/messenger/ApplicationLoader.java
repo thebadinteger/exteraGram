@@ -76,11 +76,18 @@ public class ApplicationLoader extends Application {
     private static PushListenerController.IPushListenerServiceProvider pushProvider;
     private static IMapsProvider mapsProvider;
     private static ILocationServiceProvider locationServiceProvider;
+    private static com.google.firebase.analytics.FirebaseAnalytics firebaseAnalytics;
+    private static com.google.firebase.crashlytics.FirebaseCrashlytics firebaseCrashlytics;
+    private static volatile boolean exteraHookEmbeddedConfigured = false;
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
+    public static com.google.firebase.analytics.FirebaseAnalytics getFirebaseAnalytics() {
+        return firebaseAnalytics;
     }
+
+    public static com.google.firebase.crashlytics.FirebaseCrashlytics getFirebaseCrashlytics() {
+        return firebaseCrashlytics;
+    }
+
 
     public static ILocationServiceProvider getLocationServiceProvider() {
         if (locationServiceProvider == null) {
@@ -90,8 +97,8 @@ public class ApplicationLoader extends Application {
         return locationServiceProvider;
     }
 
-    protected ILocationServiceProvider onCreateLocationServiceProvider() {
-        return new GoogleLocationProvider();
+    public ILocationServiceProvider onCreateLocationServiceProvider() {
+        return (allowToUseYandexMaps() && com.exteragram.messenger.ExteraConfig.getUseYandexMaps()) ? new com.exteragram.messenger.maps.yandex.YandexLocationProvider() : new GoogleLocationProvider();
     }
 
     public static IMapsProvider getMapsProvider() {
@@ -101,8 +108,22 @@ public class ApplicationLoader extends Application {
         return mapsProvider;
     }
 
-    protected IMapsProvider onCreateMapsProvider() {
-        return new GoogleMapsProvider();
+    public static void updateMapsProvider() {
+        mapsProvider = applicationLoaderInstance.onCreateMapsProvider();
+        ILocationServiceProvider iLocationServiceProviderOnCreateLocationServiceProvider = applicationLoaderInstance.onCreateLocationServiceProvider();
+        locationServiceProvider = iLocationServiceProviderOnCreateLocationServiceProvider;
+        iLocationServiceProviderOnCreateLocationServiceProvider.init(applicationContext);
+    }
+
+    public IMapsProvider onCreateMapsProvider() {
+        return (allowToUseYandexMaps() && com.exteragram.messenger.ExteraConfig.getUseYandexMaps()) ? new com.exteragram.messenger.maps.yandex.YandexMapsProvider() : new GoogleMapsProvider();
+    }
+
+    public boolean allowToUseYandexMaps() {
+        if (com.exteragram.messenger.maps.yandex.YandexMapsProvider.isSupported() && Build.VERSION.SDK_INT >= 26) {
+            return !com.exteragram.messenger.utils.network.RemoteUtils.getBooleanConfigValue("yandex_maps_only_ru", false).booleanValue() || com.exteragram.messenger.utils.chats.ChatUtils.getInstance().isRussianUser() || com.exteragram.messenger.utils.chats.ChatUtils.getInstance().isFragmentUser();
+        }
+        return false;
     }
 
     public static PushListenerController.IPushListenerServiceProvider getPushProvider() {
@@ -314,16 +335,29 @@ public class ApplicationLoader extends Application {
             }
             FileLog.d("device = manufacturer=" + Build.MANUFACTURER + ", device=" + Build.DEVICE + ", model=" + Build.MODEL + ", product=" + Build.PRODUCT);
         }
-        if (applicationContext == null) {
-            applicationContext = getApplicationContext();
+        try {
+            Class.forName("org.telegram.tgnet.ConnectionsManager");
+            Class.forName("org.telegram.tgnet.NativeByteBuffer");
+            Class.forName("org.telegram.tgnet.RequestTimeDelegate");
+            Class.forName("org.telegram.messenger.AnimatedFileDrawableStream");
+            Class.forName("dev.exterahook.runtime.bridge.JniBridgeBindings");
+        } catch (Throwable t) {
+            FileLog.e("Preload JNI classes failed", t);
         }
 
         NativeLoader.initNativeLibs(ApplicationLoader.applicationContext);
+        try {
+            com.exteragram.messenger.plugins.utils.NativeCrashHandler.init(com.exteragram.messenger.plugins.utils.NativeCrashHandler.getCrashFlagPath());
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
 
         try {
             ConnectionsManager.native_setJava(false);
+            configureEmbeddedExteraHook();
+            com.exteragram.messenger.plugins.PluginsController.applyArtOpts();
         } catch (UnsatisfiedLinkError error) {
-            throw new RuntimeException("can't load native libraries " +  Build.CPU_ABI + " lookup folder " + NativeLoader.getAbiFolder());
+            throw new RuntimeException("can't load native libraries " +  Build.CPU_ABI + " lookup folder " + NativeLoader.getAbiFolder() + " log:\n" + NativeLoader.log.toString(), error);
         }
         new ForegroundDetector(this) {
             @Override
@@ -345,6 +379,23 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+    }
+
+    private static void configureEmbeddedExteraHook() {
+        if (exteraHookEmbeddedConfigured) {
+            return;
+        }
+        synchronized (ApplicationLoader.class) {
+            if (exteraHookEmbeddedConfigured) {
+                return;
+            }
+            try {
+                Class.forName("dev.exterahook.runtime.bridge.HookBridgeProvider").getMethod("useEmbeddedAsDefault", (Class[]) null).invoke(null, (Object[]) null);
+                exteraHookEmbeddedConfigured = true;
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to configure embedded exteraHook runtime", th);
+            }
+        }
     }
 
     public static void startPushService() {

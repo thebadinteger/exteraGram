@@ -175,7 +175,7 @@ public final class DebugActivity extends BasePreferencesActivity {
                 Utilities.globalQueue.postRunnable(new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        DebugActivity.$r8$lambda$zzHFi_Grpm9hEdP3kmCcKKwe6fc(this.f$0);
+                        DebugActivity.clearTablesAndResetSync(DebugActivity.this);
                     }
                 });
                 break;
@@ -211,7 +211,7 @@ public final class DebugActivity extends BasePreferencesActivity {
                 AndroidUtilities.runOnUIThread(new Runnable() { 
                     @Override // java.lang.Runnable
                     public final void run() {
-                        BulletinFactory.of(this.f$0).createSimpleBulletin(R.raw.contact_check, "Translation cache cleared.").show();
+                        BulletinFactory.of(DebugActivity.this).createSimpleBulletin(R.raw.contact_check, "Translation cache cleared.").show();
                     }
                 });
                 break;
@@ -224,18 +224,17 @@ public final class DebugActivity extends BasePreferencesActivity {
                 BulletinFactory.of(this).createSimpleBulletin(R.raw.contact_check, "ipconfigv3 override cleared.").show();
                 break;
             default:
-                LazyKt__LazyJVMKt$$ExternalSyntheticBUOutline0.m();
                 break;
         }
     }
 
-    public static void $r8$lambda$zzHFi_Grpm9hEdP3kmCcKKwe6fc(final DebugActivity debugActivity) {
-        ExteraDatabase.INSTANCE.getInstance().clearAllTables();
+    public static void clearTablesAndResetSync(final DebugActivity debugActivity) {
+        ExteraDatabase.getInstance().clearAllTables();
         ApiController.resetSyncState$default(null, 1, null);
         AndroidUtilities.runOnUIThread(new Runnable() { 
             @Override // java.lang.Runnable
             public final void run() {
-                DebugActivity.onClick$lambda$5$0(this.f$0);
+                DebugActivity.onClick$lambda$5$0(debugActivity);
             }
         });
     }
@@ -280,12 +279,12 @@ public final class DebugActivity extends BasePreferencesActivity {
         showDialog(new AlertDialog.Builder(parentActivity).setTitle("ipconfigv3 override").setView(frameLayout).setPositiveButton("Apply", new AlertDialog.OnButtonClickListener() { 
             @Override // org.telegram.ui.ActionBar.AlertDialog.OnButtonClickListener
             public final void onClick(AlertDialog alertDialog, int i2) {
-                DebugActivity.$r8$lambda$6gvSBDYHjPsw8Dfps2dMtzBMnI4(editTextBoldCursor, this, alertDialog, i2);
+                DebugActivity.applyIpConfigOverride(editTextBoldCursor, DebugActivity.this, alertDialog, i2);
             }
         }).setNegativeButton("Cancel", null).create());
     }
 
-    public static void $r8$lambda$6gvSBDYHjPsw8Dfps2dMtzBMnI4(EditTextBoldCursor editTextBoldCursor, DebugActivity debugActivity, AlertDialog alertDialog, int i) {
+    public static void applyIpConfigOverride(EditTextBoldCursor editTextBoldCursor, DebugActivity debugActivity, AlertDialog alertDialog, int i) {
         String string;
         Editable text = editTextBoldCursor.getText();
         String string2 = (text == null || (string = text.toString()) == null) ? null : StringsKt.trim((CharSequence) string).toString();

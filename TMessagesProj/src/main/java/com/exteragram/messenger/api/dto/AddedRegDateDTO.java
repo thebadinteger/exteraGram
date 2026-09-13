@@ -40,8 +40,4 @@ public final /* data */ class AddedRegDateDTO {
     public AddedRegDateDTO(long j) {
         this.userId = j;
     }
-
-    public final long getUserId() {
-        return this.userId;
-    }
 }

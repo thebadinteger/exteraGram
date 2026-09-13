@@ -108,32 +108,4 @@ public final /* data */ class ProfileDTO {
         this.deleted = bool;
         this.canChangeBadge = bool2;
     }
-
-    public final long getId() {
-        return this.id;
-    }
-
-    public final ProfileType getType() {
-        return this.type;
-    }
-
-    public final ProfileStatus getStatus() {
-        return this.status;
-    }
-
-    public final BadgeDTO getBadge() {
-        return this.badge;
-    }
-
-    public final NowPlayingInfoDTO getNowPlaying() {
-        return this.nowPlaying;
-    }
-
-    public final Boolean getDeleted() {
-        return this.deleted;
-    }
-
-    public final Boolean getCanChangeBadge() {
-        return this.canChangeBadge;
-    }
 }

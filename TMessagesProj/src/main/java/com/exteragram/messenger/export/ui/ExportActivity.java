@@ -98,7 +98,7 @@ public class ExportActivity extends BasePreferencesActivity implements Notificat
         super.onFragmentDestroy();
     }
 
-    @Override 
+    @Override // org.telegram.messenger.NotificationCenter.NotificationCenterDelegate
     public void didReceivedNotification(int i, int i2, Object... objArr) {
         String str;
         if (i == ExportController.FINISH_NOTIFICATION) {
@@ -117,12 +117,12 @@ public class ExportActivity extends BasePreferencesActivity implements Notificat
         FileLog.e("[EXPORT] " + str + ", " + f);
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public String getTitle() {
         return "Export Chats";
     }
 
-    @Override 
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
     public void fillItems(ArrayList<UItem> arrayList, UniversalAdapter universalAdapter) {
         arrayList.add(UItem.asHeader("Export settings"));
         this.exportSettings.fill(arrayList);
@@ -135,8 +135,223 @@ public class ExportActivity extends BasePreferencesActivity implements Notificat
         arrayList.add(UItem.asShadow("Here you can export your chats."));
     }
 
-    class AnonymousClass1 {
-        static final void lambda$setType$2(int i, boolean z) {
+    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
+    @Override // com.exteragram.messenger.preferences.BasePreferencesActivity
+    public void onClick(UItem uItem, View view, int i, float f, float f2) {
+        ExportActivity exportActivity;
+        int i2 = uItem.id;
+        if (i2 <= 0 || i2 > ExportItem.values().length) {
+            return;
+        }
+        switch (AnonymousClass1.$SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.values()[uItem.id - 1].ordinal()]) {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+                exportActivity = this;
+                exportActivity.exportSettings.onClick(uItem);
+                break;
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+                exportActivity = this;
+                exportActivity.chatsSettings.onClick(uItem);
+                break;
+            case 13:
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+                exportActivity = this;
+                exportActivity.mediaSettings.onClick(uItem);
+                break;
+            case 21:
+                exportActivity = this;
+                exportActivity.showListDialog(uItem, formats, "Select export result type", getIndexOfFormat(), new PopupUtils.OnItemClickListener() { // from class: com.exteragram.messenger.export.ui.ExportActivity$$ExternalSyntheticLambda0
+                    @Override // com.exteragram.messenger.utils.ui.PopupUtils.OnItemClickListener
+                    public final void onClick(int i3) {
+                        ExportActivity.this.lambda$onClick$0(i3);
+                    }
+                });
+                break;
+            case 22:
+                TLRPC.InputPeer inputPeer = this.peer;
+                if (inputPeer != null) {
+                    this.settings.singlePeer = inputPeer;
+                }
+                BulletinFactory.of(this).createErrorBulletin("Starting export...").show();
+                this.settings.media.sizeLimit = 2097152000L;
+                ExportController.getInstance(UserConfig.selectedAccount).startExport(this.settings);
+                exportActivity = this;
+                break;
+            case 23:
+                Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
+                intent.addCategory("android.intent.category.DEFAULT");
+                startActivityForResult(Intent.createChooser(intent, "Choose a directory"), 1337);
+                exportActivity = this;
+                break;
+            default:
+                exportActivity = this;
+                break;
+        }
+        exportActivity.listView.adapter.update(true);
+    }
+
+    /* JADX INFO: renamed from: com.exteragram.messenger.export.ui.ExportActivity$1, reason: invalid class name */
+    public static /* synthetic */ class AnonymousClass1 {
+        static final /* synthetic */ int[] $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem;
+
+        static {
+            int[] iArr = new int[ExportItem.values().length];
+            $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem = iArr;
+            try {
+                iArr[ExportItem.EXPORT_SETTINGS.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.ACCOUNT_INFO.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.CONTACTS_LIST.ordinal()] = 3;
+            } catch (NoSuchFieldError unused3) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.STORY_ARCHIVE.ordinal()] = 4;
+            } catch (NoSuchFieldError unused4) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.ACTIVE_SESSIONS.ordinal()] = 5;
+            } catch (NoSuchFieldError unused5) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.CHATS_SETTINGS.ordinal()] = 6;
+            } catch (NoSuchFieldError unused6) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PERSONAL_CHATS.ordinal()] = 7;
+            } catch (NoSuchFieldError unused7) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.BOT_CHATS.ordinal()] = 8;
+            } catch (NoSuchFieldError unused8) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PRIVATE_GROUPS.ordinal()] = 9;
+            } catch (NoSuchFieldError unused9) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PRIVATE_CHANNELS.ordinal()] = 10;
+            } catch (NoSuchFieldError unused10) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PUBLIC_GROUPS.ordinal()] = 11;
+            } catch (NoSuchFieldError unused11) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PUBLIC_CHANNELS.ordinal()] = 12;
+            } catch (NoSuchFieldError unused12) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.MEDIA_SETTINGS.ordinal()] = 13;
+            } catch (NoSuchFieldError unused13) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.PHOTOS.ordinal()] = 14;
+            } catch (NoSuchFieldError unused14) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.VIDEOS.ordinal()] = 15;
+            } catch (NoSuchFieldError unused15) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.VOICE_MESSAGES.ordinal()] = 16;
+            } catch (NoSuchFieldError unused16) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.VIDEO_MESSAGES.ordinal()] = 17;
+            } catch (NoSuchFieldError unused17) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.STICKERS.ordinal()] = 18;
+            } catch (NoSuchFieldError unused18) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.GIFS.ordinal()] = 19;
+            } catch (NoSuchFieldError unused19) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.FILES.ordinal()] = 20;
+            } catch (NoSuchFieldError unused20) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.FORMAT.ordinal()] = 21;
+            } catch (NoSuchFieldError unused21) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.START_EXPORT.ordinal()] = 22;
+            } catch (NoSuchFieldError unused22) {
+            }
+            try {
+                $SwitchMap$com$exteragram$messenger$export$ui$ExportActivity$ExportItem[ExportItem.VIEW_JSON_EXPORT.ordinal()] = 23;
+            } catch (NoSuchFieldError unused23) {
+            }
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$onClick$0(int i) {
+        if (i == 0) {
+            this.settings.format = AbstractWriter.Format.Html;
+            return;
+        }
+        ExportSettings exportSettings = this.settings;
+        if (i == 1) {
+            exportSettings.format = AbstractWriter.Format.Json;
+        } else {
+            exportSettings.format = AbstractWriter.Format.HtmlAndJson;
+        }
+    }
+
+    @Override // org.telegram.ui.ActionBar.BaseFragment
+    public void onActivityResultFragment(int i, int i2, Intent intent) {
+        super.onActivityResultFragment(i, i2, intent);
+        if (i == 1337 && i2 == -1) {
+            try {
+                Uri data = intent.getData();
+                presentFragment(new DialogsView(AndroidPickerUtils.getPath(getParentActivity(), DocumentsContract.buildDocumentUriUsingTree(data, DocumentsContract.getTreeDocumentId(data)))));
+            } catch (Exception e) {
+                if (ExteraConfig.getUseGoogleCrashlytics()) {
+                    FirebaseCrashlytics.getInstance().recordException(e);
+                }
+            }
+        }
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ boolean lambda$type$1(int i) {
+        return (this.settings.types & i) != 0;
+    }
+
+    private BooleanSupplier type(final int i) {
+        return new BooleanSupplier() { // from class: com.exteragram.messenger.export.ui.ExportActivity$$ExternalSyntheticLambda2
+            @Override // java.util.function.BooleanSupplier
+            public final boolean getAsBoolean() {
+                return ExportActivity.this.lambda$type$1(i);
+            }
+        };
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$setType$2(int i, boolean z) {
         int i2;
         ExportSettings exportSettings = this.settings;
         if (z) {
@@ -148,15 +363,30 @@ public class ExportActivity extends BasePreferencesActivity implements Notificat
     }
 
     private SwitchGroup.Setter setType(final int i) {
-        return new SwitchGroup.Setter() { 
-            @Override 
+        return new SwitchGroup.Setter() { // from class: com.exteragram.messenger.export.ui.ExportActivity$$ExternalSyntheticLambda1
+            @Override // com.exteragram.messenger.preferences.SwitchGroup.Setter
             public final void set(boolean z) {
-                this.f$0.lambda$setType$2(i, z);
+                ExportActivity.this.lambda$setType$2(i, z);
             }
         };
     }
 
-    public void lambda$setMedia$4(int i, boolean z) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ boolean lambda$media$3(int i) {
+        return (this.settings.media.type & i) != 0;
+    }
+
+    private BooleanSupplier media(final int i) {
+        return new BooleanSupplier() { // from class: com.exteragram.messenger.export.ui.ExportActivity$$ExternalSyntheticLambda3
+            @Override // java.util.function.BooleanSupplier
+            public final boolean getAsBoolean() {
+                return ExportActivity.this.lambda$media$3(i);
+            }
+        };
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public /* synthetic */ void lambda$setMedia$4(int i, boolean z) {
         int i2;
         ExportSettings.MediaSettings mediaSettings = this.settings.media;
         if (z) {
@@ -168,10 +398,10 @@ public class ExportActivity extends BasePreferencesActivity implements Notificat
     }
 
     private SwitchGroup.Setter setMedia(final int i) {
-        return new SwitchGroup.Setter() { 
-            @Override 
+        return new SwitchGroup.Setter() { // from class: com.exteragram.messenger.export.ui.ExportActivity$$ExternalSyntheticLambda4
+            @Override // com.exteragram.messenger.preferences.SwitchGroup.Setter
             public final void set(boolean z) {
-                this.f$0.lambda$setMedia$4(i, z);
+                ExportActivity.this.lambda$setMedia$4(i, z);
             }
         };
     }

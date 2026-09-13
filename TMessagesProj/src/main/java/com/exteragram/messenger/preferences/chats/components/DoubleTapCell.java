@@ -123,12 +123,13 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
 
     @SuppressLint({"Recycle"})
     public void updateIcons(int i, boolean z) {
-        final int i2 = 0;
-        while (i2 < 2) {
+        for (int i2 = 0; i2 < 2; i2++) {
+            final int finalI2 = i2;
             if (i2 != 0 || i != 2) {
                 if (i2 != 1 || i != 1) {
                     if (z) {
-                        for (final int i3 = 0; i3 < 2; i3++) {
+                        for (int i3 = 0; i3 < 2; i3++) {
+                            final int finalI3 = i3;
                             this.circleSizeAnimator[i3] = ValueAnimator.ofFloat(0.0f, 1.0f).setDuration(1300L);
                             long j = i3;
                             this.circleSizeAnimator[i3].setStartDelay(60 * j);
@@ -138,7 +139,7 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
                             this.circleSizeAnimator[i3].addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
                                 @Override // android.animation.ValueAnimator.AnimatorUpdateListener
                                 public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                                    this.f$0.lambda$updateIcons$0(i3, i2, valueAnimator2);
+                                    DoubleTapCell.this.lambda$updateIcons$0(finalI3, finalI2, valueAnimator2);
                                 }
                             });
                             this.circleAnimator[i3] = ValueAnimator.ofFloat(0.0f, 1.0f).setDuration(700L);
@@ -147,17 +148,17 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
                             this.circleAnimator[i3].addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
                                 @Override // android.animation.ValueAnimator.AnimatorUpdateListener
                                 public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                                    this.f$0.lambda$updateIcons$1(i3, i2, valueAnimator2);
+                                    DoubleTapCell.this.lambda$updateIcons$1(finalI3, finalI2, valueAnimator2);
                                 }
                             });
                             this.circleAnimator[i3].addListener(new AnimatorListenerAdapter() { 
                                 @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
                                 public void onAnimationEnd(Animator animator) {
                                     super.onAnimationEnd(animator);
-                                    DoubleTapCell.this.circleAnimator[i3].setFloatValues(1.0f, 0.0f);
-                                    DoubleTapCell.this.circleAnimator[i3].setDuration(700L);
-                                    DoubleTapCell.this.circleAnimator[i3].removeAllListeners();
-                                    DoubleTapCell.this.circleAnimator[i3].start();
+                                    DoubleTapCell.this.circleAnimator[finalI3].setFloatValues(1.0f, 0.0f);
+                                    DoubleTapCell.this.circleAnimator[finalI3].setDuration(700L);
+                                    DoubleTapCell.this.circleAnimator[finalI3].removeAllListeners();
+                                    DoubleTapCell.this.circleAnimator[finalI3].start();
                                 }
                             });
                             this.circleSizeAnimator[i3].start();
@@ -168,7 +169,7 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
                         this.animator[i2].addUpdateListener(new ValueAnimator.AnimatorUpdateListener() { 
                             @Override // android.animation.ValueAnimator.AnimatorUpdateListener
                             public final void onAnimationUpdate(ValueAnimator valueAnimator2) {
-                                this.f$0.lambda$updateIcons$2(i2, valueAnimator2);
+                                DoubleTapCell.this.lambda$updateIcons$2(finalI2, valueAnimator2);
                             }
                         });
                         this.animator[i2].addListener(new AnimatorListenerAdapter() { 
@@ -176,18 +177,18 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
                             public void onAnimationEnd(Animator animator) {
                                 super.onAnimationEnd(animator);
                                 int[] iArr = DoubleTapCell.this.actionIcon;
-                                int i4 = i2;
-                                iArr[i4] = DoubleTapUtils.getDoubleTapActionIcon(i4 == 0 ? ExteraConfig.getDoubleTapAction() : ExteraConfig.getDoubleTapActionOutOwner(), i2 == 1);
-                                DoubleTapCell.this.animator[i2].setFloatValues(0.0f, 1.0f);
-                                DoubleTapCell.this.animator[i2].removeAllListeners();
-                                DoubleTapCell.this.animator[i2].addListener(new AnimatorListenerAdapter() { 
+                                int i4 = finalI2;
+                                iArr[i4] = DoubleTapUtils.getDoubleTapActionIcon(i4 == 0 ? ExteraConfig.getDoubleTapAction() : ExteraConfig.getDoubleTapActionOutOwner(), finalI2 == 1);
+                                DoubleTapCell.this.animator[finalI2].setFloatValues(0.0f, 1.0f);
+                                DoubleTapCell.this.animator[finalI2].removeAllListeners();
+                                DoubleTapCell.this.animator[finalI2].addListener(new AnimatorListenerAdapter() { 
                                     @Override // android.animation.AnimatorListenerAdapter, android.animation.Animator.AnimatorListener
                                     public void onAnimationEnd(Animator animator2) {
                                         super.onAnimationEnd(animator2);
                                         DoubleTapCell.this.performHapticFeedback(3, 2);
                                     }
                                 });
-                                DoubleTapCell.this.animator[i2].start();
+                                DoubleTapCell.this.animator[finalI2].start();
                             }
                         });
                         this.animator[i2].start();
@@ -195,12 +196,11 @@ public class DoubleTapCell extends LinearLayout implements CustomPreferenceCell 
                         this.circleSizeProgress[i2] = 0.0f;
                         this.circleProgress[i2] = 0.0f;
                         this.iconChangingProgress[i2] = 1.0f;
-                        this.actionIcon[i2] = DoubleTapUtils.getDoubleTapActionIcon(i2 == 0 ? ExteraConfig.getDoubleTapAction() : ExteraConfig.getDoubleTapActionOutOwner(), i2 == 1);
+                        this.actionIcon[i2] = DoubleTapUtils.getDoubleTapActionIcon(i2 == 0 ? ExteraConfig.getDoubleTapAction() : ExteraConfig.getDoubleTapActionOutOwner(), finalI2 == 1);
                         invalidate();
                     }
                 }
             }
-            i2++;
         }
     }
 

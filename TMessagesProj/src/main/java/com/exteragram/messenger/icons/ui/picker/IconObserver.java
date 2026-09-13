@@ -64,7 +64,7 @@ public final class IconObserver {
         synchronized (iconSources) {
             try {
                 ArrayList arrayList = new ArrayList();
-                Iterator<T> it = visibleFragments.iterator();
+                Iterator<BaseFragment> it = visibleFragments.iterator();
                 while (it.hasNext()) {
                     Set<Integer> setEmptySet = iconSources.get((BaseFragment) it.next());
                     if (setEmptySet == null) {

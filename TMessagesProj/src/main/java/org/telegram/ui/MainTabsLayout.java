@@ -55,6 +55,28 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         }
     }
 
+    private boolean fillAvailableWidth;
+    private boolean swipeSelectionEnabled;
+    private boolean drawTopDivider;
+
+    public void setFillAvailableWidth(boolean z) {
+        if (this.fillAvailableWidth != z) {
+            this.fillAvailableWidth = z;
+            requestLayout();
+        }
+    }
+
+    public void setSwipeSelectionEnabled(boolean z) {
+        this.swipeSelectionEnabled = z;
+    }
+
+    public void setDrawTopDivider(boolean z) {
+        if (this.drawTopDivider != z) {
+            this.drawTopDivider = z;
+            invalidate();
+        }
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);

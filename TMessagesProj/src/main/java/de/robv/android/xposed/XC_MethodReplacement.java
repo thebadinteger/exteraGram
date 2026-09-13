@@ -28,7 +28,7 @@ public abstract class XC_MethodReplacement extends XC_MethodHook {
         }
     }
 
-    public abstract Object replaceHookedMethod(XC_MethodHook.MethodHookParam methodHookParam);
+    public abstract Object replaceHookedMethod(XC_MethodHook.MethodHookParam methodHookParam) throws Throwable;
 
     public XC_MethodReplacement(int i) {
         super(i);

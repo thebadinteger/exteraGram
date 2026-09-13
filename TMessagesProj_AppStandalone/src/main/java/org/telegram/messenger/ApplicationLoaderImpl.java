@@ -34,6 +34,7 @@ import org.telegram.ui.SMSSubscribeSheet;
 import java.io.File;
 
 public class ApplicationLoaderImpl extends ApplicationLoader {
+
     @Override
     protected String onGetApplicationId() {
         return BuildConfig.APPLICATION_ID;

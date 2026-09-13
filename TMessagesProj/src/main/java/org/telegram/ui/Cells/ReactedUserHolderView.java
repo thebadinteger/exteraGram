@@ -23,6 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.exteragram.messenger.ExteraConfig;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.Emoji;
@@ -118,7 +120,7 @@ public class ReactedUserHolderView extends FrameLayout {
                 return params.checkOnTouchEvent(event, this);
             }
         };
-        avatarView.setRoundRadius(AndroidUtilities.dp(avatarSize));
+        avatarView.setRoundRadius(ExteraConfig.getAvatarCorners(avatarSize));
         addView(avatarView, LayoutHelper.createFrameRelatively(avatarSize, avatarSize, Gravity.START | Gravity.CENTER_VERTICAL, 10, 0, 0, 0));
         if (style == STYLE_STORY) {
             setClipChildren(false);

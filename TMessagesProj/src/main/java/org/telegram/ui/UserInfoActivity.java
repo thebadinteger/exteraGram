@@ -82,6 +82,7 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
     private CharSequence birthdayInfo;
 
     private ArrayList<TL_account.TL_connectedBot> bots = new ArrayList<>();
+    private com.exteragram.messenger.api.model.NowPlayingServiceType nowPlayingService;
 
     @Override
     protected CharSequence getTitle() {
@@ -100,6 +101,7 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
         getNotificationCenter().addObserver(this, NotificationCenter.privacyRulesUpdated);
         getNotificationCenter().addObserver(this, NotificationCenter.updateInterfaces);
         getNotificationCenter().addObserver(this, NotificationCenter.updatedChatbot);
+        getNotificationCenter().addObserver(this, NotificationCenter.nowPlayingUpdated);
         getContactsController().loadPrivacySettings();
         BusinessChatbotController.getInstance(currentAccount).load(null);
         return super.onFragmentCreate();
@@ -111,6 +113,7 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
         getNotificationCenter().removeObserver(this, NotificationCenter.privacyRulesUpdated);
         getNotificationCenter().removeObserver(this, NotificationCenter.updateInterfaces);
         getNotificationCenter().removeObserver(this, NotificationCenter.updatedChatbot);
+        getNotificationCenter().removeObserver(this, NotificationCenter.nowPlayingUpdated);
         super.onFragmentDestroy();
         if (!wasSaved) {
             processDone(false);
@@ -297,6 +300,7 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
     private static final int INFO_BIRTHDAY = 9;
     private static final int BUTTON_ADD_ACCOUNT = 10;
     private static final int BUTTON_LOGOUT = 11;
+    private static final int BUTTON_SCROBBLING_SERVICE = 12;
 
     private final ArrayList<Integer> accountNumbers = new ArrayList<>();
     private void updateAccounts() {
@@ -392,6 +396,10 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
             }
         }
         items.add(UItem.asShadow(birthdayInfo));
+        if (com.exteragram.messenger.badges.BadgesController.INSTANCE.hasBadge() && nowPlayingService != null) {
+            IconBackgroundColors colors = IconBackgroundColors.CYAN;
+            items.add(SettingsActivity.SettingCell.Factory.of(BUTTON_SCROBBLING_SERVICE, colors.top, colors.bottom, R.drawable.msg_filled_data_music, LocaleController.getString(R.string.ScrobblingService), null, nowPlayingService.getDisplayName()));
+        }
 
         channelRow = items.size();
         if (channel == null) {
@@ -551,6 +559,8 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
             presentFragment(new ChangeUsernameActivity());
         } else if (item.id == BUTTON_LOGOUT) {
             presentFragment(new LogoutActivity());
+        } else if (item.id == BUTTON_SCROBBLING_SERVICE) {
+            presentFragment(new com.exteragram.messenger.nowplaying.ui.SetupNowPlayingActivity());
         }
     }
 
@@ -577,6 +587,13 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
             this.bots = bots != null && bots.connected_bots != null ? bots.connected_bots : new ArrayList<>();
             if (listView != null) {
                 listView.adapter.update(true);
+            }
+        } else if (id == NotificationCenter.nowPlayingUpdated) {
+            if (args.length > 0 && args[0] instanceof com.exteragram.messenger.api.model.NowPlayingServiceType) {
+                this.nowPlayingService = (com.exteragram.messenger.api.model.NowPlayingServiceType) args[0];
+                if (listView != null) {
+                    listView.adapter.update(true);
+                }
             }
         }
     }
@@ -643,6 +660,14 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
         }
         hadHours = userFull.business_work_hours != null;
         hadLocation = userFull.business_location != null;
+        com.exteragram.messenger.nowplaying.NowPlayingController.getNowPlayingInfo(info -> {
+            AndroidUtilities.runOnUIThread(() -> {
+                nowPlayingService = info == null ? null : info.getServiceType();
+                if (listView != null) {
+                    listView.adapter.update(true);
+                }
+            }, 100L);
+        });
         checkDone(true);
 
         if (listView != null && listView.adapter != null) {
@@ -794,6 +819,9 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
                     wasSaved = true;
                     requestsReceived[0]++;
                     if (requestsReceived[0] == requests.size()) {
+                        if (com.exteragram.messenger.ExteraConfig.getTitleText() == 2) {
+                            NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.currentUserPremiumStatusChanged);
+                        }
                         finishFragment();
                     }
                 }

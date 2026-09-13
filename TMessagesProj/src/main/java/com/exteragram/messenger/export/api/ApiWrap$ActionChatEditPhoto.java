@@ -1,11 +1,11 @@
 package com.exteragram.messenger.export.api;
 
-import com.android.tools.r8.RecordTag;
+import com.exteragram.messenger.utils.RecordTag;
 import com.exteragram.messenger.export.output.html.HtmlWriter;
 import java.util.Objects;
 
 public final class ApiWrap$ActionChatEditPhoto extends RecordTag {
-    private final HtmlWriter.Photo photo;
+    public final HtmlWriter.Photo photo;
 
     private /* synthetic */ boolean $record$equals(Object obj) {
         return (obj instanceof ApiWrap$ActionChatEditPhoto) && Objects.equals(this.photo, ((ApiWrap$ActionChatEditPhoto) obj).photo);

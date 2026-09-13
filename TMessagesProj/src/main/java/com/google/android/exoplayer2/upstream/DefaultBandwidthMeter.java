@@ -1,3 +1,50 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.exoplayer2.upstream;
+
+import android.content.Context;
+import android.os.Handler;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.upstream.BandwidthMeter.EventListener.EventDispatcher;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Clock;
+import com.google.android.exoplayer2.util.NetworkTypeObserver;
+import com.google.android.exoplayer2.util.Util;
+import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.FileLog;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Estimates bandwidth by listening to data transfers.
+ *
+ * <p>The bandwidth estimate is calculated using a {@link SlidingPercentile} and is updated each
+ * time a transfer ends. The initial estimate is based on the current operator's network country
+ * code or the locale of the user, as well as the network connection type. This can be configured in
+ * the {@link Builder}.
+ */
 public final class DefaultBandwidthMeter implements BandwidthMeter, TransferListener {
 
   /** Default initial Wifi bitrate estimate in bits per second. */

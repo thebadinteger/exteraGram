@@ -1942,6 +1942,10 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
         private final ButtonWithCounterView button;
 
         private Long emoji_id;
+        private boolean localEditing;
+        private boolean localMode;
+        private boolean localPreview;
+        private Utilities.Callback3Return<String, String, Long, Boolean> onLocalSaved;
 
         private SelectAnimatedEmojiDialog.SelectAnimatedEmojiDialogWindow selectAnimatedEmojiDialog;
 
@@ -2099,6 +2103,20 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
                 }
 
                 button.setLoading(true);
+                if (localMode) {
+                    boolean success = true;
+                    if (onLocalSaved != null && !Boolean.TRUE.equals(onLocalSaved.run(titleCell.getText().toString(), promptCell.getText().toString(), emoji_id))) {
+                        success = false;
+                    }
+                    button.setLoading(false);
+                    if (success) {
+                        dismiss();
+                    } else {
+                        titleCell.performHapticFeedback(3, 2);
+                        AndroidUtilities.shakeView(titleCell);
+                    }
+                    return;
+                }
                 if (editing != null) {
                     final TL_aicompose.updateTone req = new TL_aicompose.updateTone();
                     req.flags |= TLObject.FLAG_0;
@@ -2217,6 +2235,51 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
             return this;
         }
 
+        public CreateAiStyleAlert setLocalStyle(String str, String str2, long j, boolean z, int i, int i2, Utilities.Callback3Return<String, String, Long, Boolean> callback3Return) {
+            this.localMode = true;
+            this.localEditing = z;
+            this.localPreview = false;
+            this.onLocalSaved = callback3Return;
+            this.emoji_id = j != 0 ? Long.valueOf(j) : null;
+            updateIcon();
+            this.titleCell.setMaxLength(i);
+            this.titleCell.editText.setHint(LocaleController.getString(R.string.RoleName));
+            this.titleCell.setText(str);
+            this.promptCell.setMaxLength(i2);
+            this.promptCell.setShowLimitWhenNear(Math.max(100, i2 / 2));
+            this.promptCell.editText.setHint(LocaleController.getString(R.string.RolePrompt));
+            this.promptCell.setText(str2);
+            this.actionBar.setTitle(LocaleController.getString(z ? R.string.EditRole : R.string.NewRole));
+            this.button.setText(LocaleController.getString(z ? R.string.AIEditorStyleEdit : R.string.AIEditorStyleCreate));
+            updateButton();
+            if (this.adapter != null) {
+                this.adapter.update(false);
+            }
+            return this;
+        }
+
+        public CreateAiStyleAlert setLocalStylePreview(String str, String str2, long j, int i, int i2) {
+            setLocalStyle(str, str2, j, false, i, i2, null);
+            this.localPreview = true;
+            this.iconButton.setEnabled(false);
+            this.titleCell.editText.setFocusable(false);
+            this.titleCell.editText.setFocusableInTouchMode(false);
+            this.titleCell.editText.setCursorVisible(false);
+            this.promptCell.editText.setFocusable(false);
+            this.promptCell.editText.setFocusableInTouchMode(false);
+            this.promptCell.editText.setCursorVisible(false);
+            this.promptCell.editText.setMaxLines(Integer.MAX_VALUE);
+            int i3 = this.backgroundPaddingLeft;
+            this.recyclerListView.setPadding(i3, 0, i3, AndroidUtilities.dp(6.0f));
+            this.buttonContainer.setVisibility(View.GONE);
+            this.actionBar.setTitle(LocaleController.getString(R.string.Info));
+            updateButton();
+            if (this.adapter != null) {
+                this.adapter.update(false);
+            }
+            return this;
+        }
+
         private Utilities.Callback<TL_aicompose.AiComposeTone> onToneCreated;
         public CreateAiStyleAlert setOnToneCreated(Utilities.Callback<TL_aicompose.AiComposeTone> listener) {
             this.onToneCreated = listener;
@@ -2241,6 +2304,10 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
         }
 
         private void updateButton() {
+            if (localPreview) {
+                button.setEnabled(false);
+                return;
+            }
             button.setEnabled(
                 emoji_id != null &&
                 titleCell.getText().length() > 0 &&
@@ -2264,15 +2331,21 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
             items.add(UItem.asShadow(null));
             items.add(UItem.asCustom(promptCell));
             items.add(UItem.asShadow(null));
-            if (editing != null) {
+            if (editing != null && !localMode) {
                 items.add(UItem.asButton(1, getString(R.string.AIEditorDeleteStyle)).red());
                 items.add(UItem.asShadow(null));
+            }
+            if (localMode) {
+                return;
             }
             items.add(UItem.asCustomShadow(checkboxCell));
         }
 
         @Override
         protected CharSequence getTitle() {
+            if (localMode) {
+                return LocaleController.getString(localEditing ? R.string.EditRole : R.string.NewRole);
+            }
             return editing != null ? getString(R.string.AIEditorEditStyle) : getString(R.string.AIEditorNewStyle);
         }
     }

@@ -4,6 +4,8 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -15,7 +17,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.exteragram.messenger.plugins.models.TextSetting;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
@@ -672,10 +677,27 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
                 break;
             case VIEW_TYPE_TEXT:
                 TextCell cell = (TextCell) holder.itemView;
+                cell.reset();
                 if (item.object instanceof TLRPC.Document) {
                     cell.setTextAndSticker(item.text, (TLRPC.Document) item.object, divider);
                 } else if (item.object instanceof String) {
                     cell.setTextAndSticker(item.text, (String) item.object, divider);
+                } else if (item.object2 instanceof Drawable) {
+                    Drawable valueDrawable = ((Drawable) item.object2).mutate();
+                    int iconColor = item.iconColor != null ? item.iconColor : Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider);
+                    valueDrawable.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.MULTIPLY));
+                    Drawable iconDrawable = null;
+                    if (item.object instanceof Drawable) {
+                        iconDrawable = (Drawable) item.object;
+                    } else if (item.iconResId != 0) {
+                        iconDrawable = ContextCompat.getDrawable(context, item.iconResId).mutate();
+                        iconDrawable.setColorFilter(new PorterDuffColorFilter(iconColor, PorterDuff.Mode.MULTIPLY));
+                    }
+                    if (iconDrawable != null) {
+                        cell.setTextAndIconAndValueDrawable(item.text, iconDrawable, valueDrawable, divider);
+                    } else {
+                        cell.setTextAndValueDrawable(item.text, valueDrawable, divider);
+                    }
                 } else if (TextUtils.isEmpty(item.textValue)) {
                     if (item.object instanceof Drawable) {
                         cell.setTextAndIcon(item.text, (Drawable) item.object, divider);
@@ -700,16 +722,43 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
                 } else {
                     cell.setColors(Theme.key_windowBackgroundWhiteGrayIcon, Theme.key_windowBackgroundWhiteBlackText);
                 }
+                if (item.iconColor != null) {
+                    cell.setColorfulIcon(item.iconColor, item.iconColor, item.iconResId, false);
+                }
+                if (item.pad > 0) {
+                    cell.setOffsetFromImage(item.pad);
+                }
+                if (item.intValue > 0 && (item.settingItem == null || (item.settingItem instanceof TextSetting))) {
+                    cell.heightDp = item.intValue;
+                }
+                if (!TextUtils.isEmpty(item.subtext)) {
+                    cell.setSubtitle(item.subtext);
+                    if (cell.getImageView() != null) {
+                        cell.getImageView().setTranslationY(AndroidUtilities.dp(2.0f));
+                    }
+                }
+                cell.setPrioritizeTitleOverValue(item.prioritizeTitleOverValue);
                 cell.setEnabled(item.enabled, true);
                 break;
             case VIEW_TYPE_CHECK:
             case VIEW_TYPE_CHECKRIPPLE:
                 TextCheckCell checkCell = (TextCheckCell) holder.itemView;
+                checkCell.reset();
                 if (checkCell.itemId == item.id) {
                     checkCell.setChecked(item.checked);
                 }
+                if (TextUtils.isEmpty(item.textValue)) {
+                    checkCell.setTextAndCheck(item.text, item.checked, viewType == VIEW_TYPE_CHECK && divider);
+                } else {
+                    checkCell.setTextAndValueAndCheck(item.text, item.textValue.toString(), item.checked, item.multiline, viewType == VIEW_TYPE_CHECK && divider);
+                }
                 checkCell.setEnabled(item.enabled, null);
-                checkCell.setTextAndCheck(item.text, item.checked, divider);
+                if (item.iconResId != 0) {
+                    checkCell.setIcon(item.iconResId);
+                }
+                if (item.checkBoxIconResId != 0) {
+                    checkCell.setCheckBoxIcon(item.checkBoxIconResId);
+                }
                 checkCell.itemId = item.id;
                 if (viewType == VIEW_TYPE_CHECKRIPPLE) {
                     holder.itemView.setBackgroundColor(Theme.getColor(item.checked ? Theme.key_windowBackgroundChecked : Theme.key_windowBackgroundUnchecked));
@@ -1049,8 +1098,20 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
                         switchCell.hideCollapseArrow();
                     } else {
                         switchCell.setCollapseArrow(item.animatedText.toString(), item.collapsed, () -> {
-                            item.clickCallback.onClick(switchCell);
+                            if (item.exteraExpandableSwitch) {
+                                if (item.switchClickCallback != null) {
+                                    item.switchClickCallback.onClick(switchCell);
+                                }
+                            } else {
+                                if (item.clickCallback != null) {
+                                    item.clickCallback.onClick(switchCell);
+                                }
+                            }
                         });
+                        if (item.exteraExpandableSwitch) {
+                            switchCell.getCheckBox().setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked, Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhite);
+                            switchCell.getCheckBox().setDrawIconType(0);
+                        }
                     }
                 }
                 break;

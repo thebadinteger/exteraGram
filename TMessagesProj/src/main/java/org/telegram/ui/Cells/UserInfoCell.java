@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
@@ -22,6 +23,10 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.exteragram.messenger.api.dto.BadgeDTO;
+import com.exteragram.messenger.badges.BadgesController;
+import com.exteragram.messenger.regdate.RegDateController;
 
 import androidx.annotation.NonNull;
 
@@ -109,17 +114,23 @@ public class UserInfoCell extends View implements NotificationCenter.Notificatio
         return row;
     }
 
-    public static String displayDate(String date) {
-        final String[] parts = date.split("\\.");
-        if (parts.length != 2) return date;
-        final int month = Integer.parseInt(parts[0]);
-        final int year = Integer.parseInt(parts[1]);
+    private boolean timestampSent = false;
 
-        final Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month - 1, 1, 0, 0, 0);
+    public static long getTimestamp(String str) {
+        String[] strArrSplit = str.split("\\.");
+        if (strArrSplit.length != 2) {
+            return 0L;
+        }
+        int i = Integer.parseInt(strArrSplit[0]);
+        int i2 = Integer.parseInt(strArrSplit[1]);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(i2, i - 1, 1, 0, 0, 0);
         calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis() / 1000L;
+    }
 
-        return LocaleController.formatYearMont(calendar.getTimeInMillis() / 1000L, true);
+    public static String displayDate(String date) {
+        return LocaleController.formatYearMont(getTimestamp(date), true);
     }
 
     public UserInfoCell(Context context, int currentAccount, Theme.ResourcesProvider resourcesProvider) {
@@ -167,6 +178,10 @@ public class UserInfoCell extends View implements NotificationCenter.Notificatio
             addRow(getString(R.string.ContactInfoPhone), getCountryWithFlag(settings.phone_country, 12, R.string.ContactInfoPhoneFragment), false);
         }
         if (settings != null && settings.registration_month != null) {
+            if (!this.timestampSent) {
+                RegDateController.getInstance(this.currentAccount).addRegistrationDate(dialogId, getTimestamp(settings.registration_month), str -> {});
+                this.timestampSent = true;
+            }
             addRow(getString(R.string.ContactInfoRegistration), displayDate(settings.registration_month), false);
         }
 //        if (settings != null && settings.location_country != null) {
@@ -183,12 +198,14 @@ public class UserInfoCell extends View implements NotificationCenter.Notificatio
             commonChats = MessagesController.getInstance(currentAccount).getCommonChats(dialogId);
             final int count = Math.max(userFull.common_chats_count, commonChats.getCount());
             if (count > 0) {
-                groupsRow = addRow(getString(R.string.ContactInfoCommonGroups), LocaleController.formatPluralString("Groups", count), true);
-                groupsAvatars.setCount(Math.min(3, commonChats.chats.size()));
-                for (int i = 0; i < Math.min(3, commonChats.chats.size()); ++i) {
-                    groupsAvatars.setObject(i, currentAccount, commonChats.chats.get(i));
+                groupsRow = addRow(getString(R.string.ContactInfoCommonGroups), "" + count, true);
+                final AvatarsDrawable avatarsDrawable = groupsAvatars;
+                final int countAvatars = Math.min(3, commonChats.chats.size());
+                avatarsDrawable.setCount(countAvatars);
+                for (int a = 0; a < countAvatars; ++a) {
+                    avatarsDrawable.setObject(a, currentAccount, commonChats.chats.get(a));
                 }
-                groupsAvatars.commitTransition(true);
+                avatarsDrawable.commitTransition(true);
             } else {
                 commonChats = null;
                 groupsRow = null;
@@ -200,7 +217,23 @@ public class UserInfoCell extends View implements NotificationCenter.Notificatio
 
         rowsWidth = rowsKeysWidth + dp(7.66f) + rowsValuesWidth;
         if (user != null && !user.verified && !UserObject.isService(user.id)) {
-            if (user.bot_verification_icon != 0) {
+            BadgesController badgesController = BadgesController.INSTANCE;
+            if (badgesController.isDeveloper(user)) {
+                BadgeDTO badge = badgesController.getBadge(user);
+                if (badge != null) {
+                    SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("i  ");
+                    this.footer = new Text(spannableStringBuilder, 12.0f);
+                    spannableStringBuilder.setSpan(new AnimatedEmojiSpan(badge.getDocumentId(), this.footer.getFontMetricsInt()), 0, 1, 33);
+                    spannableStringBuilder.append(AndroidUtilities.replaceTags(badge.getText() != null ? badge.getText() : LocaleController.getString(R.string.DeveloperCompact)));
+                    Text textMultiline = new Text(spannableStringBuilder, 12.0f).align(Layout.Alignment.ALIGN_CENTER).multiline(5);
+                    Point point = AndroidUtilities.displaySize;
+                    this.footer = textMultiline.setMaxWidth(Math.min(point.x, point.y) * 0.5f).supportAnimatedEmojis(this);
+                    this.height += AndroidUtilities.dp(12.0f) + this.footer.getHeight() + AndroidUtilities.dp(15.33f);
+                } else {
+                    this.footer = null;
+                    this.height += AndroidUtilities.dp(14.0f);
+                }
+            } else if (user.bot_verification_icon != 0) {
                 if (userFull != null && userFull.bot_verification != null) {
                     final TL_bots.botVerification verification = userFull.bot_verification;
                     final SpannableStringBuilder sb = new SpannableStringBuilder("i  ");

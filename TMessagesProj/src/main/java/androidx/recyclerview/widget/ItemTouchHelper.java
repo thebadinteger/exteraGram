@@ -1,3 +1,72 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package androidx.recyclerview.widget;
+
+import android.animation.Animator;
+import android.animation.ValueAnimator;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.os.Build;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.HapticFeedbackConstants;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewParent;
+import android.view.animation.Interpolator;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.GestureDetectorCompat;
+import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
+import androidx.recyclerview.widget.RecyclerView.ViewHolder;
+
+import org.telegram.messenger.AndroidUtilities;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * This is a utility class to add swipe to dismiss and drag & drop support to RecyclerView.
+ * <p>
+ * It works with a RecyclerView and a Callback class, which configures what type of interactions
+ * are enabled and also receives events when user performs these actions.
+ * <p>
+ * Depending on which functionality you support, you should override
+ * {@link Callback#onMove(RecyclerView, ViewHolder, ViewHolder)} and / or
+ * {@link Callback#onSwiped(ViewHolder, int)}.
+ * <p>
+ * This class is designed to work with any LayoutManager but for certain situations, it can be
+ * optimized for your custom LayoutManager by extending methods in the
+ * {@link ItemTouchHelper.Callback} class or implementing {@link ItemTouchHelper.ViewDropHandler}
+ * interface in your LayoutManager.
+ * <p>
+ * By default, ItemTouchHelper moves the items' translateX/Y properties to reposition them. You can
+ * customize these behaviors by overriding {@link Callback#onChildDraw(Canvas, RecyclerView,
+ * ViewHolder, float, float, int, boolean)}
+ * or {@link Callback#onChildDrawOver(Canvas, RecyclerView, ViewHolder, float, float, int,
+ * boolean)}.
+ * <p/>
+ * Most of the time you only need to override <code>onChildDraw</code>.
+ */
 public class ItemTouchHelper extends RecyclerView.ItemDecoration
         implements RecyclerView.OnChildAttachStateChangeListener {
 
