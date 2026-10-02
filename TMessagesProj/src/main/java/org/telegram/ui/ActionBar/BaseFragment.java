@@ -1419,6 +1419,13 @@ public abstract class BaseFragment {
         return isSupportEdgeToEdge();
     }
 
+    public EdgeToEdgeSupportMode getEdgeToEdgeSupportMode() {
+        if (isSupportEdgeToEdge()) {
+            return EdgeToEdgeSupportMode.VERTICAL;
+        }
+        return EdgeToEdgeSupportMode.NONE;
+    }
+
     public WindowInsetsCompat onInsetsInternal(@NonNull View view, @NonNull WindowInsetsCompat windowInsets) {
         final Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() | WindowInsetsCompat.Type.statusBars());
         onInsets(insets.left, insets.top, insets.right, bottomInset = insets.bottom);

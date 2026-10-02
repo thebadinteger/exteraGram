@@ -18,7 +18,7 @@ import com.exteragram.messenger.preferences.chats.components.StickerShapeCell;
 import com.exteragram.messenger.speech.VoiceRecognitionController;
 import com.exteragram.messenger.speech.ui.RecognitionModelDialogs;
 import com.exteragram.messenger.utils.chats.DoubleTapUtils;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.PopupUtils;
 import com.google.android.exoplayer2.util.Consumer;
 import java.util.ArrayList;

@@ -2757,6 +2757,11 @@ public final class PythonPluginsEngine implements PluginsController.PluginsEngin
         }
 
         @JvmStatic
+        public static final void enableAutoUpdate() {
+            com.exteragram.messenger.ExteraConfig.setPluginsPySdkAutoUpdate(true);
+        }
+
+        @JvmStatic
         public static final void savePythonSdkArchive(TLRPC.Message message, TLRPC.Document document) {
             INSTANCE.savePythonSdkArchive(message, document);
         }

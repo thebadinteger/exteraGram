@@ -92,15 +92,14 @@
     <string name="TranslationProvider">Translation Provider</string>
     <string name="TranslationTarget">Target Language</string>
     <string name="TranslationTargetApp">Follow App</string>
-    <string name="TranslationFormality">Formality</string>
-    <string name="TranslationFormalityLess">Less</string>
-    <string name="TranslationFormalityMore">More</string>
+    <string name="ShowTranslateChatButtonLocked">Choose another translation provider or subscribe to **Telegram Premium**.</string>
 
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Disable Number Rounding</string>
     <string name="FormatTimeWithSeconds">Format Time with Seconds</string>
     <string name="RelativeLastSeen">Relative Last Seen</string>
     <string name="InAppVibration">In-App Vibration</string>
+    <string name="DisableNotificationDelay">Disable Notification Delay</string>
     <string name="FilterZalgo">Filter \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Removes \"%1$s\" symbols in names and messages.</string>
     <string name="RestartRequired">Restart the app for changes to take effect.</string>
@@ -238,8 +237,6 @@
     <string name="AppIconAurora">Aurora</string>
     <string name="AppIconGoogle" translatable="false">Google</string>
     <string name="AppIconAmethyst">Amethyst</string>
-    <string name="AppIconSapphire">Sapphire</string>
-    <string name="AppIcon480DSGN" translatable="false">480 DSGN</string>
     <string name="AppIconInvincible">Invincible</string>
     <string name="AppIconCyberpunk">Cyberpunk</string>
     <string name="AppIconSpace">Space</string>
@@ -248,6 +245,22 @@
     <string name="AppIconOrbit">Orbit</string>
     <string name="AppIconSus">Impostor</string>
     <string name="AppIconWinter">Winter</string>
+    <string name="AppIconsApply">Select</string>
+    <string name="AppIconsKeep">Keep this one</string>
+    <string name="AppIconDefaultInfo" translatable="false">It just works</string>
+    <string name="AppIconWinterInfo" translatable="false">Winter is coming</string>
+    <string name="AppIconMonetInfo" translatable="false">Any color you like</string>
+    <string name="AppIconOrbitInfo" translatable="false">To infinity and beyond</string>
+    <string name="AppIconAuroraInfo" translatable="false">Localized entirely in your phone</string>
+    <string name="AppIconSunsetInfo" translatable="false">Here comes the sun</string>
+    <string name="AppIconIceAgeInfo" translatable="false">Where\'s my acorn?</string>
+    <string name="AppIconEditorInfo" translatable="false">final_v2_FINAL.fig</string>
+    <string name="AppIconSpaceInfo" translatable="false">The Final Frontier</string>
+    <string name="AppIconAmethystInfo" translatable="false">Perfectly balanced</string>
+    <string name="AppIconCyberpunkInfo" translatable="false">Wake up, samurai</string>
+    <string name="AppIconGoogleInfo" translatable="false">Don\'t be evil</string>
+    <string name="AppIconInvincibleInfo" translatable="false">Think, Mark!</string>
+    <string name="AppIconSusInfo" translatable="false">Red kinda sus</string>
 
     <!-- General Appearance -->
     <string name="MaterialDesign3" translatable="false">Material Design 3</string>
@@ -262,6 +275,7 @@
     <string name="NewLoadingStyle">Loading Style</string>
     <string name="NewSliderStyle">Slider Style</string>
     <string name="NewSwitchStyle">Switch Style</string>
+    <string name="NewFabStyle">Floating Button</string>
     <string name="TabletMode">Tablet Mode</string>
     <string name="RemoveMessageTail">Remove Message Tail</string>
     <string name="GooeyAvatarAnimation">\"Gooey\" Avatar Animation</string>
@@ -270,8 +284,10 @@
     <string name="PredictiveBackIntensity">Predictive Back Intensity</string>
     <string name="PredictiveBackMax">Max</string>
     <string name="PredictiveBackInfo">Adjusts how far the screen moves when swiping back.</string>
-    <string name="SpringAnimations">Spring Animations</string>
-    <string name="SpringAnimationsInfo">Enables smoother animations when switching screens and opening the side menu.</string>
+    <string name="TransitionAnimation">Transition Animation</string>
+    <string name="TransitionAnimationAosp">AOSP</string>
+    <string name="TransitionAnimationSpring">Spring</string>
+    <string name="TransitionAnimationInfo">AOSP uses the stock Android window transition, Spring a smoother one.</string>
 
     <!-- Blur & Effects -->
     <string name="BlurOptions">Blur Options</string>
@@ -294,7 +310,9 @@
     <string name="StickerShape">Sticker Shape</string>
     <string name="StickerShapeRounded">Rounded</string>
     <string name="StickerShapeRoundedMsg">Message</string>
-    <string name="StickerTime">Hide Time on Stickers</string>
+    <string name="StickerTimeMode">Time on Stickers</string>
+    <string name="StickerTimeSide">On the Side</string>
+    <string name="StickerTimeHidden">Hidden</string>
     <string name="ViewEmojiSet">View Emoji Set</string>
     <string name="UnlimitedRecentStickers">Unlimited Recent Stickers</string>
     <string name="HideReactions">Hide Reactions</string>
@@ -322,6 +340,9 @@
     <string name="ServicePasteService">Paste Service</string>
     <string name="ServicePasteKey">Paste API Key</string>
     <string name="DeleteServiceInfo">Are you sure you want to delete **%1$s**?</string>
+    <string name="ServiceAlreadyExists">Service Already Exists</string>
+    <string name="ServiceAlreadyExistsInfo">Switched to the existing service.</string>
+    <string name="ServiceDuplicate">Another service already uses this URL, model and key.</string>
 
     <!-- AI Roles -->
     <string name="Roles">Roles</string>
@@ -347,7 +368,8 @@
     <string name="InsertResponseAsQuote">Insert Response as Quote</string>
     <string name="TapToAddApiKey">Tap to add an API Key to get started with AI features.</string>
     <string name="Generate">Generate</string>
-    <string name="GenerateWithoutHistory">Without History</string>
+    <string name="GenerateWithHistory">With History</string>
+    <string name="GenerateWithPhoto">With Photo</string>
     <string name="ClearConversationHistoryInfo">Are you sure you want to clear **all** AI conversation history?</string>
 
     <!-- AI Errors -->
@@ -369,16 +391,66 @@
     <string name="AIError503Info">The service is temporarily unavailable or overloaded. Please try again later.</string>
     <string name="AIError">Server Error</string>
     <string name="AIErrorInfo">Please retry your request after a short wait.</string>
+    <string name="AIErrorEmpty">Empty Response</string>
+    <string name="AIErrorEmptyInfo">The model returned nothing. Try again or choose another model.</string>
+    <string name="AIOnDevice">On-device</string>
+    <string name="AIErrorOnDevice">On-Device Model Unavailable</string>
+    <string name="AIErrorOnDeviceInfo">This device cannot run the on-device model. Pick another service.</string>
+    <string name="AIErrorOnDeviceDownload">Model Not Downloaded</string>
+    <string name="AIErrorOnDeviceDownloadInfo">The on-device model has not been downloaded yet.</string>
+    <string name="AIErrorOnDeviceDownloading">Model Downloading</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">The on-device model is still downloading. Please try again later.</string>
+    <string name="AIErrorOnDeviceTooLong">Message Too Long</string>
+    <string name="AIErrorOnDeviceTooLongInfo">The on-device model cannot fit this request. Shorten it or pick another service.</string>
+    <string name="AIErrorOnDeviceStopped">Model Stopped</string>
+    <string name="AIErrorOnDeviceStoppedInfo">The on-device model stopped while answering, often because the device ran low on memory. Try again or pick a lighter model.</string>
+    <string name="AIOnDeviceDownloadTitle">Download On-Device Model</string>
+    <string name="AIOnDeviceDownloadInfo">The model is downloaded once and then runs entirely on this device, without sending anything to a server. The download is large and is handled by the system, so it cannot be stopped once started. Wi-Fi is recommended.</string>
+    <string name="AIOnDeviceDownloadButton">Download</string>
+    <string name="AIOnDeviceBadgeReady">READY</string>
+    <string name="AIOnDeviceBadgeUnavailable">UNAVAILABLE</string>
+    <string name="AIOnDeviceNotificationChannel">On-device AI model</string>
+    <string name="AIOnDeviceNotificationReady">Model ready</string>
+    <string name="AIOnDeviceNotificationReadyInfo">Gemini Nano is downloaded and now runs on your device.</string>
+    <string name="AIOnDeviceDownloadStarted">Download started. It continues in the background.</string>
+    <string name="AIOnDeviceBadgeDownload">DOWNLOAD</string>
+    <string name="AIOnDeviceBadgeDownloading">LOADING</string>
+    <string name="AIOnDeviceRefresh">Refresh status</string>
+    <string name="AIOnDevicePreviewModel">Preview model</string>
+    <string name="AIOnDeviceFastModel">Fast model</string>
+    <string name="AIReplaceTelegram">Telegram AI</string>
+    <string name="AIReplaceTelegramEditorInfo">Translate, restyle and proofread drafts</string>
+    <string name="AIReplaceTelegramSummariesInfo">Summarize long messages and posts</string>
+    <string name="AIReplaceTelegramInfo">Selected features use your AI service instead of Telegram servers, without Premium limits.</string>
+    <string name="AIOnDeviceManage">AICore settings</string>
+    <string name="AIOnDeviceManageUnavailable">System settings for AICore are not available on this device.</string>
+    <string name="AIChangeModel">Change</string>
+    <string name="AIAskMore">Ask More</string>
+    <string name="AIAssistant">Assistant</string>
 
     <!-- Chat Actions -->
     <string name="DoubleTap">Double Tap</string>
     <string name="DoubleTapIncoming">Incoming Messages</string>
     <string name="DoubleTapOutgoing">Outgoing Messages</string>
     <string name="DoubleTapInfo">Some actions require administrator rights in the chat or channel.</string>
+    <string name="Gestures">Gestures</string>
+    <string name="SwipeActions">Swipe Actions</string>
+    <string name="SwipeActionsInfo">Swipe a message to the left and, without lifting your finger, move up or down to pick an action.</string>
+    <string name="SwipeActionsBehavior">Behavior</string>
+    <string name="SwipeActionsLoop">Loop Actions</string>
+    <string name="SwipeActionsReversed">Reverse Scrolling</string>
+    <string name="SwipeActionsBehaviorInfo">With looping, the first action comes right after the last one. Reverse scrolling makes the list move with your finger.</string>
+    <string name="SwipeActionsEnabled">Actions</string>
+    <string name="SwipeActionsDisabled">Disabled</string>
+    <string name="SwipeActionsOrderInfo">Tap an action to turn it on or off, drag to reorder. The topmost action runs on a plain swipe.</string>
+    <string name="SwipeActionsPreviewReply">what if i slip and delete it?</string>
+    <string name="SwipeActionsPreviewMessage">fear is the mind-killer. drag slower</string>
     <string name="BottomButton">Bottom Button</string>
+    <string name="WidePosts">Wide Posts</string>
     <string name="AIFeatures">AI Features</string>
     <string name="AIFeaturesEditor">Editor</string>
     <string name="AIFeaturesSummaries">Summaries</string>
+    <string name="AIFeaturesInstantViewSummaries">Instant View Summaries</string>
     <string name="ChannelDiscussNoCaps">Discuss</string>
     <string name="QuickTransitions">Quick Swipe Transition</string>
     <string name="DisableGreetingSticker">Disable Greeting Sticker</string>
@@ -390,9 +462,12 @@
     <string name="GroupMessageMenu">Group Message Menu</string>
     <string name="GroupMessageMenuInfo">Grouping moves the main actions to the bottom of the message menu.</string>
     <string name="GlassMessageMenu">Glass Message Menu</string>
-    <string name="GlassMessageMenuInfo">The message menu and the reactions bar become frosted glass.</string>
+    <string name="GlassMessageMenuInfo">The message menu, the header menu and the reactions bar become frosted glass.</string>
     <string name="GlassMessageMenuBlurOff">Glass menus need blur, which is currently off.</string>
     <string name="AddCommaAfterMention">Add Comma after Mention</string>
+    <string name="InlineMathResult">Inline Math Results</string>
+    <string name="InlineMathResultHint">Preview the result after \"=\", then press Space to insert it.</string>
+    <string name="InlineMathResultAnnouncement">Result: %1$s</string>
     <string name="HideSendAsPeer">Hide \"Send as…\" Button</string>
     <string name="HideSendAsPeerInfo">You can still access the \"Send as…\" menu by long pressing the Emojis/Stickers/GIFs button.</string>
     <string name="ShowPollResultsBeforeVoting">Show Results Before Voting</string>
@@ -533,7 +608,20 @@
     <string name="PluginSourceTrustedInfo">Plugins from this source are **verified** and safe to use.</string>
     <string name="PluginSourceUnknown">Unknown source</string>
     <string name="PluginSourceUnknownInfo">Plugins from this source are **unverified** and may pose a security risk.</string>
+    <string name="PluginInstallBlocked">Installation Blocked</string>
+    <string name="PluginInstallBlockedInfo">Allow unknown sources in plugin settings</string>
     <string name="PluginVersion">Version</string>
+    <string name="PluginVersionValue">Version %1$s</string>
+    <string name="PluginRequired">Required Plugins</string>
+    <string name="PluginRequiredMissing">Not installed</string>
+    <string name="PluginRequiredVersion">Requires version %1$s</string>
+    <string name="PluginRequiredDisabled">Installed, but disabled</string>
+    <string name="PluginRequiredOutdated">Version %1$s, requires %2$s</string>
+    <string name="PluginRequiredDownload">Download</string>
+    <string name="PluginRequiredUpdate">Update</string>
+    <string name="PluginRequiredInstalled">Installed</string>
+    <string name="PluginBundledPackages">Bundled Packages</string>
+    <string name="PluginRequirements">Requirements</string>
     <string name="PluginNoDescription">No description provided.</string>
     <string name="PluginIsNotResponding">Plugin isn\'t responding.</string>
     <string name="PluginIsNotRespondingAlert">%1$s isn\'t responding</string>
@@ -544,6 +632,16 @@
     <string name="PluginDeleteInfo">Are you sure you want to delete **%1$s**?</string>
     <string name="ResetPluginSettings">**%1$s** settings have been reset.</string>
     <string name="ResetPluginSettingsInfo">Are you sure you want to reset **%1$s** settings to default?</string>
+    <string name="PluginsUnknownSources">Unknown Sources</string>
+    <string name="PluginsUnknownSourcesInfo">You are agreeing to install plugins from unknown sources. Every plugin has:</string>
+    <string name="PluginsUnknownSourcesInfo2">Allow installing plugins from unverified sources.</string>
+    <string name="PluginsUnknownSourcesAccount">Full access to your account</string>
+    <string name="PluginsUnknownSourcesAccountInfo">Act on your behalf: read, send and delete messages.</string>
+    <string name="PluginsUnknownSourcesFiles">App files and data</string>
+    <string name="PluginsUnknownSourcesFilesInfo">Read cached chats, media, settings and authorization data.</string>
+    <string name="PluginsUnknownSourcesCode">Unrestricted code</string>
+    <string name="PluginsUnknownSourcesCodeInfo">Run any code and send anything to any server.</string>
+    <string name="PluginsUnknownSourcesWarning">A malicious plugin can take over your account.</string>
     <string name="PluginsSafeMode">Safe Mode</string>
     <string name="PluginsSafeModeShortcut">Start with safe mode</string>
     <string name="PluginsSafeModeInfo">The Plugin Engine is disabled due to a crash. Disabling safe mode may lead to unpredictable consequences.</string>
@@ -558,6 +656,7 @@
     <string name="PluginEngineNotEnabled">Enable the **Plugin Engine** to open settings of **%1$s**.</string>
     <string name="PluginNotFound">**%1$s** not found.</string>
     <string name="PluginHasNoSettings">**%1$s** has no settings.</string>
+    <string name="PluginsPySdkUpdate">PySDK Update</string>
     <string name="PluginsPySdkAutoUpdate">Update Automatically</string>
     <string name="PluginsPySdkEnableBetaVersion">Install Beta Versions</string>
     <string name="PluginsPySdkCheckUpdates">Check for Updates</string>
@@ -587,6 +686,7 @@
     <string name="FileName">File Name</string>
     <string name="FilePath">File Path</string>
     <string name="Platform">Platform</string>
+    <string name="SentFrom">Sent from %1$s</string>
     <string name="Resolution">Resolution</string>
     <string name="Bitrate">Bitrate</string>
     <string name="Duration">Duration</string>
@@ -715,6 +815,7 @@
     <string name="FeedChannelHidden">**%1$s** hidden from feed</string>
     <string name="FeedBottomTab">Show in Bottom Tabs</string>
     <string name="FeedBottomTabInfo">Show the feed as a bottom navigation tab in place of the Contacts tab.</string>
+    <string name="WidePostsInFeed">Wide Posts in Feed</string>
     <string name="FeedUnreadCounter">Unread Post Counter</string>
     <string name="HideFeedTab">Hide Feed Tab</string>
     <string name="DisableMarkdown">Disable Markdown</string>

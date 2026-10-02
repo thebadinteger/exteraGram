@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Rupia indyjska</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Nie używaj wraz z VPN</string>
+    <string name="ProxyDisableOn">Wyłączaj proxy</string>
+    <string name="ProxyDisableNever">Nigdy</string>
+    <string name="ProxyDisableAlways">Zawsze</string>
+    <string name="ProxyDisableOnMobileData">Dane mobilne</string>
     <string name="ProxyType">Typ</string>
     <string name="Unknown">Nieznane</string>
     <string name="ProxyRename">Nazwa serwera proxy (opcjonalnie)</string>
@@ -79,14 +83,13 @@
     <string name="TranslationProvider">Dostawca tłumaczeń</string>
     <string name="TranslationTarget">Język docelowy</string>
     <string name="TranslationTargetApp">Domyślny</string>
-    <string name="TranslationFormality">Formalność</string>
-    <string name="TranslationFormalityLess">Mniej</string>
-    <string name="TranslationFormalityMore">Więcej</string>
+    <string name="ShowTranslateChatButtonLocked">Wybierz innego dostawcę tłumaczeń lub zasubskrybuj **Telegram Premium**.</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Wyłącz zaokrąglanie liczb</string>
     <string name="FormatTimeWithSeconds">Formatuj czas z sekundami</string>
     <string name="RelativeLastSeen">Czas ostatniej aktywności</string>
     <string name="InAppVibration">Wibracje w aplikacji</string>
+    <string name="DisableNotificationDelay">Wyłącz opóźnienie powiadomień</string>
     <string name="FilterZalgo">Filtrowanie \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Usuwa symbole \"%1$s\" w nazwach i wiadomościach.</string>
     <string name="RestartRequired">Uruchom ponownie aplikację, aby zmiany zaczęły obowiązywać.</string>
@@ -209,7 +212,6 @@
     <string name="AppIconSunset">Zachód słońca</string>
     <string name="AppIconAurora">Zorza polarna</string>
     <string name="AppIconAmethyst">Ametyst</string>
-    <string name="AppIconSapphire">Szafir</string>
     <string name="AppIconInvincible">Niezwyciężony</string>
     <string name="AppIconCyberpunk">Cyberpunk</string>
     <string name="AppIconSpace">Kosmos</string>
@@ -218,6 +220,8 @@
     <string name="AppIconOrbit">Orbita</string>
     <string name="AppIconSus">Impostor (oszust)</string>
     <string name="AppIconWinter">Zima</string>
+    <string name="AppIconsApply">Wybierz</string>
+    <string name="AppIconsKeep">Zostaw tę</string>
     <!-- General Appearance -->
     <string name="Sections">Sekcje</string>
     <string name="SeparateHeaders">Oddzielne nagłówki</string>
@@ -238,8 +242,10 @@
     <string name="PredictiveBackIntensity">Intensywność cofania predykcyjnego</string>
     <string name="PredictiveBackMax">Maksymalna</string>
     <string name="PredictiveBackInfo">Dostosowuje, jak daleko przesuwa się ekran podczas wykonywania gestu cofania.</string>
-    <string name="SpringAnimations">Animacje sprężynowe</string>
-    <string name="SpringAnimationsInfo">Umożliwia płynniejsze animacje podczas przełączania ekranów i otwierania menu bocznego.</string>
+    <string name="TransitionAnimation">Animacja przejścia</string>
+    <string name="TransitionAnimationAosp">AOSP</string>
+    <string name="TransitionAnimationSpring">Sprężyna</string>
+    <string name="TransitionAnimationInfo">AOSP wykorzystuje standardową animację przejścia okien w Androidzie, Sprężyna - płynniejszą.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Opcje rozmycia</string>
     <string name="GlassOutlineStyle">Szklany kontur</string>
@@ -260,7 +266,9 @@
     <string name="StickerShape">Kształt naklejki</string>
     <string name="StickerShapeRounded">Zaokrąglony</string>
     <string name="StickerShapeRoundedMsg">Wiadomość</string>
-    <string name="StickerTime">Ukryj czas wysłania naklejek</string>
+    <string name="StickerTimeMode">Czas na naklejkach</string>
+    <string name="StickerTimeSide">Z boku</string>
+    <string name="StickerTimeHidden">Ukryty</string>
     <string name="ViewEmojiSet">Wyświetl zestaw emoji</string>
     <string name="UnlimitedRecentStickers">Nieograniczona liczba ostatnich naklejek</string>
     <string name="HideReactions">Ukryj reakcje</string>
@@ -307,7 +315,6 @@
     <string name="InsertResponseAsQuote">Wstaw odpowiedź jako cytat</string>
     <string name="TapToAddApiKey">Kliknij, aby dodać klucz API i rozpocząć korzystanie z funkcji AI.</string>
     <string name="Generate">Generuj</string>
-    <string name="GenerateWithoutHistory">Bez historii</string>
     <string name="ClearConversationHistoryInfo">Czy na pewno chcesz wyczyścić **całą** historię rozmów z AI?</string>
     <!-- AI Errors -->
     <string name="AIError400">Błędne żądanie</string>
@@ -328,12 +335,51 @@
     <string name="AIError503Info">Usługa jest tymczasowo niedostępna lub przeciążona. Spróbuj ponownie później.</string>
     <string name="AIError">Błąd serwera</string>
     <string name="AIErrorInfo">Spróbuj ponownie wysłać żądanie po krótkiej przerwie.</string>
+    <string name="AIOnDevice">Na urządzeniu</string>
+    <string name="AIErrorOnDevice">Model na urządzeniu niedostępny</string>
+    <string name="AIErrorOnDeviceInfo">To urządzenie nie obsługuje modelu na urządzeniu. Wybierz inną usługę.</string>
+    <string name="AIErrorOnDeviceDownload">Model nie został pobrany</string>
+    <string name="AIErrorOnDeviceDownloadInfo">Model na urządzeniu nie został jeszcze pobrany.</string>
+    <string name="AIErrorOnDeviceDownloading">Pobieranie modelu</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">Model na urządzeniu jest w trakcie pobierania. Spróbuj ponownie później.</string>
+    <string name="AIErrorOnDeviceTooLong">Wiadomość jest zbyt długa</string>
+    <string name="AIErrorOnDeviceTooLongInfo">Model na urządzeniu nie może przetworzyć tak długiego żądania. Skróć je lub wybierz inną usługę.</string>
+    <string name="AIOnDeviceDownloadTitle">Pobierz model na urządzenie</string>
+    <string name="AIOnDeviceDownloadInfo">Model jest pobierany raz i działa w całości na tym urządzeniu, bez wysyłania jakichkolwiek danych na serwer. Plik jest duży, a pobieraniem zarządza system, dlatego nie można go przerwać po rozpoczęciu. Zalecane jest połączenie z Wi-Fi.</string>
+    <string name="AIOnDeviceDownloadButton">Pobierz</string>
+    <string name="AIOnDeviceBadgeReady">GOTOWY</string>
+    <string name="AIOnDeviceBadgeUnavailable">NIEDOSTĘPNY</string>
+    <string name="AIOnDeviceNotificationChannel">Model AI na urządzeniu</string>
+    <string name="AIOnDeviceNotificationReady">Model gotowy</string>
+    <string name="AIOnDeviceNotificationReadyInfo">Gemini Nano został pobrany i działa na tym urządzeniu.</string>
+    <string name="AIOnDeviceDownloadStarted">Rozpoczęto pobieranie. Będzie kontynuowane w tle.</string>
+    <string name="AIOnDeviceBadgeDownload">POBIERZ</string>
+    <string name="AIOnDeviceBadgeDownloading">POBIERANIE</string>
+    <string name="AIOnDeviceRefresh">Odśwież status</string>
+    <string name="AIOnDeviceManage">Ustawienia AICore</string>
+    <string name="AIOnDeviceManageUnavailable">Ustawienia systemowe AICore nie są dostępne na tym urządzeniu.</string>
+    <string name="AIChangeModel">Zmień</string>
+    <string name="AIAskMore">Zapytaj o więcej</string>
+    <string name="AIAssistant">Asystent</string>
     <!-- Chat Actions -->
     <string name="DoubleTap">Podwójne dotknięcie</string>
     <string name="DoubleTapIncoming">Wiadomości przychodzące</string>
     <string name="DoubleTapOutgoing">Wiadomości wychodzące</string>
     <string name="DoubleTapInfo">Niektóre działania wymagają uprawnień administratora na czacie lub kanale.</string>
+    <string name="Gestures">Gesty</string>
+    <string name="SwipeActions">Akcje przesuwania</string>
+    <string name="SwipeActionsInfo">Przesuń wiadomość w lewo i, nie odrywając palca, przesuń w górę lub w dół, aby wybrać akcję.</string>
+    <string name="SwipeActionsEnabled">Akcje</string>
+    <string name="SwipeActionsDisabled">Wyłączone</string>
+    <string name="SwipeActionsOrderInfo">Dotknij akcji, aby ją włączyć lub wyłączyć, przesuń, aby zmienić kolejność. Najwyższa akcja uruchamia się przy zwykłym przesunięciu.</string>
+    <string name="SwipeActionsPreviewReply">co jeśli palec mi zjedzie i to usunę?</string>
+    <string name="SwipeActionsPreviewMessage">strach zabija umysł. przesuwaj wolniej</string>
     <string name="BottomButton">Dolny przycisk</string>
+    <string name="WidePosts">Szerokie posty</string>
+    <string name="AIFeatures">Funkcje AI</string>
+    <string name="AIFeaturesEditor">Edytor</string>
+    <string name="AIFeaturesSummaries">Podsumowania</string>
+    <string name="AIFeaturesInstantViewSummaries">Podsumowania błyskawicznego podglądu</string>
     <string name="ChannelDiscussNoCaps">Dyskusja</string>
     <string name="QuickTransitions">Szybkie przejście przesunięciem</string>
     <string name="DisableGreetingSticker">Wyłącz naklejki powitalne</string>
@@ -345,9 +391,12 @@
     <string name="GroupMessageMenu">Menu wiadomości grupowych</string>
     <string name="GroupMessageMenuInfo">Grupowanie przenosi główne akcje na dół menu wiadomości.</string>
     <string name="GlassMessageMenu">Szklane menu wiadomości</string>
-    <string name="GlassMessageMenuInfo">Menu wiadomości i pasek reakcji zyskują efekt matowego szkła.</string>
+    <string name="GlassMessageMenuInfo">Menu wiadomości, menu nagłówka i pasek reakcji zyskują efekt matowego szkła.</string>
     <string name="GlassMessageMenuBlurOff">Szklane menu wymaga rozmycia, które jest obecnie wyłączone.</string>
     <string name="AddCommaAfterMention">Dodaj przecinek po wzmiance</string>
+    <string name="InlineMathResult">Wyniki matematyczne w linii</string>
+    <string name="InlineMathResultHint">Wyświetl podgląd wyniku po \"=\", a następnie naciśnij Spację, aby go wstawić.</string>
+    <string name="InlineMathResultAnnouncement">Wynik: %1$s</string>
     <string name="HideSendAsPeer">Ukryj przycisk \"Wyślij jako…\"</string>
     <string name="HideSendAsPeerInfo">Nadal możesz uzyskać dostęp do menu \"Wyślij jako…\", przytrzymując długo przycisk Emoji/Naklejki/GIF.</string>
     <string name="ShowPollResultsBeforeVoting">Pokaż wyniki przed głosowaniem</string>
@@ -426,6 +475,10 @@
     <string name="ImportChanges_other">**%1$d** zmian zostanie zastosowanych w bieżących ustawieniach.</string>
     <string name="SameSettings">Wygląda na to, że ustawienia są takie same jak obecne.</string>
     <!-- Export data -->
+    <string name="ExportData">Eksportuj dane</string>
+    <string name="ExportDelay">Ze względów bezpieczeństwa pobieranie danych będzie można rozpocząć za %1$s. Powiadomiliśmy wszystkie Twoje urządzenia o żądaniu eksportu, aby upewnić się, że są ono autoryzowane, i dać Ci czas na reakcję, jeśli tak nie jest.\n\nWróć %2$s i powtórz żądanie z tego samego urządzenia.</string>
+    <string name="ExportDelayLessThanHour">mniej niż godzinę</string>
+    <string name="ExportInvalid">Niestety, rozpoczęto nowy eksport danych, więc ten eksport został anulowany.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Usuń konto</string>
     <string name="ResetSettings">Zresetuj ustawienia</string>
@@ -474,7 +527,20 @@
     <string name="PluginSourceTrustedInfo">Wtyczki z tego źródła są **zweryfikowane** i bezpieczne w użyciu.</string>
     <string name="PluginSourceUnknown">Nieznane źródło</string>
     <string name="PluginSourceUnknownInfo">Wtyczki z tego źródła są **niezweryfikowane** i mogą stanowić zagrożenie dla bezpieczeństwa.</string>
+    <string name="PluginInstallBlocked">Instalacja zablokowana</string>
+    <string name="PluginInstallBlockedInfo">Zezwalaj na nieznane źródła w ustawieniach wtyczek</string>
     <string name="PluginVersion">Wersja</string>
+    <string name="PluginVersionValue">Wersja %1$s</string>
+    <string name="PluginRequired">Wymagane wtyczki</string>
+    <string name="PluginRequiredMissing">Nie zainstalowano</string>
+    <string name="PluginRequiredVersion">Wymaga wersji %1$s</string>
+    <string name="PluginRequiredDisabled">Zainstalowano, ale wyłączono</string>
+    <string name="PluginRequiredOutdated">Wersja %1$s, wymaga %2$s</string>
+    <string name="PluginRequiredDownload">Pobierz</string>
+    <string name="PluginRequiredUpdate">Aktualizuj</string>
+    <string name="PluginRequiredInstalled">Zainstalowano</string>
+    <string name="PluginBundledPackages">Dołączone pakiety</string>
+    <string name="PluginRequirements">Wymagania</string>
     <string name="PluginNoDescription">Brak opisu.</string>
     <string name="PluginIsNotResponding">Wtyczka nie odpowiada.</string>
     <string name="PluginIsNotRespondingAlert">Wtyczka %1$s nie odpowiada</string>
@@ -485,6 +551,16 @@
     <string name="PluginDeleteInfo">Czy na pewno chcesz usunąć **%1$s**?</string>
     <string name="ResetPluginSettings">Ustawienia **%1$s** zostały zresetowane.</string>
     <string name="ResetPluginSettingsInfo">Czy na pewno chcesz przywrócić domyślne ustawienia dla **%1$s**?</string>
+    <string name="PluginsUnknownSources">Nieznane źródła</string>
+    <string name="PluginsUnknownSourcesInfo">Wyrażasz zgodę na instalowanie wtyczek z nieznanych źródeł. Każda wtyczka ma:</string>
+    <string name="PluginsUnknownSourcesInfo2">Zezwolenie na instalowanie wtyczek z niezweryfikowanych źródeł.</string>
+    <string name="PluginsUnknownSourcesAccount">Pełny dostęp do Twojego konta</string>
+    <string name="PluginsUnknownSourcesAccountInfo">Działa w Twoim imieniu: odczytuje, wysyła i usuwa wiadomości.</string>
+    <string name="PluginsUnknownSourcesFiles">Pliki i dane aplikacji</string>
+    <string name="PluginsUnknownSourcesFilesInfo">Odczytuje zapisane w pamięci podręcznej czaty, multimedia, ustawienia i dane autoryzacyjne.</string>
+    <string name="PluginsUnknownSourcesCode">Kod bez ograniczeń</string>
+    <string name="PluginsUnknownSourcesCodeInfo">Uruchamia dowolny kod i wysyła dowolne dane na dowolny serwer.</string>
+    <string name="PluginsUnknownSourcesWarning">Złośliwa wtyczka może przejąć Twoje konto.</string>
     <string name="PluginsSafeMode">Tryb awaryjny</string>
     <string name="PluginsSafeModeShortcut">Uruchom w trybie awaryjnym</string>
     <string name="PluginsSafeModeInfo">Silnik wtyczek został wyłączony z powodu awarii. Wyłączenie trybu bezpiecznego może prowadzić do nieprzewidywalnych konsekwencji.</string>
@@ -498,6 +574,7 @@
     <string name="PluginEngineNotEnabled">Włącz **silnik wtyczek**, aby otworzyć ustawienia **%1$s**.</string>
     <string name="PluginNotFound">Nie znaleziono **%1$s**.</string>
     <string name="PluginHasNoSettings">**%1$s** nie ma żadnych ustawień.</string>
+    <string name="PluginsPySdkUpdate">Aktualizacja PySDK</string>
     <string name="PluginsPySdkAutoUpdate">Aktualizuj automatycznie</string>
     <string name="PluginsPySdkEnableBetaVersion">Zainstaluj wersję beta</string>
     <string name="PluginsPySdkCheckUpdates">Sprawdź aktualizacje</string>
@@ -525,6 +602,7 @@
     <string name="FileName">Nazwa pliku</string>
     <string name="FilePath">Ścieżka pliku</string>
     <string name="Platform">Platforma</string>
+    <string name="SentFrom">Wysłano z %1$s</string>
     <string name="Resolution">Rozdzielczość</string>
     <string name="Bitrate">Szybkość transmisji bitów</string>
     <string name="Duration">Czas trwania</string>
@@ -640,6 +718,10 @@
     <string name="FeedChannelHidden">Ukryto **%1$s** w aktualnościach</string>
     <string name="FeedBottomTab">Pokaż na dolnym pasku</string>
     <string name="FeedBottomTabInfo">Pokaż aktualności jako dolną zakładkę nawigacji zamiast zakładkę Kontakty.</string>
+    <string name="WidePostsInFeed">Szerokie posty w aktualnościach</string>
+    <string name="FeedUnreadCounter">Licznik nieprzeczytanych wpisów</string>
     <string name="HideFeedTab">Ukryj zakładkę aktualności</string>
+    <string name="DisableMarkdown">Wyłącz Markdown</string>
+    <string name="EnableMarkdown">Włącz Markdown</string>
     <!-- Non-translatable -->
 </resources>

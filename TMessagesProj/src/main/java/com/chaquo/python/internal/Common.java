@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.mvel2.MVEL$$ExternalSyntheticBUOutline0;
 
 public class Common {
     public static final String ABI_COMMON = "common";
@@ -71,7 +70,7 @@ public class Common {
                 return str;
             }
         }
-        MVEL$$ExternalSyntheticBUOutline0.m("unknown os.name: ", property);
+        android.util.Log.e("Common", "unknown os.name: " + property);
         return null;
     }
 }

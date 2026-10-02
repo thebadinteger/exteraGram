@@ -32,7 +32,7 @@ import com.exteragram.messenger.utils.chats.ChatUtils;
 import com.exteragram.messenger.utils.network.RemoteUtils;
 import com.exteragram.messenger.utils.system.SystemUtils;
 import com.exteragram.messenger.utils.system.VibratorUtils;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.ChatHeaderUiHelper;
 import com.exteragram.messenger.utils.ui.MainTabsUiHelper;
 import com.exteragram.messenger.utils.ui.UIUtil;

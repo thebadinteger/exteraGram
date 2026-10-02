@@ -167,8 +167,6 @@
     <string name="AppIconAurora">Аврора</string>
     <string name="AppIconGoogle" translatable="false">Google</string>
     <string name="AppIconAmethyst">Аметист</string>
-    <string name="AppIconSapphire">Сапфир</string>
-    <string name="AppIcon480DSGN" translatable="false">480 DSGN</string>
     <string name="AppIconInvincible">Неуязвимый</string>
     <string name="AppIconCyberpunk">Киберпанк</string>
     <string name="AppIconSpace">Космос</string>
@@ -177,6 +175,8 @@
     <string name="AppIconOrbit">Орбита</string>
     <string name="AppIconSus">Предатель</string>
     <string name="AppIconWinter">Зима</string>
+    <string name="AppIconsApply">Выбрать</string>
+    <string name="AppIconsKeep">Оставить такую</string>
 
     <!-- Размытие -->
     <string name="BlurOptions">Настройки размытия</string>
@@ -201,6 +201,7 @@
     <string name="NewLoadingStyle">Индикаторы загрузки</string>
     <string name="NewSliderStyle">Стиль слайдера</string>
     <string name="NewSwitchStyle">Стиль переключателей</string>
+    <string name="NewFabStyle">Плавающая кнопка</string>
     <string name="TabletMode">Планшетный режим</string>
     <string name="RemoveMessageTail">Убрать хвост у сообщений</string>
     <string name="GooeyAvatarAnimation">\"Липкая\" анимация аватарок</string>
@@ -209,8 +210,8 @@
     <string name="PredictiveBackIntensity">Амплитуда предиктивного жеста</string>
     <string name="PredictiveBackMax">Макс</string>
     <string name="PredictiveBackInfo">Настраивает, насколько далеко сдвигается экран при жесте назад.</string>
-    <string name="SpringAnimations">Spring-анимации</string>
-    <string name="SpringAnimationsInfo">Включает более плавные анимации при переключении между экранами и открытии бокового меню.</string>
+    <string name="TransitionAnimation">Анимация переходов</string>
+    <string name="TransitionAnimationInfo">AOSP использует системную анимацию Android, Spring — более плавную.</string>
 
     <!-- Боковое меню -->
     <string name="AppNavigation">Навигация в приложении</string>
@@ -227,18 +228,17 @@
     <string name="MainMenuRemoveSettingsInfo">Настройки нельзя скрыть, если отключена нижняя панель навигации.</string>
 
     <!-- Перевод -->
-    <string name="TranslationProvider">Провайдер перевода</string>
+    <string name="TranslationProvider">Сервис перевода</string>
     <string name="TranslationTarget">Целевой язык</string>
     <string name="TranslationTargetApp">Язык приложения</string>
-    <string name="TranslationFormality">Формальность</string>
-    <string name="TranslationFormalityLess">Менее формально</string>
-    <string name="TranslationFormalityMore">Более формально</string>
+    <string name="ShowTranslateChatButtonLocked">Выберите другой сервис перевода или оформите **Telegram Premium**.</string>
 
     <!-- Форматирование и поведение -->
     <string name="DisableNumberRounding">Отключить округление чисел</string>
     <string name="FormatTimeWithSeconds">Форматировать время с секундами</string>
     <string name="RelativeLastSeen">Относительное время онлайна</string>
     <string name="InAppVibration">Вибрация в приложении</string>
+    <string name="DisableNotificationDelay">Отключить задержку уведомлений</string>
     <string name="FilterZalgo">Фильтр \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Убирает искажающие текст символы \"%1$s\" в именах и сообщениях.</string>
     <string name="RestartRequired">Перезапустите приложение, чтобы изменения вступили в силу.</string>
@@ -289,7 +289,9 @@
     <string name="StickerShape">Форма стикеров</string>
     <string name="StickerShapeRounded">Закруглённая</string>
     <string name="StickerShapeRoundedMsg">Сообщение</string>
-    <string name="StickerTime">Скрыть время на стикерах</string>
+    <string name="StickerTimeMode">Время на стикерах</string>
+    <string name="StickerTimeSide">Сбоку</string>
+    <string name="StickerTimeHidden">Скрыто</string>
     <string name="ViewEmojiSet">Открыть набор</string>
     <string name="UnlimitedRecentStickers">Бесконечные недавние стикеры</string>
     <string name="HideReactions">Скрыть реакции</string>
@@ -302,10 +304,24 @@
     <string name="DoubleTapIncoming">Входящие сообщения</string>
     <string name="DoubleTapOutgoing">Исходящие сообщения</string>
     <string name="DoubleTapInfo">Некоторые действия требуют прав администратора в чате или канале.</string>
+    <string name="Gestures">Жесты</string>
+    <string name="SwipeActions">Действия свайпом</string>
+    <string name="SwipeActionsInfo">Проведите по сообщению влево и, не отпуская палец, ведите вверх или вниз, чтобы выбрать действие.</string>
+    <string name="SwipeActionsBehavior">Поведение</string>
+    <string name="SwipeActionsLoop">Зацикливание</string>
+    <string name="SwipeActionsReversed">Обратная прокрутка</string>
+    <string name="SwipeActionsBehaviorInfo">С зацикливанием после последнего действия снова идёт первое. При обратной прокрутке список движется вслед за пальцем.</string>
+    <string name="SwipeActionsEnabled">Действия</string>
+    <string name="SwipeActionsDisabled">Отключённые</string>
+    <string name="SwipeActionsOrderInfo">Нажмите на действие, чтобы включить или выключить, перетащите — чтобы изменить порядок. Верхнее срабатывает при обычном свайпе.</string>
+    <string name="SwipeActionsPreviewReply">а если промахнусь и удалю?</string>
+    <string name="SwipeActionsPreviewMessage">страх убивает разум. веди палец медленнее</string>
     <string name="BottomButton">Нижняя кнопка</string>
+    <string name="WidePosts">Широкие посты</string>
     <string name="AIFeatures">ИИ-функции</string>
     <string name="AIFeaturesEditor">Редактор</string>
     <string name="AIFeaturesSummaries">Краткие сводки</string>
+    <string name="AIFeaturesInstantViewSummaries">Сводки в Instant View</string>
     <string name="ChannelDiscussNoCaps">Обсудить</string>
     <string name="QuickTransitions">Быстрый переход свайпом</string>
     <string name="DisableGreetingSticker">Скрыть приветственный стикер</string>
@@ -320,6 +336,9 @@
     <string name="GlassMessageMenuInfo">Меню сообщения и панель реакций становятся матовым стеклом.</string>
     <string name="GlassMessageMenuBlurOff">Стеклянным меню нужно размытие, а оно сейчас выключено.</string>
     <string name="AddCommaAfterMention">Запятая после упоминания</string>
+    <string name="InlineMathResult">Результаты вычислений</string>
+    <string name="InlineMathResultHint">Показывать результат после «=» и вставлять его пробелом.</string>
+    <string name="InlineMathResultAnnouncement">Результат: %1$s</string>
     <string name="HideSendAsPeer">Скрыть кнопку \"Отправить как…\"</string>
     <string name="HideSendAsPeerInfo">Вы по-прежнему сможете открыть меню выбора отправителя долгим нажатием на кнопку Эмодзи/Стикеров/GIF.</string>
     <string name="ShowPollResultsBeforeVoting">Итоги до голосования</string>
@@ -403,7 +422,20 @@
     <string name="PluginSourceTrustedInfo">Плагины из этого источника **проверены** и безопасны для использования.</string>
     <string name="PluginSourceUnknown">Неизвестный источник</string>
     <string name="PluginSourceUnknownInfo">Плагины из этого источника **не проверены** и могут представлять угрозу безопасности.</string>
+    <string name="PluginInstallBlocked">Установка заблокирована</string>
+    <string name="PluginInstallBlockedInfo">Разрешите неизвестные источники в настройках</string>
     <string name="PluginVersion">Версия</string>
+    <string name="PluginVersionValue">Версия %1$s</string>
+    <string name="PluginRequired">Требуемые плагины</string>
+    <string name="PluginRequiredMissing">Не установлен</string>
+    <string name="PluginRequiredVersion">Требуется версия %1$s</string>
+    <string name="PluginRequiredDisabled">Установлен, но выключен</string>
+    <string name="PluginRequiredOutdated">Версия %1$s, требуется %2$s</string>
+    <string name="PluginRequiredDownload">Скачать</string>
+    <string name="PluginRequiredUpdate">Обновить</string>
+    <string name="PluginRequiredInstalled">Установлено</string>
+    <string name="PluginBundledPackages">Встроенные пакеты</string>
+    <string name="PluginRequirements">Зависимости</string>
     <string name="PluginNoDescription">Описание отсутствует.</string>
     <string name="PluginIsNotResponding">Плагин не отвечает.</string>
     <string name="PluginIsNotRespondingAlert">%1$s не отвечает</string>
@@ -414,6 +446,16 @@
     <string name="PluginDeleteInfo">Вы уверены, что хотите удалить **%1$s**?</string>
     <string name="ResetPluginSettings">Настройки **%1$s** были сброшены.</string>
     <string name="ResetPluginSettingsInfo">Вы уверены, что хотите сбросить настройки **%1$s** до стандартных?</string>
+    <string name="PluginsUnknownSources">Неизвестные источники</string>
+    <string name="PluginsUnknownSourcesInfo">Вы соглашаетесь на установку плагинов из неизвестных источников. Каждый плагин имеет:</string>
+    <string name="PluginsUnknownSourcesInfo2">Разрешить установку плагинов из непроверенных источников.</string>
+    <string name="PluginsUnknownSourcesAccount">Полный доступ к аккаунту</string>
+    <string name="PluginsUnknownSourcesAccountInfo">Работать от вашего имени: читать, отправлять и удалять сообщения.</string>
+    <string name="PluginsUnknownSourcesFiles">Файлы и данные приложения</string>
+    <string name="PluginsUnknownSourcesFilesInfo">Читать кэш переписок, медиа, настройки и данные авторизации.</string>
+    <string name="PluginsUnknownSourcesCode">Код без ограничений</string>
+    <string name="PluginsUnknownSourcesCodeInfo">Выполнять любой код и отправлять что угодно на любой сервер.</string>
+    <string name="PluginsUnknownSourcesWarning">Вредоносный плагин может захватить ваш аккаунт.</string>
     <string name="PluginsSafeMode">Безопасный режим</string>
     <string name="PluginsSafeModeShortcut">Запустить в безопасном режиме</string>
     <string name="PluginsSafeModeInfo">Система плагинов отключена из-за сбоя. Отключение безопасного режима может привести к непредсказуемым последствиям.</string>
@@ -427,6 +469,7 @@
     <string name="PluginEngineNotEnabled">Включите **Систему плагинов**, чтобы открыть настройки **%1$s**.</string>
     <string name="PluginNotFound">**%1$s** не найден.</string>
     <string name="PluginHasNoSettings">**%1$s** не имеет настроек.</string>
+    <string name="PluginsPySdkUpdate">Обновление PySDK</string>
     <string name="PluginsPySdkAutoUpdate">Обновлять автоматически</string>
     <string name="PluginsPySdkEnableBetaVersion">Устанавливать бета-версии</string>
     <string name="PluginsPySdkCheckUpdates">Проверить наличие обновлений</string>
@@ -456,6 +499,7 @@
     <string name="FileName">Имя файла</string>
     <string name="FilePath">Путь к файлу</string>
     <string name="Platform">Платформа</string>
+    <string name="SentFrom">Отправлено с %1$s</string>
     <string name="Resolution">Разрешение</string>
     <string name="Bitrate">Битрейт</string>
     <string name="Duration">Длительность</string>
@@ -529,6 +573,9 @@
     <string name="ServicePasteService">Вставить сервис</string>
     <string name="ServicePasteKey">Вставить API-ключ</string>
     <string name="DeleteServiceInfo">Вы уверены, что хотите удалить **%1$s**?</string>
+    <string name="ServiceAlreadyExists">Сервис уже существует</string>
+    <string name="ServiceAlreadyExistsInfo">Выбран существующий сервис.</string>
+    <string name="ServiceDuplicate">Другой сервис уже использует этот URL, модель и ключ.</string>
 
     <!-- Роли ИИ -->
     <string name="Roles">Роли</string>
@@ -554,7 +601,8 @@
     <string name="InsertResponseAsQuote">Вставлять ответ как цитату</string>
     <string name="TapToAddApiKey">Нажмите, чтобы добавить API-ключ и начать использовать функции ИИ.</string>
     <string name="Generate">Генерировать</string>
-    <string name="GenerateWithoutHistory">Без истории</string>
+    <string name="GenerateWithHistory">С историей</string>
+    <string name="GenerateWithPhoto">С фото</string>
     <string name="ClearConversationHistoryInfo">Вы уверены, что хотите очистить **всю** историю диалогов с ИИ?</string>
 
     <!-- Ошибки ИИ -->
@@ -576,6 +624,42 @@
     <string name="AIError503Info">Сервис временно недоступен или перегружен. Попробуйте позже.</string>
     <string name="AIError">Ошибка сервера</string>
     <string name="AIErrorInfo">Пожалуйста, повторите ваш запрос через некоторое время.</string>
+    <string name="AIErrorEmpty">Пустой ответ</string>
+    <string name="AIErrorEmptyInfo">Модель ничего не вернула. Повторите запрос или выберите другую модель.</string>
+    <string name="AIOnDevice">На устройстве</string>
+    <string name="AIErrorOnDevice">Модель на устройстве недоступна</string>
+    <string name="AIErrorOnDeviceInfo">Это устройство не может запустить локальную модель. Выберите другой сервис.</string>
+    <string name="AIErrorOnDeviceDownload">Модель не загружена</string>
+    <string name="AIErrorOnDeviceDownloadInfo">Локальная модель ещё не загружена на устройство.</string>
+    <string name="AIErrorOnDeviceDownloading">Модель загружается</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">Локальная модель ещё загружается. Попробуйте позже.</string>
+    <string name="AIErrorOnDeviceTooLong">Слишком длинный запрос</string>
+    <string name="AIErrorOnDeviceTooLongInfo">Запрос не помещается в локальную модель. Сократите его или выберите другой сервис.</string>
+    <string name="AIErrorOnDeviceStopped">Модель остановилась</string>
+    <string name="AIErrorOnDeviceStoppedInfo">Локальная модель прервалась во время ответа — чаще всего из-за нехватки памяти. Попробуйте ещё раз или выберите модель полегче.</string>
+    <string name="AIOnDeviceDownloadTitle">Загрузка локальной модели</string>
+    <string name="AIOnDeviceDownloadInfo">Модель загружается один раз и дальше работает прямо на устройстве, ничего не отправляя на сервер. Загрузка большая и управляется системой, поэтому остановить её после запуска нельзя. Лучше использовать Wi-Fi.</string>
+    <string name="AIOnDeviceDownloadButton">Загрузить</string>
+    <string name="AIOnDeviceBadgeReady">ГОТОВА</string>
+    <string name="AIOnDeviceBadgeUnavailable">НЕДОСТУПНА</string>
+    <string name="AIOnDeviceNotificationChannel">Локальная модель ИИ</string>
+    <string name="AIOnDeviceNotificationReady">Модель готова</string>
+    <string name="AIOnDeviceNotificationReadyInfo">Gemini Nano загружена и теперь работает на устройстве.</string>
+    <string name="AIOnDeviceDownloadStarted">Загрузка началась и продолжится в фоне.</string>
+    <string name="AIOnDeviceBadgeDownload">СКАЧАТЬ</string>
+    <string name="AIOnDeviceBadgeDownloading">ЗАГРУЗКА</string>
+    <string name="AIOnDeviceRefresh">Обновить состояние</string>
+    <string name="AIOnDevicePreviewModel">Бета-модель</string>
+    <string name="AIOnDeviceFastModel">Быстрая модель</string>
+    <string name="AIReplaceTelegram">ИИ Telegram</string>
+    <string name="AIReplaceTelegramEditorInfo">Перевод, смена стиля и проверка черновиков</string>
+    <string name="AIReplaceTelegramSummariesInfo">Краткое содержание длинных сообщений и постов</string>
+    <string name="AIReplaceTelegramInfo">Выбранные функции используют ваш сервис ИИ вместо серверов Telegram и без ограничений Premium.</string>
+    <string name="AIOnDeviceManage">Настройки AICore</string>
+    <string name="AIOnDeviceManageUnavailable">Системные настройки AICore на этом устройстве недоступны.</string>
+    <string name="AIChangeModel">Сменить</string>
+    <string name="AIAskMore">Спросить ещё</string>
+    <string name="AIAssistant">Ассистент</string>
 
     <!-- Поддержка разработки -->
     <string name="SupportDevelopment">Поддержать разработку</string>
@@ -686,6 +770,7 @@
     <string name="FeedChannelHidden">**%1$s** скрыт из ленты</string>
     <string name="FeedBottomTab">Показывать в нижних вкладках</string>
     <string name="FeedBottomTabInfo">Лента появится на нижней панели вместо вкладки «Контакты».</string>
+    <string name="WidePostsInFeed">Широкие посты в ленте</string>
     <string name="FeedUnreadCounter">Счётчик непрочитанных постов</string>
     <string name="HideFeedTab">Скрыть вкладку ленты</string>
     <string name="DisableMarkdown">Отключить Markdown</string>

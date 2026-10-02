@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Rupia indiana</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Não use com uma VPN</string>
+    <string name="ProxyDisableOn">Desativar proxy</string>
+    <string name="ProxyDisableNever">Nunca</string>
+    <string name="ProxyDisableAlways">Sempre</string>
+    <string name="ProxyDisableOnMobileData">Dados móveis</string>
     <string name="ProxyType">Tipo</string>
     <string name="Unknown">Desconhecido</string>
     <string name="ProxyRename">Nome do proxy (opcional)</string>
@@ -79,9 +83,6 @@
     <string name="TranslationProvider">Provedor de Tradução</string>
     <string name="TranslationTarget">Idioma de Destino</string>
     <string name="TranslationTargetApp">Seguir Aplicativo</string>
-    <string name="TranslationFormality">Formalidade</string>
-    <string name="TranslationFormalityLess">Menos</string>
-    <string name="TranslationFormalityMore">Mais</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Desativar arredondamento de números</string>
     <string name="FormatTimeWithSeconds">Formatar a hora com segundos</string>
@@ -209,7 +210,6 @@
     <string name="AppIconSunset">Ensolarado</string>
     <string name="AppIconAurora">Aurora</string>
     <string name="AppIconAmethyst">Ametista</string>
-    <string name="AppIconSapphire">Safira</string>
     <string name="AppIconInvincible">Invencível</string>
     <string name="AppIconCyberpunk">Cyberpunk</string>
     <string name="AppIconSpace">Space</string>
@@ -238,8 +238,6 @@
     <string name="PredictiveBackIntensity">Intensidade de Volta Preditiva</string>
     <string name="PredictiveBackMax">Máximo</string>
     <string name="PredictiveBackInfo">Ajusta o quão longe a tela se move ao deslizar para trás.</string>
-    <string name="SpringAnimations">Animações Suaves</string>
-    <string name="SpringAnimationsInfo">Permite animações mais suaves ao alternar telas e abrir o menu lateral.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Opções de desfoque</string>
     <string name="GlassOutlineStyle">Contorno de Vidro</string>
@@ -260,7 +258,6 @@
     <string name="StickerShape">Formato dos Stickers</string>
     <string name="StickerShapeRounded">Arredondado</string>
     <string name="StickerShapeRoundedMsg">Mensagem</string>
-    <string name="StickerTime">Ocultar horário nos Stickers</string>
     <string name="ViewEmojiSet">Ver Conjunto de Emojis</string>
     <string name="UnlimitedRecentStickers">Stickers recentes ilimitados</string>
     <string name="HideReactions">Ocultar Reações</string>
@@ -307,7 +304,6 @@
     <string name="InsertResponseAsQuote">Inserir resposta como citação</string>
     <string name="TapToAddApiKey">Toque para adicionar uma chave de API para começar com os recursos de IA.</string>
     <string name="Generate">Gerar</string>
-    <string name="GenerateWithoutHistory">Sem Histórico</string>
     <string name="ClearConversationHistoryInfo">Você tem certeza que deseja limpar **todo** o histórico de conversas com a IA?</string>
     <!-- AI Errors -->
     <string name="AIError400">Solicitação Inválida</string>
@@ -345,7 +341,6 @@
     <string name="GroupMessageMenu">Menu de Mensagens do Grupo</string>
     <string name="GroupMessageMenuInfo">O agrupamento move as principais ações para o final do menu de mensagens.</string>
     <string name="GlassMessageMenu">Menu Mensagem de Vidro</string>
-    <string name="GlassMessageMenuInfo">O menu de mensagem e a barra de reacções tornam-se vidro congelado.</string>
     <string name="GlassMessageMenuBlurOff">Os menus de vidro precisam de desfoque, que está atualmente desligado.</string>
     <string name="AddCommaAfterMention">Adicionar vírgula após a menção</string>
     <string name="HideSendAsPeer">Ocultar botão \"Enviar como…\"</string>
@@ -426,6 +421,10 @@
     <string name="ImportChanges_other">As alterações **%1$d** serão aplicadas às configurações atuais.</string>
     <string name="SameSettings">Parece que as configurações são as mesmas que as atuais.</string>
     <!-- Export data -->
+    <string name="ExportData">Exportar dados</string>
+    <string name="ExportDelay">Por motivos de segurança, você poderá começar a baixar seus dados em %1$s. Notificamos todos os seus dispositivos sobre a solicitação de exportação para garantir que ela seja autorizada e dar a você tempo para reagir caso não seja.\n\nPor favor, volte em %2$s e repita a solicitação usando o mesmo dispositivo.</string>
+    <string name="ExportDelayLessThanHour">menos de uma hora</string>
+    <string name="ExportInvalid">Desculpe, você iniciou uma nova exportação de dados, então esta exportação foi cancelada.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Excluir Conta</string>
     <string name="ResetSettings">Redefinir Configurações</string>
@@ -640,6 +639,9 @@
     <string name="FeedChannelHidden">**%1$s** oculta do feed</string>
     <string name="FeedBottomTab">Exibir em Abas inferiores</string>
     <string name="FeedBottomTabInfo">Exibir o feed como uma aba de navegação inferior no lugar da aba Contatos.</string>
+    <string name="FeedUnreadCounter">Contador de publicações não lidas</string>
     <string name="HideFeedTab">Ocultar aba do Feed</string>
+    <string name="DisableMarkdown">Desativar Markdown</string>
+    <string name="EnableMarkdown">Ativar Markdown</string>
     <!-- Non-translatable -->
 </resources>

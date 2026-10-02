@@ -25,7 +25,6 @@ import okhttp3.internal.url._UrlKt;
 import okio.ZipFileSystem$$ExternalSyntheticBUOutline0;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mvel2.MVEL$$ExternalSyntheticBUOutline0;
 
 public class AndroidPlatform extends Python.Platform {
     public static String ABI;
@@ -122,7 +121,7 @@ public class AndroidPlatform extends Python.Platform {
             }
         }
         if (!hashSet.isEmpty()) {
-            MVEL$$ExternalSyntheticBUOutline0.m("Failed to find assets: ", hashSet);
+            android.util.Log.e("AndroidPlatform", "Failed to find assets: " + hashSet);
             return;
         }
         Iterator it2 = hashSet2.iterator();

@@ -1,5 +1,7 @@
 package com.exteragram.messenger.feed;
 
+import org.telegram.messenger.DialogObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import okhttp3.internal.url._UrlKt;
@@ -25,6 +27,29 @@ public abstract class FeedMessageUtils {
 
     public static boolean isPostRow(MessageObject messageObject) {
         return (messageObject == null || messageObject.isDateObject || messageObject.type == 6 || messageObject.isSponsored()) ? false : true;
+    }
+
+    public static TLRPC.Chat resolveDisplayChannel(MessageObject messageObject) {
+        TLRPC.Peer peer;
+        if (messageObject != null && messageObject.messageOwner != null && messageObject.searchType == 4 && !messageObject.preview && !messageObject.isSponsored() && messageObject.type != 27) {
+            TLRPC.Message message = messageObject.messageOwner;
+            if (message.post && message.action == null && (peer = message.peer_id) != null && peer.channel_id != 0) {
+                TLRPC.Chat chat = MessagesController.getInstance(messageObject.currentAccount).getChat(Long.valueOf(messageObject.messageOwner.peer_id.channel_id));
+                if (ChatObject.isChannelAndNotMegaGroup(chat)) {
+                    return chat;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasProfileSignature(MessageObject messageObject) {
+        TLRPC.Chat chatResolveDisplayChannel = resolveDisplayChannel(messageObject);
+        return chatResolveDisplayChannel != null && chatResolveDisplayChannel.signature_profiles;
+    }
+
+    public static boolean shouldMergePosts(MessageObject messageObject, TLRPC.Chat chat, MessageObject messageObject2, TLRPC.Chat chat2) {
+        return chat != null && chat2 != null && chat.id == chat2.id && messageObject.contentType == messageObject2.contentType && !(messageObject.messageOwner.reply_markup instanceof TLRPC.TL_replyInlineMarkup) && messageObject.isOutOwner() == messageObject2.isOutOwner() && Math.abs(messageObject.messageOwner.date - messageObject2.messageOwner.date) <= 300 && messageObject2.messageOwner.paid_message_stars <= 0 && DialogObject.getPeerDialogId(messageObject.messageOwner.guestchat_via_from) == DialogObject.getPeerDialogId(messageObject2.messageOwner.guestchat_via_from);
     }
 
     public static MessageObject createUnreadDivider(int i, int i2) {

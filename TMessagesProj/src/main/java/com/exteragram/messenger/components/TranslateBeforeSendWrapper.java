@@ -3,7 +3,7 @@ package com.exteragram.messenger.components;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.View;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.PopupUtils;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;

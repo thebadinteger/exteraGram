@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Індыйская рупія</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Не выкарыстоўваць з VPN</string>
+    <string name="ProxyDisableOn">Адключыць проксі</string>
+    <string name="ProxyDisableNever">Ніколі</string>
+    <string name="ProxyDisableAlways">Заўсёды</string>
+    <string name="ProxyDisableOnMobileData">Мабільныя даныя</string>
     <string name="ProxyType">Тып</string>
     <string name="Unknown">Невядомы</string>
     <string name="ProxyRename">Імя праксі-сервера (неабавязкова)</string>
@@ -79,9 +83,6 @@
     <string name="TranslationProvider">Перакладчык</string>
     <string name="TranslationTarget">Мэтавыя мовы</string>
     <string name="TranslationTargetApp">Мова праграмы</string>
-    <string name="TranslationFormality">Фармальнасць</string>
-    <string name="TranslationFormalityLess">Менш</string>
-    <string name="TranslationFormalityMore">Больш</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Адключыць акругленне чысел</string>
     <string name="FormatTimeWithSeconds">Паказваць час с секундамі</string>
@@ -209,7 +210,6 @@
     <string name="AppIconSunset">Заход</string>
     <string name="AppIconAurora">Аўрора</string>
     <string name="AppIconAmethyst">Аметыст</string>
-    <string name="AppIconSapphire">Сапфір</string>
     <string name="AppIconInvincible">Непераможны</string>
     <string name="AppIconCyberpunk">Кіберпанк</string>
     <string name="AppIconSpace">Космас</string>
@@ -238,8 +238,6 @@
     <string name="PredictiveBackIntensity">Інтэнсіўнасць прэдыктыўнага жэсту</string>
     <string name="PredictiveBackMax">Макс</string>
     <string name="PredictiveBackInfo">Рэгулюе, наколькі экран перамяшчаецца пры правядзенні пальцам назад.</string>
-    <string name="SpringAnimations">Дынамічныя анімацыі</string>
-    <string name="SpringAnimationsInfo">Уключае больш плаўную анімацыю пры пераключэнні экранаў і адкрыцці бакавога меню.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Параметры Размыцця</string>
     <string name="GlassOutlineStyle">Контур шкла</string>
@@ -260,7 +258,6 @@
     <string name="StickerShape">Форма наклейкі</string>
     <string name="StickerShapeRounded">Скругленая</string>
     <string name="StickerShapeRoundedMsg">Паведамленне</string>
-    <string name="StickerTime">Схаваць час на стыкерах</string>
     <string name="ViewEmojiSet">Праглядзець набор эмодзі</string>
     <string name="UnlimitedRecentStickers">Безлімітныя нядаўнія стыкеры</string>
     <string name="HideReactions">Схаваць Рэакцыі</string>
@@ -307,7 +304,6 @@
     <string name="InsertResponseAsQuote">Уставіць адказ як цытату</string>
     <string name="TapToAddApiKey">Націсніце, каб дадаць ключ API і пачаць працу з AI функцыямі.</string>
     <string name="Generate">Генерыраваць</string>
-    <string name="GenerateWithoutHistory">Без гісторыі</string>
     <string name="ClearConversationHistoryInfo">Вы ўпэўнены, што хочаце ачысціць **усе** дыялогі з AI?</string>
     <!-- AI Errors -->
     <string name="AIError400">Няўдалы запыт</string>
@@ -345,7 +341,6 @@
     <string name="GroupMessageMenu">Групоўка функцый у асобнае меню</string>
     <string name="GroupMessageMenuInfo">Групоўка перамяшчае асноўныя функцыі ў ніжнюю частку меню.</string>
     <string name="GlassMessageMenu">Шкляное меню паведамленняў</string>
-    <string name="GlassMessageMenuInfo">Меню паведамленняў і панэль рэакцый набываюць эфект матавага шкла.</string>
     <string name="GlassMessageMenuBlurOff">Для шкляных меню неабходна размыццё, якое цяпер выключана.</string>
     <string name="AddCommaAfterMention">Дадаць коску пасля згадкі</string>
     <string name="HideSendAsPeer">Схаваць \"Адправіць як...\" Кнопку</string>
@@ -426,6 +421,10 @@
     <string name="ImportChanges_other">**%1$d** змены будуць ужытыя да бягучых налад.</string>
     <string name="SameSettings">Здаецца, налады такія ж, як і цяперашняе.</string>
     <!-- Export data -->
+    <string name="ExportData">Экспартаваць даныя</string>
+    <string name="ExportDelay">З меркаванняў бяспекі вы зможаце пачаць спампоўку сваіх даных праз %1$s. Мы апавясцілі ўсе вашы прылады аб запыце на экспарт, каб пераканацца, што ён аўтарызаваны, і даць вам час на рэакцыю, калі гэта не так.\n\nКалі ласка, вярніцеся %2$s і паўтарыце запыт з той жа прылады.</string>
+    <string name="ExportDelayLessThanHour">менш за гадзіну</string>
+    <string name="ExportInvalid">На жаль, вы пачалі новы экспарт даных, таму папярэдні экспарт быў скасаваны.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Выдаліць уліковы запіс</string>
     <string name="ResetSettings">Скінуць налады</string>
@@ -640,6 +639,9 @@
     <string name="FeedChannelHidden">**%1$s** схавана ў стужцы</string>
     <string name="FeedBottomTab">Паказаць у ніжніх укладках</string>
     <string name="FeedBottomTabInfo">Паказваць стужку ў выглядзе ніжняй навігацыйнай укладкі замест укладкі \"Кантакты\".</string>
+    <string name="FeedUnreadCounter">Лічыльнік непрачытаных публікацый</string>
     <string name="HideFeedTab">Схаваць укладку стужкі</string>
+    <string name="DisableMarkdown">Адключыць Markdown</string>
+    <string name="EnableMarkdown">Уключыць Markdown</string>
     <!-- Non-translatable -->
 </resources>

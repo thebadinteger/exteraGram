@@ -10,9 +10,15 @@ import okhttp3.internal.url._UrlKt;
 public class Service implements Serializable {
     private String id;
     private String key;
+    private Kind kind;
     private String model;
     private boolean reasoningEnabled;
     private String url;
+
+    public enum Kind {
+        REST,
+        ON_DEVICE
+    }
 
     public Service(String str, String str2, String str3, boolean z) {
         this(UUID.randomUUID().toString(), str, str2, str3, z);
@@ -28,6 +34,19 @@ public class Service implements Serializable {
         this.model = str3;
         this.key = str4;
         this.reasoningEnabled = z;
+    }
+
+    public Kind getKind() {
+        Kind kind = this.kind;
+        return kind == null ? Kind.REST : kind;
+    }
+
+    public void setKind(Kind kind) {
+        this.kind = kind;
+    }
+
+    public boolean isOnDevice() {
+        return getKind() == Kind.ON_DEVICE;
     }
 
     public String getId() {
@@ -56,6 +75,10 @@ public class Service implements Serializable {
         return this.model;
     }
 
+    public void setModel(String str) {
+        this.model = str;
+    }
+
     public String getShortModel() {
         String str = this.model;
         if (str == null) {
@@ -75,13 +98,17 @@ public class Service implements Serializable {
         return this.reasoningEnabled;
     }
 
+    public void setReasoningEnabled(boolean z) {
+        this.reasoningEnabled = z;
+    }
+
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
         if (obj != null && getClass() == obj.getClass()) {
             Service service = (Service) obj;
-            if (Objects.equals(this.url, service.url) && Objects.equals(this.model, service.model) && Objects.equals(this.key, service.key)) {
+            if (getKind() == service.getKind() && Objects.equals(this.url, service.url) && Objects.equals(this.model, service.model) && Objects.equals(this.key, service.key)) {
                 return true;
             }
         }
@@ -89,7 +116,7 @@ public class Service implements Serializable {
     }
 
     public int hashCode() {
-        return Objects.hash(this.url, this.model, this.key);
+        return Objects.hash(getKind(), this.url, this.model, this.key);
     }
 
     public int getLegacyHash() {

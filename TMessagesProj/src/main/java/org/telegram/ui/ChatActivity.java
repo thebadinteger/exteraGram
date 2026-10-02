@@ -133,7 +133,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.zxing.common.detector.MathUtils;
 import com.exteragram.messenger.speech.VoiceRecognitionController;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.ExteraConfig;
 
 import org.telegram.PhoneFormat.PhoneFormat;
@@ -375,7 +375,7 @@ import com.exteragram.messenger.backup.PreferencesUtils;
 import com.exteragram.messenger.components.ActionRow;
 import com.exteragram.messenger.components.MessageDetailsPopupWrapper;
 import com.exteragram.messenger.feed.FeedMessageUtils;
-import com.exteragram.messenger.forward.ForwardContext;
+import com.exteragram.messenger.utils.chats.ForwardContext;
 import com.exteragram.messenger.plugins.PluginsController;
 import com.exteragram.messenger.plugins.hooks.MenuItemRecord;
 import com.exteragram.messenger.plugins.ui.PluginsActivity;
@@ -2442,7 +2442,7 @@ public class ChatActivity extends BaseFragment implements
                             } else {
                                 inputPeerForMessageRequest = null;
                             }
-                            com.exteragram.messenger.utils.text.TranslatorUtils.translateWithAlert(selectedObject, selectedObjectGroup, inputPeerForMessageRequest, selectedObject != null ? selectedObject.getId() : 0, ChatActivity.this);
+                            com.exteragram.messenger.translator.TranslatorUtils.translateWithAlert(selectedObject, selectedObjectGroup, inputPeerForMessageRequest, selectedObject != null ? selectedObject.getId() : 0, ChatActivity.this);
                             break;
                     }
                 }
@@ -35448,6 +35448,13 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    public void updateWidePostsCommentsAuthor(final ArrayList<MessageObject> arrayList) {
+        if (arrayList == null || arrayList.isEmpty()) {
+            return;
+        }
+        updateVisibleRows(messageObject -> Boolean.valueOf(com.exteragram.messenger.utils.chats.WidePosts.isCommentsChannelPost(messageObject) && arrayList.contains(messageObject)));
+    }
+
     private void updateVisibleRows(Utilities.CallbackReturn<MessageObject, Boolean> condition) {
         if (chatListView == null) {
             return;
@@ -45228,6 +45235,10 @@ public class ChatActivity extends BaseFragment implements
             }, true);
         }
         return feedIntegration;
+    }
+
+    public void hideFeedChannelWithUndo(long j, CharSequence charSequence) {
+        feedIntegration().hideChannelWithUndo(j, charSequence);
     }
 
     public void reloadFeed() {

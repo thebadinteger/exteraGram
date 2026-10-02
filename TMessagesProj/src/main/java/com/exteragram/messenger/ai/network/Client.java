@@ -11,7 +11,7 @@ import com.exteragram.messenger.ai.data.Message;
 import com.exteragram.messenger.ai.data.Role;
 import com.exteragram.messenger.ai.data.Service;
 import com.exteragram.messenger.utils.network.ExteraHttpClient;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

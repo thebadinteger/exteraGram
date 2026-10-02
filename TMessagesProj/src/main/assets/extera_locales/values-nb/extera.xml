@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Indisk rupi</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Ikke bruk med VPN</string>
+    <string name="ProxyDisableOn">Deaktiver proxy</string>
+    <string name="ProxyDisableNever">Aldri</string>
+    <string name="ProxyDisableAlways">Alltid</string>
+    <string name="ProxyDisableOnMobileData">Mobildata</string>
     <string name="ProxyType">Type</string>
     <string name="Unknown">Ukjent</string>
     <string name="ProxyRename">Proxynavn (valgfritt)</string>
@@ -79,9 +83,6 @@
     <string name="TranslationProvider">Oversettelsesleverandør</string>
     <string name="TranslationTarget">Målspråk</string>
     <string name="TranslationTargetApp">Følg appen</string>
-    <string name="TranslationFormality">Formalitet</string>
-    <string name="TranslationFormalityLess">Mindre</string>
-    <string name="TranslationFormalityMore">Flere</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Deaktiver tallavrunding</string>
     <string name="FormatTimeWithSeconds">Formater tid med sekunder</string>
@@ -209,7 +210,6 @@
     <string name="AppIconSunset">Solnedgang</string>
     <string name="AppIconAurora">Aurora</string>
     <string name="AppIconAmethyst">Ametyst</string>
-    <string name="AppIconSapphire">Safir</string>
     <string name="AppIconInvincible">Uovervinnelig</string>
     <string name="AppIconCyberpunk">Cyberpunk</string>
     <string name="AppIconSpace">Rom</string>
@@ -238,8 +238,6 @@
     <string name="PredictiveBackIntensity">Prediktiv ryggintensitet</string>
     <string name="PredictiveBackMax">Maks</string>
     <string name="PredictiveBackInfo">Justerer hvor langt skjermen beveger seg når du sveiper tilbake.</string>
-    <string name="SpringAnimations">Våranimasjoner</string>
-    <string name="SpringAnimationsInfo">Aktiverer jevnere animasjoner når du bytter skjerm og åpner sidemenyen.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Uskarphetsalternativer</string>
     <string name="GlassOutlineStyle">Omriss av glass</string>
@@ -260,7 +258,6 @@
     <string name="StickerShape">Klistremerkeform</string>
     <string name="StickerShapeRounded">Avrundet</string>
     <string name="StickerShapeRoundedMsg">Beskjed</string>
-    <string name="StickerTime">Skjul tid på klistremerker</string>
     <string name="ViewEmojiSet">Se Emoji-sett</string>
     <string name="UnlimitedRecentStickers">Ubegrenset med nylige klistremerker</string>
     <string name="HideReactions">Skjul reaksjoner</string>
@@ -307,7 +304,6 @@
     <string name="InsertResponseAsQuote">Sett inn svar som sitat</string>
     <string name="TapToAddApiKey">Trykk for å legge til en API-nøkkel for å komme i gang med AI-funksjoner.</string>
     <string name="Generate">Generere</string>
-    <string name="GenerateWithoutHistory">Uten historie</string>
     <string name="ClearConversationHistoryInfo">Er du sikker på at du vil slette **all** AI-samtalehistorikk?</string>
     <!-- AI Errors -->
     <string name="AIError400">Ugyldig forespørsel</string>
@@ -345,7 +341,6 @@
     <string name="GroupMessageMenu">Gruppemeldingsmeny</string>
     <string name="GroupMessageMenuInfo">Gruppering flytter hovedhandlingene til bunnen av meldingsmenyen.</string>
     <string name="GlassMessageMenu">Glass meldingsmeny</string>
-    <string name="GlassMessageMenuInfo">Meldingsmenyen og reaksjonslinjen blir frostet glass.</string>
     <string name="GlassMessageMenuBlurOff">Glassmenyer trenger uskarphet, som for øyeblikket er av.</string>
     <string name="AddCommaAfterMention">Legg til komma etter omtale</string>
     <string name="HideSendAsPeer">Skjul \"Send som…\" knappen</string>
@@ -426,6 +421,10 @@
     <string name="ImportChanges_other">**%1$d** endringer vil bli brukt på de gjeldende innstillingene.</string>
     <string name="SameSettings">Det ser ut som innstillingene er de samme som de nåværende.</string>
     <!-- Export data -->
+    <string name="ExportData">Eksporter data</string>
+    <string name="ExportDelay">Av sikkerhetsgrunner kan du begynne å laste ned dataene dine om %1$s. Vi har varslet alle enhetene dine om eksportforespørselen for å sikre at den er autorisert, og for å gi deg tid til å reagere hvis den ikke er det.\n\nVennligst kom tilbake %2$s og gjenta forespørselen fra samme enhet.</string>
+    <string name="ExportDelayLessThanHour">mindre enn en time</string>
+    <string name="ExportInvalid">Beklager, du har startet en ny dataeksport, så denne dataeksporten er blitt kansellert.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Slett konto</string>
     <string name="ResetSettings">Tilbakestill innstillinger</string>
@@ -641,6 +640,9 @@
     <string name="FeedChannelHidden">**%1$s** skjult fra feed</string>
     <string name="FeedBottomTab">Vis i Nedre faner</string>
     <string name="FeedBottomTabInfo">Vis feeden som en nederste navigasjonsfane i stedet for Kontakter-fanen.</string>
+    <string name="FeedUnreadCounter">Teller for uleste innlegg</string>
     <string name="HideFeedTab">Skjul feed-fanen</string>
+    <string name="DisableMarkdown">Deaktiver Markdown</string>
+    <string name="EnableMarkdown">Aktiver Markdown</string>
     <!-- Non-translatable -->
 </resources>

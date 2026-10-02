@@ -2,7 +2,7 @@ package com.exteragram.messenger.speech.ui;
 
 import android.widget.TextView;
 import com.exteragram.messenger.speech.VoiceRecognitionController;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.PopupUtils;
 import java.util.ArrayList;
 import java.util.Iterator;

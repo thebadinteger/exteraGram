@@ -7,7 +7,7 @@ import com.exteragram.messenger.ai.data.Role;
 import com.exteragram.messenger.ai.network.Client;
 import com.exteragram.messenger.ai.network.GenerationCallback;
 import com.exteragram.messenger.speech.recognizers.VoskRecognizer;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;

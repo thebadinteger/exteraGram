@@ -78,7 +78,6 @@
     <string name="StickerShape">貼圖形狀</string>
     <string name="StickerShapeRounded">圓角</string>
     <string name="StickerShapeRoundedMsg">訊息</string>
-    <string name="StickerTime">隱藏貼圖傳送時間</string>
     <string name="UnlimitedRecentStickers">無限制最近貼圖</string>
     <string name="HideReactions">隱藏心情回應</string>
     <string name="HideReactionsInfo">心情回應將會被完全移除。</string>

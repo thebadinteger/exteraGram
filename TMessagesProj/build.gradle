@@ -48,7 +48,9 @@ dependencies {
     implementation 'com.google.android.gms:play-services-wearable:18.0.0'
     implementation 'com.google.android.gms:play-services-location:21.0.1'
     implementation 'com.google.android.gms:play-services-wallet:19.1.0'
-    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+    implementation('com.googlecode.mp4parser:isoparser:1.0.6') {
+        exclude group: 'org.aspectj', module: 'aspectjrt'
+    }
     implementation 'com.stripe:stripe-android:2.0.2'
     implementation 'com.google.mlkit:language-id:17.0.6'
     implementation 'com.android.billingclient:billing:7.1.1'
@@ -59,6 +61,9 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1'
     implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
+    implementation 'com.google.mlkit:genai-common:1.0.0-beta4'
+    implementation 'com.google.mlkit:genai-prompt:1.0.0-beta4'
+    implementation 'com.google.mlkit:genai-schema:1.0.0-alpha1'
 
     implementation "androidx.credentials:credentials:1.6.0-alpha04"
     implementation "androidx.credentials:credentials-play-services-auth:1.6.0-alpha04"
@@ -88,8 +93,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    implementation 'com.linkedin.dexmaker:dexmaker:2.28.5'
-    implementation 'com.jakewharton.android.repackaged:dalvik-dx:14.0.0_r21'
+    // implementation 'com.linkedin.dexmaker:dexmaker:2.28.5' (already in src/main/java/com/android/dx)
+    // implementation 'com.jakewharton.android.repackaged:dalvik-dx:14.0.0_r21' (already in src/main/java/com/android/dx)
     // implementation 'de.robv.android.xposed:api:82' (classes in src/main/java/de/robv/android/xposed)
 
     // CameraX (used by VideoMessagesCamera / CameraXSession)
@@ -150,7 +155,7 @@ android {
 
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 36
 
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
@@ -235,7 +240,7 @@ android {
 
         standalone {
             jniDebuggable false
-            minifyEnabled true
+            minifyEnabled false
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), '../TMessagesProj/proguard-rules.pro'
             ndk.debugSymbolLevel = 'FULL'
@@ -251,7 +256,7 @@ android {
 
         release {
             jniDebuggable false
-            minifyEnabled true
+            minifyEnabled false
             shrinkResources false
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), '../TMessagesProj/proguard-rules.pro'

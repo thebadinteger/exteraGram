@@ -25,6 +25,9 @@
     <string name="SettingLinkToSavedMessages">Link impostazioni inviato a **Messaggi salvati**.</string>
     <string name="SettingLinkToUser">Link impostazioni inviato a **%1$s**.</string>
     <string name="SettingLinkToChats">Link impostazioni inviato a **%1$s**.</string>
+    <string name="LiteBatteryFollowSystem">Usa il risparmio energetico di sistema</string>
+    <string name="LiteBatteryFollowSystemState">Sistema</string>
+    <string name="LiteBatteryFollowSystemInfo">Controllato dal risparmio energetico di sistema.</string>
     <!-- Pill Stack -->
     <string name="PillStackPills">Pillole</string>
     <string name="PillStackPillsInfo">Mostra \'pillole\' nel campo di ricerca</string>
@@ -59,13 +62,27 @@
     <string name="CryptoCurrencyInr">Rupia indiana</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Non usare tramite VPN</string>
+    <string name="ProxyDisableOn">Disabilita proxy</string>
+    <string name="ProxyDisableNever">Mai</string>
+    <string name="ProxyDisableAlways">Sempre</string>
+    <string name="ProxyDisableOnMobileData">Dati mobili</string>
+    <string name="ProxyType">Tipo</string>
+    <string name="Unknown">Sconosciuto</string>
+    <string name="ProxyRename">Nome proxy (opzionale)</string>
+    <string name="ProxyPinLimitReached">Puoi fissare fino a %1$d proxy.</string>
+    <string name="CopyIpAddress">Copia indirizzo IP</string>
+    <string name="IpInfoUnavailable">Impossibile caricare le informazioni sull\'indirizzo IP.</string>
+    <string name="IpInfoCountry">Paese</string>
+    <string name="IpInfoRegion">Regione</string>
+    <string name="IpInfoCity">Città</string>
+    <string name="IpInfoIsp">ISP</string>
+    <string name="IpInfoOrganization">Organizzazione</string>
+    <string name="IpInfoDomain">Dominio</string>
+    <string name="IpInfoTimezone">Fuso orario</string>
     <!-- Translator -->
     <string name="TranslationProvider">Servizio di traduzione</string>
     <string name="TranslationTarget">Lingua di destinazione</string>
     <string name="TranslationTargetApp">Segui l\'app</string>
-    <string name="TranslationFormality">Formalità</string>
-    <string name="TranslationFormalityLess">Meno</string>
-    <string name="TranslationFormalityMore">Altro</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Disattiva l\'arrotondamento</string>
     <string name="FormatTimeWithSeconds">Formato orario con secondi</string>
@@ -75,6 +92,9 @@
     <string name="FilterZalgoInfo">Rimuove i simboli \'%1$s\', caratteri fastidiosi in grado di appesantire una chat fino a far crashare l\'app.</string>
     <string name="RestartRequired">Riavvia l\'applicazione per applicare le modifiche.</string>
     <!-- Message Formatting -->
+    <string name="CodeBlock">Codice</string>
+    <string name="CreateCode">Crea blocco di codice</string>
+    <string name="CreateCodeLanguage">Lingua</string>
     <!-- Speed -->
     <string name="DownloadSpeedBoost">Aumento della banda in download</string>
     <string name="UploadSpeedBoost">Upload più veloci</string>
@@ -86,6 +106,12 @@
     <string name="UseYandexMaps">Usa l\'app Yandex Maps</string>
     <string name="InstallYandexMaps">Vuoi installare Yandex Maps?</string>
     <!-- Storage -->
+    <string name="StorageSettings">Archiviazione</string>
+    <string name="CustomSavePath">Cartella di salvataggio personalizzata</string>
+    <string name="CustomSavePathHint">Lascia vuoto per salvare direttamente nella root</string>
+    <string name="CustomSavePathDefault">Salva nella root</string>
+    <string name="CustomSavePathInfo">I file salvati verranno archiviati direttamente in Immagini, Download, ecc.</string>
+    <string name="CustomSavePathInfoFolder">I file salvati verranno archiviati in Immagini/%1$s, Download/%1$s, ecc.</string>
     <!-- Profile -->
     <string name="Profile">Profilo</string>
     <string name="HidePhoneNumber">Nascondi il numero di telefono</string>
@@ -112,7 +138,9 @@
     <string name="HideStories">Nascondi Storie</string>
     <string name="HideActionBarStatus">Nascondi stato</string>
     <string name="CenterTitle">Titolo al centro</string>
+    <string name="ChatHeader">Intestazione chat</string>
     <string name="HideFloatingButton">Nascondi FAB (pulsante fluttuante)</string>
+    <string name="HideDialogsSearchBar">Nascondi barra di ricerca</string>
     <string name="BottomNavigationBarMode">Barra di navigazione in basso</string>
     <string name="BottomNavigationModeShow">Mostra</string>
     <string name="BottomNavigationModeHide">Nascondi</string>
@@ -143,7 +171,10 @@
     <!-- Icon Packs -->
     <string name="IconPacks">Pacchetti di icone</string>
     <string name="IconPacksInfo">Personalizza le icone della UI</string>
+    <string name="IconPickerFilter">Filtro</string>
     <string name="IconPickerAllIcons">Tutte le icone</string>
+    <string name="IconPickerReplacedIcons">Icone sostituite</string>
+    <string name="IconPickerNotReplacedIcons">Icone non sostituite</string>
     <string name="IconPickerSaveAndExit">Salva ed esci</string>
     <string name="BasePacks">Pacchetti base</string>
     <string name="BaseIconPackInfo">Pacchetto-base: usato anche per eventuali icone non presenti in altri pacchetti.</string>
@@ -165,12 +196,20 @@
     <string name="UpdatePack">Aggiorna pacchetto</string>
     <string name="DeletePack">Elimina pacchetto</string>
     <string name="DeletePackInfo">Vuoi davvero eliminare **%1$s**?</string>
+    <string name="IconPackErrorInvalidArchive">L\'archivio del pacchetto di icone non è valido.</string>
+    <string name="IconPackErrorMissingMetadata">L\'archivio del pacchetto di icone non contiene metadata.json.</string>
+    <string name="IconPackErrorMetadataTooLarge">I metadati del pacchetto di icone sono troppo grandi.</string>
+    <string name="IconPackErrorInvalidMetadata">I metadati del pacchetto di icone non sono validi.</string>
+    <string name="IconPackErrorTooManyFiles">Il pacchetto di icone contiene troppi file.</string>
+    <string name="IconPackErrorArchiveTooLarge">Il pacchetto di icone è troppo grande.</string>
+    <string name="IconPackErrorFileTooLarge">Uno dei file di icone è troppo grande.</string>
+    <string name="IconPackErrorCompressionRatioTooHigh">L\'archivio del pacchetto di icone è compresso in modo troppo aggressivo.</string>
+    <string name="IconPackErrorStorage">Impossibile salvare il pacchetto di icone.</string>
     <!-- App Icons -->
     <string name="IconPack">Pacchetto icone</string>
     <string name="AppIconSunset">Sunset</string>
     <string name="AppIconAurora">Aurora</string>
     <string name="AppIconAmethyst">Amethyst</string>
-    <string name="AppIconSapphire">Sapphire</string>
     <string name="AppIconInvincible">Invincible</string>
     <string name="AppIconCyberpunk">Cyberpunk</string>
     <string name="AppIconSpace">Space</string>
@@ -180,7 +219,12 @@
     <string name="AppIconSus">Impostor</string>
     <string name="AppIconWinter">Winter</string>
     <!-- General Appearance -->
+    <string name="Sections">Sezioni</string>
     <string name="SeparateHeaders">Intestazioni separate</string>
+    <string name="DividerStyle">Stile divisore</string>
+    <string name="DividerStyleHidden">Nascosto</string>
+    <string name="DividerStyleLine">Linea</string>
+    <string name="DividerStyleSegments">Segmenti</string>
     <string name="UseSystemFonts">Usa font di sistema</string>
     <string name="UseSystemEmoji">Usa emoji di sistema</string>
     <string name="NewLoadingStyle">Stile caricamento</string>
@@ -191,10 +235,15 @@
     <string name="GooeyAvatarAnimation">Animazione \'viscosa\' degli avatar</string>
     <string name="CustomChatThemes">Temi personalizzati nelle chat</string>
     <string name="CustomChatThemesInfo">Ogni chat sarà visualizzata con il suo tema personalizzato, se disponibile.</string>
-    <string name="SpringAnimations">Animazioni extra</string>
-    <string name="SpringAnimationsInfo">Animazioni più fluide nel passaggio da una schermata all\'altra e all\'apertura del menu laterale.</string>
+    <string name="PredictiveBackIntensity">Intensità del gesto Indietro predittivo</string>
+    <string name="PredictiveBackMax">Massimo</string>
+    <string name="PredictiveBackInfo">Regola di quanto si sposta lo schermo quando si scorre indietro.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Sfocatura</string>
+    <string name="GlassOutlineStyle">Contorno in vetro</string>
+    <string name="GlassOutlineGlare">Bagliore</string>
+    <string name="GlassOutlineSolid">Solido</string>
+    <string name="GlassOutlineHidden">Nascosto</string>
     <string name="ForceBlur">Forza sfocatura</string>
     <string name="ForceBlurInfo">Gli effetti di sfocatura saranno applicati a tutti i temi, sovrascrivendo le loro impostazioni predefinite.</string>
     <string name="ForceSnow">Forza i fiocchi di neve</string>
@@ -209,7 +258,7 @@
     <string name="StickerShape">Forma degli sticker</string>
     <string name="StickerShapeRounded">Arrotondata</string>
     <string name="StickerShapeRoundedMsg">Messaggio</string>
-    <string name="StickerTime">Non mostrare l\'orario sugli sticker</string>
+    <string name="ViewEmojiSet">Visualizza set di emoji</string>
     <string name="UnlimitedRecentStickers">Sticker recenti illimitati</string>
     <string name="HideReactions">Nascondi reazioni</string>
     <string name="HideReactionsInfo">Le reazioni saranno completamente disattivate.</string>
@@ -217,6 +266,7 @@
     <string name="ChatSettingsInfo">Preferenze standard di Telegram</string>
     <!-- AI -->
     <string name="AIChatInfo">Impostazione di servizi, ruoli e cronologia</string>
+    <string name="AIChatInfo2">Genera testo dai messaggi o prima dell\'invio.</string>
     <!-- AI Services -->
     <string name="Services">Servizi</string>
     <string name="ServicesInfo">Scegli il servizio per l\'interazione con i modelli AI.</string>
@@ -224,6 +274,13 @@
     <string name="EditService">Modifica servizio</string>
     <string name="ServiceModel">Modello</string>
     <string name="ServiceKey">Chiave API</string>
+    <string name="ServiceInfo">Info servizio</string>
+    <string name="ServiceProvider">Fornitore</string>
+    <string name="ServiceProviderCustom">Personalizzato</string>
+    <string name="ServiceTestAndSave">Testa e salva</string>
+    <string name="ServicePasteService">Incolla servizio</string>
+    <string name="ServicePasteKey">Incolla chiave API</string>
+    <string name="DeleteServiceInfo">Sei sicuro di voler eliminare **%1$s**?</string>
     <!-- AI Roles -->
     <string name="Roles">Ruoli</string>
     <string name="RolesInfo">Definisci un ruolo specifico dell\'AI per ogni esigenza.</string>
@@ -233,15 +290,20 @@
     <string name="PromptInfo">Un prompt è il testo iniziale dato al chatbot AI per iniziare a generare una risposta o continuare un dialogo.</string>
     <string name="NewRole">Nuovo ruolo</string>
     <string name="EditRole">Modifica ruolo</string>
+    <string name="DeleteRoleInfo">Sei sicuro di voler eliminare **%1$s**?</string>
     <!-- AI History & Behavior -->
     <string name="HistoryInfo">La cronologia delle conversazioni permette al servizio AI di ricordare le conversazioni precedenti e di tenerle in considerazione per generare nuove risposte.</string>
+    <string name="AIGeneration">Generazione</string>
+    <string name="AIReasoning">Ragionamento</string>
+    <string name="AIReasoningInfo">Consente ai modelli supportati su questo servizio di spendere token aggiuntivi per ragionare prima di rispondere.</string>
+    <string name="AITemperature">Temperatura</string>
+    <string name="AITemperatureInfo">La temperatura controlla la casualità delle risposte: valori più alti sono più creativi, valori più bassi sono più focalizzati.</string>
     <string name="ResponseStreaming">Flusso di risposta</string>
     <string name="ResponseStreamingInfo">Assicura una visualizzazione più fluida e veloce delle risposte.</string>
     <string name="ShowResponseOnly">Mostra solo la risposta</string>
     <string name="InsertResponseAsQuote">Genera la risposta nel campo testo senza inviarla</string>
     <string name="TapToAddApiKey">Tocca per aggiungere una chiave API e abilitare le funzionalità AI.</string>
     <string name="Generate">Genera</string>
-    <string name="GenerateWithoutHistory">Senza cronologia</string>
     <string name="ClearConversationHistoryInfo">Vuoi davvero cancellare **tutta** la cronologia delle conversazioni AI?</string>
     <!-- AI Errors -->
     <string name="AIError400">Errore 400: \'Bad request\'</string>
@@ -250,12 +312,16 @@
     <string name="AIError401Info">La chiave API non è valida o è disabilitata. Verifica le credenziali.</string>
     <string name="AIError402">Crediti insufficienti</string>
     <string name="AIError402Info">Crediti insufficienti nel tuo account o nella chiave API. Aggiungi altri crediti e riprova.</string>
+    <string name="AIError403">Accesso negato</string>
+    <string name="AIError403Info">Non hai il permesso di accedere a questo modello o risorsa. Controlla la tua chiave API e i permessi dell\'account.</string>
     <string name="AIError408">Timeout richiesta</string>
     <string name="AIError408Info">La tua richiesta non è stata elaborata in tempo. Riprova più tardi.</string>
     <string name="AIError429">Limite di richieste superato</string>
     <string name="AIError429Info">Stai inviando richieste troppo frequenti. Attendi qualche minuto e riprova.</string>
     <string name="AIError502">Errore del modello</string>
     <string name="AIError502Info">Il modello non è disponibile o abbiamo ricevuto una risposta non valida dal sistema.</string>
+    <string name="AIError503">Servizio non disponibile</string>
+    <string name="AIError503Info">Il servizio è temporaneamente non disponibile o sovraccarico. Riprova più tardi.</string>
     <string name="AIError">Errore del server</string>
     <string name="AIErrorInfo">Attendi qualche minuto e riprova.</string>
     <!-- Chat Actions -->
@@ -264,6 +330,7 @@
     <string name="DoubleTapOutgoing">Messaggi inviati</string>
     <string name="DoubleTapInfo">Alcune azioni richiedono i permessi da amministratore nella chat o nel canale.</string>
     <string name="BottomButton">Pulsante inferiore</string>
+    <string name="ChannelDiscussNoCaps">Discussione</string>
     <string name="QuickTransitions">Transizione swipe rapida</string>
     <string name="DisableGreetingSticker">Disabilita sticker di saluti</string>
     <string name="AdminShortcuts">Scorciatoie amministratore</string>
@@ -273,6 +340,8 @@
     <string name="MessageMenu">Menu contestuale</string>
     <string name="GroupMessageMenu">Azioni principali come icone</string>
     <string name="GroupMessageMenuInfo">Le azioni più utilizzate saranno mostrate come icone in fondo al menu.</string>
+    <string name="GlassMessageMenu">Menu messaggi in vetro</string>
+    <string name="GlassMessageMenuBlurOff">I menu in vetro richiedono l\'effetto sfocato, attualmente disattivato.</string>
     <string name="AddCommaAfterMention">Virgola dopo la menzione</string>
     <string name="HideSendAsPeer">Nascondi il pulsante \'Invia come…\'</string>
     <string name="HideSendAsPeerInfo">Puoi ancora accedere al menu \'Invia come…\' premendo a lungo il pulsante Emoji/Adesivi/GIF.</string>
@@ -291,6 +360,10 @@
     <string name="ModelDownloaded">Pacchetto scaricato correttamente.</string>
     <string name="ModelError">Errore: download non riuscito.</string>
     <string name="ModelUnzipping">Estrazione…</string>
+    <string name="DeleteRecognitionModel">Elimina modello</string>
+    <string name="DeleteRecognitionModelInfo">Sei sicuro di voler eliminare il modello linguistico \"**%1$s**\"?</string>
+    <string name="RecognitionModelDeleted">Modello eliminato con successo.</string>
+    <string name="RecognitionModelDeleteError">Errore durante l\'eliminazione del modello.</string>
     <string name="PostProcessingWithAi">Utilizza AI per la post-elaborazione</string>
     <string name="PostProcessingWithAiInfo">L\'AI migliorerà la leggibilità correggendo eventuali errori, migliorando la punteggiatura e aggiungendo chiarimenti.</string>
     <!-- Camera -->
@@ -300,6 +373,9 @@
     <string name="ExtendedFramesPerSecond">Frequenza fotogrammi estesa</string>
     <string name="CameraStabilization">Stabilizzazione</string>
     <string name="CameraMirrorMode">Video specchiato</string>
+    <string name="StartWithWideAngleCamera">Avvia con grandangolo</string>
+    <string name="ZoomSlider">Cursore zoom</string>
+    <string name="ZoomSliderInfo">Mostra il controllo dello zoom sotto la fotocamera del messaggio video.</string>
     <string name="StaticZoom">Zoom statico</string>
     <string name="StaticZoomInfo">Durante la registrazione di videomessaggi, lo zoom non sarà reimpostato se rilasci le dita.</string>
     <string name="VideoMessagesCamera">Fotocamera videomessaggi</string>
@@ -345,6 +421,10 @@
     <string name="ImportChanges_other">**%1$d** cambiamenti saranno applicati alla configurazione attuale.</string>
     <string name="SameSettings">La configurazione attuale e quella da importare sono identiche.</string>
     <!-- Export data -->
+    <string name="ExportData">Esporta dati</string>
+    <string name="ExportDelay">Per motivi di sicurezza, potrai iniziare a scaricare i tuoi dati tra %1$s. Abbiamo notificato tutti i tuoi dispositivi riguardo alla richiesta di esportazione per assicurarci che sia autorizzata e darti il tempo di reagire se non lo è.\n\nTorna il %2$s e ripeti la richiesta utilizzando lo stesso dispositivo.</string>
+    <string name="ExportDelayLessThanHour">meno di un\'ora</string>
+    <string name="ExportInvalid">Siamo spiacenti, hai avviato una nuova esportazione dati, quindi questa esportazione è stata annullata.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Elimina account</string>
     <string name="ResetSettings">Resetta impostazioni</string>
@@ -492,10 +572,12 @@
     <string name="ChatNotFound">Non ci sono chat corrispondenti a questo **ID**.</string>
     <string name="PhotoCopied">Foto copiata negli appunti.</string>
     <string name="FrameCopied">Fotogramma copiato.</string>
+    <string name="TapToCopy">Tocca per copiare</string>
     <string name="ProfileUsesEmojiPack">Questo profilo utilizza emoji del pacchetto %s per lo sfondo.</string>
     <string name="ReplyUsesEmojiPacks">Sullo sfondo di questa risposta appaiono emoji del pacchetto %s.</string>
     <string name="StickerSavedHint">Sticker salvato come immagine.</string>
     <string name="EmojiSavedHint">Emoji salvata come immagine.</string>
+    <string name="GifGallerySavedHint">GIF salvata nella galleria.</string>
     <string name="MutualContactInfo">Contatto reciproco.</string>
     <string name="LocalPremiumEmojiHint">Non hai un abbonamento **Telegram Premium**, quindi solo gli utenti di **exteraGram** vedranno questa emoji.</string>
     <!-- Main Tabs -->
@@ -525,7 +607,41 @@
     <string name="CopyPhoto">Copia foto</string>
     <string name="CopyFrame">Copia fotogramma</string>
     <string name="Repeat">Ripeti</string>
+    <string name="Subtitles">Sottotitoli</string>
+    <string name="ChooseSubtitles">Scegli sottotitoli</string>
+    <string name="DisableSubtitles">Disabilita sottotitoli</string>
+    <string name="SubtitlesAdded">Sottotitoli abilitati.</string>
+    <string name="SubtitlesRemoved">Sottotitoli disabilitati.</string>
+    <string name="SubtitlesLoadError">Impossibile caricare i sottotitoli.</string>
+    <string name="SubtitlesUnsupportedFormat">Formato sottotitoli non supportato.</string>
     <!-- Sticker Maker -->
+    <string name="StickerCornerRadius">Angoli adesivi</string>
+    <string name="StickerCornerRadiusInfo">Scegli quanto arrotondati devono essere gli angoli degli sticker.</string>
+    <string name="StickerCornerRadiusLarge">Grande</string>
+    <string name="StickerCornerRadiusMedium">Medio</string>
+    <string name="StickerCornerRadiusSmall">Piccolo</string>
+    <string name="StickerCornerRadiusNone">Nessuno</string>
     <!-- Feed -->
+    <string name="Feed">Feed</string>
+    <string name="FeedShownChannels">Mostrato nel feed</string>
+    <string name="FeedHiddenChannels">Nascosto</string>
+    <string name="FeedChannels">Canali</string>
+    <string name="FeedChannelsInfo">Deseleziona un canale per nascondere i suoi post dal feed. I nuovi canali vengono mostrati automaticamente.</string>
+    <string name="FeedSettings">Impostazioni feed</string>
+    <string name="FeedNoPosts">Nessun post del canale ancora.</string>
+    <string name="FeedAllChannelsExcluded">Tutti i canali sono esclusi dal feed.</string>
+    <string name="FeedMarkAllRead">Segna tutti come letti</string>
+    <string name="FeedMarkAllReadConfirm">Segnare tutti i post nei tuoi canali del feed come letti? Questo li segnerà anche come letti nei canali originali.</string>
+    <string name="FeedMarkAllReadDone">Tutti i post segnati come letti</string>
+    <string name="FeedIncludeArchived">Mostra chat dall\'archivio</string>
+    <string name="FeedIncludeArchivedInfo">Includi anche i canali dalle tue chat archiviate nel feed.</string>
+    <string name="FeedHideChannel">Nascondi dal feed</string>
+    <string name="FeedChannelHidden">**%1$s** nascosto dal feed</string>
+    <string name="FeedBottomTab">Mostra nelle schede inferiori</string>
+    <string name="FeedBottomTabInfo">Mostra il feed come scheda di navigazione inferiore al posto della scheda Contatti.</string>
+    <string name="FeedUnreadCounter">Contatore post non letti</string>
+    <string name="HideFeedTab">Nascondi scheda Feed</string>
+    <string name="DisableMarkdown">Disabilita Markdown</string>
+    <string name="EnableMarkdown">Abilita Markdown</string>
     <!-- Non-translatable -->
 </resources>

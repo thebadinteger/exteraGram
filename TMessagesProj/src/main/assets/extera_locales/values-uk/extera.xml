@@ -19,7 +19,7 @@
     <string name="Categories">Категорії</string>
     <string name="Developer">**%1$s** є членом команди розробників **exteraGram**.</string>
     <string name="DeveloperCompact">Учасник команди розробників **exteraGram**.</string>
-    <string name="Supporter">**%1$s** підтримав розробку **exteraGram** та отримав(ла) унікальний значок.</string>
+    <string name="Supporter">**%1$s** підтримав(ла) розробку **exteraGram** та отримав(ла) унікальний значок.</string>
     <string name="OfficialChannel">**%1$s** — офіційний ресурс **exteraGram**.</string>
     <string name="NoSuchSetting">Такого налаштування не існує.</string>
     <string name="SettingLinkToSavedMessages">Посилання на налаштування відправлено у **Збережене**.</string>
@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Індійська рупія</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Не використовувати з VPN</string>
+    <string name="ProxyDisableOn">Вимикати проксі</string>
+    <string name="ProxyDisableNever">Ніколи</string>
+    <string name="ProxyDisableAlways">Завжди</string>
+    <string name="ProxyDisableOnMobileData">Мобільні дані</string>
     <string name="ProxyType">Тип</string>
     <string name="Unknown">Невідомо</string>
     <string name="ProxyRename">Назва проксі (необов\'язково)</string>
@@ -79,14 +83,13 @@
     <string name="TranslationProvider">Постачальник перекладу</string>
     <string name="TranslationTarget">Цільова мова</string>
     <string name="TranslationTargetApp">Мова додатку</string>
-    <string name="TranslationFormality">Формальність</string>
-    <string name="TranslationFormalityLess">Менш формально</string>
-    <string name="TranslationFormalityMore">Більш формально</string>
+    <string name="ShowTranslateChatButtonLocked">Оберіть інший сервіс перекладу або оформіть **Telegram Premium**.</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Вимкнути округлення чисел</string>
     <string name="FormatTimeWithSeconds">Форматувати час із секундами</string>
     <string name="RelativeLastSeen">Відносні відвідини</string>
     <string name="InAppVibration">Вібрація в додатку</string>
+    <string name="DisableNotificationDelay">Вимкнути затримку сповіщень</string>
     <string name="FilterZalgo">Фільтр \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Видаляє символи \"%1$s\" в іменах і повідомленнях.</string>
     <string name="RestartRequired">Перезапустіть додаток, щоб зміни набули чинності.</string>
@@ -209,7 +212,6 @@
     <string name="AppIconSunset">Захід</string>
     <string name="AppIconAurora">Аврора</string>
     <string name="AppIconAmethyst">Аметист</string>
-    <string name="AppIconSapphire">Сапфір</string>
     <string name="AppIconInvincible">Нездоланний</string>
     <string name="AppIconCyberpunk">Кіберпанк</string>
     <string name="AppIconSpace">Космос</string>
@@ -218,6 +220,8 @@
     <string name="AppIconOrbit">Орбіта</string>
     <string name="AppIconSus">Самозванець</string>
     <string name="AppIconWinter">Зима</string>
+    <string name="AppIconsApply">Обрати</string>
+    <string name="AppIconsKeep">Залишити цю</string>
     <!-- General Appearance -->
     <string name="Sections">Розділи</string>
     <string name="SeparateHeaders">Окремі заголовки</string>
@@ -230,6 +234,7 @@
     <string name="NewLoadingStyle">Індикатори завантаження</string>
     <string name="NewSliderStyle">Стиль слайдера</string>
     <string name="NewSwitchStyle">Стиль перемикачів</string>
+    <string name="NewFabStyle">Плаваюча кнопка</string>
     <string name="TabletMode">Планшетний режим</string>
     <string name="RemoveMessageTail">Прибрати хвіст повідомлення</string>
     <string name="GooeyAvatarAnimation">\"Липка\" анімація аватарок</string>
@@ -238,8 +243,10 @@
     <string name="PredictiveBackIntensity">Предиктивний жест назад</string>
     <string name="PredictiveBackMax">Максимум</string>
     <string name="PredictiveBackInfo">Регулює відстань, на яку зміщується екран під час свайпу.</string>
-    <string name="SpringAnimations">Spring-анімації</string>
-    <string name="SpringAnimationsInfo">Забезпечує плавнішу анімацію під час перемикання екранів та відкриття бічного меню.</string>
+    <string name="TransitionAnimation">Анімація переходів</string>
+    <string name="TransitionAnimationAosp">AOSP</string>
+    <string name="TransitionAnimationSpring">Spring</string>
+    <string name="TransitionAnimationInfo">AOSP використовує системну анімацію Android. Spring — більш плавну.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Параметри розмиття</string>
     <string name="GlassOutlineStyle">Скляний контур</string>
@@ -260,7 +267,9 @@
     <string name="StickerShape">Форма наліпки</string>
     <string name="StickerShapeRounded">Закруглено</string>
     <string name="StickerShapeRoundedMsg">Повідомлення</string>
-    <string name="StickerTime">Сховати час на наліпках</string>
+    <string name="StickerTimeMode">Час на наліпках</string>
+    <string name="StickerTimeSide">Збоку</string>
+    <string name="StickerTimeHidden">Приховано</string>
     <string name="ViewEmojiSet">Перегляд набору емодзі</string>
     <string name="UnlimitedRecentStickers">Необмежені недавні наліпки</string>
     <string name="HideReactions">Сховати реакції</string>
@@ -284,6 +293,9 @@
     <string name="ServicePasteService">Вставити службу</string>
     <string name="ServicePasteKey">Вставити API-ключ</string>
     <string name="DeleteServiceInfo">Ви впевнені, що хочете видалити **%1$s**?</string>
+    <string name="ServiceAlreadyExists">Сервіс вже існує</string>
+    <string name="ServiceAlreadyExistsInfo">Обрано наявний сервіс.</string>
+    <string name="ServiceDuplicate">Інший сервіс вже використовує цей URL, модель і ключ.</string>
     <!-- AI Roles -->
     <string name="Roles">Ролі</string>
     <string name="RolesInfo">Створюйте ролі для своїх потреб!</string>
@@ -307,7 +319,6 @@
     <string name="InsertResponseAsQuote">Вставляти відповідь як цитату</string>
     <string name="TapToAddApiKey">Натисніть, щоб додати ключ API й розпочати використовувати функції ШІ.</string>
     <string name="Generate">Згенерувати</string>
-    <string name="GenerateWithoutHistory">Без історії</string>
     <string name="ClearConversationHistoryInfo">Ви впевнені, що хочете очистити **всю** історію розмов з ШІ?</string>
     <!-- AI Errors -->
     <string name="AIError400">Невірний запит</string>
@@ -328,12 +339,57 @@
     <string name="AIError503Info">Сервіс тимчасово недоступний або перевантажений. Будь ласка, спробуйте пізніше.</string>
     <string name="AIError">Помилка сервера</string>
     <string name="AIErrorInfo">Будь ласка, спробуйте ще раз через деякий час.</string>
+    <string name="AIErrorEmpty">Порожня відповідь</string>
+    <string name="AIErrorEmptyInfo">Модель нічого не повернула. Спробуйте ще раз або оберіть іншу модель.</string>
+    <string name="AIOnDevice">На пристрої</string>
+    <string name="AIErrorOnDevice">Модель на пристрої недоступна</string>
+    <string name="AIErrorOnDeviceInfo">Цей пристрій не може запустити локальну модель. Оберіть інший сервіс.</string>
+    <string name="AIErrorOnDeviceDownload">Модель не завантажена</string>
+    <string name="AIErrorOnDeviceDownloadInfo">Локальна модель ще не завантажена на пристрій.</string>
+    <string name="AIErrorOnDeviceDownloading">Модель завантажується</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">Локальна модель досі завантажується. Спробуйте пізніше.</string>
+    <string name="AIErrorOnDeviceTooLong">Занадто довгий запит</string>
+    <string name="AIErrorOnDeviceTooLongInfo">Запит не вміщується у локальну модель. Скоротіть його або виберіть інший сервіс.</string>
+    <string name="AIOnDeviceDownloadTitle">Завантаження локальної моделі</string>
+    <string name="AIOnDeviceDownloadInfo">Модель завантажується один раз і далі працює безпосередньо на пристрої, нічого не надсилаючи на сервер. Завантаження велике й керується системою, тому зупинити його після запуску неможливо. Рекомендовано використовувати Wi-Fi.</string>
+    <string name="AIOnDeviceDownloadButton">Завантажити</string>
+    <string name="AIOnDeviceBadgeReady">ГОТОВА</string>
+    <string name="AIOnDeviceBadgeUnavailable">НЕДОСТУПНА</string>
+    <string name="AIOnDeviceNotificationChannel">Локальна модель ШІ</string>
+    <string name="AIOnDeviceNotificationReady">Модель готова</string>
+    <string name="AIOnDeviceNotificationReadyInfo">Gemini Nano завантажена і зараз працює на пристрої.</string>
+    <string name="AIOnDeviceDownloadStarted">Завантаження розпочато та продовжиться у фоні.</string>
+    <string name="AIOnDeviceBadgeDownload">ЗАВАНТАЖИТИ</string>
+    <string name="AIOnDeviceBadgeDownloading">ЗАВАНТАЖЕННЯ</string>
+    <string name="AIOnDeviceRefresh">Оновити стан</string>
+    <string name="AIOnDeviceManage">Налаштування AICore</string>
+    <string name="AIOnDeviceManageUnavailable">Системні налаштування для AICore недоступні на цьому пристрої.</string>
+    <string name="AIChangeModel">Змінити</string>
+    <string name="AIAskMore">Запитати ще</string>
+    <string name="AIAssistant">Асистент</string>
     <!-- Chat Actions -->
     <string name="DoubleTap">Подвійний дотик</string>
     <string name="DoubleTapIncoming">Вхідні повідомлення</string>
     <string name="DoubleTapOutgoing">Вихідні повідомлення</string>
     <string name="DoubleTapInfo">Деякі дії потребують прав адміністратора в чаті або каналі.</string>
+    <string name="Gestures">Жести</string>
+    <string name="SwipeActions">Дії свайпом</string>
+    <string name="SwipeActionsInfo">Проведіть по повідомленню ліворуч і, не відпускаючи палець, ведіть вгору або вниз, щоб обрати дію.</string>
+    <string name="SwipeActionsBehavior">Поведінка</string>
+    <string name="SwipeActionsLoop">Зациклювання</string>
+    <string name="SwipeActionsReversed">Зворотне прокручування</string>
+    <string name="SwipeActionsBehaviorInfo">Із зациклюванням після останньої дії знову йде перша. При зворотній прокрутці список рухається вслід за пальцем.</string>
+    <string name="SwipeActionsEnabled">Дії</string>
+    <string name="SwipeActionsDisabled">Вимкнені</string>
+    <string name="SwipeActionsOrderInfo">Натисніть на дію, щоб увімкнути або вимкнути її, затисніть і перетягніть, щоб змінити порядок. Найвища дія спрацьовує при звичайному свайпі.</string>
+    <string name="SwipeActionsPreviewReply">що якщо я промахнусь та видалю?</string>
+    <string name="SwipeActionsPreviewMessage">страх вбиває розум. тягни палець повільніше</string>
     <string name="BottomButton">Нижня кнопка</string>
+    <string name="WidePosts">Широкі повідомлення</string>
+    <string name="AIFeatures">ШІ-функції</string>
+    <string name="AIFeaturesEditor">Редактор</string>
+    <string name="AIFeaturesSummaries">Короткі змісти</string>
+    <string name="AIFeaturesInstantViewSummaries">Зміст в Instant View</string>
     <string name="ChannelDiscussNoCaps">Обговорити</string>
     <string name="QuickTransitions">Швидкий перехід свайпом</string>
     <string name="DisableGreetingSticker">Сховати наліпку привітання</string>
@@ -348,6 +404,9 @@
     <string name="GlassMessageMenuInfo">Меню повідомлень і панель реакцій набувають ефекту матового скла.</string>
     <string name="GlassMessageMenuBlurOff">Для скляних меню потрібне розмиття, яке зараз вимкнено.</string>
     <string name="AddCommaAfterMention">Кома після згадки</string>
+    <string name="InlineMathResult">Результати обчислень</string>
+    <string name="InlineMathResultHint">Показувати результат після «=» та вставляти його пробілом.</string>
+    <string name="InlineMathResultAnnouncement">Результат: %1$s</string>
     <string name="HideSendAsPeer">Приховати кнопку \"Надіслати як…\"</string>
     <string name="HideSendAsPeerInfo">Ви все ще можете відкрити меню «Надіслати як…», утримуючи кнопку Емодзі/Наліпок/GIF.</string>
     <string name="ShowPollResultsBeforeVoting">Результати до голосування</string>
@@ -402,7 +461,7 @@
     <string name="PauseOnMinimize">Автопауза</string>
     <string name="PauseOnMinimizeVideo">Відео</string>
     <string name="PauseOnMinimizeVoice">Голосових</string>
-    <string name="PauseOnMinimizeRound">Кружків</string>
+    <string name="PauseOnMinimizeRound">Круглі відео</string>
     <string name="PauseOnMinimizeInfo">Призупиняє відтворення медіа, коли пристрій заблоковано або додаток згорнуто.</string>
     <string name="SwipeToPip">Картинка-в-картинці по свайпу</string>
     <string name="UnmuteWithVolumeButtons">Вмикання звуку кнопками гучності</string>
@@ -426,6 +485,10 @@
     <string name="ImportChanges_other">**%1$d** змін буде застосовано до поточних налаштувань.</string>
     <string name="SameSettings">Схоже, що налаштування збігаються з поточними.</string>
     <!-- Export data -->
+    <string name="ExportData">Експортувати дані</string>
+    <string name="ExportDelay">З міркувань безпеки ви зможете розпочати завантаження своїх даних у %1$s. Ми повідомили всі ваші пристрої про запит на експорт, щоб переконатися, що він авторизований, і дати вам час відреагувати, якщо ні.\n\nБудь ласка, поверніться до %2$s та повторіть запит використовуючи той самий пристрій.</string>
+    <string name="ExportDelayLessThanHour">менше, ніж годину</string>
+    <string name="ExportInvalid">Вибачте, ви почали новий експорт даних, тому цей експорт даних було скасовано.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Видалити акаунт</string>
     <string name="ResetSettings">Скинути налаштування</string>
@@ -474,7 +537,20 @@
     <string name="PluginSourceTrustedInfo">Плагіни з цього джерела **перевірені** та безпечні у використанні.</string>
     <string name="PluginSourceUnknown">Невідоме джерело</string>
     <string name="PluginSourceUnknownInfo">Плагіни з цього джерела **неперевірені** й можуть становити загрозу безпеці.</string>
+    <string name="PluginInstallBlocked">Встановлення заблоковано</string>
+    <string name="PluginInstallBlockedInfo">Дозвольте невідомі джерела у налаштуваннях</string>
     <string name="PluginVersion">Версія</string>
+    <string name="PluginVersionValue">Версія %1$s</string>
+    <string name="PluginRequired">Необхідні плагіни</string>
+    <string name="PluginRequiredMissing">Не встановлено</string>
+    <string name="PluginRequiredVersion">Потрібна версія %1$s</string>
+    <string name="PluginRequiredDisabled">Встановлено, але вимкнено</string>
+    <string name="PluginRequiredOutdated">Версія %1$s, потрібна %2$s</string>
+    <string name="PluginRequiredDownload">Завантажити</string>
+    <string name="PluginRequiredUpdate">Оновити</string>
+    <string name="PluginRequiredInstalled">Встановлено</string>
+    <string name="PluginBundledPackages">Вбудовані пакети</string>
+    <string name="PluginRequirements">Вимоги</string>
     <string name="PluginNoDescription">Опис не надано.</string>
     <string name="PluginIsNotResponding">Плагін не відповідає.</string>
     <string name="PluginIsNotRespondingAlert">%1$s не відповідає</string>
@@ -485,6 +561,16 @@
     <string name="PluginDeleteInfo">Ви впевнені, що хочете видалити %1$s?</string>
     <string name="ResetPluginSettings">Налаштування **%1$s** були скинуті.</string>
     <string name="ResetPluginSettingsInfo">Ви впевнені, що хочете скинути налаштування **%1$s** до стандартних?</string>
+    <string name="PluginsUnknownSources">Невідомі джерела</string>
+    <string name="PluginsUnknownSourcesInfo">Ви погоджуєтеся на встановлення плагінів із невідомих джерел. Кожний плагін має:</string>
+    <string name="PluginsUnknownSourcesInfo2">Дозволити встановлення плагінів із неперевірених джерел.</string>
+    <string name="PluginsUnknownSourcesAccount">Повний доступ до акаунту</string>
+    <string name="PluginsUnknownSourcesAccountInfo">Діяти від вашого імені: читати, надсилати та видаляти повідомлення.</string>
+    <string name="PluginsUnknownSourcesFiles">Файли та дані додатку</string>
+    <string name="PluginsUnknownSourcesFilesInfo">Читати кеш діалогів, медіа, налаштування та дані авторизації.</string>
+    <string name="PluginsUnknownSourcesCode">Код без обмежень</string>
+    <string name="PluginsUnknownSourcesCodeInfo">Запускати будь-який код та надсилати що завгодно на будь-який сервер.</string>
+    <string name="PluginsUnknownSourcesWarning">Зловмисний плагін може вкрасти ваш акаунт.</string>
     <string name="PluginsSafeMode">Безпечний режим</string>
     <string name="PluginsSafeModeShortcut">Запустити у безпечному режимі</string>
     <string name="PluginsSafeModeInfo">Систему плагінів вимкнено через збій. Вимкнення безпечного режиму може призвести до непередбачуваних наслідків.</string>
@@ -498,6 +584,7 @@
     <string name="PluginEngineNotEnabled">Увімкніть **Систему плагінів**, щоб відкрити налаштування **%1$s**.</string>
     <string name="PluginNotFound">**%1$s** не знайдено.</string>
     <string name="PluginHasNoSettings">**%1$s** не має налаштувань.</string>
+    <string name="PluginsPySdkUpdate">Оновлення PySDK</string>
     <string name="PluginsPySdkAutoUpdate">Оновлювати автоматично</string>
     <string name="PluginsPySdkEnableBetaVersion">Встановлювати бета-версії</string>
     <string name="PluginsPySdkCheckUpdates">Перевірити наявність оновлень</string>
@@ -525,6 +612,7 @@
     <string name="FileName">Ім\'я файлу</string>
     <string name="FilePath">Шлях до файлу</string>
     <string name="Platform">Платформа</string>
+    <string name="SentFrom">Надіслано з %1$s</string>
     <string name="Resolution">Роздільність</string>
     <string name="Bitrate">Бітрейт</string>
     <string name="Duration">Тривалість</string>
@@ -640,6 +728,10 @@
     <string name="FeedChannelHidden">**%1$s** приховано зі стрічки</string>
     <string name="FeedBottomTab">Показувати на нижніх вкладках</string>
     <string name="FeedBottomTabInfo">Відображати стрічку як вкладку нижньої навігації замість вкладки Контакти.</string>
+    <string name="WidePostsInFeed">Широкі пости у стрічці</string>
+    <string name="FeedUnreadCounter">Лічильник непрочитаних повідомлень</string>
     <string name="HideFeedTab">Приховати вкладку стрічка</string>
+    <string name="DisableMarkdown">Вимкнути Markdown</string>
+    <string name="EnableMarkdown">Увімкнути Markdown</string>
     <!-- Non-translatable -->
 </resources>

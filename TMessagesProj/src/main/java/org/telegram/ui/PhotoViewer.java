@@ -150,7 +150,7 @@ import com.exteragram.messenger.components.ReverseImageSearchSheet;
 import com.exteragram.messenger.components.SearchPhotoPopupWrapper;
 import com.exteragram.messenger.utils.VideoSubtitlesHelper;
 import com.exteragram.messenger.utils.system.SystemUtils;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.PopupUtils;
 
 import com.google.android.exoplayer2.C;

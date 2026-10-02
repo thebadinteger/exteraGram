@@ -5,6 +5,7 @@
 -dontwarn javax.script.Compilable
 -dontwarn javax.script.ScriptEngine
 -dontwarn javax.script.ScriptEngineFactory
+-dontwarn org.aspectj.**
 
 # Internal Telegram classes referenced by MVEL/other libs
 -dontwarn org.telegram.messenger.AndroidUtilities
@@ -37,4 +38,7 @@
 -keep class kotlinx.coroutines.android.AndroidDispatcherFactory { *; }
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory
 -keepnames class kotlinx.coroutines.android.AndroidDispatcherFactory
+
+-dontobfuscate
+-dontoptimize
 

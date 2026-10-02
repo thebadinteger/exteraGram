@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">印度卢比</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">不与 VPN 一同使用</string>
+    <string name="ProxyDisableOn">禁用代理</string>
+    <string name="ProxyDisableNever">从不</string>
+    <string name="ProxyDisableAlways">始终</string>
+    <string name="ProxyDisableOnMobileData">移动数据</string>
     <string name="ProxyType">类型</string>
     <string name="Unknown">未知</string>
     <string name="ProxyRename">代理名称（可选）</string>
@@ -79,9 +83,6 @@
     <string name="TranslationProvider">翻译源</string>
     <string name="TranslationTarget">目标语言</string>
     <string name="TranslationTargetApp">跟随应用</string>
-    <string name="TranslationFormality">正式程度</string>
-    <string name="TranslationFormalityLess">更口语化</string>
-    <string name="TranslationFormalityMore">更书面化</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">禁用数字舍入</string>
     <string name="FormatTimeWithSeconds">时间精确到秒</string>
@@ -209,7 +210,6 @@
     <string name="AppIconSunset">日落</string>
     <string name="AppIconAurora">极光</string>
     <string name="AppIconAmethyst">紫水晶</string>
-    <string name="AppIconSapphire">蓝宝石</string>
     <string name="AppIconInvincible">无敌少侠</string>
     <string name="AppIconCyberpunk">赛博朋克</string>
     <string name="AppIconSpace">太空</string>
@@ -238,8 +238,6 @@
     <string name="PredictiveBackIntensity">预测性返回幅度</string>
     <string name="PredictiveBackMax">最大</string>
     <string name="PredictiveBackInfo">调整返回手势时屏幕的滑动幅度。</string>
-    <string name="SpringAnimations">弹性动画</string>
-    <string name="SpringAnimationsInfo">切换页面和打开侧边栏时启用更加平滑的动画。</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">模糊选项</string>
     <string name="GlassOutlineStyle">毛玻璃描边</string>
@@ -260,7 +258,6 @@
     <string name="StickerShape">贴纸形状</string>
     <string name="StickerShapeRounded">圆角</string>
     <string name="StickerShapeRoundedMsg">椭圆形</string>
-    <string name="StickerTime">隐藏贴纸发送时间</string>
     <string name="ViewEmojiSet">查看表情包</string>
     <string name="UnlimitedRecentStickers">无限的最近贴纸</string>
     <string name="HideReactions">隐藏回应</string>
@@ -307,7 +304,6 @@
     <string name="InsertResponseAsQuote">将回复作为引用插入</string>
     <string name="TapToAddApiKey">点击以添加 API 密钥来开始使用 AI 功能。</string>
     <string name="Generate">生成</string>
-    <string name="GenerateWithoutHistory">无历史记录</string>
     <string name="ClearConversationHistoryInfo">您确定要清除 **所有** AI 对话历史记录吗？</string>
     <!-- AI Errors -->
     <string name="AIError400">请求错误</string>
@@ -345,7 +341,6 @@
     <string name="GroupMessageMenu">分组消息菜单</string>
     <string name="GroupMessageMenuInfo">将分组后的主要操作移至消息菜单底部。</string>
     <string name="GlassMessageMenu">毛玻璃消息菜单</string>
-    <string name="GlassMessageMenuInfo">消息菜单和表情回应栏将呈现毛玻璃效果。</string>
     <string name="GlassMessageMenuBlurOff">毛玻璃菜单需要开启模糊效果，但该效果当前处于关闭状态。</string>
     <string name="AddCommaAfterMention">输入@ 后自动添加逗号后缀</string>
     <string name="HideSendAsPeer">隐藏“作为…发送”按钮</string>
@@ -378,7 +373,7 @@
     <string name="ExtendedFramesPerSecond">扩展帧率范围</string>
     <string name="CameraStabilization">防抖</string>
     <string name="CameraMirrorMode">镜像模式</string>
-    <string name="StartWithWideAngleCamera">打开相机时使用广角镜头</string>
+    <string name="StartWithWideAngleCamera">广角模式</string>
     <string name="ZoomSlider">变焦滑块</string>
     <string name="ZoomSliderInfo">在视频消息相机下方显示变焦滑块。</string>
     <string name="StaticZoom">静态缩放</string>
@@ -426,6 +421,10 @@
     <string name="ImportChanges_other">**%1$d** 处更改将会应用于当前设置。</string>
     <string name="SameSettings">似乎与当前设置相同。</string>
     <!-- Export data -->
+    <string name="ExportData">导出数据</string>
+    <string name="ExportDelay">出于安全原因，您将在 %1$s 后才能开始下载数据。我们已就导出请求通知您的所有设备，以确认该请求已经过授权，并留出时间供您作出反应。\n\n请在 %2$s 后使用同一设备重新提交请求。</string>
+    <string name="ExportDelayLessThanHour">不到一小时</string>
+    <string name="ExportInvalid">抱歉，您已发起新的数据导出，因此本次数据导出已取消。</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">删除账户</string>
     <string name="ResetSettings">重置设置</string>
@@ -640,6 +639,9 @@
     <string name="FeedChannelHidden">**%1$s** 已从信息流中隐藏</string>
     <string name="FeedBottomTab">显示在底部标签页</string>
     <string name="FeedBottomTabInfo">在底部导航栏中显示信息流标签页，并替代联系人标签页。</string>
+    <string name="FeedUnreadCounter">未读帖子计数器</string>
     <string name="HideFeedTab">隐藏信息流标签页</string>
+    <string name="DisableMarkdown">禁用 Markdown</string>
+    <string name="EnableMarkdown">启用 Markdown</string>
     <!-- Non-translatable -->
 </resources>

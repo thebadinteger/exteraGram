@@ -50,7 +50,11 @@ public abstract class ChatHeaderUiHelper {
     }
 
     public static void applyChatHeaderGlassStyle(ActionBar actionBar) {
-        if (isMaterial3ChatHeaderStyle()) {
+        applyChatHeaderGlassStyle(actionBar, isMaterial3ChatHeaderStyle());
+    }
+
+    public static void applyChatHeaderGlassStyle(ActionBar actionBar, boolean z) {
+        if (z) {
             actionBar.setDrawGlassMiddlePill(false);
             actionBar.setGlassShadowAlpha(0.0f);
         }

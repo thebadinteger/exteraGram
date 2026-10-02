@@ -611,8 +611,8 @@ switch2TrackChecked=a1_600
 switchTrack=n1_300
 switchTrackBlue=n1_300
 switchTrackBlueChecked=a1_600
-switchTrackBlueSelector=a1_600
-switchTrackBlueSelectorChecked=a1_600
+switchTrackBlueSelector=mBlack (a=10)
+switchTrackBlueSelectorChecked=a1_600 (a=10)
 switchTrackBlueThumb=n1_50
 switchTrackBlueThumbChecked=n1_50
 switchTrackChecked=a1_600
@@ -687,11 +687,11 @@ voipgroup_unmuteButton2=a2_600
 voipgroup_unmuteButton=a2_500
 voipgroup_windowBackgroundWhiteInputField=n1_10
 voipgroup_windowBackgroundWhiteInputFieldActivated=n1_10
-windowBackgroundCheckText=a1_600
-windowBackgroundChecked=a1_200 (a=30)
+windowBackgroundCheckText=a1_700
+windowBackgroundChecked=a1_200
 windowBackgroundGray=n1_50
 windowBackgroundGrayShadow=0
-windowBackgroundUnchecked=n1_50
+windowBackgroundUnchecked=a1_200
 windowBackgroundWhite=n1_10
 windowBackgroundWhiteBlackText=mBlack
 windowBackgroundWhiteBlueButton=a1_600

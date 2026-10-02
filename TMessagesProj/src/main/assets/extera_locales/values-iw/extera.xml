@@ -62,22 +62,41 @@
     <string name="CryptoCurrencyInr">רופי הודי</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">אין להשתמש עם VPN</string>
+    <string name="ProxyDisableOn">השבת פרוקסי</string>
+    <string name="ProxyDisableNever">לעולם לא</string>
+    <string name="ProxyDisableAlways">תמיד</string>
+    <string name="ProxyDisableOnMobileData">נתונים סלולריים</string>
+    <string name="ProxyType">סוג</string>
+    <string name="Unknown">לא ידוע</string>
+    <string name="ProxyRename">שם פרוקסי (אופציונלי)</string>
+    <string name="ProxyPinLimitReached">ניתן להצמיד עד %1$d פרוקסים.</string>
+    <string name="CopyIpAddress">העתק כתובת IP</string>
+    <string name="IpInfoUnavailable">לא ניתן לטעון מידע על כתובת IP.</string>
+    <string name="IpInfoCountry">מדינה</string>
+    <string name="IpInfoRegion">אזור</string>
+    <string name="IpInfoCity">עיר</string>
+    <string name="IpInfoIsp">ספק אינטרנט</string>
+    <string name="IpInfoOrganization">ארגון</string>
+    <string name="IpInfoDomain">דומיין</string>
+    <string name="IpInfoTimezone">אזור זמן</string>
     <!-- Translator -->
     <string name="TranslationProvider">ספק התרגומים</string>
     <string name="TranslationTarget">שפת היעד</string>
     <string name="TranslationTargetApp">עקוב אחר האפליקציה</string>
-    <string name="TranslationFormality">רשמיות</string>
-    <string name="TranslationFormalityLess">פחות</string>
-    <string name="TranslationFormalityMore">יותר</string>
+    <string name="ShowTranslateChatButtonLocked">בחר ספק תרגום אחר או הירשם ל-**Telegram Premium**.</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">השבתת עיגול מספרים</string>
     <string name="FormatTimeWithSeconds">עיצוב זמן עם שניות</string>
     <string name="RelativeLastSeen">קרוב משפחה נראה לאחרונה</string>
     <string name="InAppVibration">רטט בתוך האפליקציה</string>
+    <string name="DisableNotificationDelay">בטל את השהיית ההתראות</string>
     <string name="FilterZalgo">פילטר \"Zalgo\"</string>
     <string name="FilterZalgoInfo">מסיר את הסמלים \"%1$s\" משמות והודעות.</string>
     <string name="RestartRequired">הפעל מחדש את האפליקציה כדי שהשינויים ייכנסו לתוקף.</string>
     <!-- Message Formatting -->
+    <string name="CodeBlock">קוד</string>
+    <string name="CreateCode">צור בלוק קוד</string>
+    <string name="CreateCodeLanguage">שפה</string>
     <!-- Speed -->
     <string name="DownloadSpeedBoost">הגברת מהירות הורדה</string>
     <string name="UploadSpeedBoost">הגברת מהירות העלאה</string>
@@ -89,6 +108,12 @@
     <string name="UseYandexMaps">השתמש במפת Yandex</string>
     <string name="InstallYandexMaps">להתקין את מפת Yandex?</string>
     <!-- Storage -->
+    <string name="StorageSettings">אחסון</string>
+    <string name="CustomSavePath">תיקיית שמירה מותאמת אישית</string>
+    <string name="CustomSavePathHint">השאר ריק לשמירה ישירה לשורש</string>
+    <string name="CustomSavePathDefault">שמור לשורש</string>
+    <string name="CustomSavePathInfo">קבצים שנשמרו יאוחסנו ישירות ב-Pictures, Downloads וכו\'.</string>
+    <string name="CustomSavePathInfoFolder">קבצים שנשמרו יאוחסנו ב-Pictures/%1$s, Downloads/%1$s וכו\'.</string>
     <!-- Profile -->
     <string name="Profile">פרופיל</string>
     <string name="HidePhoneNumber">הסתר מספר טלפון</string>
@@ -115,7 +140,9 @@
     <string name="HideStories">הסתר סיפורים</string>
     <string name="HideActionBarStatus">הסתר סטטוס</string>
     <string name="CenterTitle">כותרת במרכז</string>
+    <string name="ChatHeader">כותרת צ\'אט</string>
     <string name="HideFloatingButton">הסתר כפתור צף</string>
+    <string name="HideDialogsSearchBar">הסתר סרגל חיפוש</string>
     <string name="BottomNavigationBarMode">סרגל הניווט התחתון</string>
     <string name="BottomNavigationModeShow">הצג</string>
     <string name="BottomNavigationModeHide">הסתר</string>
@@ -146,7 +173,10 @@
     <!-- Icon Packs -->
     <string name="IconPacks">חבילת אייקונים</string>
     <string name="IconPacksInfo">התאמה אישית של סמלים ברחבי האפליקציה</string>
+    <string name="IconPickerFilter">סינון</string>
     <string name="IconPickerAllIcons">כל הסמלים</string>
+    <string name="IconPickerReplacedIcons">אייקונים שהוחלפו</string>
+    <string name="IconPickerNotReplacedIcons">אייקונים שלא הוחלפו</string>
     <string name="IconPickerSaveAndExit">שמור &amp; וצא</string>
     <string name="BasePacks">חבילות בסיס</string>
     <string name="BaseIconPackInfo">חבילת הסמלים הבסיסית משמשת כגיבוי לסמלים שלא הוחלפו על ידי חבילות אחרות.</string>
@@ -160,7 +190,7 @@
     <string name="NameCannotBeEmpty">השם לא יכול להיות ריק.</string>
     <string name="Version">גרסה</string>
     <string name="InstallPack">התקן ערכה</string>
-    <string name="IconCount_one">אייקון %1$d</string>
+    <string name="IconCount_one">%1$d אייקון</string>
     <string name="IconCount_two">אייקון %1$d</string>
     <string name="IconCount_few">אייקון %1$d</string>
     <string name="IconCount_many">אייקון %1$d</string>
@@ -168,12 +198,20 @@
     <string name="UpdatePack">עדכן חבילה</string>
     <string name="DeletePack">מחק חבילה</string>
     <string name="DeletePackInfo">האם אתה בטוח שברצונך למחוק את **%1$s**?</string>
+    <string name="IconPackErrorInvalidArchive">ארכיון חבילת האייקונים אינו תקין.</string>
+    <string name="IconPackErrorMissingMetadata">בארכיון חבילת האייקונים חסר metadata.json.</string>
+    <string name="IconPackErrorMetadataTooLarge">מטא-נתונים של חבילת האייקונים גדולים מדי.</string>
+    <string name="IconPackErrorInvalidMetadata">מטא-נתונים של חבילת האייקונים אינם תקינים.</string>
+    <string name="IconPackErrorTooManyFiles">חבילת האייקונים מכילה יותר מדי קבצים.</string>
+    <string name="IconPackErrorArchiveTooLarge">חבילת האייקונים גדולה מדי.</string>
+    <string name="IconPackErrorFileTooLarge">אחד מקבצי האייקונים גדול מדי.</string>
+    <string name="IconPackErrorCompressionRatioTooHigh">ארכיון חבילת האייקונים דחוס באגרסיביות מדי.</string>
+    <string name="IconPackErrorStorage">לא ניתן לשמור את חבילת האייקונים.</string>
     <!-- App Icons -->
     <string name="IconPack">חבילת אייקונים</string>
     <string name="AppIconSunset">שקיעה</string>
     <string name="AppIconAurora">זוהר הקוטב</string>
     <string name="AppIconAmethyst">אחלמה</string>
-    <string name="AppIconSapphire">ספיר</string>
     <string name="AppIconInvincible">בלתי מנוצח</string>
     <string name="AppIconCyberpunk">סייברפאנק</string>
     <string name="AppIconSpace">מרחב</string>
@@ -182,8 +220,15 @@
     <string name="AppIconOrbit">מסלול</string>
     <string name="AppIconSus">מתחזה</string>
     <string name="AppIconWinter">חורף</string>
+    <string name="AppIconsApply">בחר</string>
+    <string name="AppIconsKeep">שמור את זה</string>
     <!-- General Appearance -->
+    <string name="Sections">סעיפים</string>
     <string name="SeparateHeaders">כותרות נפרדות</string>
+    <string name="DividerStyle">סגנון מפריד</string>
+    <string name="DividerStyleHidden">מוסתר</string>
+    <string name="DividerStyleLine">קו</string>
+    <string name="DividerStyleSegments">קטעים</string>
     <string name="UseSystemFonts">השתמש בגופן המערכת</string>
     <string name="UseSystemEmoji">השתמש באימוג\'ים של המערכת</string>
     <string name="NewLoadingStyle">סגנון טעינה</string>
@@ -194,10 +239,19 @@
     <string name="GooeyAvatarAnimation">אנימציית אווטאר \"דביקה\"</string>
     <string name="CustomChatThemes">ערכות נושא מותאמות אישית בצ\'אטים</string>
     <string name="CustomChatThemesInfo">כל צ\'אט יציג את הנושא שנבחר במיוחד עבורו.</string>
-    <string name="SpringAnimations">אנימציות אביב</string>
-    <string name="SpringAnimationsInfo">מאפשר אנימציות חלקות יותר בעת החלפת מסכים ופתיחת תפריט צד.</string>
+    <string name="PredictiveBackIntensity">עוצמת חזרה חזויה</string>
+    <string name="PredictiveBackMax">מקסימום</string>
+    <string name="PredictiveBackInfo">מכוון עד כמה המסך זז בעת החלקה אחורה.</string>
+    <string name="TransitionAnimation">אנימציית מעבר</string>
+    <string name="TransitionAnimationAosp">AOSP</string>
+    <string name="TransitionAnimationSpring">אביב</string>
+    <string name="TransitionAnimationInfo">ה-AOSP משתמשת במעבר החלונות המקורי של אנדרואיד, בעוד ש-Spring משתמשת במעבר חלק יותר.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">אפשרויות טשטוש</string>
+    <string name="GlassOutlineStyle">קו מתאר זכוכית</string>
+    <string name="GlassOutlineGlare">בוהק</string>
+    <string name="GlassOutlineSolid">מוצק</string>
+    <string name="GlassOutlineHidden">מוסתר</string>
     <string name="ForceBlur">טשטוש כפוי</string>
     <string name="ForceBlurInfo">אפקטי הטשטוש יוחלו על כל הנושאים, ויעקפו את הגדרות ברירת המחדל שלהן.</string>
     <string name="ForceSnow">כוח פתיתי שלג</string>
@@ -212,7 +266,10 @@
     <string name="StickerShape">צורת מדבקה</string>
     <string name="StickerShapeRounded">מעוגל</string>
     <string name="StickerShapeRoundedMsg">הודעה</string>
-    <string name="StickerTime">הסתר זמן על מדבקות</string>
+    <string name="StickerTimeMode">זמן על מדבקות</string>
+    <string name="StickerTimeSide">בצד</string>
+    <string name="StickerTimeHidden">מוסתר</string>
+    <string name="ViewEmojiSet">הצג סט אמוג\'י</string>
     <string name="UnlimitedRecentStickers">מדבקות אחרונות ללא הגבלה</string>
     <string name="HideReactions">הסתר תגובות</string>
     <string name="HideReactionsInfo">התגובות יהיו מוסתרות לחלוטין מהממשק.</string>
@@ -220,6 +277,7 @@
     <string name="ChatSettingsInfo">הגדרות מדיה, סמל אפליקציה ועוד</string>
     <!-- AI -->
     <string name="AIChatInfo">הגדרת שירותים, תפקידים והיסטוריה</string>
+    <string name="AIChatInfo2">צור טקסט מתוך הודעות או לפני שליחה.</string>
     <!-- AI Services -->
     <string name="Services">שירותים</string>
     <string name="ServicesInfo">בחר את השירות המתאים לאינטראקציה עם מודלים של שפה.</string>
@@ -227,6 +285,13 @@
     <string name="EditService">ערוך שירות</string>
     <string name="ServiceModel">מודל</string>
     <string name="ServiceKey">מפתח API</string>
+    <string name="ServiceInfo">מידע על השירות</string>
+    <string name="ServiceProvider">ספק</string>
+    <string name="ServiceProviderCustom">מותאם אישית</string>
+    <string name="ServiceTestAndSave">בדוק ושמור</string>
+    <string name="ServicePasteService">הדבק שירות</string>
+    <string name="ServicePasteKey">הדבק מפתח API</string>
+    <string name="DeleteServiceInfo">האם אתה בטוח שברצונך למחוק את **%1$s**?</string>
     <!-- AI Roles -->
     <string name="Roles">תפקידים</string>
     <string name="RolesInfo">צור תפקידים בהתאם לצרכים הספציפיים שלך!</string>
@@ -236,15 +301,20 @@
     <string name="PromptInfo">הנחיה היא הטקסט הראשוני שניתן למודל כדי להתחיל ליצור תגובה או להמשיך דיאלוג.</string>
     <string name="NewRole">תפקיד חדש</string>
     <string name="EditRole">עריכת תפקיד</string>
+    <string name="DeleteRoleInfo">האם אתה בטוח שברצונך למחוק את **%1$s**?</string>
     <!-- AI History & Behavior -->
     <string name="HistoryInfo">היסטוריית השיחות מאפשרת לבינה המלאכותית להבין בקשות קודמות ולשקול אותן בעת יצירת תגובות חדשות.</string>
+    <string name="AIGeneration">יצירה</string>
+    <string name="AIReasoning">חשיבה</string>
+    <string name="AIReasoningInfo">מאפשר למודלים נתמכים בשירות זה להשקיע אסימונים נוספים בחשיבה לפני תשובה.</string>
+    <string name="AITemperature">טמפרטורה</string>
+    <string name="AITemperatureInfo">טמפרטורה שולטת באקראיות התגובה: ערכים גבוהים יותר יצירתיים יותר, ערכים נמוכים יותר ממוקדים יותר.</string>
     <string name="ResponseStreaming">הזרמת תגובות</string>
     <string name="ResponseStreamingInfo">מבטיח תצוגה חלקה ומהירה יותר של תגובות.</string>
     <string name="ShowResponseOnly">הצג תגובה בלבד</string>
     <string name="InsertResponseAsQuote">הוסף תגובה כציטוט</string>
     <string name="TapToAddApiKey">הקש כדי להוסיף מפתח API בכדי להתחיל להשתמש בתכונות בינה מלאכותית.</string>
     <string name="Generate">יצירה</string>
-    <string name="GenerateWithoutHistory">בלי היסטוריה</string>
     <string name="ClearConversationHistoryInfo">האם אתה בטוח שברצונך לנקות את **כל** היסטוריית השיחות של הבינה המלאכותית?</string>
     <!-- AI Errors -->
     <string name="AIError400">בקשה שגויה</string>
@@ -253,20 +323,64 @@
     <string name="AIError401Info">מפתח ה-API אינו חוקי או מושבת. בדוק את פרטי הגישה שלך.</string>
     <string name="AIError402">אין מספיק נקודות</string>
     <string name="AIError402Info">אין מספיק נקודות זכות בחשבון או במפתח ה-API שלך. הוסף נקודות זכות נוספות ונסה שוב לבצע את הבקשה.</string>
+    <string name="AIError403">גישה נדחתה</string>
+    <string name="AIError403Info">אין לך הרשאה לגשת למודל או למשאב זה. בדוק את מפתח ה-API שלך ואת הרשאות החשבון.</string>
     <string name="AIError408">הזמן הקצוב לבקשה עבר</string>
     <string name="AIError408Info">בקשתך לא עובדה בזמן. אנא נסה שוב מאוחר יותר.</string>
     <string name="AIError429">חריגה ממגבלת התעריף</string>
     <string name="AIError429Info">אתה שולח בקשות לעתים קרובות מדי. אנא המתן רגע ונסה שוב.</string>
     <string name="AIError502">המודול נכשל</string>
     <string name="AIError502Info">המודל שנבחר אינו זמין או שקיבלנו ממנו תגובה לא חוקית.</string>
+    <string name="AIError503">השירות לא זמין</string>
+    <string name="AIError503Info">השירות אינו זמין זמנית או עמוס. אנא נסה שוב מאוחר יותר.</string>
     <string name="AIError">שגיאת שרת</string>
     <string name="AIErrorInfo">אנא נסה שוב את בקשתך לאחר המתנה קצרה.</string>
+    <string name="AIOnDevice">על הטלפון</string>
+    <string name="AIErrorOnDevice">המודל המקומי אינו זמין</string>
+    <string name="AIErrorOnDeviceInfo">מכשיר זה אינו יכול להריץ את המודל הפועל על המכשיר. בחר שירות אחר.</string>
+    <string name="AIErrorOnDeviceDownload">המודל לא הורד</string>
+    <string name="AIErrorOnDeviceDownloadInfo">המודל הפועל על המכשיר טרם הורד.</string>
+    <string name="AIErrorOnDeviceDownloading">הורדת מודל</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">המודל המקומי עדיין יורד. אנא נסה שוב מאוחר יותר.</string>
+    <string name="AIErrorOnDeviceTooLong">ההודעה ארוכה מדי</string>
+    <string name="AIErrorOnDeviceTooLongInfo">המודל הפועל על המכשיר אינו יכול לטפל בבקשה זו. יש לקצר אותה או לבחור בשירות אחר.</string>
+    <string name="AIOnDeviceDownloadTitle">הורד מודל הפועל על המכשיר</string>
+    <string name="AIOnDeviceDownloadInfo">המודל יורד פעם אחת ולאחר מכן פועל במלואו על המכשיר, מבלי לשלוח דבר לשרת. ההורדה גדולה ומנוהלת על ידי המערכת, ולכן לא ניתן לעצור אותה לאחר שהחלה. מומלץ להשתמש ב-Wi-Fi.</string>
+    <string name="AIOnDeviceDownloadButton">הורדה</string>
+    <string name="AIOnDeviceBadgeReady">מוכן</string>
+    <string name="AIOnDeviceBadgeUnavailable">לא זמין</string>
+    <string name="AIOnDeviceNotificationChannel">מודל בינה מלאכותית הפועל על המכשיר</string>
+    <string name="AIOnDeviceNotificationReady">המודל מוכן</string>
+    <string name="AIOnDeviceNotificationReadyInfo">ה-Gemini Nano הורד וכעת פועל במכשיר שלך.</string>
+    <string name="AIOnDeviceDownloadStarted">ההורדה החלה. היא נמשכת ברקע.</string>
+    <string name="AIOnDeviceBadgeDownload">הורדה</string>
+    <string name="AIOnDeviceBadgeDownloading">טוען</string>
+    <string name="AIOnDeviceRefresh">רענן סטטוס</string>
+    <string name="AIOnDeviceManage">הגדרות AICore</string>
+    <string name="AIOnDeviceManageUnavailable">הגדרות המערכת עבור AICore אינן זמינות במכשיר זה.</string>
+    <string name="AIChangeModel">שינוי</string>
+    <string name="AIAskMore">שאל עוד</string>
+    <string name="AIAssistant">מסייע</string>
     <!-- Chat Actions -->
     <string name="DoubleTap">לחיצה כפולה</string>
     <string name="DoubleTapIncoming">הודעות נכנסות</string>
     <string name="DoubleTapOutgoing">הודעות יוצאות</string>
     <string name="DoubleTapInfo">חלק מהפעולות דורשות הרשאות מנהל בצ\'אט או בערוץ.</string>
+    <string name="Gestures">מחוות</string>
+    <string name="SwipeActions">פעולות החלקה</string>
+    <string name="SwipeActionsInfo">החלק הודעה שמאלה, ומבלי להרים את האצבע, הזז אותה למעלה או למטה כדי לבחור פעולה.</string>
+    <string name="SwipeActionsEnabled">פעולות</string>
+    <string name="SwipeActionsDisabled">מושבת</string>
+    <string name="SwipeActionsOrderInfo">הקש על פעולה כדי להפעיל או לכבות אותה, וגרור כדי לשנות את הסדר. הפעולה העליונה ביותר מתבצעת בעת ביצוע החלקה רגילה.</string>
+    <string name="SwipeActionsPreviewReply">מה אם תחליק לי היד ואמחק את זה?</string>
+    <string name="SwipeActionsPreviewMessage">הפחד הוא רצח התודעה. משוך לאט יותר</string>
     <string name="BottomButton">כפתור תחתון</string>
+    <string name="WidePosts">עמודים רחבים</string>
+    <string name="AIFeatures">תכונות בינה מלאכותית</string>
+    <string name="AIFeaturesEditor">עורך</string>
+    <string name="AIFeaturesSummaries">תקצירים</string>
+    <string name="AIFeaturesInstantViewSummaries">סיכומי תצוגה מיידית</string>
+    <string name="ChannelDiscussNoCaps">דיון</string>
     <string name="QuickTransitions">מעבר החלקה מהירה</string>
     <string name="DisableGreetingSticker">השבת מדבקת ברכה</string>
     <string name="AdminShortcuts">קיצורי דרך מהירים לניהול</string>
@@ -276,7 +390,13 @@
     <string name="MessageMenu">תפריט הודעות</string>
     <string name="GroupMessageMenu">תפריט הודעות קבוצתיות</string>
     <string name="GroupMessageMenuInfo">קיבוץ מעביר את הפעולות העיקריות לתחתית תפריט ההודעות.</string>
+    <string name="GlassMessageMenu">תפריט הודעות זכוכית</string>
+    <string name="GlassMessageMenuInfo">תפריט ההודעות, תפריט הכותרת וסרגל התגובות הופכים למראה של זכוכית חלבית.</string>
+    <string name="GlassMessageMenuBlurOff">תפריטי זכוכית דורשים טשטוש, אשר כרגע כבוי.</string>
     <string name="AddCommaAfterMention">הוסף פסיק לאחר אזכור</string>
+    <string name="InlineMathResult">תוצאות מתמטיות משולבות</string>
+    <string name="InlineMathResultHint">הצג תצוגה מקדימה של התוצאה לאחר \"=\", ולאחר מכן לחץ על מקש הרווח כדי להכניס אותה.</string>
+    <string name="InlineMathResultAnnouncement">תוצאה: %1$s</string>
     <string name="HideSendAsPeer">הסתר את כפתור \"שלח כ...\"</string>
     <string name="HideSendAsPeerInfo">עדיין ניתן לגשת לתפריט \"שלח כ...\" על ידי לחיצה ארוכה על כפתור האימוג\'ים/מדבקות/GIF.</string>
     <string name="ShowPollResultsBeforeVoting">הצג תוצאות לפני ההצבעה</string>
@@ -294,6 +414,10 @@
     <string name="ModelDownloaded">המודל הורד בהצלחה.</string>
     <string name="ModelError">שגיאה בעת הורדת המודל.</string>
     <string name="ModelUnzipping">פתיחת דחיסה…</string>
+    <string name="DeleteRecognitionModel">מחק מודל</string>
+    <string name="DeleteRecognitionModelInfo">האם אתה בטוח שברצונך למחוק את מודל השפה \"**%1$s**\"?</string>
+    <string name="RecognitionModelDeleted">המודל נמחק בהצלחה.</string>
+    <string name="RecognitionModelDeleteError">שגיאה בעת מחיקת המודל.</string>
     <string name="PostProcessingWithAi">שימוש בבינה מלאכותית לעיבוד לאחר מכן</string>
     <string name="PostProcessingWithAiInfo">בינה מלאכותית תשפר את הקריאות על ידי תיקון שגיאות, הוספת סימני פיסוק והבהרת חלקים לא ברורים.</string>
     <!-- Camera -->
@@ -303,6 +427,9 @@
     <string name="ExtendedFramesPerSecond">טווח FPS מורחב</string>
     <string name="CameraStabilization">ייצוב</string>
     <string name="CameraMirrorMode">מצב מראה</string>
+    <string name="StartWithWideAngleCamera">התחל עם זווית רחבה</string>
+    <string name="ZoomSlider">מחוון זום</string>
+    <string name="ZoomSliderInfo">הצג את בקרת הזום מתחת למצלמת הודעת הווידאו.</string>
     <string name="StaticZoom">זום סטטי</string>
     <string name="StaticZoomInfo">בעת הקלטת הודעות וידאו, רמת הזום לא תתאפס אם תשחררו את האצבעות.</string>
     <string name="VideoMessagesCamera">מצלמה בהודעות וידאו</string>
@@ -348,6 +475,10 @@
     <string name="ImportChanges_other">שינויים של **%1$d** יוחלו על ההגדרות הנוכחיות.</string>
     <string name="SameSettings">נראה שההגדרות זהות להגדרות הנוכחיות.</string>
     <!-- Export data -->
+    <string name="ExportData">ייצא נתונים</string>
+    <string name="ExportDelay">מסיבות אבטחה, תוכל להתחיל להוריד את הנתונים שלך בעוד %1$s. הודענו לכל המכשירים שלך על בקשת הייצוא כדי לוודא שהיא מורשית ולתת לך זמן להגיב אם לא.\n\nאנא חזור ב-%2$s וחזור על הבקשה באמצעות אותו מכשיר.</string>
+    <string name="ExportDelayLessThanHour">פחות משעה</string>
+    <string name="ExportInvalid">מצטערים, התחלת ייצוא נתונים חדש, ולכן ייצוא נתונים זה בוטל.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">מחק חשבון</string>
     <string name="ResetSettings">אפס הגדרות</string>
@@ -396,7 +527,20 @@
     <string name="PluginSourceTrustedInfo">תוספים ממקור זה **מאומתים** ובטוחים לשימוש.</string>
     <string name="PluginSourceUnknown">מקור לא ידוע</string>
     <string name="PluginSourceUnknownInfo">תוספים ממקור זה **לא מאומתים** ועלולים להוות סיכון אבטחה.</string>
+    <string name="PluginInstallBlocked">ההתקנה נחסמה</string>
+    <string name="PluginInstallBlockedInfo">אפשר מקורות לא ידועים בהגדרות התוסף</string>
     <string name="PluginVersion">גרסה</string>
+    <string name="PluginVersionValue">גרסת %1$s</string>
+    <string name="PluginRequired">תוספים נדרשים</string>
+    <string name="PluginRequiredMissing">לא מותקן</string>
+    <string name="PluginRequiredVersion">דורש גרסת %1$s</string>
+    <string name="PluginRequiredDisabled">מותקן, אך מושבת</string>
+    <string name="PluginRequiredOutdated">גרסת %1$s, דורשת %2$s</string>
+    <string name="PluginRequiredDownload">הורדה</string>
+    <string name="PluginRequiredUpdate">עדכון</string>
+    <string name="PluginRequiredInstalled">מותקן</string>
+    <string name="PluginBundledPackages">חבילות משולבות</string>
+    <string name="PluginRequirements">דרישות</string>
     <string name="PluginNoDescription">לא סופק תיאור.</string>
     <string name="PluginIsNotResponding">התוסף לא מגיב.</string>
     <string name="PluginIsNotRespondingAlert">%1$s לא מגיב</string>
@@ -407,6 +551,16 @@
     <string name="PluginDeleteInfo">האם אתה בטוח שברצונך למחוק את **%1$s**?</string>
     <string name="ResetPluginSettings">הגדרות ה- **%1$s** אופסו.</string>
     <string name="ResetPluginSettingsInfo">האם אתה בטוח שברצונך לאפס את הגדרות **%1$s** לברירת המחדל?</string>
+    <string name="PluginsUnknownSources">מקורות לא ידועים</string>
+    <string name="PluginsUnknownSourcesInfo">אתה מסכים להתקין תוספים ממקורות לא ידועים. לכל תוסף יש:</string>
+    <string name="PluginsUnknownSourcesInfo2">אפשר התקנת תוספים ממקורות לא מאומתים.</string>
+    <string name="PluginsUnknownSourcesAccount">גישה מלאה לחשבון שלך</string>
+    <string name="PluginsUnknownSourcesAccountInfo">לפעול בשמך: לקרוא, לשלוח ולמחוק הודעות.</string>
+    <string name="PluginsUnknownSourcesFiles">קבצים ונתונים של אפליקציות</string>
+    <string name="PluginsUnknownSourcesFilesInfo">קריאת צ\'אטים, מדיה, הגדרות ונתוני הרשאה השמורים במטמון.</string>
+    <string name="PluginsUnknownSourcesCode">קוד בלתי-מוגבל</string>
+    <string name="PluginsUnknownSourcesCodeInfo">הרץ כל קוד ושלח כל דבר לכל שרת.</string>
+    <string name="PluginsUnknownSourcesWarning">תוסף זדוני עלול להשתלט על החשבון שלך.</string>
     <string name="PluginsSafeMode">מצב בטוח</string>
     <string name="PluginsSafeModeShortcut">התחל מצב בטוח</string>
     <string name="PluginsSafeModeInfo">מנוע התוספים מושבת עקב קריסה. השבתת מצב בטוח עלולה להוביל לתוצאות בלתי צפויות.</string>
@@ -420,6 +574,7 @@
     <string name="PluginEngineNotEnabled">הפעל את **מנוע התוספים** כדי לפתוח הגדרות של **%1$s**.</string>
     <string name="PluginNotFound">**%1$s** לא נמצא.</string>
     <string name="PluginHasNoSettings">אין הגדרות ל-**%1$s**.</string>
+    <string name="PluginsPySdkUpdate">עדכון PySDK</string>
     <string name="PluginsPySdkAutoUpdate">עדכון אוטומטי</string>
     <string name="PluginsPySdkEnableBetaVersion">התקנת גרסאות בטא</string>
     <string name="PluginsPySdkCheckUpdates">בדוק אם יש עדכונים</string>
@@ -447,6 +602,7 @@
     <string name="FileName">שם הקובץ</string>
     <string name="FilePath">נתיב הקובץ</string>
     <string name="Platform">פלטפורמה</string>
+    <string name="SentFrom">נשלח מ-%1$s</string>
     <string name="Resolution">רזולוציה</string>
     <string name="Bitrate">קצב סיביות</string>
     <string name="Duration">משך זמן</string>
@@ -495,10 +651,12 @@
     <string name="ChatNotFound">משתמש עם **id** זה לא נמצא.</string>
     <string name="PhotoCopied">התמונה הועתקה ללוח.</string>
     <string name="FrameCopied">הפריים הועתק ללוח.</string>
+    <string name="TapToCopy">הקש להעתקה</string>
     <string name="ProfileUsesEmojiPack">פרופיל זה משתמש באמוג\'י מחבילת %s כרקע שלו.</string>
     <string name="ReplyUsesEmojiPacks">תגובה זו משתמשת באימוג\'י מחבילת %s כרקע שלה.</string>
     <string name="StickerSavedHint">הסטיקר נשמר בגלריה.</string>
     <string name="EmojiSavedHint">האימוג\'י נשמר בגלריה.</string>
+    <string name="GifGallerySavedHint">ה-GIF נשמר לגלריה.</string>
     <string name="MutualContactInfo">קשר זה הוא הדדי.</string>
     <string name="LocalPremiumEmojiHint">אין לך מנוי ל- **טלגרם פרימיום**, כך שרק משתמשי **exteraGram** יוכלו לראות את האימוג\'י הזה.</string>
     <!-- Main Tabs -->
@@ -528,7 +686,42 @@
     <string name="CopyPhoto">העתק תמונה</string>
     <string name="CopyFrame">העתק פריים</string>
     <string name="Repeat">חזור</string>
+    <string name="Subtitles">כתוביות</string>
+    <string name="ChooseSubtitles">בחר כתוביות</string>
+    <string name="DisableSubtitles">השבת כתוביות</string>
+    <string name="SubtitlesAdded">כתוביות הופעלו.</string>
+    <string name="SubtitlesRemoved">כתוביות הושבתו.</string>
+    <string name="SubtitlesLoadError">לא ניתן לטעון כתוביות.</string>
+    <string name="SubtitlesUnsupportedFormat">פורמט כתוביות לא נתמך.</string>
     <!-- Sticker Maker -->
+    <string name="StickerCornerRadius">פינות מדבקה</string>
+    <string name="StickerCornerRadiusInfo">בחר עד כמה פינות המדבקה יהיו מעוגלות.</string>
+    <string name="StickerCornerRadiusLarge">גדול</string>
+    <string name="StickerCornerRadiusMedium">בינוני</string>
+    <string name="StickerCornerRadiusSmall">קטן</string>
+    <string name="StickerCornerRadiusNone">ללא</string>
     <!-- Feed -->
+    <string name="Feed">פיד</string>
+    <string name="FeedShownChannels">מוצג בפיד</string>
+    <string name="FeedHiddenChannels">מוסתר</string>
+    <string name="FeedChannels">ערוצים</string>
+    <string name="FeedChannelsInfo">בטל סימון ערוץ כדי להסתיר את הפוסטים שלו מהפיד. ערוצים חדשים מוצגים אוטומטית.</string>
+    <string name="FeedSettings">הגדרות פיד</string>
+    <string name="FeedNoPosts">אין עדיין פוסטים בערוצים.</string>
+    <string name="FeedAllChannelsExcluded">כל הערוצים אינם נכללים בפיד.</string>
+    <string name="FeedMarkAllRead">סמן הכל כנקרא</string>
+    <string name="FeedMarkAllReadConfirm">לסמן את כל הפוסטים בערוצי הפיד שלך כנקראים? פעולה זו תסמן אותם גם כנקראים בערוצים המקוריים.</string>
+    <string name="FeedMarkAllReadDone">כל הפוסטים סומנו כנקראים</string>
+    <string name="FeedIncludeArchived">הצג צ\'אטים מארכיון</string>
+    <string name="FeedIncludeArchivedInfo">כלול גם ערוצים מצ\'אטים בארכיון בפיד.</string>
+    <string name="FeedHideChannel">הסתר מהפיד</string>
+    <string name="FeedChannelHidden">**%1$s** הוסתר מהפיד</string>
+    <string name="FeedBottomTab">הצג בלשוניות התחתונות</string>
+    <string name="FeedBottomTabInfo">הצג את הפיד כלשונית ניווט תחתונה במקום לשונית אנשי הקשר.</string>
+    <string name="WidePostsInFeed">פוסטים רחבים בפיד</string>
+    <string name="FeedUnreadCounter">מונה פוסטים לא נקראים</string>
+    <string name="HideFeedTab">הסתר לשונית פיד</string>
+    <string name="DisableMarkdown">השבת Markdown</string>
+    <string name="EnableMarkdown">הפעל Markdown</string>
     <!-- Non-translatable -->
 </resources>

@@ -25,9 +25,9 @@
     <string name="SettingLinkToSavedMessages">Ayar bağlantısı **Kayıtlı Mesajlar**\'a gönderildi.</string>
     <string name="SettingLinkToUser">Ayar bağlantısı **%1$s** adlı kullanıcıya gönderildi.</string>
     <string name="SettingLinkToChats">Ayar bağlantısı **%1$s** sohbetine gönderildi.</string>
-    <string name="LiteBatteryFollowSystem">Sistemin batarya tasarruf modunu kullan</string>
+    <string name="LiteBatteryFollowSystem">Sistemin pil tasarruf modunu kullan</string>
     <string name="LiteBatteryFollowSystemState">Sistem</string>
-    <string name="LiteBatteryFollowSystemInfo">Sistemin batarya tasarruf modu tarafından kontrol ediliyor.</string>
+    <string name="LiteBatteryFollowSystemInfo">Sistem Pil Tasarrufu tarafından yönetilir.</string>
     <!-- Pill Stack -->
     <string name="PillStackPills">Hap Yığını</string>
     <string name="PillStackPillsInfo">Arama alanında etkileşimli hapları (etiketleri) gösterir</string>
@@ -62,31 +62,34 @@
     <string name="CryptoCurrencyInr">Hindistan Rupisi</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">Bir VPN ile kullanmayın</string>
+    <string name="ProxyDisableOn">Proxy\'yi devre dışı bırak</string>
+    <string name="ProxyDisableNever">Asla</string>
+    <string name="ProxyDisableAlways">Her zaman</string>
+    <string name="ProxyDisableOnMobileData">Mobil veri</string>
     <string name="ProxyType">Tür</string>
     <string name="Unknown">Bilinmeyen</string>
-    <string name="ProxyRename">Proxy adı (opsiyonel)</string>
-    <string name="ProxyPinLimitReached">En fazla %1$d tane proxy sabitleyebilirsin.</string>
+    <string name="ProxyRename">Proxy adı (isteğe bağlı)</string>
+    <string name="ProxyPinLimitReached">En fazla %1$d proxy sabitleyebilirsiniz.</string>
     <string name="CopyIpAddress">IP adresini kopyala</string>
     <string name="IpInfoUnavailable">IP adress bilgisi alınamadı.</string>
     <string name="IpInfoCountry">Ülke</string>
     <string name="IpInfoRegion">Bölge</string>
     <string name="IpInfoCity">Şehir</string>
-    <string name="IpInfoIsp">ISP (Operatör)</string>
-    <string name="IpInfoOrganization">Organizasyon</string>
+    <string name="IpInfoIsp">İSS</string>
+    <string name="IpInfoOrganization">Kuruluş</string>
     <string name="IpInfoDomain">Alan adı</string>
     <string name="IpInfoTimezone">Saat dilimi</string>
     <!-- Translator -->
     <string name="TranslationProvider">Çeviri Sağlayıcısı</string>
     <string name="TranslationTarget">Hedef Dil</string>
     <string name="TranslationTargetApp">Uygulamayı Takip Et</string>
-    <string name="TranslationFormality">Resmiyet</string>
-    <string name="TranslationFormalityLess">Daha Az</string>
-    <string name="TranslationFormalityMore">Daha Fazla</string>
+    <string name="ShowTranslateChatButtonLocked">Başka bir çeviri hizmeti sağlayıcısı seçin veya **Telegram Premium**’a abone olun.</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Sayı Yuvarlamayı Devre Dışı Bırak</string>
     <string name="FormatTimeWithSeconds">Saati Saniyelerle Biçimlendir</string>
     <string name="RelativeLastSeen">Göreceli Son Görülme</string>
     <string name="InAppVibration">Uygulama İçi Titreşim</string>
+    <string name="DisableNotificationDelay">Bildirim Gecikmesini Devre Dışı Bırak</string>
     <string name="FilterZalgo">\"Zalgo\" Filtresi</string>
     <string name="FilterZalgoInfo">İsimlerdeki ve mesajlardaki \"%1$s\" sembollerini kaldırır.</string>
     <string name="RestartRequired">Değişikliklerin etkili olması için uygulamayı yeniden başlatın.</string>
@@ -106,10 +109,10 @@
     <string name="InstallYandexMaps">Yandex Haritalar yüklensin mi?</string>
     <!-- Storage -->
     <string name="StorageSettings">Depolama</string>
-    <string name="CustomSavePath">Özel Kaydetme Klasörü</string>
+    <string name="CustomSavePath">Özel Kayıt Klasörü</string>
     <string name="CustomSavePathHint">Kök dizinine kaydetmek için boş bırakın</string>
     <string name="CustomSavePathDefault">Kök dizinine kaydet</string>
-    <string name="CustomSavePathInfo">Kaydedilen dosyalar doğrudan Pictures, Downloads vb. klasörlerde saklanacak.</string>
+    <string name="CustomSavePathInfo">Kaydedilen dosyalar doğrudan Pictures, Downloads vb. klasörlerinde saklanacak.</string>
     <string name="CustomSavePathInfoFolder">Kaydedilen dosyalar Pictures/%1$s, Downloads/%1$s, vb. yerlerde saklanacak.</string>
     <!-- Profile -->
     <string name="Profile">Profil</string>
@@ -196,9 +199,9 @@
     <string name="DeletePack">Paketi Sil</string>
     <string name="DeletePackInfo">**%1$s** paketini silmek istediğinize emin misiniz?</string>
     <string name="IconPackErrorInvalidArchive">Simge paketi arşivi geçersiz.</string>
-    <string name="IconPackErrorMissingMetadata">Simge paketi arşivi metadata.json içermiyor.</string>
-    <string name="IconPackErrorMetadataTooLarge">Simge paketi metadatası çok büyük.</string>
-    <string name="IconPackErrorInvalidMetadata">Simge paketi metadatası geçersiz.</string>
+    <string name="IconPackErrorMissingMetadata">Simge paketi arşivinde metadata.json eksik.</string>
+    <string name="IconPackErrorMetadataTooLarge">Simge paketi metadata\'sı çok büyük.</string>
+    <string name="IconPackErrorInvalidMetadata">Simge paketi metadata\'sı geçersiz.</string>
     <string name="IconPackErrorTooManyFiles">Simge paketi çok fazla dosya içeriyor.</string>
     <string name="IconPackErrorArchiveTooLarge">Simge paketi çok büyük.</string>
     <string name="IconPackErrorFileTooLarge">Simge dosyalardan biri çok büyük.</string>
@@ -209,7 +212,6 @@
     <string name="AppIconSunset">Gün Batımı</string>
     <string name="AppIconAurora">Aurora</string>
     <string name="AppIconAmethyst">Ametist</string>
-    <string name="AppIconSapphire">Safir</string>
     <string name="AppIconInvincible">Yenilmez</string>
     <string name="AppIconCyberpunk">Siberpunk</string>
     <string name="AppIconSpace">Uzay</string>
@@ -218,6 +220,8 @@
     <string name="AppIconOrbit">Yörünge</string>
     <string name="AppIconSus">Sahtekar</string>
     <string name="AppIconWinter">Kış</string>
+    <string name="AppIconsApply">Seç</string>
+    <string name="AppIconsKeep">Bu kalsın</string>
     <!-- General Appearance -->
     <string name="Sections">Bölümler</string>
     <string name="SeparateHeaders">Ayrı Başlıklar</string>
@@ -235,14 +239,16 @@
     <string name="GooeyAvatarAnimation">\"Yapışkan\" Avatar Animasyonu</string>
     <string name="CustomChatThemes">Sohbetlerde Özel Temalar</string>
     <string name="CustomChatThemesInfo">Her sohbet, kendisi için özel olarak seçilen temayı gösterecektir.</string>
-    <string name="PredictiveBackIntensity">Öngörülebilir Geri Yoğunluğu</string>
+    <string name="PredictiveBackIntensity">Tahmini geri animasyon seviyesi</string>
     <string name="PredictiveBackMax">Maks</string>
     <string name="PredictiveBackInfo">Geriye doğru kaydırma yapıldığında ekranın ne kadar kayacağını ayarlar.</string>
-    <string name="SpringAnimations">Yay Animasyonları</string>
-    <string name="SpringAnimationsInfo">Ekranlar arasında geçiş yaparken ve yan menüyü açarken daha akıcı animasyonlar sağlar.</string>
+    <string name="TransitionAnimation">Geçiş Animasyonu</string>
+    <string name="TransitionAnimationAosp">AOSP</string>
+    <string name="TransitionAnimationSpring">Yay</string>
+    <string name="TransitionAnimationInfo">AOSP stok Android pencere geçişini kullanır, Yay ise daha akıcı olanıdır.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Bulanıklık Seçenekleri</string>
-    <string name="GlassOutlineStyle">Cam Dış Hatları</string>
+    <string name="GlassOutlineStyle">Cam kenarlığı</string>
     <string name="GlassOutlineGlare">Parlama</string>
     <string name="GlassOutlineSolid">Katı</string>
     <string name="GlassOutlineHidden">Gizli</string>
@@ -260,7 +266,9 @@
     <string name="StickerShape">Çıkartma Şekli</string>
     <string name="StickerShapeRounded">Yuvarlatılmış</string>
     <string name="StickerShapeRoundedMsg">Mesaj</string>
-    <string name="StickerTime">Çıkartmalarda Saati Gizle</string>
+    <string name="StickerTimeMode">Çıkartmalarda Saat</string>
+    <string name="StickerTimeSide">Yanda</string>
+    <string name="StickerTimeHidden">Gizli</string>
     <string name="ViewEmojiSet">Emoji Setini Görüntüle</string>
     <string name="UnlimitedRecentStickers">Sınırsız Son Kullanılan Çıkartma</string>
     <string name="HideReactions">Tepkileri Gizle</string>
@@ -277,7 +285,7 @@
     <string name="EditService">Servisi Düzenle</string>
     <string name="ServiceModel">Model</string>
     <string name="ServiceKey">API Anahtarı</string>
-    <string name="ServiceInfo">Servis Bilgisi</string>
+    <string name="ServiceInfo">Servis Bilgileri</string>
     <string name="ServiceProvider">Sağlayıcı</string>
     <string name="ServiceProviderCustom">Özel</string>
     <string name="ServiceTestAndSave">Test Et ve Kaydet</string>
@@ -296,9 +304,9 @@
     <string name="DeleteRoleInfo">**%1$s**\'yi silmek istediğinizden emin misiniz?</string>
     <!-- AI History & Behavior -->
     <string name="HistoryInfo">Konuşma geçmişi, yapay zekanın önceki istekleri anlamasını ve yeni yanıtlar üretirken bunları dikkate almasını sağlar.</string>
-    <string name="AIGeneration">Oluşturulma</string>
-    <string name="AIReasoning">Gerekçelendirme</string>
-    <string name="AIReasoningInfo">Bu hizmetteki desteklenen modellerin, yanıt vermeden önce biraz düşünmek için fazladan jeton harcamasına izin verelim.</string>
+    <string name="AIGeneration">Oluşturma</string>
+    <string name="AIReasoning">Akıl yürütme</string>
+    <string name="AIReasoningInfo">Bu hizmetteki desteklenen modellerin, yanıt vermeden önce düşünmek için fazladan jeton harcamasını sağlar.</string>
     <string name="AITemperature">Sıcaklık</string>
     <string name="AITemperatureInfo">Sıcaklık, tepkilerin rastgeleliğini belirler: daha yüksek değerler daha yaratıcı, daha düşük değerler ise daha odaklı sonuçlar verir.</string>
     <string name="ResponseStreaming">Yanıt Akışı (Streaming)</string>
@@ -307,7 +315,6 @@
     <string name="InsertResponseAsQuote">Yanıtı Alıntı Olarak Ekle</string>
     <string name="TapToAddApiKey">Yapay zeka özelliklerini kullanmaya başlamak amacıyla bir API Anahtarı eklemek için dokunun.</string>
     <string name="Generate">Oluştur</string>
-    <string name="GenerateWithoutHistory">Geçmiş Olmadan</string>
     <string name="ClearConversationHistoryInfo">**Tüm** yapay zeka konuşma geçmişini temizlemek istediğinize emin misiniz?</string>
     <!-- AI Errors -->
     <string name="AIError400">Hatalı İstek</string>
@@ -324,16 +331,55 @@
     <string name="AIError429Info">Çok sık istek gönderiyorsunuz. Lütfen biraz bekleyip tekrar deneyin.</string>
     <string name="AIError502">Model Hatası</string>
     <string name="AIError502Info">Seçilen model kullanılamıyor veya modelden geçersiz bir yanıt aldık.</string>
-    <string name="AIError503">Hizmet Kullanılamıyor</string>
-    <string name="AIError503Info">Hizmet geçici olarak kullanılamıyor veya aşırı yüklenmiş durumda. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="AIError503">Servis Kullanılamıyor</string>
+    <string name="AIError503Info">Servis geçici olarak kullanılamıyor veya aşırı yüklenmiş durumda. Lütfen daha sonra tekrar deneyin.</string>
     <string name="AIError">Sunucu Hatası</string>
     <string name="AIErrorInfo">Lütfen kısa bir süre bekledikten sonra isteğinizi yeniden deneyin.</string>
+    <string name="AIOnDevice">Cihaz içi</string>
+    <string name="AIErrorOnDevice">Cihaz içi model kullanılamıyor</string>
+    <string name="AIErrorOnDeviceInfo">Bu cihaz, cihaz içi model çalıştıramıyor. Başka bir servis seçin.</string>
+    <string name="AIErrorOnDeviceDownload">Model İndirilmedi</string>
+    <string name="AIErrorOnDeviceDownloadInfo">Cihaz içi model henüz indirilmedi.</string>
+    <string name="AIErrorOnDeviceDownloading">Model İndiriliyor</string>
+    <string name="AIErrorOnDeviceDownloadingInfo">Cihaz içi model hâlâ indiriliyor. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="AIErrorOnDeviceTooLong">Mesaj Çok Uzun</string>
+    <string name="AIErrorOnDeviceTooLongInfo">Cihaz içi model bu isteği karşılayamıyor. İsteği kısaltın veya başka bir hizmet seçin.</string>
+    <string name="AIOnDeviceDownloadTitle">Cihaz İçi Model İndir</string>
+    <string name="AIOnDeviceDownloadInfo">Model bir kez indirilir ve sunucuya hiçbir veri göndermeden tamamen bu cihazda çalışır. İndirme boyutu büyüktür ve işlem sistem tarafından yürütüldüğü için başlatıldıktan sonra durdurulamaz. Wi-Fi kullanılması önerilir.</string>
+    <string name="AIOnDeviceDownloadButton">İndir</string>
+    <string name="AIOnDeviceBadgeReady">HAZIR</string>
+    <string name="AIOnDeviceBadgeUnavailable">KULLANILAMIYOR</string>
+    <string name="AIOnDeviceNotificationChannel">Cihaz İçi AI modeli</string>
+    <string name="AIOnDeviceNotificationReady">Model hazır</string>
+    <string name="AIOnDeviceNotificationReadyInfo">Gemini Nano indirildi ve artık cihazınızda çalışıyor.</string>
+    <string name="AIOnDeviceDownloadStarted">İndirme işlemi başladı. Arka planda devam ediyor.</string>
+    <string name="AIOnDeviceBadgeDownload">İNDİR</string>
+    <string name="AIOnDeviceBadgeDownloading">YÜKLENİYOR</string>
+    <string name="AIOnDeviceRefresh">Durumu yenile</string>
+    <string name="AIOnDeviceManage">AICore ayarları</string>
+    <string name="AIOnDeviceManageUnavailable">Bu cihazda AICore için sistem ayarları mevcut değil.</string>
+    <string name="AIChangeModel">Değiştir</string>
+    <string name="AIAskMore">Daha Fazla Sor</string>
+    <string name="AIAssistant">Asistan</string>
     <!-- Chat Actions -->
     <string name="DoubleTap">Çift Dokunma</string>
     <string name="DoubleTapIncoming">Gelen Mesajlar</string>
     <string name="DoubleTapOutgoing">Giden Mesajlar</string>
     <string name="DoubleTapInfo">Bazı eylemler sohbette veya kanalda yönetici hakları gerektirir.</string>
+    <string name="Gestures">Hareketler</string>
+    <string name="SwipeActions">Kaydırma Eylemleri</string>
+    <string name="SwipeActionsInfo">Bir mesajı sola kaydırın ve parmağınızı kaldırmadan yukarı veya aşağı kaydırarak bir eylem seçin.</string>
+    <string name="SwipeActionsEnabled">Eylemler</string>
+    <string name="SwipeActionsDisabled">Devre dışı</string>
+    <string name="SwipeActionsOrderInfo">Bir eylemi etkinleştirmek veya devre dışı bırakmak için üzerine dokunun, sırasını değiştirmek için sürükleyin. En üstteki eylem, basit bir kaydırma hareketiyle çalıştırılır.</string>
+    <string name="SwipeActionsPreviewReply">ya yanlışlıkla silersem ne olur?</string>
+    <string name="SwipeActionsPreviewMessage">korku, akıl katilidir. daha yavaş sürükle</string>
     <string name="BottomButton">Alt Düğme</string>
+    <string name="WidePosts">Geniş Gönderiler</string>
+    <string name="AIFeatures">AI Özellikleri</string>
+    <string name="AIFeaturesEditor">Editör</string>
+    <string name="AIFeaturesSummaries">Özetler</string>
+    <string name="AIFeaturesInstantViewSummaries">Hızlı Görünüm özetleri</string>
     <string name="ChannelDiscussNoCaps">Tartışma</string>
     <string name="QuickTransitions">Hızlı Kaydırma Geçişi</string>
     <string name="DisableGreetingSticker">Karşılama Çıkartmasını Devre Dışı Bırak</string>
@@ -345,9 +391,12 @@
     <string name="GroupMessageMenu">Grup Mesaj Menüsü</string>
     <string name="GroupMessageMenuInfo">Gruplama, ana eylemleri mesaj menüsünün en altına taşır.</string>
     <string name="GlassMessageMenu">Cam Mesaj Menüsü</string>
-    <string name="GlassMessageMenuInfo">Mesaj menüsü ve tepki çubuğu buzlu cam görünümüne bürünür.</string>
+    <string name="GlassMessageMenuInfo">Mesaj menüsü, başlık menüsü ve tepki çubuğu buzlu cam görünümü kazanır.</string>
     <string name="GlassMessageMenuBlurOff">Cam menülerde bulanıklık efekti gerekir; ancak bu özellik şu anda devre dışıdır.</string>
     <string name="AddCommaAfterMention">Bahsetmeden Sonra Virgül Ekle</string>
+    <string name="InlineMathResult">Satır içi matematik sonuçları</string>
+    <string name="InlineMathResultHint">\"=\" işaretinden sonraki sonucu önizleyin, ardından boşluk tuşuna basarak ekleyin.</string>
+    <string name="InlineMathResultAnnouncement">Sonuç: %1$s</string>
     <string name="HideSendAsPeer">\"Şu kişi olarak gönder...\" Düğmesini Gizle</string>
     <string name="HideSendAsPeerInfo">Emojiler/Çıkartmalar/GIF\'ler düğmesine uzun basarak \"Şu kişi olarak gönder...\" menüsüne erişmeye devam edebilirsiniz.</string>
     <string name="ShowPollResultsBeforeVoting">Oylamadan Önce Sonuçları Göster</string>
@@ -379,6 +428,8 @@
     <string name="CameraStabilization">Sabitleme</string>
     <string name="CameraMirrorMode">Ayna Modu</string>
     <string name="StartWithWideAngleCamera">Geniş Açı ile Başlayın</string>
+    <string name="ZoomSlider">Yakınlaştırma Çubuğu</string>
+    <string name="ZoomSliderInfo">Video mesajı kamerasının altında yakınlaştırma kontrolünü göster.</string>
     <string name="StaticZoom">Statik Yakınlaştırma</string>
     <string name="StaticZoomInfo">Video mesajları kaydederken, parmaklarınızı serbest bırakırsanız yakınlaştırma (zoom) seviyesi sıfırlanmaz.</string>
     <string name="VideoMessagesCamera">Video Mesajlarında Kamera</string>
@@ -424,6 +475,10 @@
     <string name="ImportChanges_other">Mevcut ayarlara **%1$d** değişiklik uygulanacak.</string>
     <string name="SameSettings">Görünüşe göre ayarlar mevcut olanlarla aynı.</string>
     <!-- Export data -->
+    <string name="ExportData">Verileri dışa aktar</string>
+    <string name="ExportDelay">Güvenlik nedenleriyle verilerinizi indirmeye %1$s içinde başlayabileceksiniz. İsteğin yetkilendirildiğinden emin olmak ve aksi takdirde tepki vermeniz için size zaman tanımak amacıyla tüm cihazlarınızı dışa aktarma isteği hakkında bilgilendirdik.\n\nLütfen %2$s tarihinde geri gelin ve aynı cihazı kullanarak isteği tekrarlayın.</string>
+    <string name="ExportDelayLessThanHour">bir saatten az</string>
+    <string name="ExportInvalid">Üzgünüz, yeni bir veri dışa aktarma işlemi başlattığınız için bu dışa aktarma iptal edildi.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Hesabı Sil</string>
     <string name="ResetSettings">Ayarları Sıfırla</string>
@@ -472,7 +527,20 @@
     <string name="PluginSourceTrustedInfo">Bu kaynaktan gelen eklentiler **doğrulanmıştır** ve kullanımı güvenlidir.</string>
     <string name="PluginSourceUnknown">Bilinmeyen kaynak</string>
     <string name="PluginSourceUnknownInfo">Bu kaynaktan gelen eklentiler **doğrulanmamıştır** ve bir güvenlik riski oluşturabilir.</string>
+    <string name="PluginInstallBlocked">Yükleme engellendi</string>
+    <string name="PluginInstallBlockedInfo">Eklenti ayarlarında bilinmeyen kaynaklara izin verin</string>
     <string name="PluginVersion">Sürüm</string>
+    <string name="PluginVersionValue">Sürüm %1$s</string>
+    <string name="PluginRequired">Gerekli Eklentiler</string>
+    <string name="PluginRequiredMissing">Yüklenmedi</string>
+    <string name="PluginRequiredVersion">%1$s sürümü gerekli</string>
+    <string name="PluginRequiredDisabled">Yüklü ama devre dışı</string>
+    <string name="PluginRequiredOutdated">Sürüm %1$s, %2$s sürümü gerekli</string>
+    <string name="PluginRequiredDownload">İndir</string>
+    <string name="PluginRequiredUpdate">Güncelle</string>
+    <string name="PluginRequiredInstalled">Yüklü</string>
+    <string name="PluginBundledPackages">Dahili paketler</string>
+    <string name="PluginRequirements">Gereksinimler</string>
     <string name="PluginNoDescription">Açıklama sağlanmamış.</string>
     <string name="PluginIsNotResponding">Eklenti yanıt vermiyor.</string>
     <string name="PluginIsNotRespondingAlert">%1$s yanıt vermiyor</string>
@@ -483,6 +551,16 @@
     <string name="PluginDeleteInfo">**%1$s** eklentisini silmek istediğinize emin misiniz?</string>
     <string name="ResetPluginSettings">**%1$s** ayarları sıfırlandı.</string>
     <string name="ResetPluginSettingsInfo">**%1$s** ayarlarını varsayılana sıfırlamak istediğinize emin misiniz?</string>
+    <string name="PluginsUnknownSources">Bilinmeyen Kaynaklar</string>
+    <string name="PluginsUnknownSourcesInfo">Bilinmeyen kaynaklardan eklenti yüklemeyi kabul ediyorsunuz. Her eklentinin sahip olduğu yetkiler:</string>
+    <string name="PluginsUnknownSourcesInfo2">Doğrulanmamış kaynaklardan eklenti yüklenmesine izin ver.</string>
+    <string name="PluginsUnknownSourcesAccount">Hesabınıza tam erişim</string>
+    <string name="PluginsUnknownSourcesAccountInfo">Adınıza işlem yapma: Mesajları okuma, gönderme ve silme.</string>
+    <string name="PluginsUnknownSourcesFiles">Uygulama dosyaları ve verileri</string>
+    <string name="PluginsUnknownSourcesFilesInfo">Önbelleğe alınan sohbetleri, medyaları, ayarları ve yetkilendirme verilerini okuma.</string>
+    <string name="PluginsUnknownSourcesCode">Kısıtlamasız kod</string>
+    <string name="PluginsUnknownSourcesCodeInfo">Herhangi bir kodu çalıştırma ve herhangi bir sunucuya her türlü veriyi gönderme.</string>
+    <string name="PluginsUnknownSourcesWarning">Kötü amaçlı bir eklenti hesabınızı ele geçirebilir.</string>
     <string name="PluginsSafeMode">Güvenli Mod</string>
     <string name="PluginsSafeModeShortcut">Güvenli modla başlat</string>
     <string name="PluginsSafeModeInfo">Eklenti Motoru bir çökme nedeniyle devre dışı bırakıldı. Güvenli modun devre dışı bırakılması öngörülemeyen sonuçlara yol açabilir.</string>
@@ -496,6 +574,7 @@
     <string name="PluginEngineNotEnabled">**%1$s** ayarlarını açmak için **Eklenti Motorunu** etkinleştirin.</string>
     <string name="PluginNotFound">**%1$s** bulunamadı.</string>
     <string name="PluginHasNoSettings">**%1$s** için herhangi bir ayar yok.</string>
+    <string name="PluginsPySdkUpdate">PySDK Güncellemesi</string>
     <string name="PluginsPySdkAutoUpdate">Otomatik Olarak Güncelle</string>
     <string name="PluginsPySdkEnableBetaVersion">Beta Sürümlerini Yükle</string>
     <string name="PluginsPySdkCheckUpdates">Güncellemeleri Kontrol Et</string>
@@ -523,6 +602,7 @@
     <string name="FileName">Dosya Adı</string>
     <string name="FilePath">Dosya Yolu</string>
     <string name="Platform">Platform</string>
+    <string name="SentFrom">%1$s ile gönderildi</string>
     <string name="Resolution">Çözünürlük</string>
     <string name="Bitrate">Bit Hızı</string>
     <string name="Duration">Süre</string>
@@ -639,6 +719,10 @@
     <string name="FeedChannelHidden">**%1$s** akıştan gizlendi</string>
     <string name="FeedBottomTab">Alt Sekmelerde Göster</string>
     <string name="FeedBottomTabInfo">Akışı, “Kişiler” sekmesinin yerine alt gezinme sekmesi olarak göster.</string>
+    <string name="WidePostsInFeed">Akışta Geniş Gönderiler</string>
+    <string name="FeedUnreadCounter">Okunmamış Gönderi Sayacı</string>
     <string name="HideFeedTab">Akış Sekmesini Gizle</string>
+    <string name="DisableMarkdown">Markdown\'ı Devre Dışı Bırak</string>
+    <string name="EnableMarkdown">Markdown\'ı Etkinleştir</string>
     <!-- Non-translatable -->
 </resources>

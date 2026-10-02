@@ -25,7 +25,6 @@ import java.util.Set;
 import kotlin.Unit;
 import okhttp3.internal.url._UrlKt;
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
-import org.mvel2.util.Make$Map$$ExternalSyntheticBUOutline0;
 
 public class XposedBridge {
     private static final Object[] EMPTY_ARRAY = new Object[0];
@@ -262,7 +261,7 @@ public class XposedBridge {
             hookRegistry = new d();
             hookBridge = HookBridgeProvider.createDefault();
         } catch (Throwable th) {
-            Make$Map$$ExternalSyntheticBUOutline0.m("Failed to initialize callback bridge", th);
+            android.util.Log.e("XposedBridge", "Failed to initialize callback bridge", th);
         }
     }
 

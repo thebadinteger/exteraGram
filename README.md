@@ -73,7 +73,7 @@ Run or build the project via **Build -> Build Bundle(s) / APK(s) -> Build APK(s)
 To produce release-signed APKs, configure your `signingConfigs` in `TMessagesProj/build.gradle` or supply keystore parameters via command line flags:
 
 ```bash
-./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
+./gradlew :TMessagesProj_AppStandalone:assembleAfatRelease \
   -Pandroid.injected.signing.store.file=/path/to/keystore.jks \
   -Pandroid.injected.signing.store.password=YOUR_PASSWORD \
   -Pandroid.injected.signing.key.alias=YOUR_ALIAS \

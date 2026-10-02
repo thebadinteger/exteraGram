@@ -27,7 +27,7 @@ import com.exteragram.messenger.utils.AppUtils;
 import com.exteragram.messenger.utils.chats.MainMenuHelper;
 import com.exteragram.messenger.utils.system.VibratorUtils;
 import com.exteragram.messenger.utils.text.LocaleUtils;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.ui.MainTabsUiHelper;
 
 import android.Manifest;

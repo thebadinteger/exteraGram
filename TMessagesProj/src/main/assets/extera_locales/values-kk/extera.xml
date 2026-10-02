@@ -62,6 +62,10 @@
     <string name="CryptoCurrencyInr">Үндістан рупиясы</string>
     <!-- Proxy -->
     <string name="ProxyDoNotUseWithVPN">VPN-мен пайдаланбаңыз</string>
+    <string name="ProxyDisableOn">Проксиді өшіру</string>
+    <string name="ProxyDisableNever">Ешқашан</string>
+    <string name="ProxyDisableAlways">Әрқашан</string>
+    <string name="ProxyDisableOnMobileData">Мобильді интернет</string>
     <string name="ProxyType">Түрі</string>
     <string name="Unknown">Белгісіз</string>
     <string name="ProxyRename">Прокси атауы (міндетті емес)</string>
@@ -79,9 +83,6 @@
     <string name="TranslationProvider">Аударма провайдері</string>
     <string name="TranslationTarget">Мақсатты тіл</string>
     <string name="TranslationTargetApp">Қолданбаның тіліне сәйкес</string>
-    <string name="TranslationFormality">Сыпайылық дәрежесі</string>
-    <string name="TranslationFormalityLess">Азырақ ресми</string>
-    <string name="TranslationFormalityMore">Неғұрлым ресми</string>
     <!-- Formatting & Behavior -->
     <string name="DisableNumberRounding">Сандарды дөңгелектеуді өшіру</string>
     <string name="FormatTimeWithSeconds">Уақытты секундтармен көрсету</string>
@@ -208,7 +209,6 @@
     <string name="AppIconSunset">Күн батқанда</string>
     <string name="AppIconAurora">Аврора</string>
     <string name="AppIconAmethyst">Аметист</string>
-    <string name="AppIconSapphire">Сафир</string>
     <string name="AppIconInvincible">Құдіретті</string>
     <string name="AppIconCyberpunk">Киберпанк</string>
     <string name="AppIconSpace">Ғарыш</string>
@@ -237,8 +237,6 @@
     <string name="PredictiveBackIntensity">Болжамды артқа қайту қарқындылығы</string>
     <string name="PredictiveBackMax">Макс</string>
     <string name="PredictiveBackInfo">Артқа сырғытқанда экранның қаншалықты жылжитынын реттейді.</string>
-    <string name="SpringAnimations">Серпімді анимациялар</string>
-    <string name="SpringAnimationsInfo">Экрандарды ауыстыру және бүйірлік мәзірді ашу кезінде тегістірек анимацияларды қосады.</string>
     <!-- Blur & Effects -->
     <string name="BlurOptions">Бұлыңғырлық параметрлері</string>
     <string name="GlassOutlineStyle">Шыны жиегі</string>
@@ -259,7 +257,6 @@
     <string name="StickerShape">Стикер пішіні</string>
     <string name="StickerShapeRounded">Бұрыштары жұмыр</string>
     <string name="StickerShapeRoundedMsg">Хабарлама</string>
-    <string name="StickerTime">Стикерлерде уақытты жасыру</string>
     <string name="ViewEmojiSet">Эмодзи жинағын көру</string>
     <string name="UnlimitedRecentStickers">Шексіз соңғы стикерлер</string>
     <string name="HideReactions">Реакцияларды жасыру</string>
@@ -306,7 +303,6 @@
     <string name="InsertResponseAsQuote">Жауапты дәйексөз ретінде қосу</string>
     <string name="TapToAddApiKey">AI мүмкіндіктерін бастау үшін API кілтін қосу үшін түртіңіз.</string>
     <string name="Generate">Генерациялау</string>
-    <string name="GenerateWithoutHistory">Тарихсыз</string>
     <string name="ClearConversationHistoryInfo">**Барлық** AI әңгіме тарихын тазалауға сенімдісіз бе?</string>
     <!-- AI Errors -->
     <string name="AIError400">Сұраныс қателігі</string>
@@ -344,7 +340,6 @@
     <string name="GroupMessageMenu">Топтық хабарлама мәзірі</string>
     <string name="GroupMessageMenuInfo">Топтау негізгі әрекеттерді хабарлама мәзірдің төменгі жағына жылжытады.</string>
     <string name="GlassMessageMenu">Шыны хабарлама мәзірі</string>
-    <string name="GlassMessageMenuInfo">Хабарлама мәзірі мен реакциялар жолағы күңгірт шыныға айналады.</string>
     <string name="GlassMessageMenuBlurOff">Шыны мәзірлерге бұлыңғырлық қажет, ол қазір өшірулі.</string>
     <string name="AddCommaAfterMention">Атаудан кейін үтір қосу</string>
     <string name="HideSendAsPeer">\"…ретінде жіберу\" түймесін жасыру</string>
@@ -425,6 +420,10 @@
     <string name="ImportChanges_other">**%1$d** өзгеріс ағымдағы параметрлерге қолданылады.</string>
     <string name="SameSettings">Параметрлер ағымдағылармен бірдей сияқты.</string>
     <!-- Export data -->
+    <string name="ExportData">Деректерді экспорттау</string>
+    <string name="ExportDelay">Қауіпсіздік мақсатында деректеріңізді жүктеуді %1$s кейін бастай аласыз. Сұраудың расталғанына көз жеткізу және рұқсат етілмеген жағдайда әрекет етуге уақыт беру үшін барлық құрылғыларыңызға экспорттау сұрауы туралы хабарлама жіберілді.\n\nӨтінеміз, %2$s қайта кіріп, сол құрылғы арқылы сұрауды қайталаңыз.</string>
+    <string name="ExportDelayLessThanHour">бір сағаттан аз</string>
+    <string name="ExportInvalid">Кешіріңіз, сіз жаңа деректер экспортын бастадыңыз, сондықтан бұл экспорт тоқтатылды.</string>
     <!-- Settings Management -->
     <string name="DeleteAccount">Аккаунтты жою</string>
     <string name="ResetSettings">Параметрлерді қалпына келтіру</string>
@@ -640,6 +639,9 @@
     <string name="FeedChannelHidden">**%1$s** лентадан жасырылды</string>
     <string name="FeedBottomTab">Төменгі қойындыларда көрсету</string>
     <string name="FeedBottomTabInfo">Контактілер қойындысының орнына лентаны төменгі навигация қойындысы ретінде көрсету.</string>
+    <string name="FeedUnreadCounter">Оқылмаған жазбалар санағышы</string>
     <string name="HideFeedTab">Лента қойындысын жасыру</string>
+    <string name="DisableMarkdown">Markdown-ды өшіру</string>
+    <string name="EnableMarkdown">Markdown-ды қосу</string>
     <!-- Non-translatable -->
 </resources>

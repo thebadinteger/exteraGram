@@ -41,7 +41,7 @@ import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
 public class UpdateAppAlertDialog extends BottomSheet {
     private final int accountNum;
-    private final TLRPC.TL_help_appUpdate appUpdate;
+    protected final TLRPC.TL_help_appUpdate appUpdate;
     protected final LinearLayout linearLayout;
     private final int[] location;
     private int scrollOffsetY;
@@ -49,7 +49,17 @@ public class UpdateAppAlertDialog extends BottomSheet {
     private final View shadow;
     private AnimatorSet shadowAnimation;
     private final Drawable shadowDrawable;
-    private final TextView textView;
+    protected final TextView textView;
+    protected TextView messageTextView;
+    protected SpoilersTextView changelogTextView;
+
+    public int getExtraBottomContentHeight() {
+        return 0;
+    }
+
+    public boolean hasSecondaryButton() {
+        return true;
+    }
 
     public void addContentBeforeDoneButton(FrameLayout frameLayout) {
     }
@@ -170,6 +180,7 @@ public class UpdateAppAlertDialog extends BottomSheet {
         textView.setText(getTitleText());
         linearLayout.addView(textView, LayoutHelper.createLinear(-2, -2, 49, 23, 16, 23, 0));
         TextView textView2 = new TextView(getContext());
+        this.messageTextView = textView2;
         textView2.setTextColor(Theme.getColor(Theme.key_dialogTextGray3));
         textView2.setTextSize(1, 14.0f);
         textView2.setMovementMethod(new AndroidUtilities.LinkMovementMethodMy());
@@ -179,6 +190,7 @@ public class UpdateAppAlertDialog extends BottomSheet {
         textView2.setGravity(49);
         linearLayout.addView(textView2, LayoutHelper.createLinear(-2, -2, 49, 23, 0, 23, 5));
         SpoilersTextView spoilersTextView = new SpoilersTextView(getContext());
+        this.changelogTextView = spoilersTextView;
         spoilersTextView.setTextColor(Theme.getColor(i2));
         spoilersTextView.setTextSize(1, 14.0f);
         spoilersTextView.setMovementMethod(new AndroidUtilities.LinkMovementMethodMy());

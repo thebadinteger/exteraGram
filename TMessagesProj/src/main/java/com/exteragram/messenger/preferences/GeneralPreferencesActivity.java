@@ -7,7 +7,7 @@ import android.widget.LinearLayout;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.TranslationFormality;
 import com.exteragram.messenger.utils.text.LocaleUtils;
-import com.exteragram.messenger.utils.text.TranslatorUtils;
+import com.exteragram.messenger.translator.TranslatorUtils;
 import com.exteragram.messenger.utils.text.ZalgoFilter;
 import com.exteragram.messenger.utils.ui.PopupUtils;
 import com.google.android.exoplayer2.util.Consumer;
