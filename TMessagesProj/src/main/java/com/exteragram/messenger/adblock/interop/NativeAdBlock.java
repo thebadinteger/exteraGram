@@ -1,11 +1,14 @@
 package com.exteragram.messenger.adblock.interop;
 
-import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.adblock.data.BlockResult;
 import com.exteragram.messenger.adblock.data.FilterListMetadata;
 import com.exteragram.messenger.adblock.data.UrlCosmeticResources;
+import org.telegram.messenger.FileLog;
 
+/* JADX INFO: loaded from: classes.dex */
 public class NativeAdBlock {
+    private static volatile Boolean loaded;
+
     public static native FilterListMetadata addFilters(long j, String str);
 
     public static native long createEngine(long j);
@@ -24,13 +27,24 @@ public class NativeAdBlock {
 
     public static native void useResources(long j, String[] strArr, String[][] strArr2, String[] strArr3, String[] strArr4);
 
-    public static boolean loadLibraries() {
+    public static synchronized boolean loadLibraries() {
         try {
-            System.loadLibrary("etgadblock");
-            return true;
-        } catch (Throwable unused) {
-            ExteraConfig.setEnableAdBlock(false);
-            return false;
+            if (loaded == null) {
+                try {
+                    System.loadLibrary("etgadblock");
+                    loaded = Boolean.TRUE;
+                } catch (Throwable th) {
+                    FileLog.e(th);
+                    loaded = Boolean.FALSE;
+                }
+            }
+        } catch (Throwable th2) {
+            throw th2;
         }
+        return loaded.booleanValue();
+    }
+
+    public static boolean isLoadFailed() {
+        return Boolean.FALSE.equals(loaded);
     }
 }

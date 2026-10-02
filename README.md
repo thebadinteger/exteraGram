@@ -14,7 +14,7 @@ cd exteraGram
 ### Requirements  
 - **JDK:** Java Development Kit 17
 - **Android SDK:**
-  - Compile SDK: `35` (or `36`)
+  - Compile SDK: `36`
   - Target SDK: `36`
   - Min SDK: `24`
   - Build Tools: `35.0.0`  
@@ -70,7 +70,7 @@ Run or build the project via **Build -> Build Bundle(s) / APK(s) -> Build APK(s)
 
 ## Signing Release APKs
 
-To produce release-signed APKs, configure your `signingConfigs` in `TMessagesProj/build.gradle` or supply keystore parameters via command line flags:
+To produce release-signed APKs, configure your `signingConfigs` in `TMessagesProj_AppStandalone/build.gradle` or supply keystore parameters via command line flags:
 
 ```bash
 ./gradlew :TMessagesProj_AppStandalone:assembleAfatRelease \

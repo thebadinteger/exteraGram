@@ -108,7 +108,7 @@ public abstract class ExteraConfig {
     private static final BasePref senderMiniAvatars$delegate;
     private static final BasePref titleText$delegate;
     private static final BasePref tabIcons$delegate;
-    private static final BasePref tabCounter$delegate;
+    private static final BasePref tabCounterMode$delegate;
     private static final BasePref hideAllChats$delegate;
     private static final BasePref squareFab$delegate;
     private static final BasePref sectionRadius$delegate;
@@ -166,6 +166,7 @@ public abstract class ExteraConfig {
     private static final BasePref removeMessageTail$delegate;
     private static final BasePref replaceEditedWithIcon$delegate;
     private static final BasePref showOnlineStatus$delegate;
+    private static final BasePref showForwardsCount$delegate;
     private static final BasePref hideShareButton$delegate;
     private static final BasePref showResultsBeforeVoting$delegate;
     private static final BasePref showCopyPhotoButton$delegate;
@@ -239,7 +240,7 @@ public abstract class ExteraConfig {
 
     static {
         int i = 2;
-        KProperty<?>[] kPropertyArr = {Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "translationProvider", "getTranslationProvider()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableNumberRounding", "getDisableNumberRounding()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "formatTimeWithSeconds", "getFormatTimeWithSeconds()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "relativeLastSeen", "getRelativeLastSeen()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "inAppVibration", "getInAppVibration()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableNotificationDelay", "getDisableNotificationDelay()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "filterZalgo", "getFilterZalgo()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useYandexMaps", "getUseYandexMaps()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "downloadSpeedBoost", "getDownloadSpeedBoost()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "uploadSpeedBoost", "getUploadSpeedBoost()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hidePhoneNumber", "getHidePhoneNumber()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showIdAndDc", "getShowIdAndDc()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideArchiveFolder", "getHideArchiveFolder()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "archiveOnPull", "getArchiveOnPull()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableUnarchiveSwipe", "getDisableUnarchiveSwipe()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doNotUseProxy", "getDoNotUseProxy()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "customSavePath", "getCustomSavePath()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "iconPack", "getIconPack()Lcom/exteragram/messenger/IconPackType;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "editingIconPackId", "getEditingIconPackId()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "avatarCorners", "getAvatarCorners()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "singleCornerRadius", "getSingleCornerRadius()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "dividerStyle", "getDividerStyle()Lcom/exteragram/messenger/DividerStyle;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "forceSnow", "getForceSnow()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideActionBarStatus", "getHideActionBarStatus()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "centerTitle", "getCenterTitle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideStories", "getHideStories()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideFloatingButton", "getHideFloatingButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideDialogsSearchBar", "getHideDialogsSearchBar()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "senderMiniAvatars", "getSenderMiniAvatars()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "titleText", "getTitleText()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabIcons", "getTabIcons()Lcom/exteragram/messenger/TabIconsMode;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabCounter", "getTabCounter()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideAllChats", "getHideAllChats()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "squareFab", "getSquareFab()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sectionRadius", "getSectionRadius()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sectionsSeparatedHeadersPreference", "getSectionsSeparatedHeadersPreference()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newLoadingStyle", "getNewLoadingStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newSliderStyle", "getNewSliderStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newSwitchStyle", "getNewSwitchStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newChatHeaderStyle", "getNewChatHeaderStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newNavigationBarStyle", "getNewNavigationBarStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newFabStyle", "getNewFabStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabletMode", "getTabletMode()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useSystemFonts", "getUseSystemFonts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "gooeyAvatarAnimation", "getGooeyAvatarAnimation()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "customThemes", "getCustomThemes()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "predictiveBackIntensity", "getPredictiveBackIntensity()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "transitionAnimation", "getTransitionAnimation()Lcom/exteragram/messenger/TransitionAnimation;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "glassOutlineStyle", "getGlassOutlineStyle()Lcom/exteragram/messenger/GlassOutlineStyle;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "glassMessageMenu", "getGlassMessageMenu()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "forceBlur", "getForceBlur()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "eventType", "getEventType()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "navigationDrawer", "getNavigationDrawer()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "immersiveDrawerAnimation", "getImmersiveDrawerAnimation()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showFeedTab", "getShowFeedTab()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showFeedUnreadCounter", "getShowFeedUnreadCounter()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerSize", "getStickerSize()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerTimeMode", "getStickerTimeMode()Lcom/exteragram/messenger/StickerTimeMode;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyColors", "getReplyColors()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyEmoji", "getReplyEmoji()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyBackground", "getReplyBackground()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerShape", "getStickerShape()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "unlimitedRecentStickers", "getUnlimitedRecentStickers()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInPrivateChats", "getHideReactionsInPrivateChats()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInChannels", "getHideReactionsInChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInGroups", "getHideReactionsInGroups()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapAction", "getDoubleTapAction()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapActionOutOwner", "getDoubleTapActionOutOwner()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActions", "getSwipeActions()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActionsLoop", "getSwipeActionsLoop()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActionsReversed", "getSwipeActionsReversed()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "bottomButton", "getBottomButton()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "widePostsInFeed", "getWidePostsInFeed()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "widePostsInChannels", "getWidePostsInChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiEditor", "getTelegramAiEditor()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiSummaries", "getTelegramAiSummaries()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiInstantViewSummaries", "getTelegramAiInstantViewSummaries()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickAdminShortcuts", "getQuickAdminShortcuts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickTransitionForChannels", "getQuickTransitionForChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickTransitionForTopics", "getQuickTransitionForTopics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableGreetingSticker", "getDisableGreetingSticker()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideKeyboardOnScroll", "getHideKeyboardOnScroll()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "addCommaAfterMention", "getAddCommaAfterMention()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "inlineMathResult", "getInlineMathResult()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableMarkdown", "getDisableMarkdown()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideSendAsPeer", "getHideSendAsPeer()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "removeMessageTail", "getRemoveMessageTail()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replaceEditedWithIcon", "getReplaceEditedWithIcon()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showOnlineStatus", "getShowOnlineStatus()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideShareButton", "getHideShareButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showResultsBeforeVoting", "getShowResultsBeforeVoting()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showCopyPhotoButton", "getShowCopyPhotoButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showSaveMessageButton", "getShowSaveMessageButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showRepeatMessageButton", "getShowRepeatMessageButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showClearButton", "getShowClearButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showHistoryButton", "getShowHistoryButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showReportButton", "getShowReportButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showGenerateButton", "getShowGenerateButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showDetailsButton", "getShowDetailsButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "groupMessageMenu", "getGroupMessageMenu()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "recognitionLanguage", "getRecognitionLanguage()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "postprocessingWithAi", "getPostprocessingWithAi()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraType", "getCameraType()Lcom/exteragram/messenger/CameraType;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "extendedFramesPerSecond", "getExtendedFramesPerSecond()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraStabilization", "getCameraStabilization()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraMirrorMode", "getCameraMirrorMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "videoMessagesCamera", "getVideoMessagesCamera()Lcom/exteragram/messenger/VideoMessagesCamera;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "rememberLastUsedCamera", "getRememberLastUsedCamera()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "startWithWideAngleCamera", "getStartWithWideAngleCamera()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "zoomSlider", "getZoomSlider()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "staticZoom", "getStaticZoom()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "alwaysSendInHD", "getAlwaysSendInHD()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideCameraTile", "getHideCameraTile()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapSeekDuration", "getDoubleTapSeekDuration()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "preferOriginalQuality", "getPreferOriginalQuality()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeToPip", "getSwipeToPip()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "unmuteWithVolumeButtons", "getUnmuteWithVolumeButtons()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeVideo", "getPauseOnMinimizeVideo()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeVoice", "getPauseOnMinimizeVoice()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeRound", "getPauseOnMinimizeRound()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useGoogleCrashlytics", "getUseGoogleCrashlytics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useGoogleAnalytics", "getUseGoogleAnalytics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "enableAdBlock", "getEnableAdBlock()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "updateScheduleTimestamp", "getUpdateScheduleTimestamp()J", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sdkUpdateScheduleTimestamp", "getSdkUpdateScheduleTimestamp()J", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "targetLang", "getTargetLang()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "flashWarmth", "getFlashWarmth()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "flashIntensity", "getFlashIntensity()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsDevMode", "getPluginsDevMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsSafeMode", "getPluginsSafeMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsCompactView", "getPluginsCompactView()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsPySdkAutoUpdate", "getPluginsPySdkAutoUpdate()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsPySdkBetaVersions", "getPluginsPySdkBetaVersions()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsDisableArtOpts", "getPluginsDisableArtOpts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsUnknownSources", "getPluginsUnknownSources()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pinnedPlugins", "getPinnedPlugins()Ljava/util/Set;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useSystemIconShape", "getUseSystemIconShape()Z", 1))};
+        KProperty<?>[] kPropertyArr = {Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "translationProvider", "getTranslationProvider()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableNumberRounding", "getDisableNumberRounding()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "formatTimeWithSeconds", "getFormatTimeWithSeconds()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "relativeLastSeen", "getRelativeLastSeen()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "inAppVibration", "getInAppVibration()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableNotificationDelay", "getDisableNotificationDelay()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "filterZalgo", "getFilterZalgo()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useYandexMaps", "getUseYandexMaps()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "downloadSpeedBoost", "getDownloadSpeedBoost()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "uploadSpeedBoost", "getUploadSpeedBoost()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hidePhoneNumber", "getHidePhoneNumber()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showIdAndDc", "getShowIdAndDc()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideArchiveFolder", "getHideArchiveFolder()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "archiveOnPull", "getArchiveOnPull()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableUnarchiveSwipe", "getDisableUnarchiveSwipe()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doNotUseProxy", "getDoNotUseProxy()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "customSavePath", "getCustomSavePath()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "iconPack", "getIconPack()Lcom/exteragram/messenger/IconPackType;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "editingIconPackId", "getEditingIconPackId()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "avatarCorners", "getAvatarCorners()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "singleCornerRadius", "getSingleCornerRadius()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "dividerStyle", "getDividerStyle()Lcom/exteragram/messenger/DividerStyle;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "forceSnow", "getForceSnow()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideActionBarStatus", "getHideActionBarStatus()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "centerTitle", "getCenterTitle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideStories", "getHideStories()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideFloatingButton", "getHideFloatingButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideDialogsSearchBar", "getHideDialogsSearchBar()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "senderMiniAvatars", "getSenderMiniAvatars()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "titleText", "getTitleText()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabIcons", "getTabIcons()Lcom/exteragram/messenger/TabIconsMode;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabCounterMode", "getTabCounterMode()Lcom/exteragram/messenger/TabCounterMode;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideAllChats", "getHideAllChats()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "squareFab", "getSquareFab()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sectionRadius", "getSectionRadius()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sectionsSeparatedHeadersPreference", "getSectionsSeparatedHeadersPreference()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newLoadingStyle", "getNewLoadingStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newSliderStyle", "getNewSliderStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newSwitchStyle", "getNewSwitchStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newChatHeaderStyle", "getNewChatHeaderStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newNavigationBarStyle", "getNewNavigationBarStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "newFabStyle", "getNewFabStyle()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "tabletMode", "getTabletMode()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useSystemFonts", "getUseSystemFonts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "gooeyAvatarAnimation", "getGooeyAvatarAnimation()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "customThemes", "getCustomThemes()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "predictiveBackIntensity", "getPredictiveBackIntensity()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "transitionAnimation", "getTransitionAnimation()Lcom/exteragram/messenger/TransitionAnimation;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "glassOutlineStyle", "getGlassOutlineStyle()Lcom/exteragram/messenger/GlassOutlineStyle;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "glassMessageMenu", "getGlassMessageMenu()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "forceBlur", "getForceBlur()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "eventType", "getEventType()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "navigationDrawer", "getNavigationDrawer()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "immersiveDrawerAnimation", "getImmersiveDrawerAnimation()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showFeedTab", "getShowFeedTab()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showFeedUnreadCounter", "getShowFeedUnreadCounter()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerSize", "getStickerSize()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerTimeMode", "getStickerTimeMode()Lcom/exteragram/messenger/StickerTimeMode;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyColors", "getReplyColors()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyEmoji", "getReplyEmoji()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replyBackground", "getReplyBackground()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "stickerShape", "getStickerShape()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "unlimitedRecentStickers", "getUnlimitedRecentStickers()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInPrivateChats", "getHideReactionsInPrivateChats()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInChannels", "getHideReactionsInChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideReactionsInGroups", "getHideReactionsInGroups()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapAction", "getDoubleTapAction()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapActionOutOwner", "getDoubleTapActionOutOwner()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActions", "getSwipeActions()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActionsLoop", "getSwipeActionsLoop()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeActionsReversed", "getSwipeActionsReversed()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "bottomButton", "getBottomButton()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "widePostsInFeed", "getWidePostsInFeed()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "widePostsInChannels", "getWidePostsInChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiEditor", "getTelegramAiEditor()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiSummaries", "getTelegramAiSummaries()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "telegramAiInstantViewSummaries", "getTelegramAiInstantViewSummaries()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickAdminShortcuts", "getQuickAdminShortcuts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickTransitionForChannels", "getQuickTransitionForChannels()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "quickTransitionForTopics", "getQuickTransitionForTopics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableGreetingSticker", "getDisableGreetingSticker()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideKeyboardOnScroll", "getHideKeyboardOnScroll()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "addCommaAfterMention", "getAddCommaAfterMention()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "inlineMathResult", "getInlineMathResult()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "disableMarkdown", "getDisableMarkdown()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideSendAsPeer", "getHideSendAsPeer()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "removeMessageTail", "getRemoveMessageTail()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "replaceEditedWithIcon", "getReplaceEditedWithIcon()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showOnlineStatus", "getShowOnlineStatus()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showForwardsCount", "getShowForwardsCount()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideShareButton", "getHideShareButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showResultsBeforeVoting", "getShowResultsBeforeVoting()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showCopyPhotoButton", "getShowCopyPhotoButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showSaveMessageButton", "getShowSaveMessageButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showRepeatMessageButton", "getShowRepeatMessageButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showClearButton", "getShowClearButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showHistoryButton", "getShowHistoryButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showReportButton", "getShowReportButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showGenerateButton", "getShowGenerateButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "showDetailsButton", "getShowDetailsButton()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "groupMessageMenu", "getGroupMessageMenu()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "recognitionLanguage", "getRecognitionLanguage()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "postprocessingWithAi", "getPostprocessingWithAi()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraType", "getCameraType()Lcom/exteragram/messenger/CameraType;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "extendedFramesPerSecond", "getExtendedFramesPerSecond()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraStabilization", "getCameraStabilization()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "cameraMirrorMode", "getCameraMirrorMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "videoMessagesCamera", "getVideoMessagesCamera()Lcom/exteragram/messenger/VideoMessagesCamera;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "rememberLastUsedCamera", "getRememberLastUsedCamera()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "startWithWideAngleCamera", "getStartWithWideAngleCamera()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "zoomSlider", "getZoomSlider()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "staticZoom", "getStaticZoom()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "alwaysSendInHD", "getAlwaysSendInHD()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "hideCameraTile", "getHideCameraTile()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "doubleTapSeekDuration", "getDoubleTapSeekDuration()I", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "preferOriginalQuality", "getPreferOriginalQuality()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "swipeToPip", "getSwipeToPip()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "unmuteWithVolumeButtons", "getUnmuteWithVolumeButtons()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeVideo", "getPauseOnMinimizeVideo()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeVoice", "getPauseOnMinimizeVoice()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pauseOnMinimizeRound", "getPauseOnMinimizeRound()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useGoogleCrashlytics", "getUseGoogleCrashlytics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useGoogleAnalytics", "getUseGoogleAnalytics()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "enableAdBlock", "getEnableAdBlock()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "updateScheduleTimestamp", "getUpdateScheduleTimestamp()J", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "sdkUpdateScheduleTimestamp", "getSdkUpdateScheduleTimestamp()J", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "targetLang", "getTargetLang()Ljava/lang/String;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "flashWarmth", "getFlashWarmth()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "flashIntensity", "getFlashIntensity()F", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsDevMode", "getPluginsDevMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsSafeMode", "getPluginsSafeMode()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsCompactView", "getPluginsCompactView()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsPySdkAutoUpdate", "getPluginsPySdkAutoUpdate()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsPySdkBetaVersions", "getPluginsPySdkBetaVersions()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsDisableArtOpts", "getPluginsDisableArtOpts()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pluginsUnknownSources", "getPluginsUnknownSources()Z", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "pinnedPlugins", "getPinnedPlugins()Ljava/util/Set;", 1)), Reflection.mutableProperty0(new MutablePropertyReference0Impl(ExteraConfig.class, "useSystemIconShape", "getUseSystemIconShape()Z", 1))};
         $$delegatedProperties = (KProperty<Object>[]) (Object) kPropertyArr;
         GSON = new Gson();
         SharedPreferences preferences2 = PreferencesUtils.getPreferences("exteraconfig");
@@ -278,7 +279,7 @@ public abstract class ExteraConfig {
         senderMiniAvatars$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[28]);
         titleText$delegate = new IntegerPref(0, (String) null).provideDelegate(null, kPropertyArr[29]);
         tabIcons$delegate = new EnumPref(TabIconsMode.TITLES_ONLY, (String) null).provideDelegate(null, kPropertyArr[30]);
-        tabCounter$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[31]);
+        tabCounterMode$delegate = new EnumPref(TabCounterMode.ALL, (String) null).provideDelegate(null, kPropertyArr[31]);
         hideAllChats$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[32]);
         squareFab$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[33]);
         sectionRadius$delegate = new FloatPref(20.0f, (String) null).provideDelegate(null, kPropertyArr[34]);
@@ -336,54 +337,55 @@ public abstract class ExteraConfig {
         removeMessageTail$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[86]);
         replaceEditedWithIcon$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[87]);
         showOnlineStatus$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[88]);
-        hideShareButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[89]);
-        showResultsBeforeVoting$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[90]);
-        showCopyPhotoButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[91]);
-        showSaveMessageButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[92]);
-        showRepeatMessageButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[93]);
-        showClearButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[94]);
-        showHistoryButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[95]);
-        showReportButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[96]);
-        showGenerateButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[97]);
-        showDetailsButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[98]);
-        groupMessageMenu$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[99]);
-        recognitionLanguage$delegate = new StringPref("none", (String) null).provideDelegate(null, kPropertyArr[100]);
-        postprocessingWithAi$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[101]);
-        cameraType$delegate = new EnumPref(SharedConfig.getDevicePerformanceClass() == 2 ? CameraType.CAMERA_X : CameraType.CAMERA_1, (String) null).provideDelegate(null, kPropertyArr[102]);
-        extendedFramesPerSecond$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[103]);
-        cameraStabilization$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[104]);
-        cameraMirrorMode$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[105]);
-        videoMessagesCamera$delegate = new EnumPref(VideoMessagesCamera.FRONT, (String) null).provideDelegate(null, kPropertyArr[106]);
-        rememberLastUsedCamera$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[107]);
-        startWithWideAngleCamera$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[108]);
-        zoomSlider$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[109]);
-        staticZoom$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[110]);
-        alwaysSendInHD$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[111]);
-        hideCameraTile$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[112]);
-        doubleTapSeekDuration$delegate = new IntegerPref(1, (String) null).provideDelegate(null, kPropertyArr[113]);
-        preferOriginalQuality$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[114]);
-        swipeToPip$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[115]);
-        unmuteWithVolumeButtons$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[116]);
-        pauseOnMinimizeVideo$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[117]);
-        pauseOnMinimizeVoice$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[118]);
-        pauseOnMinimizeRound$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[119]);
-        useGoogleCrashlytics$delegate = new BooleanPref(BuildVars.isBetaApp(), (String) null).provideDelegate(null, kPropertyArr[120]);
-        useGoogleAnalytics$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[121]);
-        enableAdBlock$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[122]);
-        updateScheduleTimestamp$delegate = new LongPref(0L, (String) null).provideDelegate(null, kPropertyArr[123]);
-        sdkUpdateScheduleTimestamp$delegate = new LongPref(0L, (String) null).provideDelegate(null, kPropertyArr[124]);
-        targetLang$delegate = new StringPref(Common.ASSET_APP, (String) null).provideDelegate(null, kPropertyArr[125]);
-        flashWarmth$delegate = new FloatPref(0.5f, (String) null).provideDelegate(null, kPropertyArr[126]);
-        flashIntensity$delegate = new FloatPref(1.0f, (String) null).provideDelegate(null, kPropertyArr[127]);
-        pluginsDevMode$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[128]);
-        pluginsSafeMode$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[129]);
-        pluginsCompactView$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[130]);
-        pluginsPySdkAutoUpdate$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[131]);
-        pluginsPySdkBetaVersions$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[132]);
-        pluginsDisableArtOpts$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[133]);
-        pluginsUnknownSources$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[134]);
-        pinnedPlugins$delegate = new StringSetPref(SetsKt.emptySet(), (String) null).provideDelegate(null, kPropertyArr[135]);
-        useSystemIconShape$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[136]);
+        showForwardsCount$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[89]);
+        hideShareButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[90]);
+        showResultsBeforeVoting$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[91]);
+        showCopyPhotoButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[92]);
+        showSaveMessageButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[93]);
+        showRepeatMessageButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[94]);
+        showClearButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[95]);
+        showHistoryButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[96]);
+        showReportButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[97]);
+        showGenerateButton$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[98]);
+        showDetailsButton$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[99]);
+        groupMessageMenu$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[100]);
+        recognitionLanguage$delegate = new StringPref("none", (String) null).provideDelegate(null, kPropertyArr[101]);
+        postprocessingWithAi$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[102]);
+        cameraType$delegate = new EnumPref(SharedConfig.getDevicePerformanceClass() == 2 ? CameraType.CAMERA_X : CameraType.CAMERA_1, (String) null).provideDelegate(null, kPropertyArr[103]);
+        extendedFramesPerSecond$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[104]);
+        cameraStabilization$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[105]);
+        cameraMirrorMode$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[106]);
+        videoMessagesCamera$delegate = new EnumPref(VideoMessagesCamera.FRONT, (String) null).provideDelegate(null, kPropertyArr[107]);
+        rememberLastUsedCamera$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[108]);
+        startWithWideAngleCamera$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[109]);
+        zoomSlider$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[110]);
+        staticZoom$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[111]);
+        alwaysSendInHD$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[112]);
+        hideCameraTile$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[113]);
+        doubleTapSeekDuration$delegate = new IntegerPref(1, (String) null).provideDelegate(null, kPropertyArr[114]);
+        preferOriginalQuality$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[115]);
+        swipeToPip$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[116]);
+        unmuteWithVolumeButtons$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[117]);
+        pauseOnMinimizeVideo$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[118]);
+        pauseOnMinimizeVoice$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[119]);
+        pauseOnMinimizeRound$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[120]);
+        useGoogleCrashlytics$delegate = new BooleanPref(BuildVars.isBetaApp(), (String) null).provideDelegate(null, kPropertyArr[121]);
+        useGoogleAnalytics$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[122]);
+        enableAdBlock$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[123]);
+        updateScheduleTimestamp$delegate = new LongPref(0L, (String) null).provideDelegate(null, kPropertyArr[124]);
+        sdkUpdateScheduleTimestamp$delegate = new LongPref(0L, (String) null).provideDelegate(null, kPropertyArr[125]);
+        targetLang$delegate = new StringPref(Common.ASSET_APP, (String) null).provideDelegate(null, kPropertyArr[126]);
+        flashWarmth$delegate = new FloatPref(0.5f, (String) null).provideDelegate(null, kPropertyArr[127]);
+        flashIntensity$delegate = new FloatPref(1.0f, (String) null).provideDelegate(null, kPropertyArr[128]);
+        pluginsDevMode$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[129]);
+        pluginsSafeMode$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[130]);
+        pluginsCompactView$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[131]);
+        pluginsPySdkAutoUpdate$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[132]);
+        pluginsPySdkBetaVersions$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[133]);
+        pluginsDisableArtOpts$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[134]);
+        pluginsUnknownSources$delegate = new BooleanPref(false, (String) null).provideDelegate(null, kPropertyArr[135]);
+        pinnedPlugins$delegate = new StringSetPref(SetsKt.emptySet(), (String) null).provideDelegate(null, kPropertyArr[136]);
+        useSystemIconShape$delegate = new BooleanPref(true, (String) null).provideDelegate(null, kPropertyArr[137]);
         doNotMarkAsNew = new ArrayList<>();
         newFeaturesShowedAt = new HashMap<>();
         iconPacksLayout = new ArrayList<>();
@@ -745,12 +747,12 @@ public abstract class ExteraConfig {
         tabIcons$delegate.setValue(null, $$delegatedProperties[30], value);
     }
 
-    public static final boolean getTabCounter() {
-        return ((Boolean) tabCounter$delegate.getValue(null, $$delegatedProperties[31])).booleanValue();
+    public static final TabCounterMode getTabCounterMode() {
+        return (TabCounterMode) tabCounterMode$delegate.getValue(null, $$delegatedProperties[31]);
     }
 
-    public static final void setTabCounter(boolean z) {
-        tabCounter$delegate.setValue(null, $$delegatedProperties[31], Boolean.valueOf(z));
+    public static final void setTabCounterMode(TabCounterMode tabCounterMode) {
+        tabCounterMode$delegate.setValue(null, $$delegatedProperties[31], tabCounterMode);
     }
 
     public static final boolean getHideAllChats() {
@@ -1213,393 +1215,401 @@ public abstract class ExteraConfig {
         showOnlineStatus$delegate.setValue(null, $$delegatedProperties[88], Boolean.valueOf(z));
     }
 
+    public static final boolean getShowForwardsCount() {
+        return ((Boolean) showForwardsCount$delegate.getValue(null, $$delegatedProperties[89])).booleanValue();
+    }
+
+    public static final void setShowForwardsCount(boolean z) {
+        showForwardsCount$delegate.setValue(null, $$delegatedProperties[89], Boolean.valueOf(z));
+    }
+
     public static final boolean getHideShareButton() {
-        return ((Boolean) hideShareButton$delegate.getValue(null, $$delegatedProperties[89])).booleanValue();
+        return ((Boolean) hideShareButton$delegate.getValue(null, $$delegatedProperties[90])).booleanValue();
     }
 
     public static final void setHideShareButton(boolean z) {
-        hideShareButton$delegate.setValue(null, $$delegatedProperties[89], Boolean.valueOf(z));
+        hideShareButton$delegate.setValue(null, $$delegatedProperties[90], Boolean.valueOf(z));
     }
 
     public static final boolean getShowResultsBeforeVoting() {
-        return ((Boolean) showResultsBeforeVoting$delegate.getValue(null, $$delegatedProperties[90])).booleanValue();
+        return ((Boolean) showResultsBeforeVoting$delegate.getValue(null, $$delegatedProperties[91])).booleanValue();
     }
 
     public static final void setShowResultsBeforeVoting(boolean z) {
-        showResultsBeforeVoting$delegate.setValue(null, $$delegatedProperties[90], Boolean.valueOf(z));
+        showResultsBeforeVoting$delegate.setValue(null, $$delegatedProperties[91], Boolean.valueOf(z));
     }
 
     public static final boolean getShowCopyPhotoButton() {
-        return ((Boolean) showCopyPhotoButton$delegate.getValue(null, $$delegatedProperties[91])).booleanValue();
+        return ((Boolean) showCopyPhotoButton$delegate.getValue(null, $$delegatedProperties[92])).booleanValue();
     }
 
     public static final void setShowCopyPhotoButton(boolean z) {
-        showCopyPhotoButton$delegate.setValue(null, $$delegatedProperties[91], Boolean.valueOf(z));
+        showCopyPhotoButton$delegate.setValue(null, $$delegatedProperties[92], Boolean.valueOf(z));
     }
 
     public static final boolean getShowSaveMessageButton() {
-        return ((Boolean) showSaveMessageButton$delegate.getValue(null, $$delegatedProperties[92])).booleanValue();
+        return ((Boolean) showSaveMessageButton$delegate.getValue(null, $$delegatedProperties[93])).booleanValue();
     }
 
     public static final void setShowSaveMessageButton(boolean z) {
-        showSaveMessageButton$delegate.setValue(null, $$delegatedProperties[92], Boolean.valueOf(z));
+        showSaveMessageButton$delegate.setValue(null, $$delegatedProperties[93], Boolean.valueOf(z));
     }
 
     public static final boolean getShowRepeatMessageButton() {
-        return ((Boolean) showRepeatMessageButton$delegate.getValue(null, $$delegatedProperties[93])).booleanValue();
+        return ((Boolean) showRepeatMessageButton$delegate.getValue(null, $$delegatedProperties[94])).booleanValue();
     }
 
     public static final void setShowRepeatMessageButton(boolean z) {
-        showRepeatMessageButton$delegate.setValue(null, $$delegatedProperties[93], Boolean.valueOf(z));
+        showRepeatMessageButton$delegate.setValue(null, $$delegatedProperties[94], Boolean.valueOf(z));
     }
 
     public static final boolean getShowClearButton() {
-        return ((Boolean) showClearButton$delegate.getValue(null, $$delegatedProperties[94])).booleanValue();
+        return ((Boolean) showClearButton$delegate.getValue(null, $$delegatedProperties[95])).booleanValue();
     }
 
     public static final void setShowClearButton(boolean z) {
-        showClearButton$delegate.setValue(null, $$delegatedProperties[94], Boolean.valueOf(z));
+        showClearButton$delegate.setValue(null, $$delegatedProperties[95], Boolean.valueOf(z));
     }
 
     public static final boolean getShowHistoryButton() {
-        return ((Boolean) showHistoryButton$delegate.getValue(null, $$delegatedProperties[95])).booleanValue();
+        return ((Boolean) showHistoryButton$delegate.getValue(null, $$delegatedProperties[96])).booleanValue();
     }
 
     public static final void setShowHistoryButton(boolean z) {
-        showHistoryButton$delegate.setValue(null, $$delegatedProperties[95], Boolean.valueOf(z));
+        showHistoryButton$delegate.setValue(null, $$delegatedProperties[96], Boolean.valueOf(z));
     }
 
     public static final boolean getShowReportButton() {
-        return ((Boolean) showReportButton$delegate.getValue(null, $$delegatedProperties[96])).booleanValue();
+        return ((Boolean) showReportButton$delegate.getValue(null, $$delegatedProperties[97])).booleanValue();
     }
 
     public static final void setShowReportButton(boolean z) {
-        showReportButton$delegate.setValue(null, $$delegatedProperties[96], Boolean.valueOf(z));
+        showReportButton$delegate.setValue(null, $$delegatedProperties[97], Boolean.valueOf(z));
     }
 
     public static final boolean getShowGenerateButton() {
-        return ((Boolean) showGenerateButton$delegate.getValue(null, $$delegatedProperties[97])).booleanValue();
+        return ((Boolean) showGenerateButton$delegate.getValue(null, $$delegatedProperties[98])).booleanValue();
     }
 
     public static final void setShowGenerateButton(boolean z) {
-        showGenerateButton$delegate.setValue(null, $$delegatedProperties[97], Boolean.valueOf(z));
+        showGenerateButton$delegate.setValue(null, $$delegatedProperties[98], Boolean.valueOf(z));
     }
 
     public static final boolean getShowDetailsButton() {
-        return ((Boolean) showDetailsButton$delegate.getValue(null, $$delegatedProperties[98])).booleanValue();
+        return ((Boolean) showDetailsButton$delegate.getValue(null, $$delegatedProperties[99])).booleanValue();
     }
 
     public static final void setShowDetailsButton(boolean z) {
-        showDetailsButton$delegate.setValue(null, $$delegatedProperties[98], Boolean.valueOf(z));
+        showDetailsButton$delegate.setValue(null, $$delegatedProperties[99], Boolean.valueOf(z));
     }
 
     public static final boolean getGroupMessageMenu() {
-        return ((Boolean) groupMessageMenu$delegate.getValue(null, $$delegatedProperties[99])).booleanValue();
+        return ((Boolean) groupMessageMenu$delegate.getValue(null, $$delegatedProperties[100])).booleanValue();
     }
 
     public static final void setGroupMessageMenu(boolean z) {
-        groupMessageMenu$delegate.setValue(null, $$delegatedProperties[99], Boolean.valueOf(z));
+        groupMessageMenu$delegate.setValue(null, $$delegatedProperties[100], Boolean.valueOf(z));
     }
 
     public static final String getRecognitionLanguage() {
-        return (String) recognitionLanguage$delegate.getValue(null, $$delegatedProperties[100]);
+        return (String) recognitionLanguage$delegate.getValue(null, $$delegatedProperties[101]);
     }
 
     public static final void setRecognitionLanguage(String str) {
         Intrinsics.checkNotNullParameter(str, "value");
-        recognitionLanguage$delegate.setValue(null, $$delegatedProperties[100], str);
+        recognitionLanguage$delegate.setValue(null, $$delegatedProperties[101], str);
     }
 
     public static final boolean getPostprocessingWithAi() {
-        return ((Boolean) postprocessingWithAi$delegate.getValue(null, $$delegatedProperties[101])).booleanValue();
+        return ((Boolean) postprocessingWithAi$delegate.getValue(null, $$delegatedProperties[102])).booleanValue();
     }
 
     public static final void setPostprocessingWithAi(boolean z) {
-        postprocessingWithAi$delegate.setValue(null, $$delegatedProperties[101], Boolean.valueOf(z));
+        postprocessingWithAi$delegate.setValue(null, $$delegatedProperties[102], Boolean.valueOf(z));
     }
 
     public static final CameraType getCameraType() {
-        return (CameraType) cameraType$delegate.getValue(null, $$delegatedProperties[102]);
+        return (CameraType) cameraType$delegate.getValue(null, $$delegatedProperties[103]);
     }
 
     public static final void setCameraType(CameraType value) {
         Intrinsics.checkNotNullParameter(value, "value");
-        cameraType$delegate.setValue(null, $$delegatedProperties[102], value);
+        cameraType$delegate.setValue(null, $$delegatedProperties[103], value);
     }
 
     public static final boolean getExtendedFramesPerSecond() {
-        return ((Boolean) extendedFramesPerSecond$delegate.getValue(null, $$delegatedProperties[103])).booleanValue();
+        return ((Boolean) extendedFramesPerSecond$delegate.getValue(null, $$delegatedProperties[104])).booleanValue();
     }
 
     public static final void setExtendedFramesPerSecond(boolean z) {
-        extendedFramesPerSecond$delegate.setValue(null, $$delegatedProperties[103], Boolean.valueOf(z));
+        extendedFramesPerSecond$delegate.setValue(null, $$delegatedProperties[104], Boolean.valueOf(z));
     }
 
     public static final boolean getCameraStabilization() {
-        return ((Boolean) cameraStabilization$delegate.getValue(null, $$delegatedProperties[104])).booleanValue();
+        return ((Boolean) cameraStabilization$delegate.getValue(null, $$delegatedProperties[105])).booleanValue();
     }
 
     public static final void setCameraStabilization(boolean z) {
-        cameraStabilization$delegate.setValue(null, $$delegatedProperties[104], Boolean.valueOf(z));
+        cameraStabilization$delegate.setValue(null, $$delegatedProperties[105], Boolean.valueOf(z));
     }
 
     public static final boolean getCameraMirrorMode() {
-        return ((Boolean) cameraMirrorMode$delegate.getValue(null, $$delegatedProperties[105])).booleanValue();
+        return ((Boolean) cameraMirrorMode$delegate.getValue(null, $$delegatedProperties[106])).booleanValue();
     }
 
     public static final void setCameraMirrorMode(boolean z) {
-        cameraMirrorMode$delegate.setValue(null, $$delegatedProperties[105], Boolean.valueOf(z));
+        cameraMirrorMode$delegate.setValue(null, $$delegatedProperties[106], Boolean.valueOf(z));
     }
 
     public static final VideoMessagesCamera getVideoMessagesCamera() {
-        return (VideoMessagesCamera) videoMessagesCamera$delegate.getValue(null, $$delegatedProperties[106]);
+        return (VideoMessagesCamera) videoMessagesCamera$delegate.getValue(null, $$delegatedProperties[107]);
     }
 
     public static final void setVideoMessagesCamera(VideoMessagesCamera value) {
         Intrinsics.checkNotNullParameter(value, "value");
-        videoMessagesCamera$delegate.setValue(null, $$delegatedProperties[106], value);
+        videoMessagesCamera$delegate.setValue(null, $$delegatedProperties[107], value);
     }
 
     public static final boolean getRememberLastUsedCamera() {
-        return ((Boolean) rememberLastUsedCamera$delegate.getValue(null, $$delegatedProperties[107])).booleanValue();
+        return ((Boolean) rememberLastUsedCamera$delegate.getValue(null, $$delegatedProperties[108])).booleanValue();
     }
 
     public static final void setRememberLastUsedCamera(boolean z) {
-        rememberLastUsedCamera$delegate.setValue(null, $$delegatedProperties[107], Boolean.valueOf(z));
+        rememberLastUsedCamera$delegate.setValue(null, $$delegatedProperties[108], Boolean.valueOf(z));
     }
 
     public static final boolean getStartWithWideAngleCamera() {
-        return ((Boolean) startWithWideAngleCamera$delegate.getValue(null, $$delegatedProperties[108])).booleanValue();
+        return ((Boolean) startWithWideAngleCamera$delegate.getValue(null, $$delegatedProperties[109])).booleanValue();
     }
 
     public static final void setStartWithWideAngleCamera(boolean z) {
-        startWithWideAngleCamera$delegate.setValue(null, $$delegatedProperties[108], Boolean.valueOf(z));
+        startWithWideAngleCamera$delegate.setValue(null, $$delegatedProperties[109], Boolean.valueOf(z));
     }
 
     public static final boolean getZoomSlider() {
-        return ((Boolean) zoomSlider$delegate.getValue(null, $$delegatedProperties[109])).booleanValue();
+        return ((Boolean) zoomSlider$delegate.getValue(null, $$delegatedProperties[110])).booleanValue();
     }
 
     public static final void setZoomSlider(boolean z) {
-        zoomSlider$delegate.setValue(null, $$delegatedProperties[109], Boolean.valueOf(z));
+        zoomSlider$delegate.setValue(null, $$delegatedProperties[110], Boolean.valueOf(z));
     }
 
     public static final boolean getStaticZoom() {
-        return ((Boolean) staticZoom$delegate.getValue(null, $$delegatedProperties[110])).booleanValue();
+        return ((Boolean) staticZoom$delegate.getValue(null, $$delegatedProperties[111])).booleanValue();
     }
 
     public static final void setStaticZoom(boolean z) {
-        staticZoom$delegate.setValue(null, $$delegatedProperties[110], Boolean.valueOf(z));
+        staticZoom$delegate.setValue(null, $$delegatedProperties[111], Boolean.valueOf(z));
     }
 
     public static final boolean getAlwaysSendInHD() {
-        return ((Boolean) alwaysSendInHD$delegate.getValue(null, $$delegatedProperties[111])).booleanValue();
+        return ((Boolean) alwaysSendInHD$delegate.getValue(null, $$delegatedProperties[112])).booleanValue();
     }
 
     public static final void setAlwaysSendInHD(boolean z) {
-        alwaysSendInHD$delegate.setValue(null, $$delegatedProperties[111], Boolean.valueOf(z));
+        alwaysSendInHD$delegate.setValue(null, $$delegatedProperties[112], Boolean.valueOf(z));
     }
 
     public static final boolean getHideCameraTile() {
-        return ((Boolean) hideCameraTile$delegate.getValue(null, $$delegatedProperties[112])).booleanValue();
+        return ((Boolean) hideCameraTile$delegate.getValue(null, $$delegatedProperties[113])).booleanValue();
     }
 
     public static final void setHideCameraTile(boolean z) {
-        hideCameraTile$delegate.setValue(null, $$delegatedProperties[112], Boolean.valueOf(z));
+        hideCameraTile$delegate.setValue(null, $$delegatedProperties[113], Boolean.valueOf(z));
     }
 
     public static final int getDoubleTapSeekDuration() {
-        return ((Number) doubleTapSeekDuration$delegate.getValue(null, $$delegatedProperties[113])).intValue();
+        return ((Number) doubleTapSeekDuration$delegate.getValue(null, $$delegatedProperties[114])).intValue();
     }
 
     public static final void setDoubleTapSeekDuration(int i) {
-        doubleTapSeekDuration$delegate.setValue(null, $$delegatedProperties[113], Integer.valueOf(i));
+        doubleTapSeekDuration$delegate.setValue(null, $$delegatedProperties[114], Integer.valueOf(i));
     }
 
     public static final boolean getPreferOriginalQuality() {
-        return ((Boolean) preferOriginalQuality$delegate.getValue(null, $$delegatedProperties[114])).booleanValue();
+        return ((Boolean) preferOriginalQuality$delegate.getValue(null, $$delegatedProperties[115])).booleanValue();
     }
 
     public static final void setPreferOriginalQuality(boolean z) {
-        preferOriginalQuality$delegate.setValue(null, $$delegatedProperties[114], Boolean.valueOf(z));
+        preferOriginalQuality$delegate.setValue(null, $$delegatedProperties[115], Boolean.valueOf(z));
     }
 
     public static final boolean getSwipeToPip() {
-        return ((Boolean) swipeToPip$delegate.getValue(null, $$delegatedProperties[115])).booleanValue();
+        return ((Boolean) swipeToPip$delegate.getValue(null, $$delegatedProperties[116])).booleanValue();
     }
 
     public static final void setSwipeToPip(boolean z) {
-        swipeToPip$delegate.setValue(null, $$delegatedProperties[115], Boolean.valueOf(z));
+        swipeToPip$delegate.setValue(null, $$delegatedProperties[116], Boolean.valueOf(z));
     }
 
     public static final boolean getUnmuteWithVolumeButtons() {
-        return ((Boolean) unmuteWithVolumeButtons$delegate.getValue(null, $$delegatedProperties[116])).booleanValue();
+        return ((Boolean) unmuteWithVolumeButtons$delegate.getValue(null, $$delegatedProperties[117])).booleanValue();
     }
 
     public static final void setUnmuteWithVolumeButtons(boolean z) {
-        unmuteWithVolumeButtons$delegate.setValue(null, $$delegatedProperties[116], Boolean.valueOf(z));
+        unmuteWithVolumeButtons$delegate.setValue(null, $$delegatedProperties[117], Boolean.valueOf(z));
     }
 
     public static final boolean getPauseOnMinimizeVideo() {
-        return ((Boolean) pauseOnMinimizeVideo$delegate.getValue(null, $$delegatedProperties[117])).booleanValue();
+        return ((Boolean) pauseOnMinimizeVideo$delegate.getValue(null, $$delegatedProperties[118])).booleanValue();
     }
 
     public static final void setPauseOnMinimizeVideo(boolean z) {
-        pauseOnMinimizeVideo$delegate.setValue(null, $$delegatedProperties[117], Boolean.valueOf(z));
+        pauseOnMinimizeVideo$delegate.setValue(null, $$delegatedProperties[118], Boolean.valueOf(z));
     }
 
     public static final boolean getPauseOnMinimizeVoice() {
-        return ((Boolean) pauseOnMinimizeVoice$delegate.getValue(null, $$delegatedProperties[118])).booleanValue();
+        return ((Boolean) pauseOnMinimizeVoice$delegate.getValue(null, $$delegatedProperties[119])).booleanValue();
     }
 
     public static final void setPauseOnMinimizeVoice(boolean z) {
-        pauseOnMinimizeVoice$delegate.setValue(null, $$delegatedProperties[118], Boolean.valueOf(z));
+        pauseOnMinimizeVoice$delegate.setValue(null, $$delegatedProperties[119], Boolean.valueOf(z));
     }
 
     public static final boolean getPauseOnMinimizeRound() {
-        return ((Boolean) pauseOnMinimizeRound$delegate.getValue(null, $$delegatedProperties[119])).booleanValue();
+        return ((Boolean) pauseOnMinimizeRound$delegate.getValue(null, $$delegatedProperties[120])).booleanValue();
     }
 
     public static final void setPauseOnMinimizeRound(boolean z) {
-        pauseOnMinimizeRound$delegate.setValue(null, $$delegatedProperties[119], Boolean.valueOf(z));
+        pauseOnMinimizeRound$delegate.setValue(null, $$delegatedProperties[120], Boolean.valueOf(z));
     }
 
     public static final boolean getUseGoogleCrashlytics() {
-        return ((Boolean) useGoogleCrashlytics$delegate.getValue(null, $$delegatedProperties[120])).booleanValue();
+        return ((Boolean) useGoogleCrashlytics$delegate.getValue(null, $$delegatedProperties[121])).booleanValue();
     }
 
     public static final void setUseGoogleCrashlytics(boolean z) {
-        useGoogleCrashlytics$delegate.setValue(null, $$delegatedProperties[120], Boolean.valueOf(z));
+        useGoogleCrashlytics$delegate.setValue(null, $$delegatedProperties[121], Boolean.valueOf(z));
     }
 
     public static final boolean getUseGoogleAnalytics() {
-        return ((Boolean) useGoogleAnalytics$delegate.getValue(null, $$delegatedProperties[121])).booleanValue();
+        return ((Boolean) useGoogleAnalytics$delegate.getValue(null, $$delegatedProperties[122])).booleanValue();
     }
 
     public static final void setUseGoogleAnalytics(boolean z) {
-        useGoogleAnalytics$delegate.setValue(null, $$delegatedProperties[121], Boolean.valueOf(z));
+        useGoogleAnalytics$delegate.setValue(null, $$delegatedProperties[122], Boolean.valueOf(z));
     }
 
     public static final boolean getEnableAdBlock() {
-        return ((Boolean) enableAdBlock$delegate.getValue(null, $$delegatedProperties[122])).booleanValue();
+        return ((Boolean) enableAdBlock$delegate.getValue(null, $$delegatedProperties[123])).booleanValue();
     }
 
     public static final void setEnableAdBlock(boolean z) {
-        enableAdBlock$delegate.setValue(null, $$delegatedProperties[122], Boolean.valueOf(z));
+        enableAdBlock$delegate.setValue(null, $$delegatedProperties[123], Boolean.valueOf(z));
     }
 
     public static final long getUpdateScheduleTimestamp() {
-        return ((Number) updateScheduleTimestamp$delegate.getValue(null, $$delegatedProperties[123])).longValue();
+        return ((Number) updateScheduleTimestamp$delegate.getValue(null, $$delegatedProperties[124])).longValue();
     }
 
     public static final void setUpdateScheduleTimestamp(long j) {
-        updateScheduleTimestamp$delegate.setValue(null, $$delegatedProperties[123], Long.valueOf(j));
+        updateScheduleTimestamp$delegate.setValue(null, $$delegatedProperties[124], Long.valueOf(j));
     }
 
     public static final long getSdkUpdateScheduleTimestamp() {
-        return ((Number) sdkUpdateScheduleTimestamp$delegate.getValue(null, $$delegatedProperties[124])).longValue();
+        return ((Number) sdkUpdateScheduleTimestamp$delegate.getValue(null, $$delegatedProperties[125])).longValue();
     }
 
     public static final void setSdkUpdateScheduleTimestamp(long j) {
-        sdkUpdateScheduleTimestamp$delegate.setValue(null, $$delegatedProperties[124], Long.valueOf(j));
+        sdkUpdateScheduleTimestamp$delegate.setValue(null, $$delegatedProperties[125], Long.valueOf(j));
     }
 
     public static final String getTargetLang() {
-        return (String) targetLang$delegate.getValue(null, $$delegatedProperties[125]);
+        return (String) targetLang$delegate.getValue(null, $$delegatedProperties[126]);
     }
 
     public static final void setTargetLang(String str) {
         Intrinsics.checkNotNullParameter(str, "value");
-        targetLang$delegate.setValue(null, $$delegatedProperties[125], str);
+        targetLang$delegate.setValue(null, $$delegatedProperties[126], str);
     }
 
     public static final float getFlashWarmth() {
-        return ((Number) flashWarmth$delegate.getValue(null, $$delegatedProperties[126])).floatValue();
+        return ((Number) flashWarmth$delegate.getValue(null, $$delegatedProperties[127])).floatValue();
     }
 
     public static final void setFlashWarmth(float f) {
-        flashWarmth$delegate.setValue(null, $$delegatedProperties[126], Float.valueOf(f));
+        flashWarmth$delegate.setValue(null, $$delegatedProperties[127], Float.valueOf(f));
     }
 
     public static final float getFlashIntensity() {
-        return ((Number) flashIntensity$delegate.getValue(null, $$delegatedProperties[127])).floatValue();
+        return ((Number) flashIntensity$delegate.getValue(null, $$delegatedProperties[128])).floatValue();
     }
 
     public static final void setFlashIntensity(float f) {
-        flashIntensity$delegate.setValue(null, $$delegatedProperties[127], Float.valueOf(f));
+        flashIntensity$delegate.setValue(null, $$delegatedProperties[128], Float.valueOf(f));
     }
 
     public static final boolean getPluginsDevMode() {
-        return ((Boolean) pluginsDevMode$delegate.getValue(null, $$delegatedProperties[128])).booleanValue();
+        return ((Boolean) pluginsDevMode$delegate.getValue(null, $$delegatedProperties[129])).booleanValue();
     }
 
     public static final void setPluginsDevMode(boolean z) {
-        pluginsDevMode$delegate.setValue(null, $$delegatedProperties[128], Boolean.valueOf(z));
+        pluginsDevMode$delegate.setValue(null, $$delegatedProperties[129], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsSafeMode() {
-        return ((Boolean) pluginsSafeMode$delegate.getValue(null, $$delegatedProperties[129])).booleanValue();
+        return ((Boolean) pluginsSafeMode$delegate.getValue(null, $$delegatedProperties[130])).booleanValue();
     }
 
     public static final void setPluginsSafeMode(boolean z) {
-        pluginsSafeMode$delegate.setValue(null, $$delegatedProperties[129], Boolean.valueOf(z));
+        pluginsSafeMode$delegate.setValue(null, $$delegatedProperties[130], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsCompactView() {
-        return ((Boolean) pluginsCompactView$delegate.getValue(null, $$delegatedProperties[130])).booleanValue();
+        return ((Boolean) pluginsCompactView$delegate.getValue(null, $$delegatedProperties[131])).booleanValue();
     }
 
     public static final void setPluginsCompactView(boolean z) {
-        pluginsCompactView$delegate.setValue(null, $$delegatedProperties[130], Boolean.valueOf(z));
+        pluginsCompactView$delegate.setValue(null, $$delegatedProperties[131], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsPySdkAutoUpdate() {
-        return ((Boolean) pluginsPySdkAutoUpdate$delegate.getValue(null, $$delegatedProperties[131])).booleanValue();
+        return ((Boolean) pluginsPySdkAutoUpdate$delegate.getValue(null, $$delegatedProperties[132])).booleanValue();
     }
 
     public static final void setPluginsPySdkAutoUpdate(boolean z) {
-        pluginsPySdkAutoUpdate$delegate.setValue(null, $$delegatedProperties[131], Boolean.valueOf(z));
+        pluginsPySdkAutoUpdate$delegate.setValue(null, $$delegatedProperties[132], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsPySdkBetaVersions() {
-        return ((Boolean) pluginsPySdkBetaVersions$delegate.getValue(null, $$delegatedProperties[132])).booleanValue();
+        return ((Boolean) pluginsPySdkBetaVersions$delegate.getValue(null, $$delegatedProperties[133])).booleanValue();
     }
 
     public static final void setPluginsPySdkBetaVersions(boolean z) {
-        pluginsPySdkBetaVersions$delegate.setValue(null, $$delegatedProperties[132], Boolean.valueOf(z));
+        pluginsPySdkBetaVersions$delegate.setValue(null, $$delegatedProperties[133], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsDisableArtOpts() {
-        return ((Boolean) pluginsDisableArtOpts$delegate.getValue(null, $$delegatedProperties[133])).booleanValue();
+        return ((Boolean) pluginsDisableArtOpts$delegate.getValue(null, $$delegatedProperties[134])).booleanValue();
     }
 
     public static final void setPluginsDisableArtOpts(boolean z) {
-        pluginsDisableArtOpts$delegate.setValue(null, $$delegatedProperties[133], Boolean.valueOf(z));
+        pluginsDisableArtOpts$delegate.setValue(null, $$delegatedProperties[134], Boolean.valueOf(z));
     }
 
     public static final boolean getPluginsUnknownSources() {
-        return ((Boolean) pluginsUnknownSources$delegate.getValue(null, $$delegatedProperties[134])).booleanValue();
+        return ((Boolean) pluginsUnknownSources$delegate.getValue(null, $$delegatedProperties[135])).booleanValue();
     }
 
     public static final void setPluginsUnknownSources(boolean z) {
-        pluginsUnknownSources$delegate.setValue(null, $$delegatedProperties[134], Boolean.valueOf(z));
+        pluginsUnknownSources$delegate.setValue(null, $$delegatedProperties[135], Boolean.valueOf(z));
     }
 
     public static final Set<String> getPinnedPlugins() {
-        return (Set) pinnedPlugins$delegate.getValue(null, $$delegatedProperties[135]);
+        return (Set) pinnedPlugins$delegate.getValue(null, $$delegatedProperties[136]);
     }
 
     public static final void setPinnedPlugins(Set<String> set) {
         Intrinsics.checkNotNullParameter(set, "value");
-        pinnedPlugins$delegate.setValue(null, $$delegatedProperties[135], set);
+        pinnedPlugins$delegate.setValue(null, $$delegatedProperties[136], set);
     }
 
     public static final boolean getUseSystemIconShape() {
-        return ((Boolean) useSystemIconShape$delegate.getValue(null, $$delegatedProperties[136])).booleanValue();
+        return ((Boolean) useSystemIconShape$delegate.getValue(null, $$delegatedProperties[137])).booleanValue();
     }
 
     public static final void setUseSystemIconShape(boolean z) {
-        useSystemIconShape$delegate.setValue(null, $$delegatedProperties[136], Boolean.valueOf(z));
+        useSystemIconShape$delegate.setValue(null, $$delegatedProperties[137], Boolean.valueOf(z));
     }
 
     public static final boolean getAospTransitions() {
@@ -1712,6 +1722,16 @@ public static final void init() {
                 setProxyDisabledOn(ProxyDisableCondition.VPN, true);
             }
             editor.remove("doNotUseProxyWithVpn").apply();
+        }
+    }
+
+    private static final void migrateTabCounterMode() {
+        SharedPreferences sharedPreferences = preferences;
+        if (sharedPreferences.contains("tabCounter")) {
+            if (!sharedPreferences.getBoolean("tabCounter", true)) {
+                setTabCounterMode(TabCounterMode.HIDDEN);
+            }
+            editor.remove("tabCounter").apply();
         }
     }
 

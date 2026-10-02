@@ -1,5 +1,6 @@
 package com.exteragram.messenger.utils.text;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -28,6 +29,8 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LinkifyPort;
+import org.telegram.messenger.LocaleController;
+import org.telegram.ui.Components.ColoredImageSpan;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessageObject;
@@ -265,6 +268,22 @@ public abstract class LocaleUtils {
         newSpan.setColor(Theme.getColor(Theme.key_featuredStickers_addButton));
         newSpan.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
         spannableStringBuilder.setSpan(newSpan, spannableStringBuilder.length() - 1, spannableStringBuilder.length(), 33);
+        return spannableStringBuilder;
+    }
+
+    public static SpannableStringBuilder replaceArrows(Context context, CharSequence charSequence, int i) {
+        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(charSequence);
+        int iIndexOf = TextUtils.indexOf(spannableStringBuilder, "->");
+        while (iIndexOf >= 0) {
+            ColoredImageSpan coloredImageSpan = new ColoredImageSpan(ContextCompat.getDrawable(context, i).mutate(), 2);
+            if (LocaleController.isRTL) {
+                coloredImageSpan.rotate(180.0f);
+            }
+            spannableStringBuilder.replace(iIndexOf, iIndexOf + 2, (CharSequence) ">");
+            int i2 = iIndexOf + 1;
+            spannableStringBuilder.setSpan(coloredImageSpan, iIndexOf, i2, 33);
+            iIndexOf = TextUtils.indexOf(spannableStringBuilder, "->", i2);
+        }
         return spannableStringBuilder;
     }
 

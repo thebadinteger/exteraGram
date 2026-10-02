@@ -16,7 +16,6 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 import com.exteragram.messenger.ExteraConfig;
 import com.exteragram.messenger.badges.BadgesController;
-import com.exteragram.messenger.components.VerticalImageSpan;
 import com.exteragram.messenger.plugins.Plugin;
 import com.exteragram.messenger.plugins.PluginsController;
 import com.exteragram.messenger.plugins.PythonPluginsEngine;
@@ -161,7 +160,7 @@ public final class InstallPluginBottomSheet extends BottomSheet {
                 String version2 = plugin2.getVersion();
                 plugin = plugin2;
                 spannableStringBuilderAppend.append((CharSequence) version).append((CharSequence) " -> ").append((CharSequence) (version2 == null ? "" : version2));
-                spannableStringBuilderAppend = VerticalImageSpan.createSpan(getContext(), R.drawable.msg_mini_arrow_mediathin, spannableStringBuilderAppend.toString(), "->", i3, this.resourcesProvider);
+                spannableStringBuilderAppend = LocaleUtils.replaceArrows(getContext(), spannableStringBuilderAppend, R.drawable.msg_mini_arrow_mediathin);
                 spannableStringBuilderAppend.setSpan(new StrikethroughSpan(), length, version.length() + length, 33);
             } else {
                 plugin = plugin2;

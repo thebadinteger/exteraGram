@@ -9,7 +9,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.exteragram.messenger.ExteraConfig;
-import com.exteragram.messenger.components.VerticalImageSpan;
 import com.exteragram.messenger.icons.IconManager;
 import com.exteragram.messenger.icons.IconPack;
 import com.exteragram.messenger.utils.text.LocaleUtils;
@@ -87,7 +86,7 @@ public final class InstallIconPackBottomSheet extends BottomSheet {
         if (iconPackFindPackById != null) {
             String version = iconPackFindPackById.getVersion();
             spannableStringBuilderAppend.append((CharSequence) version).append((CharSequence) " -> ").append((CharSequence) this.iconPack.getVersion());
-            spannableStringBuilderAppend = VerticalImageSpan.createSpan(context, R.drawable.msg_mini_arrow_mediathin, spannableStringBuilderAppend.toString(), "->", i, this.resourcesProvider);
+            spannableStringBuilderAppend = LocaleUtils.replaceArrows(context, spannableStringBuilderAppend, R.drawable.msg_mini_arrow_mediathin);
             spannableStringBuilderAppend.setSpan(new StrikethroughSpan(), length, version.length() + length, 33);
         } else if (!TextUtils.isEmpty(this.iconPack.getVersion())) {
             spannableStringBuilderAppend.append((CharSequence) this.iconPack.getVersion());

@@ -32,6 +32,8 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 
+import com.exteragram.messenger.debug.HeapMonitor;
+import com.exteragram.messenger.debug.LoadMonitor;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
@@ -379,6 +381,8 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+        HeapMonitor.init();
+        LoadMonitor.init();
     }
 
     private static void configureEmbeddedExteraHook() {

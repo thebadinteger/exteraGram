@@ -12946,6 +12946,17 @@ public class MessageObject {
     public boolean isQuickReply() {
         return isQuickReply(messageOwner);
     }
+
+    public boolean isWelcomeMessage() {
+        return isWelcomeMessage(messageOwner);
+    }
+
+    public static boolean isWelcomeMessage(TLRPC.Message message) {
+        if (message != null && (isEphemeralMessageId(message.id) || message.ephemeralReceiverBotId != 0)) {
+            return message.ephemeralReceiverBotId == -1 || message.ephemeralAnchorMsgId != 0;
+        }
+        return false;
+    }
     
     public TLRPC.TL_availableEffect getEffect() {
         if (messageOwner == null || (messageOwner.flags2 & 4) == 0)

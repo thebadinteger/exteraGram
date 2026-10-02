@@ -1018,5 +1018,18 @@
     <string name="com.google.firebase.crashlytics.mapping_file_id">369bcd602f8948088ea49559e15e035a</string>
     <string name="com.google.firebase.crashlytics.version_control_info">repositories {\n  system: GIT\n  local_root_path: \"$PROJECT_DIR\"\n  revision: \"6cbf8ce35ee19c3716a1e63a00bd69d1bfb88308\"\n}\n</string>
     <string name="mr_chooser_wifi_learn_more">Learn more</string>
+    <string name="AccountNotifications">Accounts</string>
+    <string name="AccountNotificationsCount">%1$d of %2$d</string>
+    <string name="AccountNotificationsCurrent">Notifications from the current account are always shown.</string>
+    <string name="AccountNotificationsInfo">"Unchecked accounts don\'t show notifications while you\'re using another account."</string>
+    <string name="AdBlockFiltersLoading">Loading Filters…</string>
+    <string name="BlockAds">Block Ads</string>
+    <string name="BlockedRequests_few">%1$d blocked</string>
+    <string name="BlockedRequests_many">%1$d blocked</string>
+    <string name="BlockedRequests_one">%1$d blocked</string>
+    <string name="BlockedRequests_other">%1$d blocked</string>
+    <string name="BlockedRequests_two">%1$d blocked</string>
+    <string name="ShowForwardsCount">Show Forward Count</string>
+    <string name="TabCounterUnmuted">Unmuted</string>
     <string name="side_sheet_behavior">com.google.android.material.sidesheet.SideSheetBehavior</string>
 </resources>

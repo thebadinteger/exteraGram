@@ -157,6 +157,7 @@
     <string name="TabTitleStyleIconsOnly">Только иконки</string>
     <string name="TabTitleStyleTextOnly">Только названия</string>
     <string name="TabCounter">Счётчик уведомлений</string>
+    <string name="TabCounterUnmuted">С уведомлениями</string>
     <string name="HideAllChats">Скрыть вкладку \"%1$s\"</string>
     <string name="FoldersInfo">Иконки папок синхронизируются с вашим аккаунтом.</string>
 
@@ -239,6 +240,10 @@
     <string name="RelativeLastSeen">Относительное время онлайна</string>
     <string name="InAppVibration">Вибрация в приложении</string>
     <string name="DisableNotificationDelay">Отключить задержку уведомлений</string>
+    <string name="AccountNotifications">Аккаунты</string>
+    <string name="AccountNotificationsCount">%1$d из %2$d</string>
+    <string name="AccountNotificationsInfo">Уведомления от неотмеченных аккаунтов не приходят, пока вы пользуетесь другим аккаунтом.</string>
+    <string name="AccountNotificationsCurrent">Уведомления текущего аккаунта показываются всегда.</string>
     <string name="FilterZalgo">Фильтр \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Убирает искажающие текст символы \"%1$s\" в именах и сообщениях.</string>
     <string name="RestartRequired">Перезапустите приложение, чтобы изменения вступили в силу.</string>
@@ -344,6 +349,7 @@
     <string name="ShowPollResultsBeforeVoting">Итоги до голосования</string>
     <string name="ShowPollResultsBeforeVotingHint">Показывать результаты голосов около каждого пункта опроса до вашего голосования.</string>
     <string name="ShowOnlineStatus">Показывать индикатор онлайна</string>
+    <string name="ShowForwardsCount">Показывать число пересылок</string>
     <string name="MessagePreviewDialogMessage">Я могу есть стекло, оно мне не вредит.</string>
 
     <!-- Фото -->
@@ -543,6 +549,12 @@
     <string name="PageBlockedDescription">exteraGram предотвратил загрузку следующей страницы:\n**%1$s**</string>
     <string name="PageBlockedGoBack">Назад</string>
     <string name="PageBlockedProceed">Продолжить</string>
+    <string name="BlockAds">Блокировка рекламы</string>
+    <string name="BlockedRequests_one">%1$d заблокировано</string>
+    <string name="BlockedRequests_few">%1$d заблокировано</string>
+    <string name="BlockedRequests_many">%1$d заблокировано</string>
+    <string name="BlockedRequests_other">%1$d заблокировано</string>
+    <string name="AdBlockFiltersLoading">Загрузка фильтров…</string>
 
     <!-- Прочее -->
     <string name="SetAsBadge">Установить как бейдж</string>

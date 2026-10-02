@@ -396,6 +396,7 @@ public class ChatsPreferencesActivity extends BasePreferencesActivity {
         REMOVE_MESSAGE_TAIL,
         REPLACE_EDITED_WITH_ICON,
         SHOW_ONLINE_STATUS,
+        SHOW_FORWARDS_COUNT,
         HIDE_SHARE_BUTTON,
         SHOW_RESULTS_BEFORE_VOTING,
         MESSAGE_MENU,
@@ -599,6 +600,7 @@ public class ChatsPreferencesActivity extends BasePreferencesActivity {
         arrayList.add(UItem.asCheck(ChatsItem.REMOVE_MESSAGE_TAIL.getId(), LocaleController.getString(R.string.RemoveMessageTail)).setChecked(ExteraConfig.getRemoveMessageTail()).setSearchable(this).setLinkAlias("removeMessageTail", this));
         arrayList.add(UItem.asCheck(ChatsItem.REPLACE_EDITED_WITH_ICON.getId(), LocaleController.formatString(R.string.ReplaceEditedWithIcon, LocaleController.getString(R.string.EditedMessage))).setChecked(ExteraConfig.getReplaceEditedWithIcon()).setSearchable(this).setLinkAlias("replaceEditedWithIcon", this));
         arrayList.add(UItem.asCheck(ChatsItem.SHOW_ONLINE_STATUS.getId(), LocaleController.getString(R.string.ShowOnlineStatus)).setChecked(ExteraConfig.getShowOnlineStatus()).setSearchable(this).setLinkAlias("showOnlineStatus", this));
+        arrayList.add(UItem.asCheck(ChatsItem.SHOW_FORWARDS_COUNT.getId(), LocaleController.getString(R.string.ShowForwardsCount)).setChecked(ExteraConfig.getShowForwardsCount()).setSearchable(this).setLinkAlias("showForwardsCount", this));
         arrayList.add(UItem.asCheck(ChatsItem.HIDE_SHARE_BUTTON.getId(), LocaleController.formatString(R.string.HideShareButton, LocaleController.getString(R.string.ShareFile))).setChecked(ExteraConfig.getHideShareButton()).setSearchable(this).setLinkAlias("hideShareButton", this));
         arrayList.add(UItem.asCheck(ChatsItem.SHOW_RESULTS_BEFORE_VOTING.getId(), LocaleController.getString(R.string.ShowPollResultsBeforeVoting), LocaleController.getString(R.string.ShowPollResultsBeforeVotingHint), true).setChecked(ExteraConfig.getShowResultsBeforeVoting()).setSearchable(this).setLinkAlias("showResultsBeforeVoting", this));
         this.messageMenu.fill(arrayList);
@@ -645,6 +647,16 @@ public class ChatsPreferencesActivity extends BasePreferencesActivity {
     public void onClick(UItem uItem, View view, int i, float f, float f2) {
         int i2 = uItem.id;
         if (i2 <= 0 || i2 > ChatsItem.values().length) {
+            return;
+        }
+        if (ChatsItem.values()[uItem.id - 1] == ChatsItem.SHOW_FORWARDS_COUNT) {
+            toggleBooleanSettingAndRefresh(uItem, new Consumer() {
+                @Override
+                public final void accept(Object obj) {
+                    ExteraConfig.setShowForwardsCount(((Boolean) obj).booleanValue());
+                }
+            });
+            this.messagesPreviewCell.refreshMessages();
             return;
         }
         switch (AnonymousClass2.$SwitchMap$com$exteragram$messenger$preferences$chats$ChatsPreferencesActivity$ChatsItem[ChatsItem.values()[uItem.id - 1].ordinal()]) {

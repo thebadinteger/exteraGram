@@ -5,6 +5,8 @@ import android.os.Parcelable;
 import android.view.View;
 import com.exteragram.messenger.DividerStyle;
 import com.exteragram.messenger.ExteraConfig;
+import com.exteragram.messenger.TabCounterMode;
+import com.exteragram.messenger.utils.chats.FolderCounters;
 import com.exteragram.messenger.GlassOutlineStyle;
 import com.exteragram.messenger.TabIconsMode;
 import com.exteragram.messenger.icons.ui.IconPacksActivity;
@@ -101,6 +103,7 @@ public class AppearancePreferencesActivity extends BasePreferencesActivity {
     }).markNew("Appearance-M3Styles-NavigationBar");
     private Parcelable recyclerViewState;
     private CharSequence[] tabIcons;
+    private CharSequence[] tabCounterModes;
     private CharSequence[] titles;
 
     public enum AppearanceItem {
@@ -152,6 +155,7 @@ public class AppearancePreferencesActivity extends BasePreferencesActivity {
     public void initializeOptionStrings() {
         this.titles = new CharSequence[]{LocaleController.getString(R.string.exteraAppName), LocaleController.getString(R.string.ActionBarTitleUsername), LocaleController.getString(R.string.ActionBarTitleName), LocaleController.getString(R.string.FilterChats)};
         this.tabIcons = new CharSequence[]{LocaleController.getString(R.string.TabTitleStyleTextWithIcons), LocaleController.getString(R.string.TabTitleStyleTextOnly), LocaleController.getString(R.string.TabTitleStyleIconsOnly)};
+        this.tabCounterModes = new CharSequence[]{LocaleController.getString(R.string.Default), LocaleController.getString(R.string.TabCounterUnmuted), LocaleController.getString(R.string.Disable)};
         this.dividerStyles = new CharSequence[]{LocaleController.getString(R.string.DividerStyleHidden), LocaleController.getString(R.string.DividerStyleLine), LocaleController.getString(R.string.DividerStyleSegments)};
         this.glassOutlineStyles = new CharSequence[]{LocaleController.getString(R.string.GlassOutlineGlare), LocaleController.getString(R.string.GlassOutlineSolid), LocaleController.getString(R.string.GlassOutlineHidden)};
     }
@@ -196,7 +200,7 @@ public class AppearancePreferencesActivity extends BasePreferencesActivity {
         arrayList.add(UItem.asHeader(LocaleController.getString(R.string.Filters)));
         arrayList.add(UItem.asCustom(AppearanceItem.FOLDERS_PREVIEW.getId(), this.filterTabsPreviewCell));
         arrayList.add(UItem.asButton(AppearanceItem.TAB_TITLE.getId(), LocaleController.getString(R.string.TabTitleStyle), this.tabIcons[ExteraConfig.getTabIcons().ordinal()]).setSearchable(this).setLinkAlias("tabTitleStyle", this));
-        arrayList.add(UItem.asCheck(AppearanceItem.TAB_COUNTER.getId(), LocaleController.getString(R.string.TabCounter)).setChecked(ExteraConfig.getTabCounter()).setSearchable(this).setLinkAlias("tabCounter", this));
+        arrayList.add(UItem.asButton(AppearanceItem.TAB_COUNTER.getId(), LocaleController.getString(R.string.TabCounter), this.tabCounterModes[ExteraConfig.getTabCounterMode().ordinal()]).setSearchable(this).setLinkAlias("tabCounter", this));
         arrayList.add(UItem.asCheck(AppearanceItem.HIDE_ALL_CHATS.getId(), LocaleController.formatString(R.string.HideAllChats, LocaleController.getString(R.string.FilterAllChats))).setChecked(ExteraConfig.getHideAllChats()).setSearchable(this).setLinkAlias("hideAllChats", this));
         arrayList.add(UItem.asShadow(LocaleController.getString(R.string.FoldersInfo)));
         arrayList.add(UItem.asButtonWithSubtext(AppearanceItem.APP_NAVIGATION_SETTINGS.getId(), R.drawable.msg_newphone, LocaleController.getString(R.string.AppNavigation), LocaleController.getString(R.string.AppNavigationInfo), 64, 60).setSearchable(this).setLinkAlias("appNavigationSettings", this));
@@ -324,13 +328,13 @@ public class AppearancePreferencesActivity extends BasePreferencesActivity {
                 });
                 break;
             case 11:
-                toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.appearance.AppearancePreferencesActivity$$ExternalSyntheticLambda30
-                    @Override // com.google.android.exoplayer2.util.Consumer
-                    public final void accept(Object obj) {
-                        ExteraConfig.setTabCounter(((Boolean) obj).booleanValue());
+                showListDialog(uItem, this.tabCounterModes, LocaleController.getString(R.string.TabCounter), ExteraConfig.getTabCounterMode().ordinal(), new PopupUtils.OnItemClickListener() {
+                    @Override
+                    public final void onClick(int i3) {
+                        ExteraConfig.setTabCounterMode(TabCounterMode.values()[i3]);
+                        AppearancePreferencesActivity.this.handleTabCounterClick();
                     }
                 });
-                handleTabCounterClick();
                 break;
             case 12:
                 toggleBooleanSettingAndRefresh(uItem, new Consumer() { // from class: com.exteragram.messenger.preferences.appearance.AppearancePreferencesActivity$$ExternalSyntheticLambda12

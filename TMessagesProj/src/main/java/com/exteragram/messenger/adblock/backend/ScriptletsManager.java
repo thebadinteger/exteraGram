@@ -17,11 +17,12 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DispatchQueue;
+import org.telegram.messenger.Utilities;
 
+/* JADX INFO: loaded from: classes.dex */
 public class ScriptletsManager {
-    private static final Map<String, ScriptletInfo> SCRIPTLETS_MAP = new HashMap<String, ScriptletInfo>() { 
+    private static final Map<String, ScriptletInfo> SCRIPTLETS_MAP = new HashMap<String, ScriptletInfo>() { // from class: com.exteragram.messenger.adblock.backend.ScriptletsManager.1
         {
             put("1x1.gif", new ScriptletInfo("1x1-transparent.gif"));
             put("2x2.png", new ScriptletInfo("2x2-transparent.png"));
@@ -43,7 +44,6 @@ public class ScriptletsManager {
             put("googlesyndication_adsbygoogle.js", new ScriptletInfo(new String[]{"googlesyndication.com/adsbygoogle.js", "googlesyndication-adsbygoogle"}));
             put("googletagservices_gpt.js", new ScriptletInfo(new String[]{"googletagservices.com/gpt.js", "googletagservices-gpt"}));
             put("hd-main.js", new ScriptletInfo(null));
-            put("nobab.js", new ScriptletInfo(new String[]{"bab-defuser.js", "prevent-bab.js"}));
             put("nobab2.js", new ScriptletInfo(null));
             put("noeval.js", new ScriptletInfo(null));
             put("noeval-silent.js", new ScriptletInfo("silent-noeval.js"));
@@ -74,12 +74,6 @@ public class ScriptletsManager {
     private final DispatchQueue queue = new DispatchQueue("ScriptletsManager");
     private final OkHttpClient client = ExteraHttpClient.INSTANCE.getClient();
     private final SharedPreferences prefs = PreferencesUtils.getPreferences("ublock_scriptlets");
-
-    public interface DownloadCallback {
-        void onError();
-
-        void onProgress(int i, int i2);
-    }
 
     public static ScriptletsManager getInstance() {
         if (instance == null) {
@@ -119,99 +113,100 @@ public class ScriptletsManager {
         return ".xml";
     }
 
-    public void download(final DownloadCallback downloadCallback) {
-        this.queue.postRunnable(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                ScriptletsManager.this.lambda$download$1(downloadCallback);
-            }
-        });
+    public void download(final Utilities.Callback<Boolean> callback) {
+        this.queue.postRunnable(() -> downloadInternal(callback));
     }
 
-    public /* synthetic */ void lambda$download$1(final DownloadCallback downloadCallback) {
-        Map<String, ScriptletInfo> map = SCRIPTLETS_MAP;
-        final int size = map.size();
-        int i = 0;
-        for (Map.Entry<String, ScriptletInfo> entry : map.entrySet()) {
-            String key = entry.getKey();
+    private void downloadInternal(Utilities.Callback callback) {
+        boolean z;
+        Iterator<Map.Entry<String, ScriptletInfo>> it = SCRIPTLETS_MAP.entrySet().iterator();
+        while (true) {
+            if (!it.hasNext()) {
+                z = true;
+                break;
+            }
+            Map.Entry<String, ScriptletInfo> next = it.next();
+            if (!downloadScriptlet(next.getKey(), next.getValue())) {
+                z = false;
+                break;
+            }
+        }
+        if (z) {
+            synchronized (this.lock) {
+                this.prefs.edit().putBoolean("__downloaded", true).apply();
+            }
+        }
+        if (callback != null) {
+            callback.run(Boolean.valueOf(z));
+        }
+    }
+
+    private boolean downloadScriptlet(String str, ScriptletInfo scriptletInfo) {
+        synchronized (this.lock) {
             try {
-                Response responseExecute = this.client.newCall(new Request.Builder().url("https://raw.githubusercontent.com/gorhill/uBlock/master/src/web_accessible_resources/" + key).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15").build()).execute();
+                if (this.prefs.contains(str)) {
+                    return true;
+                }
                 try {
-                    if (responseExecute.isSuccessful()) {
-                        String strEncodeToString = Base64.encodeToString(responseExecute.body().bytes(), 2);
-                        synchronized (this.lock) {
-                            try {
-                                SharedPreferences.Editor editorEdit = this.prefs.edit();
-                                editorEdit.putString(key, strEncodeToString);
-                                ScriptletInfo value = entry.getValue();
-                                if (value.alias != null) {
-                                    JSONArray jSONArray = new JSONArray();
-                                    Object obj = value.alias;
-                                    if (obj instanceof String) {
-                                        jSONArray.put(obj);
-                                    } else if (obj instanceof String[]) {
-                                        for (String str : (String[]) obj) {
-                                            jSONArray.put(str);
+                    Response responseExecute = this.client.newCall(new Request.Builder().url("https://raw.githubusercontent.com/gorhill/uBlock/master/src/web_accessible_resources/" + str).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15").build()).execute();
+                    try {
+                        if (responseExecute.code() != 404) {
+                            if (responseExecute.isSuccessful()) {
+                                String strEncodeToString = Base64.encodeToString(responseExecute.body().bytes(), 2);
+                                synchronized (this.lock) {
+                                    try {
+                                        SharedPreferences.Editor editorEdit = this.prefs.edit();
+                                        editorEdit.putString(str, strEncodeToString);
+                                        if (scriptletInfo.alias != null) {
+                                            JSONArray jSONArray = new JSONArray();
+                                            Object obj = scriptletInfo.alias;
+                                            if (obj instanceof String) {
+                                                jSONArray.put(obj);
+                                            } else if (obj instanceof String[]) {
+                                                for (String str2 : (String[]) obj) {
+                                                    jSONArray.put(str2);
+                                                }
+                                            }
+                                            editorEdit.putString(str + "_aliases", jSONArray.toString());
                                         }
+                                        editorEdit.apply();
+                                    } catch (Throwable th) {
+                                        throw th;
                                     }
-                                    editorEdit.putString(key + "_aliases", jSONArray.toString());
                                 }
-                                editorEdit.apply();
-                            } catch (Throwable th) {
-                                throw th;
+                            } else {
+                                responseExecute.close();
+                                return false;
+                            }
+                            return false;
+                        }
+                        responseExecute.close();
+                        return true;
+                    } catch (Throwable th2) {
+                        if (responseExecute != null) {
+                            try {
+                                responseExecute.close();
+                            } catch (Throwable th3) {
+                                th2.addSuppressed(th3);
                             }
                         }
+                        throw th2;
                     }
-                    responseExecute.close();
-                    i++;
-                    if (downloadCallback != null) {
-                        final int progress = i;
-                        AndroidUtilities.runOnUIThread(new Runnable() { 
-                            @Override // java.lang.Runnable
-                            public final void run() {
-                                downloadCallback.onProgress(progress, size);
-                            }
-                        });
-                    }
-                } catch (Throwable th2) {
-                    if (responseExecute != null) {
-                        try {
-                            responseExecute.close();
-                        } catch (Throwable th3) {
-                            th2.addSuppressed(th3);
-                        }
-                    }
-                    throw th2;
+                } catch (IOException unused) {
+                    return false;
                 }
-            } catch (IOException unused) {
-                if (downloadCallback != null) {
-                    AndroidUtilities.runOnUIThread(new Runnable() { 
-                        @Override // java.lang.Runnable
-                        public final void run() {
-                            downloadCallback.onError();
-                        }
-                    });
-                    return;
-                }
-                return;
+            } catch (Throwable th4) {
+                throw th4;
             }
         }
     }
 
     public boolean isDownloaded() {
+        boolean z;
         synchronized (this.lock) {
-            try {
-                Iterator<String> it = SCRIPTLETS_MAP.keySet().iterator();
-                while (it.hasNext()) {
-                    if (!this.prefs.contains(it.next())) {
-                        return false;
-                    }
-                }
-                return true;
-            } catch (Throwable th) {
-                throw th;
-            }
+            z = this.prefs.getBoolean("__downloaded", false);
         }
+        return z;
     }
 
     public Collection<Scriptlet> iterScriptlets() {

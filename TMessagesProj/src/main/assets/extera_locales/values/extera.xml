@@ -100,6 +100,10 @@
     <string name="RelativeLastSeen">Relative Last Seen</string>
     <string name="InAppVibration">In-App Vibration</string>
     <string name="DisableNotificationDelay">Disable Notification Delay</string>
+    <string name="AccountNotifications">Accounts</string>
+    <string name="AccountNotificationsCount">%1$d of %2$d</string>
+    <string name="AccountNotificationsInfo">Unchecked accounts don\'t show notifications while you\'re using another account.</string>
+    <string name="AccountNotificationsCurrent">Notifications from the current account are always shown.</string>
     <string name="FilterZalgo">Filter \"Zalgo\"</string>
     <string name="FilterZalgoInfo">Removes \"%1$s\" symbols in names and messages.</string>
     <string name="RestartRequired">Restart the app for changes to take effect.</string>
@@ -175,6 +179,7 @@
     <string name="TabTitleStyleIconsOnly">Icons only</string>
     <string name="TabTitleStyleTextOnly">Names only</string>
     <string name="TabCounter">Notification Counter</string>
+    <string name="TabCounterUnmuted">Unmuted</string>
     <string name="HideAllChats">Hide \"%1$s\" Tab</string>
     <string name="FoldersInfo">Icons are synchronized with your account.</string>
 
@@ -260,7 +265,6 @@
     <string name="AppIconCyberpunkInfo" translatable="false">Wake up, samurai</string>
     <string name="AppIconGoogleInfo" translatable="false">Don\'t be evil</string>
     <string name="AppIconInvincibleInfo" translatable="false">Think, Mark!</string>
-    <string name="AppIconSusInfo" translatable="false">Red kinda sus</string>
 
     <!-- General Appearance -->
     <string name="MaterialDesign3" translatable="false">Material Design 3</string>
@@ -473,6 +477,7 @@
     <string name="ShowPollResultsBeforeVoting">Show Results Before Voting</string>
     <string name="ShowPollResultsBeforeVotingHint">View results for each option before sending your vote.</string>
     <string name="ShowOnlineStatus">Show Online Indicator</string>
+    <string name="ShowForwardsCount">Show Forward Count</string>
     <string name="MessagePreviewDialogMessage">I can eat glass and it doesn\'t hurt me.</string>
 
     <!-- Voice & Video Recognition -->
@@ -718,6 +723,13 @@
     <string name="PageBlockedDescription">exteraGram has prevented the following page from loading:\n**%1$s**</string>
     <string name="PageBlockedGoBack">Go back</string>
     <string name="PageBlockedProceed">Proceed</string>
+    <string name="BlockAds">Block Ads</string>
+    <string name="BlockedRequests_one">%1$d blocked</string>
+    <string name="BlockedRequests_two">%1$d blocked</string>
+    <string name="BlockedRequests_few">%1$d blocked</string>
+    <string name="BlockedRequests_many">%1$d blocked</string>
+    <string name="BlockedRequests_other">%1$d blocked</string>
+    <string name="AdBlockFiltersLoading">Loading Filters…</string>
 
     <!-- Other -->
     <string name="SetAsBadge">Set as Badge</string>

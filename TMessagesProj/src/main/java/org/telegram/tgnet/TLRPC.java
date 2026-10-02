@@ -58208,6 +58208,7 @@ public class TLRPC {
         public TL_textWithEntities summaryText; //custom
         public String translatedSummaryLanguage; //custom
         public TL_textWithEntities translatedSummaryText; //custom
+        public int ephemeralAnchorMsgId;
         public long ephemeralReceiverBotId; //custom
 
         private static Message fromConstructor(int constructor) {

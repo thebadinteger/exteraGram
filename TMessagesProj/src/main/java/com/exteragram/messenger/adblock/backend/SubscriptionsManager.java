@@ -6,13 +6,14 @@ import com.exteragram.messenger.backup.PreferencesUtils;
 import com.exteragram.messenger.utils.network.ExteraHttpClient;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import okhttp3.OkHttpClient;
@@ -21,10 +22,10 @@ import okhttp3.Response;
 import okhttp3.internal.url._UrlKt;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.DispatchQueue;
 
+/* JADX INFO: loaded from: classes.dex */
 public class SubscriptionsManager {
     private static SubscriptionsManager instance;
     private static final Pattern redirectPattern = Pattern.compile("!\\s*Redirect:\\s*(\\S+)");
@@ -32,10 +33,6 @@ public class SubscriptionsManager {
     private final DispatchQueue queue = new DispatchQueue("SubscriptionsManager");
     private final OkHttpClient client = ExteraHttpClient.INSTANCE.getClient();
     private final SharedPreferences prefs = PreferencesUtils.getPreferences("ublock_subscriptions");
-
-    public interface SubscriptionCallback {
-        void onComplete(boolean z);
-    }
 
     public static SubscriptionsManager getInstance() {
         if (instance == null) {
@@ -52,49 +49,45 @@ public class SubscriptionsManager {
         return new File(file, Base64.encodeToString(str.getBytes(StandardCharsets.UTF_8), 10) + ".txt");
     }
 
-    public void initialize(final Runnable runnable) {
-        this.queue.postRunnable(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                SubscriptionsManager.this.lambda$initialize$1(runnable);
-            }
-        });
+    public void update(final String[] strArr, final Runnable runnable) {
+        this.queue.postRunnable(() -> updateInternal(strArr, runnable));
     }
 
-    public void lambda$initialize$1(final Runnable runnable) {
-        final List<FilterMetadata> subscriptions = getSubscriptions();
+    private void updateInternal(String[] strArr, Runnable runnable) {
+        LinkedHashSet linkedHashSet = new LinkedHashSet();
         long jCurrentTimeMillis = System.currentTimeMillis();
-        final AtomicInteger atomicInteger = new AtomicInteger(0);
-        for (FilterMetadata filterMetadata : subscriptions) {
-            if (jCurrentTimeMillis >= filterMetadata.expires) {
-                lambda$subscribe$2(filterMetadata.url, new SubscriptionCallback() { 
-                    @Override // com.exteragram.messenger.adblock.backend.SubscriptionsManager.SubscriptionCallback
-                    public final void onComplete(boolean z) {
-                        SubscriptionsManager.$r8$lambda$ex7K0DzJlEYCVNCVLClmUrbS_nY(atomicInteger, subscriptions, runnable, z);
-                    }
-                });
-            } else if (atomicInteger.incrementAndGet() == subscriptions.size()) {
-                runnable.run();
+        for (FilterMetadata filterMetadata : getSubscriptions()) {
+            if (jCurrentTimeMillis >= filterMetadata.expires || !getFileForUrl(filterMetadata.url).exists()) {
+                linkedHashSet.add(filterMetadata.url);
             }
         }
-    }
-
-    public static void $r8$lambda$ex7K0DzJlEYCVNCVLClmUrbS_nY(AtomicInteger atomicInteger, List list, Runnable runnable, boolean z) {
-        if (atomicInteger.incrementAndGet() == list.size()) {
+        synchronized (this.lock) {
+            try {
+                for (String str : strArr) {
+                    if (!this.prefs.contains("metadata_" + str)) {
+                        if (!this.prefs.contains("redirect_" + str)) {
+                            linkedHashSet.add(str);
+                        }
+                    }
+                }
+            } catch (Throwable th) {
+                throw th;
+            }
+        }
+        Iterator it = linkedHashSet.iterator();
+        while (it.hasNext()) {
+            fetchSubscription((String) it.next(), 0);
+        }
+        if (runnable != null) {
             runnable.run();
         }
     }
 
-    public void subscribe(final String str, final SubscriptionCallback subscriptionCallback) {
-        this.queue.postRunnable(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                SubscriptionsManager.this.lambda$subscribe$2(str, subscriptionCallback);
-            }
-        });
+    public boolean hasFilters() {
+        return !getSubscriptionFilePaths().isEmpty();
     }
 
-    public void unsubscribe(String str) {
+    private void unsubscribe(String str) {
         synchronized (this.lock) {
             SharedPreferences.Editor editorEdit = this.prefs.edit();
             editorEdit.remove("metadata_" + str);
@@ -136,7 +129,24 @@ public class SubscriptionsManager {
         return arrayList;
     }
 
-    public void lambda$subscribe$2(String str, final SubscriptionCallback subscriptionCallback) {
+    /* JADX WARN: Undo finally extract visitor
+    java.lang.NullPointerException: Cannot invoke "Object.hashCode()" because "this.second" is null
+    	at jadx.core.utils.Pair.hashCode(Pair.java:35)
+    	at java.base/java.util.HashMap.hash(Unknown Source)
+    	at java.base/java.util.HashMap.getNode(Unknown Source)
+    	at java.base/java.util.HashMap.containsKey(Unknown Source)
+    	at jadx.core.dex.visitors.finaly.traverser.state.TraverserGlobalCommonState.hasBlocksBeenCached(TraverserGlobalCommonState.java:35)
+    	at jadx.core.dex.visitors.finaly.traverser.handlers.MergePathActivePathTraverserHandler.handle(MergePathActivePathTraverserHandler.java:174)
+    	at jadx.core.dex.visitors.finaly.traverser.handlers.AbstractActivePathTraverserHandler.process(AbstractActivePathTraverserHandler.java:19)
+    	at jadx.core.dex.visitors.finaly.traverser.TraverserController.processHandlerImplementations(TraverserController.java:43)
+    	at jadx.core.dex.visitors.finaly.traverser.TraverserController.advance(TraverserController.java:156)
+    	at jadx.core.dex.visitors.finaly.traverser.TraverserController.process(TraverserController.java:79)
+    	at jadx.core.dex.visitors.finaly.MarkFinallyVisitor.findCommonInsns(MarkFinallyVisitor.java:404)
+    	at jadx.core.dex.visitors.finaly.MarkFinallyVisitor.extractFinally(MarkFinallyVisitor.java:284)
+    	at jadx.core.dex.visitors.finaly.MarkFinallyVisitor.processTryBlock(MarkFinallyVisitor.java:202)
+    	at jadx.core.dex.visitors.finaly.MarkFinallyVisitor.visit(MarkFinallyVisitor.java:135)
+     */
+    private boolean fetchSubscription(String str, int i) {
         try {
             Response responseExecute = this.client.newCall(new Request.Builder().url(str).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15").build()).execute();
             try {
@@ -144,64 +154,72 @@ public class SubscriptionsManager {
                     String strString = responseExecute.body().string();
                     String strExtractRedirect = extractRedirect(strString);
                     if (strExtractRedirect != null) {
-                        unsubscribe(str);
-                        lambda$subscribe$2(strExtractRedirect, subscriptionCallback);
+                        if (i < 3 && fetchSubscription(strExtractRedirect, i + 1)) {
+                            unsubscribe(str);
+                            synchronized (this.lock) {
+                                try {
+                                    this.prefs.edit().putString("redirect_" + str, strExtractRedirect).apply();
+                                } catch (Throwable th) {
+                                    throw th;
+                                }
+                            }
+                            responseExecute.close();
+                            return true;
+                        }
                     } else {
                         FilterMetadata metadata = parseMetadata(str, strString);
-                        FileOutputStream fileOutputStream = new FileOutputStream(getFileForUrl(str));
+                        File fileForUrl = getFileForUrl(str);
+                        File file = new File(fileForUrl.getPath() + ".tmp");
                         try {
-                            fileOutputStream.write(strString.getBytes(StandardCharsets.UTF_8));
-                            fileOutputStream.close();
-                            synchronized (this.lock) {
-                                SharedPreferences.Editor editorEdit = this.prefs.edit();
-                                editorEdit.putString("metadata_" + str, metadata.toJson().toString());
-                                editorEdit.apply();
-                            }
-                            if (subscriptionCallback != null) {
-                                AndroidUtilities.runOnUIThread(new Runnable() { 
-                                    @Override // java.lang.Runnable
-                                    public final void run() {
-                                        subscriptionCallback.onComplete(true);
-                                    }
-                                });
-                            }
-                        } catch (Throwable th) {
+                            FileOutputStream fileOutputStream = new FileOutputStream(file);
                             try {
+                                fileOutputStream.write(strString.getBytes(StandardCharsets.UTF_8));
                                 fileOutputStream.close();
-                            } catch (Throwable th2) {
-                                th.addSuppressed(th2);
+                                if (!file.renameTo(fileForUrl)) {
+                                    file.delete();
+                                } else {
+                                    synchronized (this.lock) {
+                                        try {
+                                            SharedPreferences.Editor editorEdit = this.prefs.edit();
+                                            editorEdit.putString("metadata_" + str, metadata.toJson().toString());
+                                            editorEdit.apply();
+                                        } catch (Throwable th2) {
+                                            throw th2;
+                                        }
+                                    }
+                                    responseExecute.close();
+                                    return true;
+                                }
+                            } catch (Throwable th3) {
+                                try {
+                                    fileOutputStream.close();
+                                } catch (Throwable th4) {
+                                    th3.addSuppressed(th4);
+                                }
+                                throw th3;
                             }
-                            throw th;
+                        } catch (IOException unused) {
+                            file.delete();
+                            responseExecute.close();
+                            return false;
                         }
                     }
-                } else if (subscriptionCallback != null) {
-                    AndroidUtilities.runOnUIThread(new Runnable() { 
-                        @Override // java.lang.Runnable
-                        public final void run() {
-                            subscriptionCallback.onComplete(false);
-                        }
-                    });
+                    return false;
                 }
                 responseExecute.close();
-            } catch (Throwable th3) {
+                return false;
+            } catch (Throwable th5) {
                 if (responseExecute != null) {
                     try {
                         responseExecute.close();
-                    } catch (Throwable th4) {
-                        th3.addSuppressed(th4);
+                    } catch (Throwable th6) {
+                        th5.addSuppressed(th6);
                     }
                 }
-                throw th3;
+                throw th5;
             }
-        } catch (Exception unused) {
-            if (subscriptionCallback != null) {
-                AndroidUtilities.runOnUIThread(new Runnable() { 
-                    @Override // java.lang.Runnable
-                    public final void run() {
-                        subscriptionCallback.onComplete(false);
-                    }
-                });
-            }
+        } catch (Exception unused2) {
+            return false;
         }
     }
 
@@ -288,6 +306,7 @@ public class SubscriptionsManager {
             return new FilterMetadata(jSONObject.getString("url"), jSONObject.getString("title"), jSONObject.getString("homepage"), jSONObject.getInt("rulesCount"), jSONObject.getLong("expires"));
         }
 
+        /* JADX INFO: Access modifiers changed from: private */
         public JSONObject toJson() throws JSONException {
             JSONObject jSONObject = new JSONObject();
             jSONObject.put("url", this.url);

@@ -41,7 +41,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.Switch;
 
-import com.exteragram.messenger.components.VerticalImageSpan;
+import com.exteragram.messenger.utils.text.LocaleUtils;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -228,7 +228,7 @@ public class TextCheckCell extends FrameLayout {
 
     public void setTextAndValueAndCheck(CharSequence text, String value, boolean checked, boolean multiline, boolean divider) {
         if (value != null && value.contains("->")) {
-            valueTextView.setText(VerticalImageSpan.createSpan(getContext(), R.drawable.search_arrow, value, "->", Theme.key_windowBackgroundWhiteGrayText2, resourcesProvider));
+            valueTextView.setText(LocaleUtils.replaceArrows(getContext(), value, R.drawable.search_arrow));
         } else {
             valueTextView.setText(value);
         }

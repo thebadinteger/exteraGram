@@ -7,60 +7,72 @@ import com.exteragram.messenger.adblock.data.UrlCosmeticResources;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import org.telegram.messenger.DispatchQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/* JADX INFO: loaded from: classes.dex */
 public class AdBlock {
-    private static final DispatchQueue queue = new DispatchQueue("adblock");
-    private static final Object lock = new Object();
-    private static long enginePtr = 0;
-    private static long filterSetPtr = 0;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static volatile long enginePtr = 0;
 
-    public static void initialize() {
-        queue.postRunnable(new Runnable() { 
-            @Override // java.lang.Runnable
-            public final void run() {
-                AdBlock.initializeInner();
-            }
-        });
+    public static boolean isReady() {
+        return enginePtr != 0;
+    }
+
+    public static void build() {
+        List<String> subscriptionFilePaths = SubscriptionsManager.getInstance().getSubscriptionFilePaths();
+        if (subscriptionFilePaths.isEmpty()) {
+            return;
+        }
+        long jCreateFilterSet = NativeAdBlock.createFilterSet(new String[0]);
+        Iterator<String> it = subscriptionFilePaths.iterator();
+        while (it.hasNext()) {
+            NativeAdBlock.addFilters(jCreateFilterSet, it.next());
+        }
+        long jCreateEngine = NativeAdBlock.createEngine(jCreateFilterSet);
+        useResources(jCreateEngine, ScriptletsManager.getInstance().iterScriptlets());
+        swap(jCreateEngine);
     }
 
     public static void destroy() {
-        synchronized (lock) {
-            try {
-                long j = enginePtr;
-                if (j != 0) {
-                    NativeAdBlock.destroyEngine(j);
-                    enginePtr = 0L;
-                }
-                if (filterSetPtr != 0) {
-                    filterSetPtr = 0L;
-                }
-            } catch (Throwable th) {
-                throw th;
-            }
-        }
+        swap(0L);
     }
 
-    public static void reload() {
-        destroy();
-        initialize();
-    }
-
-    private static void initializeInner() {
-        filterSetPtr = NativeAdBlock.createFilterSet(new String[0]);
-        Iterator<String> it = SubscriptionsManager.getInstance().getSubscriptionFilePaths().iterator();
-        while (it.hasNext()) {
-            NativeAdBlock.addFilters(filterSetPtr, it.next());
-        }
-        long jCreateEngine = NativeAdBlock.createEngine(filterSetPtr);
+    public static void applyResources() {
         Collection<ScriptletsManager.Scriptlet> collectionIterScriptlets = ScriptletsManager.getInstance().iterScriptlets();
-        int size = collectionIterScriptlets.size();
+        lock.writeLock().lock();
+        try {
+            if (enginePtr != 0) {
+                useResources(enginePtr, collectionIterScriptlets);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private static void swap(long j) {
+        ReentrantReadWriteLock reentrantReadWriteLock = lock;
+        reentrantReadWriteLock.writeLock().lock();
+        try {
+            long j2 = enginePtr;
+            enginePtr = j;
+            reentrantReadWriteLock.writeLock().unlock();
+            if (j2 != 0) {
+                NativeAdBlock.destroyEngine(j2);
+            }
+        } catch (Throwable th) {
+            lock.writeLock().unlock();
+            throw th;
+        }
+    }
+
+    private static void useResources(long j, Collection<ScriptletsManager.Scriptlet> collection) {
+        int size = collection.size();
         String[] strArr = new String[size];
         String[][] strArr2 = new String[size][];
         String[] strArr3 = new String[size];
         String[] strArr4 = new String[size];
         int i = 0;
-        for (ScriptletsManager.Scriptlet scriptlet : collectionIterScriptlets) {
+        for (ScriptletsManager.Scriptlet scriptlet : collection) {
             strArr[i] = scriptlet.filename;
             List<String> list = scriptlet.aliases;
             strArr2[i] = list != null ? (String[]) list.toArray(new String[0]) : new String[0];
@@ -68,31 +80,33 @@ public class AdBlock {
             strArr4[i] = scriptlet.content;
             i++;
         }
-        NativeAdBlock.useResources(jCreateEngine, strArr, strArr2, strArr3, strArr4);
-        enginePtr = jCreateEngine;
+        NativeAdBlock.useResources(j, strArr, strArr2, strArr3, strArr4);
     }
 
     public static BlockResult getBlockResult(String str, String str2, String str3) {
-        long j = enginePtr;
-        if (j == 0) {
-            return null;
+        lock.readLock().lock();
+        try {
+            return enginePtr != 0 ? NativeAdBlock.shouldBlock(enginePtr, str, str2, str3) : null;
+        } finally {
+            lock.readLock().unlock();
         }
-        return NativeAdBlock.shouldBlock(j, str, str2, str3);
     }
 
     public static UrlCosmeticResources getCosmeticResources(String str) {
-        long j = enginePtr;
-        if (j == 0) {
-            return null;
+        lock.writeLock().lock();
+        try {
+            return enginePtr != 0 ? NativeAdBlock.getCosmeticResources(enginePtr, str) : null;
+        } finally {
+            lock.writeLock().unlock();
         }
-        return NativeAdBlock.getCosmeticResources(j, str);
     }
 
     public static String[] getHiddenSelectors(String[] strArr, String[] strArr2, String[] strArr3) {
-        long j = enginePtr;
-        if (j == 0) {
-            return null;
+        lock.writeLock().lock();
+        try {
+            return enginePtr != 0 ? NativeAdBlock.getHiddenSelectors(enginePtr, strArr, strArr2, strArr3) : null;
+        } finally {
+            lock.writeLock().unlock();
         }
-        return NativeAdBlock.getHiddenSelectors(j, strArr, strArr2, strArr3);
     }
 }

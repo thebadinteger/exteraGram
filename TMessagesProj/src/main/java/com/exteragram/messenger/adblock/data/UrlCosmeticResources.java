@@ -1,5 +1,6 @@
 package com.exteragram.messenger.adblock.data;
 
+/* JADX INFO: loaded from: classes4.dex */
 public class UrlCosmeticResources {
     private final String[] exceptions;
     private final boolean genericHide;

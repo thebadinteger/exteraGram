@@ -1,59 +1,73 @@
 package com.exteragram.messenger.adblock;
 
 import android.text.TextUtils;
+import android.util.Base64;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebResourceRequest;
-import com.exteragram.messenger.ExteraConfig;
+import android.webkit.WebResourceResponse;
 import com.exteragram.messenger.adblock.data.BlockResult;
 import com.exteragram.messenger.adblock.data.UrlCosmeticResources;
 import com.exteragram.messenger.adblock.interop.AdBlock;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.google.android.gms.cast.MediaError;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import org.telegram.messenger.FileLog;
 
+/* JADX INFO: loaded from: classes4.dex */
 public abstract class AdBlockClient {
+    private static final IOException BLOCKED_EXCEPTION = new IOException("Blocked by filter") { // from class: com.exteragram.messenger.adblock.AdBlockClient.1
+        @Override // java.lang.Throwable
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
+    };
+
     public static CosmeticHide getCosmeticHide(String str) {
         UrlCosmeticResources cosmeticResources = AdBlock.getCosmeticResources(str);
         if (cosmeticResources == null) {
-            FileLog.e("err cosmetic: " + str);
             return null;
         }
-        FileLog.d("hideSelectors: " + Arrays.toString(cosmeticResources.getHideSelectors()));
-        FileLog.d("proceduralActions: " + Arrays.toString(cosmeticResources.getProceduralActions()));
-        FileLog.d("exceptions: " + Arrays.toString(cosmeticResources.getExceptions()));
-        FileLog.d("injectedScript: " + cosmeticResources.getInjectedScript() + " genericHide: " + cosmeticResources.isGenericHide());
-        return new CosmeticHide(createHideScript(cosmeticResources.getHideSelectors()), cosmeticResources.getInjectedScript(), cosmeticResources.getExceptions(), cosmeticResources.isGenericHide());
+        return new CosmeticHide(str, createHideCss(cosmeticResources.getHideSelectors()), cosmeticResources.getInjectedScript(), cosmeticResources.getExceptions(), cosmeticResources.isGenericHide());
     }
 
-    public static String getCosmeticHideContinuous(CosmeticHide cosmeticHide, Set<String> set, String str) {
-        String[] hiddenSelectors;
-        ClassesAndIds classesAndIds = (ClassesAndIds) ExteraConfig.getGSON().fromJson(str, ClassesAndIds.class);
-        if (classesAndIds == null) {
+    public static String getHiddenSelectorsCss(CosmeticHide cosmeticHide, String[] strArr, String[] strArr2) {
+        if (strArr.length == 0 && strArr2.length == 0) {
             return null;
         }
-        String[] classes = classesAndIds.getClasses();
-        String[] ids = classesAndIds.getIds();
-        if ((classes.length == 0 && ids.length == 0) || (hiddenSelectors = AdBlock.getHiddenSelectors(classes, ids, cosmeticHide.exceptions)) == null || hiddenSelectors.length == 0) {
-            return null;
-        }
-        ArrayList arrayList = new ArrayList();
-        for (String str2 : hiddenSelectors) {
-            if (!set.contains(str2)) {
-                arrayList.add(str2);
-                set.add(str2);
-            }
-        }
-        if (arrayList.isEmpty()) {
-            return null;
-        }
-        return createHideScript((String[]) arrayList.toArray(new String[0]));
+        return createHideCss(AdBlock.getHiddenSelectors(strArr, strArr2, cosmeticHide.getExceptions()));
     }
 
     public static BlockResult isAdRequest(WebResourceRequest webResourceRequest, String str) {
         return AdBlock.getBlockResult(webResourceRequest.getUrl().toString(), str, getRequestType(webResourceRequest, str));
+    }
+
+    public static WebResourceResponse createBlockedResponse(String str, BlockResult blockResult) {
+        String redirect = blockResult.getRedirect();
+        if (redirect != null && redirect.startsWith("data:")) {
+            int iIndexOf = redirect.indexOf(59);
+            int iIndexOf2 = redirect.indexOf(44);
+            if (iIndexOf > 5 && iIndexOf2 > iIndexOf) {
+                try {
+                    String strSubstring = redirect.substring(5, iIndexOf);
+                    byte[] bArrDecode = Base64.decode(redirect.substring(iIndexOf2 + 1), 0);
+                    HashMap map = new HashMap();
+                    map.put("Content-Type", strSubstring);
+                    map.put("Access-Control-Allow-Credentials", "true");
+                    map.put("Access-Control-Allow-Headers", "Cache-Control");
+                    map.put("Access-Control-Allow-Origin", "*");
+                    return new WebResourceResponse(strSubstring, null, 200, "OK", map, new ByteArrayInputStream(bArrDecode));
+                } catch (IllegalArgumentException unused) {
+                }
+            }
+        }
+        if ("sub_frame".equals(str)) {
+            return new WebResourceResponse("text/html", "utf-8", MediaError.DetailedErrorCode.SEGMENT_UNKNOWN, "Internal Server Error", null, null);
+        }
+        return new WebResourceResponse("text/plain", "utf-8", new BlockedInputStream());
     }
 
     public static String getRequestType(WebResourceRequest webResourceRequest, String str) {
@@ -71,6 +85,10 @@ public abstract class AdBlockClient {
         if (requestHeaders != null && "XMLHttpRequest".equals(requestHeaders.get("X-Requested-With"))) {
             return "xhr";
         }
+        String strTrim = requestHeaders != null ? requestHeaders.get("Accept") : null;
+        if (!webResourceRequest.isForMainFrame() && strTrim != null && strTrim.startsWith("text/html")) {
+            return "sub_frame";
+        }
         String requestExtension = getRequestExtension(string);
         if ("js".equals(requestExtension)) {
             return "script";
@@ -87,7 +105,6 @@ public abstract class AdBlockClient {
                 return getRequestTypeFromMime(requestMime);
             }
         }
-        String strTrim = requestHeaders != null ? requestHeaders.get("Accept") : null;
         if (TextUtils.isEmpty(strTrim) || "*/*".equals(strTrim)) {
             return "other";
         }
@@ -154,11 +171,35 @@ public abstract class AdBlockClient {
         return str.startsWith("font/") ? "font" : "other";
     }
 
-    private static String createHideScript(String[] strArr) {
-        if (strArr == null || strArr.length == 0) {
-            return null;
+    private static String createHideCss(String[] strArr) {
+        if (strArr != null && strArr.length != 0) {
+            StringBuilder sb = new StringBuilder();
+            for (String str : strArr) {
+                if (!TextUtils.isEmpty(str) && str.indexOf(123) < 0 && str.indexOf(125) < 0) {
+                    sb.append(str);
+                    sb.append("{display:none!important}\n");
+                }
+            }
+            if (sb.length() > 0) {
+                return sb.toString();
+            }
         }
-        return "(function() {var parent = document.getElementsByTagName('head').item(0);var style = document.createElement('style');style.type = 'text/css';style.innerHTML = window.atob('" + android.util.Base64.encodeToString((android.text.TextUtils.join(",", strArr) + "{display: none !important;}").getBytes(), android.util.Base64.NO_WRAP) + "');parent.appendChild(style)})()";
+        return null;
+    }
+
+    public static class BlockedInputStream extends InputStream {
+        private BlockedInputStream() {
+        }
+
+        @Override // java.io.InputStream
+        public int available() throws IOException {
+            throw AdBlockClient.BLOCKED_EXCEPTION;
+        }
+
+        @Override // java.io.InputStream
+        public int read() throws IOException {
+            throw AdBlockClient.BLOCKED_EXCEPTION;
+        }
     }
 
     public static class CosmeticHide {
@@ -166,12 +207,18 @@ public abstract class AdBlockClient {
         private final boolean genericHide;
         private final String hideCss;
         private final String injectedScript;
+        private final String url;
 
-        public CosmeticHide(String str, String str2, String[] strArr, boolean z) {
-            this.hideCss = str;
-            this.injectedScript = str2;
+        public CosmeticHide(String str, String str2, String str3, String[] strArr, boolean z) {
+            this.url = str;
+            this.hideCss = str2;
+            this.injectedScript = str3;
             this.exceptions = strArr;
             this.genericHide = z;
+        }
+
+        public String getUrl() {
+            return this.url;
         }
 
         public String getHideCss() {
@@ -182,26 +229,12 @@ public abstract class AdBlockClient {
             return this.injectedScript;
         }
 
+        public String[] getExceptions() {
+            return this.exceptions;
+        }
+
         public boolean isGenericHide() {
             return this.genericHide;
-        }
-    }
-
-    public static class ClassesAndIds {
-        private final String[] classes;
-        private final String[] ids;
-
-        public ClassesAndIds(String[] strArr, String[] strArr2) {
-            this.classes = strArr;
-            this.ids = strArr2;
-        }
-
-        public String[] getClasses() {
-            return this.classes;
-        }
-
-        public String[] getIds() {
-            return this.ids;
         }
     }
 }

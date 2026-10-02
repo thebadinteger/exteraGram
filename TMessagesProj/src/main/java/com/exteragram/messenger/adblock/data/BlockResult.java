@@ -1,5 +1,6 @@
 package com.exteragram.messenger.adblock.data;
 
+/* JADX INFO: loaded from: classes4.dex */
 public class BlockResult {
     private final String exception;
     private final String filter;

@@ -1,16 +1,20 @@
 package com.exteragram.messenger.utils;
 
+import android.text.SpannableString;
 import android.text.TextUtils;
+import com.exteragram.messenger.components.PreformattedScrollView;
+import com.exteragram.messenger.plugins.PluginsConstants;
 import com.google.android.gms.cast.HlsSegmentFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import okhttp3.internal.url._UrlKt;
+import org.telegram.messenger.CodeHighlighting;
+import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.MessageObject;
-import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_iv;
 
+/* JADX INFO: loaded from: classes4.dex */
 public abstract class MarkdownUtils {
     private static final String[] MARKDOWN_TEXT_EXTENSIONS = {"txt", "text"};
     private static final String[] MARKDOWN_MIME_PREFIXES = {"text/plain", "text/x-diff", "text/x-patch", "text/csv", "text/xml", "text/yaml", "text/x-yaml", "text/css", "text/javascript", "application/json", "application/ld+json", "application/json5", "application/xml", "application/yaml", "application/x-yaml", "application/javascript", "application/x-javascript", "application/x-sh"};
@@ -37,7 +41,7 @@ public abstract class MarkdownUtils {
         addLanguage("kotlin", "kt", "kts");
         addLanguage("gradle", "gradle");
         addLanguage("groovy", "groovy");
-        addLanguage("python", "py", "pyw", "plugin");
+        addLanguage(PluginsConstants.PYTHON, "py", "pyw", "plugin");
         addLanguage("bash", "sh", "bash", "zsh", "fish", "shell");
         addLanguage("powershell", "ps1", "psm1", "psd1");
         addLanguage("batch", "bat", "cmd");
@@ -78,11 +82,19 @@ public abstract class MarkdownUtils {
         addFilename("ini", ".editorconfig", ".env");
     }
 
-    public static boolean isExteraMarkdown(MessageObject messageObject) {
+    public static boolean isTheme(MessageObject messageObject) {
         if (messageObject == null) {
             return false;
         }
-        return isExteraMarkdownExtension(messageObject.getExtension()) || isExteraMarkdownMime(messageObject.getMimeType()) || !TextUtils.isEmpty(getPreformattedLanguage(getDocumentFileName(messageObject.getDocument()), messageObject.getExtension(), messageObject.getMimeType()));
+        String documentFileName = FileLoader.getDocumentFileName(messageObject.getDocument());
+        return !TextUtils.isEmpty(documentFileName) && documentFileName.toLowerCase(Locale.ROOT).endsWith("attheme");
+    }
+
+    public static boolean isExteraMarkdown(MessageObject messageObject) {
+        if (messageObject == null || isTheme(messageObject)) {
+            return false;
+        }
+        return isExteraMarkdownExtension(messageObject.getExtension()) || isExteraMarkdownMime(messageObject.getMimeType()) || !TextUtils.isEmpty(getPreformattedLanguage(FileLoader.getDocumentFileName(messageObject.getDocument()), messageObject.getExtension(), messageObject.getMimeType()));
     }
 
     public static boolean isExteraMarkdownExtension(String str) {
@@ -103,23 +115,6 @@ public abstract class MarkdownUtils {
             }
         }
         return false;
-    }
-
-    public static String getDocumentFileName(TLRPC.Document document) {
-        ArrayList<TLRPC.DocumentAttribute> arrayList;
-        if (document != null && (arrayList = document.attributes) != null) {
-            int size = arrayList.size();
-            int i = 0;
-            while (i < size) {
-                TLRPC.DocumentAttribute documentAttribute = arrayList.get(i);
-                i++;
-                TLRPC.DocumentAttribute documentAttribute2 = documentAttribute;
-                if (documentAttribute2 instanceof TLRPC.TL_documentAttributeFilename) {
-                    return documentAttribute2.file_name;
-                }
-            }
-        }
-        return null;
     }
 
     public static String getPreformattedLanguage(String str, String str2, String str3) {
@@ -182,17 +177,72 @@ public abstract class MarkdownUtils {
             list.add(pageblockpreformatted);
             return;
         }
+        if (str2 == null) {
+            str2 = _UrlKt.FRAGMENT_ENCODE_SET;
+        }
+        HighlightSource highlightSource = new HighlightSource(str, str2);
         int i2 = 0;
         while (i2 < str.length()) {
             int iMin = Math.min(str.length(), i2 + iMax);
             if (iMin < str.length() && (iLastIndexOf = str.lastIndexOf(10, iMin - 1)) > i2) {
                 iMin = iLastIndexOf + 1;
             }
-            TL_iv.pageBlockPreformatted pageblockpreformatted2 = new TL_iv.pageBlockPreformatted();
-            pageblockpreformatted2.text = plain(str.substring(i2, iMin));
-            pageblockpreformatted2.language = str2 == null ? _UrlKt.FRAGMENT_ENCODE_SET : str2;
-            list.add(pageblockpreformatted2);
+            list.add(new PreformattedChunk(highlightSource, i2, iMin));
             i2 = iMin;
+        }
+    }
+
+    public static final class PreformattedChunk extends TL_iv.pageBlockPreformatted {
+        private final int end;
+        private CharSequence highlightedText;
+        public final boolean joinsNext;
+        public final boolean joinsPrevious;
+        private final String plainText;
+        public final PreformattedScrollView.Group scrollGroup;
+        private final HighlightSource source;
+        private final int start;
+
+        private PreformattedChunk(HighlightSource highlightSource, int i, int i2) {
+            this.source = highlightSource;
+            this.start = i;
+            this.end = i2;
+            String strSubstring = highlightSource.text.substring(i, i2);
+            this.plainText = strSubstring;
+            this.joinsPrevious = i > 0;
+            this.joinsNext = i2 < highlightSource.text.length();
+            this.scrollGroup = highlightSource.scrollGroup;
+            this.text = MarkdownUtils.plain(strSubstring);
+            this.language = highlightSource.language;
+        }
+
+        public CharSequence getHighlightedText() {
+            if (this.highlightedText == null) {
+                SpannableString highlighted = this.source.getHighlighted();
+                if ((highlighted instanceof CodeHighlighting.LockedSpannableString) && !((CodeHighlighting.LockedSpannableString) highlighted).ready) {
+                    return this.plainText;
+                }
+                this.highlightedText = highlighted.subSequence(this.start, this.end);
+            }
+            return this.highlightedText;
+        }
+    }
+
+    public static final class HighlightSource {
+        private SpannableString highlighted;
+        final String language;
+        final PreformattedScrollView.Group scrollGroup = new PreformattedScrollView.Group();
+        final String text;
+
+        public HighlightSource(String str, String str2) {
+            this.text = str;
+            this.language = str2;
+        }
+
+        public SpannableString getHighlighted() {
+            if (this.highlighted == null) {
+                this.highlighted = CodeHighlighting.getHighlighted(this.text, this.language);
+            }
+            return this.highlighted;
         }
     }
 
@@ -258,7 +308,8 @@ public abstract class MarkdownUtils {
         return strTrim.toLowerCase(Locale.ROOT);
     }
 
-    private static TL_iv.RichText plain(String str) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public static TL_iv.RichText plain(String str) {
         TL_iv.textPlain textplain = new TL_iv.textPlain();
         if (str == null) {
             str = _UrlKt.FRAGMENT_ENCODE_SET;
