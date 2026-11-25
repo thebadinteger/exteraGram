@@ -167,26 +167,27 @@ public class BitmapsCache {
     }
 
     public void createCache() {
+        RandomAccessFile randomAccessFile = null;
         try {
             if (file.exists()) {
-                RandomAccessFile randomAccessFile = null;
+                RandomAccessFile existingFile = null;
                 try {
-                    randomAccessFile = new RandomAccessFile(file, "r");
-                    cacheCreated = randomAccessFile.readBoolean();
+                    existingFile = new RandomAccessFile(file, "r");
+                    cacheCreated = existingFile.readBoolean();
                     if (cacheCreated) {
                         frameOffsets.clear();
-                        randomAccessFile.seek(randomAccessFile.readInt());
-                        int count = randomAccessFile.readInt();
+                        existingFile.seek(existingFile.readInt());
+                        int count = existingFile.readInt();
                         if (count > 10_000) {
                             count = 0;
                         }
                         if (count > 0) {
-                            fillFrames(randomAccessFile, count);
-                            randomAccessFile.seek(0);
-                            if (cachedFile != randomAccessFile) {
+                            fillFrames(existingFile, count);
+                            existingFile.seek(0);
+                            if (cachedFile != existingFile) {
                                 closeCachedFile();
                             }
-                            cachedFile = randomAccessFile;
+                            cachedFile = existingFile;
                             fileExist = true;
                             checked = true;
                             return;
@@ -206,9 +207,9 @@ public class BitmapsCache {
 
                     }
                 } finally {
-                    if (cachedFile != randomAccessFile && randomAccessFile != null) {
+                    if (cachedFile != existingFile && existingFile != null) {
                         try {
-                            randomAccessFile.close();
+                            existingFile.close();
                         } catch (Throwable e2) {
 
                         }
@@ -216,7 +217,7 @@ public class BitmapsCache {
                 }
             }
 
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            randomAccessFile = new RandomAccessFile(file, "rw");
 
             if (sharedTools == null) {
                 sharedTools = new CacheGeneratorSharedTools();
@@ -259,6 +260,14 @@ public class BitmapsCache {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
+                        }
+                        if (bitmap[i] != null) {
+                            try {
+                                bitmap[i].recycle();
+                            } catch (Exception e) {
+
+                            }
+                            bitmap[i] = null;
                         }
                     }
                     randomAccessFile.close();
@@ -365,6 +374,13 @@ public class BitmapsCache {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            if (randomAccessFile != null) {
+                try {
+                    randomAccessFile.close();
+                } catch (Throwable ignore) {
+
+                }
+            }
             source.releaseForGenerateCache();
         }
     }
@@ -626,7 +642,7 @@ public class BitmapsCache {
             }
             lastSize = size;
             for (int i = 0; i < N; i++) {
-                if (recreateBitmaps || bitmap[i] == null) {
+                if (recreateBitmaps || bitmap[i] == null || bitmap[i].isRecycled()) {
                     if (bitmap[i] != null) {
                         Bitmap bitmapToRecycle = bitmap[i];
                         Utilities.globalQueue.postRunnable(() -> {
@@ -657,7 +673,7 @@ public class BitmapsCache {
                 bitmap[i] = null;
                 byteArrayOutputStream[i] = null;
             }
-            if (!bitmapsToRecycle.isEmpty()) {
+            if (bitmapsToRecycle != null && !bitmapsToRecycle.isEmpty()) {
                 ArrayList<Bitmap> finalBitmapsToRecycle = bitmapsToRecycle;
                 Utilities.globalQueue.postRunnable(() -> {
                     for (Bitmap bitmap : finalBitmapsToRecycle) {

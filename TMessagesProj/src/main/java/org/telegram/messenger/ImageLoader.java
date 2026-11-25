@@ -138,8 +138,7 @@ public class ImageLoader {
     private HashMap<String, Integer> forceLoadingImages = new HashMap<>();
     private static ThreadLocal<byte[]> bytesLocal = new ThreadLocal<>();
     private static ThreadLocal<byte[]> bytesThumbLocal = new ThreadLocal<>();
-    private static byte[] header = new byte[12];
-    private static byte[] headerThumb = new byte[12];
+    private static final int MAX_REUSABLE_BYTE_ARRAY_SIZE = 16 * 1024 * 1024;
     private int currentHttpTasksCount = 0;
     private int currentArtworkTasksCount = 0;
     private boolean canForce8888;
@@ -174,11 +173,52 @@ public class ImageLoader {
         return false;
     }
 
+    private static Bitmap getVideoFrame(File file) {
+        AnimatedFileDrawable fileDrawable = new AnimatedFileDrawable(file, true, 0, 0, null, null, null, 0, 0, true, null);
+        try {
+            return fileDrawable.getFrameAtTime(0, true);
+        } finally {
+            fileDrawable.recycle();
+        }
+    }
+
+    private static byte[] getByteArray(ThreadLocal<byte[]> local, int len) {
+        if (len <= MAX_REUSABLE_BYTE_ARRAY_SIZE) {
+            byte[] data = local.get();
+            if (data != null && data.length > MAX_REUSABLE_BYTE_ARRAY_SIZE) {
+                local.remove();
+                data = null;
+            }
+            if (data == null || data.length < len) {
+                data = new byte[len];
+                local.set(data);
+            }
+            return data;
+        }
+        local.remove();
+        return new byte[len];
+    }
+
+    private static final android.util.LruCache<String, Bitmap> strippedBitmapCache = new android.util.LruCache<>(64);
+
     public static Drawable createStripedBitmap(ArrayList<TLRPC.PhotoSize> thumbs) {
         for (int i = 0; i < thumbs.size(); i++) {
             if (thumbs.get(i) instanceof TLRPC.TL_photoStrippedSize) {
                 TLRPC.TL_photoStrippedSize size = (TLRPC.TL_photoStrippedSize) thumbs.get(i);
-                return new BitmapDrawable(ApplicationLoader.applicationContext.getResources(), getStrippedPhotoBitmap(size.bytes, "b"));
+                String key = Utilities.bytesToHex(size.bytes);
+                Bitmap cached = strippedBitmapCache.get(key);
+                if (cached != null && !cached.isRecycled()) {
+                    return new BitmapDrawable(ApplicationLoader.applicationContext.getResources(), cached);
+                }
+                if (cached != null) {
+                    strippedBitmapCache.remove(key);
+                }
+                Bitmap bitmap = getStrippedPhotoBitmap(size.bytes, "b");
+                if (bitmap == null) {
+                    return null;
+                }
+                strippedBitmapCache.put(key, bitmap);
+                return new BitmapDrawable(ApplicationLoader.applicationContext.getResources(), bitmap);
             }
         }
         return null;
@@ -856,6 +896,8 @@ public class ImageLoader {
     private class CacheOutTask implements Runnable {
         private Thread runningThread;
         private final Object sync = new Object();
+        private byte[] header = new byte[12];
+        private byte[] headerThumb = new byte[12];
 
         private CacheImage cacheImage;
         private boolean isCancelled;
@@ -1260,12 +1302,7 @@ public class ImageLoader {
                                 if (secureDocumentKey != null) {
                                     RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
                                     int len = (int) f.length();
-                                    byte[] bytes = bytesLocal.get();
-                                    byte[] data = bytes != null && bytes.length >= len ? bytes : null;
-                                    if (data == null) {
-                                        bytes = data = new byte[len];
-                                        bytesLocal.set(bytes);
-                                    }
+                                    byte[] data = getByteArray(bytesLocal, len);
                                     f.readFully(data, 0, len);
                                     f.close();
                                     EncryptedFileInputStream.decryptBytesWithKeyFile(data, 0, len, secureDocumentKey);
@@ -1305,9 +1342,9 @@ public class ImageLoader {
                             opts.inJustDecodeBounds = false;
                             if (scaleFactor > 1.0f && (photoW > w_filter || photoH > h_filter)) {
                                 int sample = 1;
-                                do {
+                                while (sample * 2 <= scaleFactor) {
                                     sample *= 2;
-                                } while (sample * 2 < scaleFactor);
+                                }
                                 opts.inSampleSize = sample;
                             } else {
                                 opts.inSampleSize = (int) scaleFactor;
@@ -1358,12 +1395,7 @@ public class ImageLoader {
                             RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
                             int len = (int) f.length();
                             int offset = 0;
-                            byte[] bytesThumb = bytesThumbLocal.get();
-                            byte[] data = bytesThumb != null && bytesThumb.length >= len ? bytesThumb : null;
-                            if (data == null) {
-                                bytesThumb = data = new byte[len];
-                                bytesThumbLocal.set(bytesThumb);
-                            }
+                            byte[] data = getByteArray(bytesThumbLocal, len);
                             f.readFully(data, 0, len);
                             f.close();
                             boolean error = false;
@@ -1444,7 +1476,9 @@ public class ImageLoader {
                             }
                         }
                     } catch (Throwable e) {
-                        FileLog.e(e);
+                        if (!(e instanceof FileNotFoundException)) {
+                            FileLog.e(e);
+                        }
                     }
                 } else {
                     try {
@@ -1465,17 +1499,18 @@ public class ImageLoader {
                         if (mediaId != null && mediaThumbPath == null) {
                             if (mediaIsVideo) {
                                 if (mediaId == 0) {
-                                    AnimatedFileDrawable fileDrawable = new AnimatedFileDrawable(cacheFileFinal, true, 0, 0, null, null, null, 0, 0, true, null);
-                                    image = fileDrawable.getFrameAtTime(0, true);
-                                    fileDrawable.recycle();
+                                    image = getVideoFrame(cacheFileFinal);
                                 } else {
                                     image = MediaStore.Video.Thumbnails.getThumbnail(ApplicationLoader.applicationContext.getContentResolver(), mediaId, MediaStore.Video.Thumbnails.MINI_KIND, opts);
+                                    if (image == null) {
+                                        image = getVideoFrame(cacheFileFinal);
+                                    }
                                 }
                             } else {
                                 image = MediaStore.Images.Thumbnails.getThumbnail(ApplicationLoader.applicationContext.getContentResolver(), mediaId, MediaStore.Images.Thumbnails.MINI_KIND, opts);
                             }
                         }
-                        if (image == null) {
+                        if (!mediaIsVideo && image == null) {
                             if (image == null) {
                                 FileInputStream is;
                                 if (secureDocumentKey != null) {
@@ -1509,14 +1544,7 @@ public class ImageLoader {
                                     RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
                                     int len = (int) f.length();
                                     int offset = 0;
-                                    byte[] bytes = bytesLocal.get();
-                                    byte[] data = bytes != null && bytes.length >= len ? bytes : null;
-                                    if (data == null) {
-                                        bytes = data = new byte[len];
-                                        if (len < 1024 * 1024 * 50) { // 50 mb
-                                            bytesLocal.set(bytes);
-                                        }
-                                    }
+                                    byte[] data = getByteArray(bytesLocal, len);
                                     f.readFully(data, 0, len);
                                     f.close();
                                     boolean error = false;
@@ -1598,7 +1626,9 @@ public class ImageLoader {
                             }
                         }
                     } catch (Throwable e) {
-                        FileLog.e(e);
+                        if (!(e instanceof FileNotFoundException)) {
+                            FileLog.e(e);
+                        }
                     }
                 }
                 Thread.interrupted();
@@ -1812,12 +1842,7 @@ public class ImageLoader {
 
         try {
             int len = photoBytes.length - 3 + Bitmaps.header.length + Bitmaps.footer.length;
-            byte[] bytes = bytesLocal.get();
-            byte[] data = bytes != null && bytes.length >= len ? bytes : null;
-            if (data == null) {
-                bytes = data = new byte[len];
-                bytesLocal.set(bytes);
-            }
+            byte[] data = getByteArray(bytesLocal, len);
             System.arraycopy(Bitmaps.header, 0, data, 0, Bitmaps.header.length);
             System.arraycopy(photoBytes, 3, data, Bitmaps.header.length, photoBytes.length - 3);
             System.arraycopy(Bitmaps.footer, 0, data, Bitmaps.header.length + photoBytes.length - 3, Bitmaps.footer.length);
@@ -2086,17 +2111,21 @@ public class ImageLoader {
     public ImageLoader() {
         thumbGeneratingQueue.setPriority(Thread.MIN_PRIORITY);
 
-        int memoryClass = ((ActivityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
+        final ActivityManager activityManager = (ActivityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE);
+        // the app declares largeHeap, so getMemoryClass underreports the real budget
+        int memoryClass = (ApplicationLoader.applicationContext.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_LARGE_HEAP) != 0
+            ? activityManager.getLargeMemoryClass()
+            : activityManager.getMemoryClass();
         int maxSize;
         if (canForce8888 = memoryClass >= 192) {
-            maxSize = 30;
+            maxSize = 48;
         } else {
-            maxSize = 15;
+            maxSize = 28;
         }
-        int cacheSize = DEBUG_MODE ? 1 : Math.min(maxSize, memoryClass / 7) * 1024 * 1024;
+        int cacheSize = DEBUG_MODE ? 1 : Math.min(maxSize, memoryClass / 8) * 1024 * 1024;
 
-        int commonCacheSize =  DEBUG_MODE ? 1 : (int) (cacheSize * 0.8f);
-        int smallImagesCacheSize =   DEBUG_MODE ? 1 : (int) (cacheSize * 0.2f);
+        int commonCacheSize =  DEBUG_MODE ? 1 : (int) (cacheSize * 0.7f);
+        int smallImagesCacheSize =   DEBUG_MODE ? 1 : (int) (cacheSize * 0.3f);
 
         memCache = new LruCache<BitmapDrawable>(commonCacheSize) {
             @Override
@@ -2800,6 +2829,7 @@ public class ImageLoader {
         smallImagesMemCache.evictAll();
         memCache.evictAll();
         lottieMemCache.evictAll();
+        strippedBitmapCache.evictAll();
     }
 
     private void removeFromWaitingForThumb(int TAG, ImageReceiver imageReceiver) {
@@ -2852,12 +2882,18 @@ public class ImageLoader {
         }
         WebInstantView.cancelLoadPhoto(imageReceiver);
         ArrayList<Runnable> runnables = imageReceiver.getLoadingOperations();
+        final ArrayList<Runnable> runnablesCopy;
         synchronized (runnables) {
             if (!runnables.isEmpty()) {
-                for (int i = 0; i < runnables.size(); i++) {
-                    imageLoadQueue.cancelRunnable(runnables.get(i));
-                }
+                runnablesCopy = new ArrayList<>(runnables);
                 runnables.clear();
+            } else {
+                runnablesCopy = null;
+            }
+        }
+        if (runnablesCopy != null) {
+            for (int i = 0; i < runnablesCopy.size(); i++) {
+                imageLoadQueue.cancelRunnable(runnablesCopy.get(i));
             }
         }
         imageReceiver.addLoadingImageRunnable(null);
@@ -4301,7 +4337,13 @@ public class ImageLoader {
         } catch (Throwable e) {
             FileLog.e(e);
             ImageLoader.getInstance().clearMemory();
-            return null;
+            System.gc();
+            try {
+                return scaleAndSaveImageInternal(photoSize, bitmap, compressFormat, progressive, w, h, photoW, photoH, scaleFactor, quality, cache, scaleAnyway, forceCacheDir);
+            } catch (Throwable e2) {
+                FileLog.e(e2);
+                return null;
+            }
         }
     }
 
@@ -4612,17 +4654,21 @@ public class ImageLoader {
                 int h = photoSize.h;
                 int w = photoSize.w;
                 PointF point = ChatMessageCell.getMessageSize(w, h);
-                String key = String.format(Locale.US, "%d_%d@%d_%d_b", photoSize.location.volume_id, photoSize.location.local_id, (int) (point.x / AndroidUtilities.density), (int) (point.y / AndroidUtilities.density));
-                if (!getInstance().isInMemCache(key, false)) {
-                    Bitmap bitmap = ImageLoader.loadBitmap(file.getPath(), null, (int) (point.x / AndroidUtilities.density), (int) (point.y / AndroidUtilities.density), false);
-                    if (bitmap != null) {
-                        Utilities.blurBitmap(bitmap, 3);
-                        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, (int) (point.x / AndroidUtilities.density), (int) (point.y / AndroidUtilities.density), true);
-                        if (scaledBitmap != bitmap) {
-                            bitmap.recycle();
-                            bitmap = scaledBitmap;
+                int targetWidth = (int) (point.x / AndroidUtilities.density);
+                int targetHeight = (int) (point.y / AndroidUtilities.density);
+                if (targetWidth > 0 && targetHeight > 0) {
+                    String key = String.format(Locale.US, "%d_%d@%d_%d_b", photoSize.location.volume_id, photoSize.location.local_id, targetWidth, targetHeight);
+                    if (!getInstance().isInMemCache(key, false)) {
+                        Bitmap bitmap = ImageLoader.loadBitmap(file.getPath(), null, targetWidth, targetHeight, false);
+                        if (bitmap != null) {
+                            Utilities.blurBitmap(bitmap, 3);
+                            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true);
+                            if (scaledBitmap != bitmap) {
+                                bitmap.recycle();
+                                bitmap = scaledBitmap;
+                            }
+                            return new MessageThumb(key, new BitmapDrawable(bitmap));
                         }
-                        return new MessageThumb(key, new BitmapDrawable(bitmap));
                     }
                 }
             }
@@ -4648,17 +4694,21 @@ public class ImageLoader {
                     }
 
                     PointF point = ChatMessageCell.getMessageSize(w, h);
-                    String key = String.format(Locale.US, "%s_false@%d_%d_b", ImageLocation.getStrippedKey(message, message, size), (int) (point.x / AndroidUtilities.density), (int) (point.y / AndroidUtilities.density));
-                    if (!getInstance().isInMemCache(key, false)) {
-                        Bitmap b = getStrippedPhotoBitmap(size.bytes, null);
-                        if (b != null) {
-                            Utilities.blurBitmap(b, 3);
-                            Bitmap scaledBitmap = Bitmap.createScaledBitmap(b, (int) (point.x / AndroidUtilities.density), (int) (point.y / AndroidUtilities.density), true);
-                            if (scaledBitmap != b) {
-                                b.recycle();
-                                b = scaledBitmap;
+                    int targetWidth = (int) (point.x / AndroidUtilities.density);
+                    int targetHeight = (int) (point.y / AndroidUtilities.density);
+                    if (targetWidth > 0 && targetHeight > 0) {
+                        String key = String.format(Locale.US, "%s_false@%d_%d_b", ImageLocation.getStrippedKey(message, message, size), targetWidth, targetHeight);
+                        if (!getInstance().isInMemCache(key, false)) {
+                            Bitmap b = getStrippedPhotoBitmap(size.bytes, null);
+                            if (b != null) {
+                                Utilities.blurBitmap(b, 3);
+                                Bitmap scaledBitmap = Bitmap.createScaledBitmap(b, targetWidth, targetHeight, true);
+                                if (scaledBitmap != b) {
+                                    b.recycle();
+                                    b = scaledBitmap;
+                                }
+                                return new MessageThumb(key, new BitmapDrawable(b));
                             }
-                            return new MessageThumb(key, new BitmapDrawable(b));
                         }
                     }
                 }

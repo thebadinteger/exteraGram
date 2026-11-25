@@ -1698,9 +1698,18 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             final String fileName = currentPlayingMessageObject.getFileName();
             progressTimer = new Timer();
             progressTimer.schedule(new TimerTask() {
+                private long lastHiddenTick;
+
                 @Override
                 public void run() {
                     synchronized (sync) {
+                        if (videoPlayer == null && ApplicationLoader.mainInterfacePaused && ApplicationLoader.externalInterfacePaused) {
+                            final long now = SystemClock.elapsedRealtime();
+                            if (now - lastHiddenTick < 1000) {
+                                return;
+                            }
+                            lastHiddenTick = now;
+                        }
                         AndroidUtilities.runOnUIThread(() -> {
                             if ((audioPlayer != null || videoPlayer != null) && !isPaused) {
                                 try {
@@ -3115,7 +3124,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         reporter = null;
                     }
                     try {
-                        audioPlayer.releasePlayer(true);
+                        audioPlayer.releasePlayerDeferred(1000);
                     } catch (Exception e) {
                         FileLog.e(e);
                     }

@@ -1162,9 +1162,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     public void onDestroy(boolean force) {
+        removeNotificationObservers();
         if (sharedMediaPreloader != null) {
             sharedMediaPreloader.onDestroy(parentFragment, force);
+            sharedMediaPreloader = null;
         }
+        parentFragment = null;
     }
 
     private void setTypingAnimation(boolean start) {
@@ -1688,13 +1691,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (parentFragment != null) {
-            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.didUpdateConnectionState);
-            NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
-            if (parentFragment.getChatMode() == ChatActivity.MODE_SAVED) {
-                NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.savedMessagesDialogsUpdate);
-            }
-        }
+        removeNotificationObservers();
         if (emojiStatusDrawable != null) {
             emojiStatusDrawable.detach();
         }
@@ -1703,6 +1700,16 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         if (botVerificationDrawable != null) {
             botVerificationDrawable.detach();
+        }
+    }
+
+    private void removeNotificationObservers() {
+        if (parentFragment != null) {
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.didUpdateConnectionState);
+            NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
+            if (parentFragment.getChatMode() == ChatActivity.MODE_SAVED) {
+                NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.savedMessagesDialogsUpdate);
+            }
         }
     }
 

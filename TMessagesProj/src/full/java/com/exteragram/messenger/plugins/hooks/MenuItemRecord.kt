@@ -93,6 +93,11 @@ class MenuItemRecord(
         removed = true
     }
 
+    fun close() {
+        PyObjectUtils.closeSafely(onClickCallback)
+        PyObjectUtils.closeSafely(onLongClickCallback)
+    }
+
     fun executeClick(contextData: Any?) {
         if (removed || !PluginsController.getInstance().isPluginActive(pluginId)) {
             return

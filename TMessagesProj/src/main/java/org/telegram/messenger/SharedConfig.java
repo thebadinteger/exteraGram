@@ -159,6 +159,10 @@ public class SharedConfig {
                 .apply();
     }
 
+    public static boolean photoViewerBlurEnabled() {
+        return photoViewerBlur && LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR);
+    }
+
     private static String goodHevcEncoder;
     private static HashSet<String> hevcEncoderWhitelist = new HashSet<>();
     static {
@@ -1532,12 +1536,18 @@ public class SharedConfig {
         int cpuCount = ConnectionsManager.CPU_COUNT;
         int memoryClass = ((ActivityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MODEL != null) {
-            int hash = Build.SOC_MODEL.toUpperCase().hashCode();
-            for (int i = 0; i < LOW_SOC.length; ++i) {
-                if (LOW_SOC[i] == hash) {
-                    return PERFORMANCE_CLASS_LOW;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                if (Build.SOC_MODEL != null) {
+                    int hash = Build.SOC_MODEL.toUpperCase().hashCode();
+                    for (int i = 0; i < LOW_SOC.length; ++i) {
+                        if (LOW_SOC[i] == hash) {
+                            return PERFORMANCE_CLASS_LOW;
+                        }
+                    }
                 }
+            } catch (NoSuchFieldError ignore) {
+
             }
         }
 

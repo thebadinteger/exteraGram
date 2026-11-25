@@ -806,6 +806,7 @@ class PluginsController private constructor() : PluginsHooks {
             if (existing != null) {
                 menuItemsByMenuType[existing.menuType]?.remove(existing)
                 existing.markRemoved()
+                existing.close()
             }
 
             menuItemsById[record.itemId] = record
@@ -843,6 +844,7 @@ class PluginsController private constructor() : PluginsHooks {
             }
             menuItemsByMenuType[record.menuType]?.remove(record)
             record.markRemoved()
+            record.close()
             FileLog.d("Removed menu item: $itemId for plugin $pluginId")
             notifyMenuItemsUpdated()
             return true

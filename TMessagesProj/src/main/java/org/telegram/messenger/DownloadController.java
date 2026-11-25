@@ -16,10 +16,8 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.util.Pair;
-import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
-import androidx.collection.LongSparseArray;
 
 import org.telegram.SQLite.SQLiteCursor;
 import org.telegram.SQLite.SQLitePreparedStatement;
@@ -35,6 +33,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
 
@@ -71,18 +70,18 @@ public class DownloadController extends BaseController implements NotificationCe
 
     private final HashMap<String, ArrayList<WeakReference<FileDownloadProgressListener>>> loadingFileObservers = new HashMap<>();
     private final HashMap<String, ArrayList<WeakReference<MessageObject>>> loadingFileMessagesObservers = new HashMap<>();
-    private final SparseArray<String> observersByTag = new SparseArray<>();
+    private final ConcurrentHashMap<Integer, String> observersByTag = new ConcurrentHashMap<>();
     private boolean listenerInProgress = false;
     private final ArrayList<Runnable> deferredObserverOperations = new ArrayList<>();
     private int lastTag = 0;
 
     private boolean loadingAutoDownloadConfig;
 
-    private final LongSparseArray<Long> typingTimes = new LongSparseArray<>();
+    private final ConcurrentHashMap<Long, Long> typingTimes = new ConcurrentHashMap<>();
 
     public final ArrayList<MessageObject> downloadingFiles = new ArrayList<>();
     public final ArrayList<MessageObject> recentDownloadingFiles = new ArrayList<>();
-    public final SparseArray<MessageObject> unviewedDownloads = new SparseArray<>();
+    public final ConcurrentHashMap<Integer, MessageObject> unviewedDownloads = new ConcurrentHashMap<>();
 
     public static class Preset {
         public int[] mask = new int[4];
@@ -1262,7 +1261,9 @@ public class DownloadController extends BaseController implements NotificationCe
             messageObjects.add(new WeakReference<>(messageObject));
         }
 
-        observersByTag.put(observer.getObserverTag(), fileName);
+        if (fileName != null) {
+            observersByTag.put(observer.getObserverTag(), fileName);
+        }
     }
 
     public void removeLoadingFileObserver(FileDownloadProgressListener observer) {

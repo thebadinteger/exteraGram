@@ -8,8 +8,8 @@
 # Licensed under the GNU GPL v. 3 or later, with the additional terms
 # in ADDITIONAL_TERMS.md at the root of the repository.
 
-__version__ = "1.4.6.5"
-version = (1, 4, 6, 5)
+__version__ = "1.4.6.6"
+version = (1, 4, 6, 6)
 version_str = __version__
 
 __beta__ = False
@@ -56,6 +56,8 @@ class SafeModeImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     
     @classmethod
     def c(cls): # check state
+        if cls.I and not cls.E:
+            return
         caller_is_plugin = False
         try:
             frame = sys._getframe(1)

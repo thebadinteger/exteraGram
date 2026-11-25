@@ -23,6 +23,7 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Looper;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -655,7 +656,7 @@ public class AnimatedTextView extends View {
 
         private StaticLayout makeLayout(CharSequence textPart, int width) {
             if (width <= 0) {
-                width = Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
+                width = Math.max(1, Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y));
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 return StaticLayout.Builder.obtain(textPart, 0, textPart.length(), textPaint, width)
@@ -1346,6 +1347,11 @@ public class AnimatedTextView extends View {
 
     private boolean first = true;
     public void setText(CharSequence text, boolean animated, boolean moveDown) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            boolean finalAnimated = animated;
+            AndroidUtilities.runOnUIThread(() -> setText(text, finalAnimated, moveDown));
+            return;
+        }
         animated = !first && animated;
         first = false;
         if (animated && !TextUtils.equals(text, drawable.getText())) {

@@ -331,7 +331,7 @@ public class EmojiView extends FrameLayout implements
         }
         allowEmojisForNonPremium = allow;
         if (emojiAdapter != null) {
-            emojiAdapter.notifyDataSetChanged(true);
+            emojiAdapter.notifyDataSetChanged(true, isAttachedToWindow());
         }
     }
 
@@ -2668,7 +2668,7 @@ public class EmojiView extends FrameLayout implements
         pager = new ViewPager(context) {
             @Override
             public boolean onInterceptTouchEvent(MotionEvent ev) {
-                if (ignorePagerScroll) {
+                if (ignorePagerScroll || isFakeDragging()) {
                     return false;
                 }
                 if (getParent() != null) {
@@ -8179,6 +8179,10 @@ public class EmojiView extends FrameLayout implements
         }
 
         public void notifyDataSetChanged(boolean updateEmojipack) {
+            notifyDataSetChanged(updateEmojipack, true);
+        }
+
+        public void notifyDataSetChanged(boolean updateEmojipack, boolean animated) {
             if (frozen) {
                 return;
             }
@@ -8200,6 +8204,10 @@ public class EmojiView extends FrameLayout implements
                 trendingEmojiAdapter.notifyDataSetChanged();
             }
 //            super.notifyDataSetChanged();
+            if (!animated) {
+                super.notifyDataSetChanged();
+                return;
+            }
 
             DiffUtil.calculateDiff(new DiffUtil.Callback() {
                 @Override

@@ -603,6 +603,15 @@ class BasePlugin:
         _sdk_version.Z.c()
         return []
 
+    @staticmethod
+    def _instance_handles(instance, name: str) -> bool:
+        try:
+            fn = getattr(instance, name, None)
+            base = getattr(BasePlugin, name, None)
+            return callable(fn) and getattr(fn, "__func__", None) is not base
+        except Exception:
+            return True
+
     def on_app_event(self, event_type: AppEvent):
         _sdk_version.Z.c()
 

@@ -40,6 +40,8 @@ class HookFilter(
 
     var `object`: Any? = null
 
+    private val conditionVars = ThreadLocal<HashMap<String, Any?>>()
+
     fun execute(param: XC_MethodHook.MethodHookParam, isBefore: Boolean): Boolean {
         try {
             when (typeId) {
@@ -56,20 +58,27 @@ class HookFilter(
                 }
 
                 TYPE_CONDITION -> {
-                    val vars = HashMap<String, Any?>(4)
-                    vars["param"] = param
-                    vars["result"] = if (isBefore) null else param.result
-                    vars["object"] = `object`
-
                     val expression = mvelExpression ?: return false
                     val compiled = getCompiledExpression(expression) ?: return false
-                    val result = MVEL.executeExpression(
-                        compiled,
-                        param.thisObject,
-                        vars,
-                        Boolean::class.java
-                    )
-                    return result ?: false
+                    val vars = conditionVars.get()?.also {
+                        conditionVars.set(null)
+                        it.clear()
+                    } ?: HashMap(4)
+                    try {
+                        vars["param"] = param
+                        vars["result"] = if (isBefore) null else param.result
+                        vars["object"] = `object`
+                        val result = MVEL.executeExpression(
+                            compiled,
+                            param.thisObject,
+                            vars,
+                            Boolean::class.java
+                        )
+                        return result ?: false
+                    } finally {
+                        vars.clear()
+                        conditionVars.set(vars)
+                    }
                 }
 
                 TYPE_ARGUMENT_EQUAL,

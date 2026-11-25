@@ -220,11 +220,18 @@ public class ChatActivityFadeView extends View implements Theme.Colorable {
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
+        if (fadeZoneTop <= 0 && fadeZoneBottom <= 0) {
+            return;
+        }
         if (Theme.isCompactMode(resourcesProvider)) {
             drawCompactFades(canvas);
         } else {
-            fadeDrawableTop.draw(canvas);
-            fadeDrawableBottom.draw(canvas);
+            if (fadeZoneTop > 0 && fadeDrawableTop.getAlpha() > 0) {
+                fadeDrawableTop.draw(canvas);
+            }
+            if (fadeZoneBottom > 0 && fadeDrawableBottom.getAlpha() > 0) {
+                fadeDrawableBottom.draw(canvas);
+            }
         }
         drawOverlay(canvas);
     }

@@ -3859,32 +3859,36 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
 //                req.offset_id = 0;
 //                req.offset_peer = new TLRPC.TL_inputPeerEmpty();
 //            }
-            ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                if (searchString.equals(this.searchString)) {
-                    int oldRowCount = rowCount;
-                    messagesIsLoading = false;
-                    isLoading = false;
-                    if (response instanceof TLRPC.messages_Messages) {
-                        TLRPC.messages_Messages messages = (TLRPC.messages_Messages) response;
-
-                        for (int i = 0; i < messages.messages.size(); i++) {
-                            TLRPC.Message message = messages.messages.get(i);
-                            MessageObject messageObject = new MessageObject(currentAccount, message, false, false);
-                            messageObject.setQuery(searchString);
-                            searchResultMessages.add(messageObject);
-                        }
-                        updateRows();
-                        canLoadMore = searchResultMessages.size() < messages.count && !messages.messages.isEmpty();
-                    } else {
-                        canLoadMore = false;
+            ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
+                final ArrayList<MessageObject> loaded = new ArrayList<>();
+                if (response instanceof TLRPC.messages_Messages) {
+                    for (TLRPC.Message message : ((TLRPC.messages_Messages) response).messages) {
+                        MessageObject messageObject = new MessageObject(currentAccount, message, false, false);
+                        messageObject.setQuery(searchString);
+                        loaded.add(messageObject);
                     }
-
-                    if (rowCount == 0) {
-                        emptyView.showProgress(isLoading, true);
-                    }
-                    itemsEnterAnimator.showItemsAnimated(oldRowCount);
                 }
-            }));
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (searchString.equals(this.searchString)) {
+                        int oldRowCount = rowCount;
+                        messagesIsLoading = false;
+                        isLoading = false;
+                        if (response instanceof TLRPC.messages_Messages) {
+                            TLRPC.messages_Messages messages = (TLRPC.messages_Messages) response;
+                            searchResultMessages.addAll(loaded);
+                            updateRows();
+                            canLoadMore = searchResultMessages.size() < messages.count && !messages.messages.isEmpty();
+                        } else {
+                            canLoadMore = false;
+                        }
+
+                        if (rowCount == 0) {
+                            emptyView.showProgress(isLoading, true);
+                        }
+                        itemsEnterAnimator.showItemsAnimated(oldRowCount);
+                    }
+                });
+            });
         }
 
         private void updateRows() {

@@ -14,6 +14,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 import traceback
 from typing import Any
 
@@ -23,6 +24,9 @@ _settings_cache = {}
 _settings_file_path = None
 _lock = threading.RLock()
 _MISSING = object()
+_dirty = False
+_save_scheduled = False
+_schedule_lock = threading.Lock()
 
 
 def init(plugins_dir_path: str, all_shared_prefs):
@@ -97,6 +101,8 @@ def _save_settings_to_file() -> bool:
 
             os.replace(temp_path, _settings_file_path)
             temp_path = None
+            global _dirty
+            _dirty = False
             return True
         except Exception as e:
             log(f"Error saving plugin settings to JSON: {e}\n{traceback.format_exc()}")
@@ -129,6 +135,7 @@ def _restore_plugin_settings(plugin_id: str, previous_settings):
 
 def set_setting(plugin_id: str, key: str, value: Any):
     _sdk_version.Z.c()
+    global _dirty
     with _lock:
         previous_settings = _settings_cache.get(plugin_id, _MISSING)
         updated_settings = (
@@ -136,8 +143,41 @@ def set_setting(plugin_id: str, key: str, value: Any):
         )
         updated_settings[key] = copy.deepcopy(value)
         _settings_cache[plugin_id] = updated_settings
-        if not _save_settings_to_file():
-            _restore_plugin_settings(plugin_id, previous_settings)
+        _dirty = True
+    _schedule_save()
+
+
+def _schedule_save():
+    global _save_scheduled
+    with _schedule_lock:
+        if _save_scheduled:
+            return
+        _save_scheduled = True
+    threading.Thread(target=_delayed_save, name="plugin-settings-save", daemon=True).start()
+
+
+def _delayed_save():
+    global _save_scheduled
+    time.sleep(0.25)
+    saved = False
+    try:
+        saved = flush()
+    finally:
+        restart = False
+        with _schedule_lock:
+            _save_scheduled = False
+            if saved and _dirty:
+                _save_scheduled = True
+                restart = True
+        if restart:
+            threading.Thread(target=_delayed_save, name="plugin-settings-save", daemon=True).start()
+
+
+def flush():
+    with _lock:
+        if not _dirty or not _settings_file_path:
+            return True
+        return _save_settings_to_file()
 
 
 def clear_settings(plugin_id: str):

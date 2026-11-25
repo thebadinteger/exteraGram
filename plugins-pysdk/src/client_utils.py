@@ -99,18 +99,57 @@ def _resolve_account(account: Optional[int], helper: str) -> int:
 
 
 def _account_instance(account: Optional[int], helper: str):
-    return AccountInstance.getInstance(_resolve_account(account, helper))
+    return _account_part(_resolve_account(account, helper), None)
+
+
+_account_parts = {}
+
+
+def _account_part(account: int, getter: Optional[str]):
+    key = (account, getter)
+    part = _account_parts.get(key)
+    if part is not None:
+        return part
+    instance = _account_parts.get((account, None))
+    if instance is None:
+        instance = AccountInstance.getInstance(account)
+        if instance is None:
+            return None
+        _account_parts[(account, None)] = instance
+    part = instance if getter is None else getattr(instance, getter)()
+    if part is not None:
+        _account_parts[key] = part
+    return part
+
+
+_queue_cache = {}
 
 
 def get_queue_by_name(queue_name: str) -> Optional[DispatchQueue]:
+    cached = _queue_cache.get(queue_name)
+    if cached is not None:
+        return cached
     try:
         field = Utilities.getClass().getField(queue_name)
         field.setAccessible(True)
         queue_instance = field.get(None)
-        return queue_instance if isinstance(queue_instance, DispatchQueue) else None
+        if isinstance(queue_instance, DispatchQueue):
+            _queue_cache[queue_name] = queue_instance
+            return queue_instance
+        return None
     except Exception as e:
         log(f"Error getting queue '{queue_name}': {e}\n{traceback.format_exc()}")
         return None
+
+
+_plugins_controller = None
+
+
+def _get_plugins_controller():
+    global _plugins_controller
+    if _plugins_controller is None:
+        _plugins_controller = PluginsController.getInstance()
+    return _plugins_controller
 
 
 def run_on_queue(fn: callable, queue_name: str = PLUGINS_QUEUE, delay: int = 0):
@@ -118,7 +157,7 @@ def run_on_queue(fn: callable, queue_name: str = PLUGINS_QUEUE, delay: int = 0):
     if queue:
         try:
             call_info, plugin_id = get_plugin_id(fn)
-            controller = PluginsController.getInstance()
+            controller = _get_plugins_controller()
             watchdog = controller.watchdog
             scheduled_account = _hook_account.get()
 
@@ -183,63 +222,69 @@ def get_account_instance(account: Optional[int] = None):
 
 
 def get_messages_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_messages_controller").getMessagesController()
+    return _account_part(_resolve_account(account, "get_messages_controller"), "getMessagesController")
 
 
 def get_contacts_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_contacts_controller").getContactsController()
+    return _account_part(_resolve_account(account, "get_contacts_controller"), "getContactsController")
 
 
 def get_media_data_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_media_data_controller").getMediaDataController()
+    return _account_part(_resolve_account(account, "get_media_data_controller"), "getMediaDataController")
 
 
 def get_connections_manager(account: Optional[int] = None):
-    return _account_instance(account, "get_connections_manager").getConnectionsManager()
+    return _account_part(_resolve_account(account, "get_connections_manager"), "getConnectionsManager")
 
 
 def get_location_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_location_controller").getLocationController()
+    return _account_part(_resolve_account(account, "get_location_controller"), "getLocationController")
 
 
 def get_notifications_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_notifications_controller").getNotificationsController()
+    return _account_part(_resolve_account(account, "get_notifications_controller"), "getNotificationsController")
 
 
 def get_messages_storage(account: Optional[int] = None):
-    return _account_instance(account, "get_messages_storage").getMessagesStorage()
+    return _account_part(_resolve_account(account, "get_messages_storage"), "getMessagesStorage")
 
 
 def get_send_messages_helper(account: Optional[int] = None):
-    return _account_instance(account, "get_send_messages_helper").getSendMessagesHelper()
+    return _account_part(_resolve_account(account, "get_send_messages_helper"), "getSendMessagesHelper")
 
 
 def get_file_loader(account: Optional[int] = None):
-    return _account_instance(account, "get_file_loader").getFileLoader()
+    return _account_part(_resolve_account(account, "get_file_loader"), "getFileLoader")
 
 
 def get_secret_chat_helper(account: Optional[int] = None):
-    return _account_instance(account, "get_secret_chat_helper").getSecretChatHelper()
+    return _account_part(_resolve_account(account, "get_secret_chat_helper"), "getSecretChatHelper")
 
 
 def get_download_controller(account: Optional[int] = None):
-    return _account_instance(account, "get_download_controller").getDownloadController()
+    return _account_part(_resolve_account(account, "get_download_controller"), "getDownloadController")
 
 
 def get_notifications_settings(account: Optional[int] = None):
-    return _account_instance(account, "get_notifications_settings").getNotificationsSettings()
+    return _account_part(_resolve_account(account, "get_notifications_settings"), "getNotificationsSettings")
 
 
 def get_notification_center(account: Optional[int] = None):
-    return _account_instance(account, "get_notification_center").getNotificationCenter()
+    return _account_part(_resolve_account(account, "get_notification_center"), "getNotificationCenter")
+
+
+_media_controller = None
 
 
 def get_media_controller():
-    return MediaController.getInstance()
+    global _media_controller
+    if _media_controller is None:
+        _media_controller = MediaController.getInstance()
+    return _media_controller
 
 
 def get_user_config(account: Optional[int] = None):
-    return _account_instance(account, "get_user_config").getUserConfig()
+    return _account_part(_resolve_account(account, "get_user_config"), "getUserConfig")
 
 
 def send_message(params: dict, parse_mode: str = None, *, account: Optional[int] = None):

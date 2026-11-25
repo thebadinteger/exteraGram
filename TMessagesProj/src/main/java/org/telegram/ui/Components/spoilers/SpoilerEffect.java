@@ -223,7 +223,7 @@ public class SpoilerEffect extends Drawable {
                 Iterator<Particle> it = particles.iterator();
                 while (it.hasNext()) {
                     Particle p = it.next();
-                    if (particlesPool.size() < maxParticles) {
+                    if (p != null && particlesPool.size() < maxParticles) {
                         particlesPool.push(p);
                     }
                     it.remove();
@@ -296,11 +296,15 @@ public class SpoilerEffect extends Drawable {
         Iterator<Particle> it = particles.iterator();
         while (it.hasNext()) {
             Particle p = it.next();
+            if (p == null) {
+                it.remove();
+                continue;
+            }
             if (!getBounds().contains((int) p.x, (int) p.y)) {
                 it.remove();
-            }
-            if (particlesPool.size() < maxParticles) {
-                particlesPool.push(p);
+                if (particlesPool.size() < maxParticles) {
+                    particlesPool.push(p);
+                }
             }
         }
     }
@@ -367,6 +371,16 @@ public class SpoilerEffect extends Drawable {
 
         for (int i = 0, size = particles.size(); i < size; i++) {
             final Particle particle = particles.get(i);
+            if (particle == null) {
+                final int last = size - 1;
+                if (i != last) {
+                    particles.set(i, particles.get(last));
+                }
+                particles.remove(last);
+                size--;
+                i--;
+                continue;
+            }
 
             final float newCurrentTime = Math.min(particle.currentTime + dt, particle.lifeTime);
             particle.currentTime = newCurrentTime;
@@ -413,7 +427,10 @@ public class SpoilerEffect extends Drawable {
                     ri = 0;
                 }
 
-                final Particle newParticle = !particlesPool.isEmpty() ? particlesPool.pop() : new Particle();
+                Particle newParticle = !particlesPool.isEmpty() ? particlesPool.pop() : new Particle();
+                if (newParticle == null) {
+                    newParticle = new Particle();
+                }
 
                 int attempts = 0;
                 do {

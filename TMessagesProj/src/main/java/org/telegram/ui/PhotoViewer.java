@@ -6748,7 +6748,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             @Override
             public void invalidate() {
-                if (SharedConfig.photoViewerBlur && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
+                if (SharedConfig.photoViewerBlurEnabled() && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
                     return;
                 }
                 super.invalidate();
@@ -7299,7 +7299,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             @Override
             public void invalidate() {
-                if (SharedConfig.photoViewerBlur && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
+                if (SharedConfig.photoViewerBlurEnabled() && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
                     return;
                 }
                 super.invalidate();
@@ -7409,7 +7409,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             @Override
             public void invalidate() {
-                if (SharedConfig.photoViewerBlur && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
+                if (SharedConfig.photoViewerBlurEnabled() && (animationInProgress == 1 || animationInProgress == 2 || animationInProgress == 3)) {
                     return;
                 }
                 super.invalidate();
@@ -13015,6 +13015,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 animatorX.addUpdateListener(animation -> photoPaintView.setOffsetTranslationX((Float) animation.getAnimatedValue()));
                 paintingOverlay.showAll();
                 containerView.invalidate();
+                if (iBlur3FactoryFrostedLiquidGlass != null) {
+                    iBlur3FactoryFrostedLiquidGlass.unsubscribe(photoPaintView.bottomLayout);
+                }
+                if (paintKeyboardAnimator != null) {
+                    paintKeyboardAnimator.cancel();
+                    paintKeyboardAnimator = null;
+                }
                 photoPaintView.shutdown();
                 animators.add(animatorY);
                 animators.add(animatorX);
@@ -19421,6 +19428,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     public void closePhoto(boolean animated, boolean fromEditMode) {
+        if (selectedPhotosListView != null) {
+            selectedPhotosListView.stopScroll();
+        }
+        if (selectedPhotosAdapter != null) {
+            selectedPhotosAdapter.notifyDataSetChanged();
+        }
         if (stickerMakerView != null) {
             stickerMakerView.isThanosInProgress = false;
             if (cutOutBtn.isCancelState()) {
@@ -19480,6 +19493,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 editorDoneLayout.setVisibility(View.GONE);
                 photoCropView.setVisibility(View.GONE);
             } else if (currentEditMode == EDIT_MODE_PAINT) {
+                if (iBlur3FactoryFrostedLiquidGlass != null) {
+                    iBlur3FactoryFrostedLiquidGlass.unsubscribe(photoPaintView.bottomLayout);
+                }
+                if (paintKeyboardAnimator != null) {
+                    paintKeyboardAnimator.cancel();
+                    paintKeyboardAnimator = null;
+                }
                 photoPaintView.shutdown();
                 containerView.removeView(photoPaintView.getView());
                 photoPaintView = null;
@@ -20000,6 +20020,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             currentThumb = null;
         }
         animatingImageView.setImageBitmap(null);
+        if (captionEdit != null && captionEdit.mentionContainer != null && captionEdit.mentionContainer.getAdapter() != null) {
+            captionEdit.mentionContainer.getAdapter().onDestroy();
+        }
+        if (topCaptionEdit != null && topCaptionEdit.mentionContainer != null && topCaptionEdit.mentionContainer.getAdapter() != null) {
+            topCaptionEdit.mentionContainer.getAdapter().onDestroy();
+        }
 //        if (captionEdit.editText != null) {
 //            captionEdit.editText.onDestroy();
 //        }
@@ -21744,7 +21770,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (!fancyShadows) {
             return;
         }
-        float maxAlpha = !SharedConfig.photoViewerBlur ? 1f : blurAlpha.set(animationInProgress == 0 || animationInProgress == 2 || animationInProgress == 3);
+        float maxAlpha = !SharedConfig.photoViewerBlurEnabled() ? 1f : blurAlpha.set(animationInProgress == 0 || animationInProgress == 2 || animationInProgress == 3);
         if (maxAlpha <= 0) {
             return;
         }
@@ -23528,7 +23554,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             }
             return;
         }
-        float maxAlpha = !SharedConfig.photoViewerBlur ? 1f : blurAlpha.set(animationInProgress == 0 || animationInProgress == 2 || animationInProgress == 3);
+        float maxAlpha = !SharedConfig.photoViewerBlurEnabled() ? 1f : blurAlpha.set(animationInProgress == 0 || animationInProgress == 2 || animationInProgress == 3);
 
         drawer.paint.setShader(null);
         if (bgColor != 0) {
@@ -23537,7 +23563,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             canvas.drawPaint(drawer.paint);
         }
 
-        if (!SharedConfig.photoViewerBlur || animationInProgress != 0) {
+        if (!SharedConfig.photoViewerBlurEnabled() || animationInProgress != 0) {
             blurAlpha.set(0, true);
             if (overlayColor != 0) {
                 drawer.paint.setColor(overlayColor);

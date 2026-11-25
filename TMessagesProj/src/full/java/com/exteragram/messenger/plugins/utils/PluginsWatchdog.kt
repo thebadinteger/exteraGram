@@ -30,8 +30,8 @@ import org.telegram.ui.ActionBar.AlertDialog
 import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.LaunchActivity
 import java.io.File
+import java.util.ArrayDeque
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -39,11 +39,15 @@ import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 class PluginsWatchdog(private val controller: PluginsController) {
-    private data class ExecutionInfo(val pluginId: String)
+    private data class ExecutionInfo(val pluginId: String, val startNanos: Long)
 
     private val executingPlugins = ConcurrentHashMap<Thread, ExecutionInfo>()
     private val frozenExecutions = ConcurrentHashMap<Thread, ExecutionInfo>()
-    private val scheduledChecks = ConcurrentHashMap<Thread, ScheduledFuture<*>>()
+    private val stateLock = Any()
+    private val frames = object : ThreadLocal<ArrayDeque<String>>() {
+        override fun initialValue() = ArrayDeque<String>()
+    }
+    private var executionSweep: ScheduledFuture<*>? = null
     private var scheduler: ScheduledExecutorService? = null
 
     fun start() {
@@ -54,21 +58,25 @@ class PluginsWatchdog(private val controller: PluginsController) {
 
         scheduler = ScheduledThreadPoolExecutor(1).apply {
             removeOnCancelPolicy = true
+        }.also { executor ->
+            executionSweep = executor.scheduleWithFixedDelay(
+                { sweepExecutions() }, SWEEP_INTERVAL_MS, SWEEP_INTERVAL_MS, TimeUnit.MILLISECONDS
+            )
         }
     }
 
     fun stop() {
-        for (check in scheduledChecks.values) {
-            check.cancel(false)
-        }
-        scheduledChecks.clear()
+        executionSweep?.cancel(false)
+        executionSweep = null
         scheduler?.shutdownNow()
         scheduler = null
-        for (info in frozenExecutions.values) {
-            controller.plugins[info.pluginId]?.setNotResponding(false)
+        synchronized(stateLock) {
+            for (info in frozenExecutions.values) {
+                controller.plugins[info.pluginId]?.setNotResponding(false)
+            }
+            frozenExecutions.clear()
+            executingPlugins.clear()
         }
-        frozenExecutions.clear()
-        executingPlugins.clear()
     }
 
     fun onPluginExecutionStarted(pluginId: String?) {
@@ -76,60 +84,93 @@ class PluginsWatchdog(private val controller: PluginsController) {
             return
         }
         val thread = Thread.currentThread()
-        val info = ExecutionInfo(pluginId)
-        executingPlugins[thread] = info
-        val previousFrozenExecution = frozenExecutions.remove(thread)
-        if (previousFrozenExecution != null) {
-            if (previousFrozenExecution.pluginId == pluginId) {
-                frozenExecutions[thread] = info
-            } else if (frozenExecutions.values.none { it.pluginId == previousFrozenExecution.pluginId }) {
-                controller.plugins[previousFrozenExecution.pluginId]?.setNotResponding(false)
-                NotificationCenter.getGlobalInstance()
-                    .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding)
-            }
+        val stack = frames.get()
+        val wasEmpty = stack.isEmpty()
+        stack.addLast(pluginId)
+        if (!wasEmpty) {
+            return
         }
-        scheduledChecks.remove(thread)?.cancel(false)
-        val currentScheduler = scheduler ?: return
-        try {
-            scheduledChecks[thread] = currentScheduler.schedule({
-                try {
-                    var stateChanged = false
-                    executingPlugins.computeIfPresent(thread) { _, currentInfo ->
-                        if (currentInfo === info) {
-                            frozenExecutions[thread] = info
-                            val plugin = controller.plugins[pluginId]
-                            if (plugin != null && !plugin.isNotResponding()) {
-                                plugin.setNotResponding(true)
-                                stateChanged = true
-                            }
-                        }
-                        currentInfo
-                    }
-                    if (stateChanged) {
-                        NotificationCenter.getGlobalInstance()
-                            .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding)
-                    }
-                } catch (e: Exception) {
-                    FileLog.e(e)
+
+        val info = ExecutionInfo(pluginId, System.nanoTime())
+        synchronized(stateLock) {
+            executingPlugins[thread] = info
+            val previousFrozenExecution = frozenExecutions.remove(thread)
+            if (previousFrozenExecution != null) {
+                if (previousFrozenExecution.pluginId == pluginId) {
+                    frozenExecutions[thread] = info
+                } else {
+                    notifyRecovered(previousFrozenExecution.pluginId)
                 }
-            }, 5, TimeUnit.SECONDS)
-        } catch (_: RejectedExecutionException) {
-            executingPlugins.remove(thread, info)
+            }
         }
     }
 
     fun onPluginExecutionFinished(pluginId: String) {
-        val thread = Thread.currentThread()
-        val info = executingPlugins[thread]
-        if (info != null && info.pluginId == pluginId && executingPlugins.remove(thread, info)) {
-            scheduledChecks.remove(thread)?.cancel(false)
+        val stack = frames.get()
+        if (stack.peekLast() != pluginId) {
+            return
+        }
+        stack.removeLast()
+        if (stack.isNotEmpty()) {
+            return
+        }
 
-            val frozenExecution = frozenExecutions.remove(thread)
-            if (frozenExecution != null && frozenExecutions.values.none { it.pluginId == frozenExecution.pluginId }) {
-                controller.plugins[frozenExecution.pluginId]?.setNotResponding(false)
-                NotificationCenter.getGlobalInstance()
-                    .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding)
+        val thread = Thread.currentThread()
+        synchronized(stateLock) {
+            val info = executingPlugins[thread]
+            if (info != null && info.pluginId == pluginId) {
+                executingPlugins.remove(thread, info)
             }
+            val frozenExecution = frozenExecutions.remove(thread)
+            if (frozenExecution != null) {
+                notifyRecovered(frozenExecution.pluginId)
+            }
+        }
+    }
+
+    private fun sweepExecutions() {
+        try {
+            val now = System.nanoTime()
+            for ((thread, info) in executingPlugins) {
+                if ((now - info.startNanos) / 1_000_000L < FREEZE_TIMEOUT_MS) {
+                    continue
+                }
+                var newlyFrozen = false
+                var stateChanged = false
+                synchronized(stateLock) {
+                    if (executingPlugins[thread] === info && frozenExecutions.putIfAbsent(thread, info) == null) {
+                        newlyFrozen = true
+                        val plugin = controller.plugins[info.pluginId]
+                        if (plugin != null && !plugin.isNotResponding()) {
+                            plugin.setNotResponding(true)
+                            stateChanged = true
+                        }
+                    }
+                }
+                if (stateChanged) {
+                    NotificationCenter.getGlobalInstance()
+                        .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding)
+                }
+                if (newlyFrozen) {
+                    FileLog.e("PluginsWatchdog: ${info.pluginId} is not responding on ${thread.name}")
+                }
+            }
+        } catch (e: Exception) {
+            FileLog.e(e)
+        }
+    }
+
+    private fun notifyRecovered(pluginId: String) {
+        var recovered = false
+        synchronized(stateLock) {
+            if (frozenExecutions.values.none { it.pluginId == pluginId }) {
+                controller.plugins[pluginId]?.setNotResponding(false)
+                recovered = true
+            }
+        }
+        if (recovered) {
+            NotificationCenter.getGlobalInstance()
+                .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding)
         }
     }
 
@@ -155,7 +196,7 @@ class PluginsWatchdog(private val controller: PluginsController) {
     }
 
     private fun disablePluginPref(pluginId: String) {
-        controller.preferences.edit {
+        controller.preferences.edit(commit = true) {
             putBoolean(PluginsController.PREF_PLUGIN_ENABLED_KEY_PREFIX + pluginId, false)
         }
     }
@@ -175,6 +216,42 @@ class PluginsWatchdog(private val controller: PluginsController) {
     }
 
     companion object {
+        private const val FREEZE_TIMEOUT_MS = 5_000L
+        private const val SWEEP_INTERVAL_MS = 500L
+
+        @JvmStatic
+        fun findPluginInTrace(error: Throwable?, ids: Collection<String>): String? {
+            if (error == null) {
+                return null
+            }
+            var depth = 0
+            var current: Throwable? = error
+            while (current != null && depth < 10) {
+                var outermost: String? = null
+                for (element in current.stackTrace) {
+                    val className = element.className ?: continue
+                    if (!className.startsWith("<python>.")) {
+                        continue
+                    }
+                    val module = className.substring(9)
+                    val id = if (module.startsWith("ElyxPlugins.")) {
+                        module.substring("ElyxPlugins.".length).substringBefore('.')
+                    } else {
+                        module.substringBefore('.')
+                    }
+                    if (id in ids) {
+                        outermost = id
+                    }
+                }
+                if (outermost != null) {
+                    return outermost
+                }
+                current = current.cause
+                depth++
+            }
+            return null
+        }
+
         @JvmStatic
         fun showNotRespondingAlert(plugin: Plugin) {
             val fragment = LaunchActivity.getSafeLastFragment() ?: return

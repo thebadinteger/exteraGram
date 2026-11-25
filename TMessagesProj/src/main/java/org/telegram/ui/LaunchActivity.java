@@ -1656,7 +1656,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         if (messageObject != null && messageObject.isRoundVideo()) {
             MediaController.getInstance().cleanupPlayer(true, true);
         }
-        passcodeDialog.show();
+        try {
+            passcodeDialog.show();
+        } catch (WindowManager.BadTokenException e) {
+            FileLog.e(e);
+            // do not expose the content while the passcode cannot be shown
+            if (actionBarLayout != null && actionBarLayout.getView() != null) {
+                actionBarLayout.getView().setVisibility(View.INVISIBLE);
+            }
+            return;
+        }
         passcodeDialog.passcodeView.onShow(overlayPasscodeViews.isEmpty() && fingerprint, animated, x, y, () -> {
             actionBarLayout.getView().setVisibility(View.INVISIBLE);
             if (AndroidUtilities.isTablet()) {

@@ -58,6 +58,7 @@ import org.simplifiles.archive.ArchiveExtractionOptions
 import org.simplifiles.archive.ExtractionTargetPolicy
 import org.simplifiles.archive.security.SecurityPolicy
 import org.simplifiles.files.OverwritePolicy
+import org.json.JSONObject
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.BuildVars
@@ -164,8 +165,20 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
             return runCatching { File(path).canonicalPath }.getOrNull()
         }
 
+        private val moduleNamesCache = ConcurrentHashMap<String, Pair<Long, Set<String>>>()
+
         private fun topLevelModuleNames(dir: File?): Set<String> {
-            val files = dir?.listFiles() ?: return emptySet()
+            if (dir == null) {
+                return emptySet()
+            }
+            val path = dir.absolutePath
+            val stamp = dir.lastModified()
+            moduleNamesCache[path]?.let { (cachedStamp, names) ->
+                if (cachedStamp == stamp) {
+                    return names
+                }
+            }
+            val files = dir.listFiles() ?: return emptySet()
             val names = HashSet<String>()
             for (file in files) {
                 val name = file.name
@@ -178,13 +191,22 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
                     names.add(name.substringBefore('.'))
                 }
             }
+            moduleNamesCache[path] = stamp to names
             return names
         }
     }
 
     val pluginInstances = ConcurrentHashMap<String, PyObject>()
+    private val appEventPluginIds = ConcurrentHashMap.newKeySet<String>()
 
     private val settingsCache = ConcurrentHashMap<String, ConcurrentHashMap<String, Any?>>()
+    private val metadataCache = ConcurrentHashMap<String, Map<String, String>>()
+    @Volatile private var metadataParserModule: PyObject? = null
+    @Volatile private var pluginSettingsModule: PyObject? = null
+    @Volatile private var appEventClass: PyObject? = null
+    private val metadataDiskCache by lazy {
+        ApplicationLoader.applicationContext.getSharedPreferences("plugins_metadata_cache", android.content.Context.MODE_PRIVATE)
+    }
 
     private val dependencyPaths = ConcurrentHashMap.newKeySet<String>()
     private val lifecycleGeneration = AtomicInteger()
@@ -221,6 +243,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
                 Python.start(AndroidPlatform(ApplicationLoader.applicationContext))
             }
             python = Python.getInstance()
+            runCatching { python?.getModule("sys")?.callAttr("setswitchinterval", 0.001) }
         } catch (e: Throwable) {
             FileLog.e("Failed to initialize Python", e)
         }
@@ -412,7 +435,19 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         return sdkInitialized
     }
 
+    private fun flushPluginSettings() {
+        try {
+            getPython()?.getModule("plugin_settings")?.callAttr("flush")
+        } catch (t: Throwable) {
+            FileLog.e("Failed to flush plugin settings", t)
+        }
+    }
+
     private fun stopAndUnloadSdk() {
+        flushPluginSettings()
+        metadataParserModule = null
+        pluginSettingsModule = null
+        appEventClass = null
         val currentPython = python ?: return
         basePluginClass = null
         val sys = currentPython.getModule("sys")
@@ -498,7 +533,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
 
         if (!pluginsSafeMode) {
             try {
-                val pySettingsModule = currentPython.getModule("plugin_settings")
+                val pySettingsModule = pluginSettings(currentPython)
                 val allPrefs = getPluginsController().preferences.all
                 val keysToDeletePy = pySettingsModule.callAttr(
                     "init",
@@ -577,6 +612,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
 
     override fun shutdown(callback: Runnable) {
         try {
+            flushPluginSettings()
             stopPluginTasks()
             runCatching { stopDevServer() }.onFailure { FileLog.e(it) }
             for (pluginId in ArrayList(pluginInstances.keys)) {
@@ -586,6 +622,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
             runCatching { debuggerListener?.close() }.onFailure { FileLog.e(it) }
             debuggerListener = null
             pluginInstances.clear()
+            appEventPluginIds.clear()
             synchronized(this) {
                 runCatching { removePluginPathsFromSysPath() }.onFailure { FileLog.e(it) }
                 runCatching { stopAndUnloadSdk() }.onFailure { FileLog.e(it) }
@@ -628,7 +665,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
             }
 
             val pluginFiles = getPluginsController().pluginsDir.listFiles { _, name ->
-                name.lowercase().endsWith(".py")
+                !name.startsWith(".") && name.lowercase().endsWith(".py")
             }
             if (pluginFiles == null) {
                 getPluginsController().notifyPluginsChanged()
@@ -948,10 +985,21 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         pluginInstance["error_message"] = null
 
         pluginInstances[pluginId] = pluginInstance
+        appEventPluginIds.remove(pluginId)
+        val handlesAppEvent = try {
+            currentBasePluginClass.callAttr("_instance_handles", pluginInstance, "on_app_event")
+                ?.toBoolean() ?: true
+        } catch (_: Throwable) {
+            true
+        }
+        if (handlesAppEvent) {
+            appEventPluginIds.add(pluginId)
+        }
     }
 
     fun unloadPlugin(pluginId: String) {
         settingsCache.remove(pluginId)
+        appEventPluginIds.remove(pluginId)
         val pluginInstance = pluginInstances.remove(pluginId)
         getPluginsController().plugins[pluginId]?.setEnabled(false)
         try {
@@ -1126,6 +1174,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
 
         val pluginFile = File(getPluginsController().pluginsDir, "$pluginId.py")
         deleteFileIfExists(pluginFile)
+        clearMetadataCache(pluginFile.absolutePath)
 
         if (PluginsController.isPluginPinned(pluginId)) {
             PluginsController.setPluginPinned(pluginId, false)
@@ -1299,10 +1348,12 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
                             FileLog.e(e)
                         }
                         val removed = pluginInstances.remove(pluginId)
+                        appEventPluginIds.remove(pluginId)
                         removed?.close()
                         getPluginsController().clearPluginSettingsPreferences(pluginId, true)
                         getPluginsController().plugins.remove(pluginId)
                         deleteFileIfExists(currentPluginFile)
+                        clearMetadataCache(currentPluginFile.absolutePath)
                     }
                 }
                 getPluginsController().notifyPluginsChanged()
@@ -1708,8 +1759,13 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         if (!sdkInitialized || pluginsSafeMode) {
             return
         }
-        val appEventClass = getPython()?.getModule("base_plugin")?.get("AppEvent") ?: return
-        val appEvent = appEventClass.call(eventType)
+        if (eventType == PluginsConstants.APP_PAUSE || eventType == PluginsConstants.APP_STOP) {
+            flushPluginSettings()
+        }
+        val cachedAppEventClass = appEventClass ?: getPython()?.getModule("base_plugin")?.get("AppEvent")?.also {
+            appEventClass = it
+        } ?: return
+        val appEvent = cachedAppEventClass.call(eventType)
         try {
             val currentDebuggerListener = debuggerListener
             if (currentDebuggerListener != null) {
@@ -1720,8 +1776,9 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
                 }
             }
 
-            for ((pluginId, instance) in pluginInstances.entries) {
+            for (pluginId in appEventPluginIds) {
                 if (getPluginsController().isPluginActive(pluginId)) {
+                    val instance = pluginInstances[pluginId] ?: continue
                     getPluginsController().watchdog.onPluginExecutionStarted(pluginId)
                     try {
                         instance.callAttr(PluginsConstants.ON_APP_EVENT, appEvent)
@@ -2026,6 +2083,13 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
             return metadata
         }
 
+        val cacheKey = "$filePath|${file.length()}|${file.lastModified()}|${BuildVars.BUILD_VERSION}"
+        metadataCache[cacheKey]?.let { return it }
+        loadMetadataFromDisk(cacheKey)?.let {
+            metadataCache[cacheKey] = it
+            return it
+        }
+
         val currentPython = getPython()
         if (currentPython == null) {
             FileLog.e("Python engine not initialized, cannot parse metadata for $filePath")
@@ -2033,7 +2097,9 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         }
 
         try {
-            val metadataParser = currentPython.getModule("extera_utils.metadata_parser")
+            val metadataParser = metadataParserModule ?: currentPython.getModule("extera_utils.metadata_parser").also {
+                metadataParserModule = it
+            }
             val pyMetadataDict = metadataParser.callAttr("get_metadata", filePath)
             if (pyMetadataDict != null) {
                 for ((key, value) in pyMetadataDict.asMap()) {
@@ -2044,8 +2110,58 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
             FileLog.e("Failed to parse metadata from $filePath. Error: ${e.message}", e)
             throw e
         }
+        metadataCache.keySet().removeIf { it.startsWith("$filePath|") && it != cacheKey }
+        metadataCache[cacheKey] = HashMap(metadata)
+        storeMetadataOnDisk(cacheKey, filePath, metadata)
         return metadata
     }
+
+    private fun loadMetadataFromDisk(cacheKey: String): Map<String, String>? {
+        val raw = metadataDiskCache.getString(cacheKey, null) ?: return null
+        return runCatching {
+            val obj = JSONObject(raw)
+            val map = HashMap<String, String>(obj.length())
+            for (key in obj.keys()) {
+                map[key] = obj.optString(key, "")
+            }
+            map
+        }.getOrNull()
+    }
+
+    private fun storeMetadataOnDisk(cacheKey: String, filePath: String, metadata: Map<String, String>) {
+        runCatching {
+            val obj = JSONObject()
+            for ((key, value) in metadata) {
+                obj.put(key, value)
+            }
+            val prefs = metadataDiskCache
+            val edit = prefs.edit()
+            for (key in prefs.all.keys) {
+                if (key.startsWith("$filePath|") && key != cacheKey) {
+                    edit.remove(key)
+                }
+            }
+            edit.putString(cacheKey, obj.toString()).apply()
+        }
+    }
+
+    private fun clearMetadataCache(filePath: String) {
+        val prefix = "$filePath|"
+        metadataCache.keySet().removeIf { it.startsWith(prefix) }
+        runCatching {
+            val prefs = metadataDiskCache
+            val edit = prefs.edit()
+            for (key in prefs.all.keys) {
+                if (key.startsWith(prefix)) {
+                    edit.remove(key)
+                }
+            }
+            edit.apply()
+        }
+    }
+
+    private fun pluginSettings(currentPython: Python): PyObject =
+        pluginSettingsModule ?: currentPython.getModule("plugin_settings").also { pluginSettingsModule = it }
 
     override fun getPluginSetting(pluginId: String, key: String, defaultValue: Any?): Any? {
         val pluginCache = settingsCache[pluginId]
@@ -2055,7 +2171,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
 
         val currentPython = getPython() ?: return defaultValue
         try {
-            val pySettingsModule = currentPython.getModule("plugin_settings")
+            val pySettingsModule = pluginSettings(currentPython)
             val result = pySettingsModule.callAttr("get_setting", pluginId, key, defaultValue)
                 ?: return defaultValue
             val javaResult: Any = when (defaultValue) {
@@ -2079,7 +2195,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         settingsCache.computeIfAbsent(pluginId) { ConcurrentHashMap() }[key] = value
         val currentPython = getPython() ?: return
         try {
-            val pySettingsModule = currentPython.getModule("plugin_settings")
+            val pySettingsModule = pluginSettings(currentPython)
             pySettingsModule.callAttr("set_setting", pluginId, key, value)
         } catch (e: PyException) {
             FileLog.e("Failed to set plugin setting $pluginId/$key", e)
@@ -2090,7 +2206,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
         settingsCache.remove(pluginId)
         val currentPython = getPython() ?: return
         try {
-            val pySettingsModule = currentPython.getModule("plugin_settings")
+            val pySettingsModule = pluginSettings(currentPython)
             pySettingsModule.callAttr("clear_settings", pluginId)
         } catch (e: PyException) {
             FileLog.e("Failed to clear plugin settings for $pluginId", e)
@@ -2100,7 +2216,7 @@ class PythonPluginsEngine : PluginsController.PluginsEngine {
     override fun getAllPluginSettings(pluginId: String): Map<String, *>? {
         val currentPython = getPython() ?: return null
         try {
-            val pySettingsModule = currentPython.getModule("plugin_settings")
+            val pySettingsModule = pluginSettings(currentPython)
             val result = pySettingsModule.callAttr("get_all_settings", pluginId)
             if (result != null) {
                 val javaMap = HashMap<String, Any?>()

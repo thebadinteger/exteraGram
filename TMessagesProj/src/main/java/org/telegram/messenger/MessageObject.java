@@ -513,6 +513,9 @@ public class MessageObject {
 
     @Deprecated
     private static long getTopicId(int currentAccount, TLRPC.Message message, boolean sureIsForum, boolean sureIsMonoForum) {
+        if (message == null) {
+            return sureIsForum ? 1 : 0;
+        }
         final long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
         if (sureIsMonoForum) {
             return getMonoForumTopicId(message);
@@ -782,6 +785,7 @@ public class MessageObject {
         messageOwner.premiumEffectWasPlayed = old.messageOwner.premiumEffectWasPlayed;
         forcePlayEffect = old.forcePlayEffect;
         wasJustSent = old.wasJustSent;
+        reactionsLastCheckTime = old.reactionsLastCheckTime;
         if (messageOwner.reactions != null && messageOwner.reactions.results != null && !messageOwner.reactions.results.isEmpty() && old.messageOwner.reactions != null && old.messageOwner.reactions.results != null) {
             for (int i = 0; i < messageOwner.reactions.results.size(); i++) {
                 TLRPC.ReactionCount reactionCount = messageOwner.reactions.results.get(i);
@@ -794,6 +798,7 @@ public class MessageObject {
             }
         }
         isSpoilersRevealed = old.isSpoilersRevealed;
+        isMediaSpoilersRevealed = old.isMediaSpoilersRevealed;
         messageOwner.replyStory = old.messageOwner.replyStory;
         if (messageOwner.media != null && old.messageOwner.media != null) {
             messageOwner.media.storyItem = old.messageOwner.media.storyItem;
@@ -2142,7 +2147,7 @@ public class MessageObject {
         emojiAnimatedSticker = null;
         emojiAnimatedStickerId = null;
         if (emojiOnlyCount == 1 && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage) && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaInvoice) && (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaEmpty || getMedia(messageOwner) == null) && this.messageOwner.grouped_id == 0) {
-            if (messageOwner.entities.isEmpty()) {
+            if (messageOwner.entities == null || messageOwner.entities.isEmpty()) {
                 CharSequence emoji = messageText;
                 int index;
                 if ((index = TextUtils.indexOf(emoji, "\uD83C\uDFFB")) >= 0) {
@@ -7932,7 +7937,7 @@ public class MessageObject {
             if (messageOwner.send_state != MESSAGE_SEND_STATE_SENT) {
                 hasEntities = false;
             } else {
-                hasEntities = !entities.isEmpty();
+                hasEntities = entities != null && !entities.isEmpty();
             }
 
             boolean useManualParse = forceManualEntities || !hasEntities && (
@@ -8903,7 +8908,8 @@ public class MessageObject {
         if (messageOwner.send_state != MESSAGE_SEND_STATE_SENT) {
             hasEntities = false;
         } else {
-            hasEntities = !getEntities().isEmpty();
+            ArrayList<TLRPC.MessageEntity> entities = getEntities();
+            hasEntities = entities != null && !entities.isEmpty();
         }
 
         boolean useManualParse = !hasEntities && (

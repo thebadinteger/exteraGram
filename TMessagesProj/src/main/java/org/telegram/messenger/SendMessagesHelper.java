@@ -7295,12 +7295,14 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (inputMedia != null) {
             TLRPC.TL_messages_uploadMedia req = new TLRPC.TL_messages_uploadMedia();
             req.media = inputMedia;
+            TLRPC.Message sendingMessage = null;
             if (message.sendRequest instanceof TLRPC.TL_messages_sendMultiMedia) {
                 TLRPC.TL_messages_sendMultiMedia multiMedia = (TLRPC.TL_messages_sendMultiMedia) message.sendRequest;
                 req.peer = multiMedia.peer;
                 for (int a = 0; a < multiMedia.multi_media.size(); a++) {
                     if (multiMedia.multi_media.get(a).media == inputMedia) {
-                        putToSendingMessages(message.messages.get(a), message.scheduled);
+                        sendingMessage = message.messages.get(a);
+                        putToSendingMessages(sendingMessage, message.scheduled);
                         getNotificationCenter().postNotificationName(NotificationCenter.fileUploadProgressChanged, key, -1L, -1L, false);
                         break;
                     }
@@ -7311,7 +7313,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 TLRPC.TL_inputMediaPaidMedia multiMedia = (TLRPC.TL_inputMediaPaidMedia) sendMedia.media;
                 for (int a = 0; a < multiMedia.extended_media.size(); a++) {
                     if (multiMedia.extended_media.get(a) == inputMedia) {
-                        putToSendingMessages(message.messages.get(a), message.scheduled);
+                        sendingMessage = message.messages.get(a);
+                        putToSendingMessages(sendingMessage, message.scheduled);
                         getNotificationCenter().postNotificationName(NotificationCenter.fileUploadProgressChanged, key, -1L, -1L, false);
                         break;
                     }
@@ -7323,7 +7326,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 final int mediaPackIndex = PollAttachedMediaPack.findInputMedia(multiMedia, inputMedia);
                 for (int a = 0; a < message.pollIndexes.size(); a++) {
                     if (message.pollIndexes.get(a) == mediaPackIndex) {
-                        putToSendingMessages(message.messages.get(a), message.scheduled);
+                        sendingMessage = message.messages.get(a);
+                        putToSendingMessages(sendingMessage, message.scheduled);
                         getNotificationCenter().postNotificationName(NotificationCenter.fileUploadProgressChanged, key, -1L, -1L, false);
                         break;
                     }
@@ -7334,7 +7338,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 TLRPC.TL_inputMediaPaidMedia multiMedia = (TLRPC.TL_inputMediaPaidMedia) sendMedia.media;
                 for (int a = 0; a < multiMedia.extended_media.size(); a++) {
                     if (multiMedia.extended_media.get(a) == inputMedia) {
-                        putToSendingMessages(message.messages.get(a), message.scheduled);
+                        sendingMessage = message.messages.get(a);
+                        putToSendingMessages(sendingMessage, message.scheduled);
                         getNotificationCenter().postNotificationName(NotificationCenter.fileUploadProgressChanged, key, -1L, -1L, false);
                         break;
                     }
@@ -7346,13 +7351,14 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 final int mediaPackIndex = PollAttachedMediaPack.findInputMedia(multiMedia, inputMedia);
                 for (int a = 0; a < message.pollIndexes.size(); a++) {
                     if (message.pollIndexes.get(a) == mediaPackIndex) {
-                        putToSendingMessages(message.messages.get(a), message.scheduled);
+                        sendingMessage = message.messages.get(a);
+                        putToSendingMessages(sendingMessage, message.scheduled);
                         getNotificationCenter().postNotificationName(NotificationCenter.fileUploadProgressChanged, key, -1L, -1L, false);
                         break;
                     }
                 }
             }
-            getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            int reqId = getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
                 TLRPC.InputMedia newInputMedia = null;
                 if (response != null) {
                     final TLRPC.MessageMedia messageMedia = (TLRPC.MessageMedia) response;
@@ -7443,6 +7449,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     message.markAsError();
                 }
             }));
+            if (sendingMessage != null) {
+                sendingMessage.reqId = reqId;
+            }
         } else if (inputEncryptedFile != null) {
             TLRPC.TL_messages_sendEncryptedMultiMedia multiMedia = (TLRPC.TL_messages_sendEncryptedMultiMedia) message.sendEncryptedRequest;
             for (int a = 0; a < multiMedia.files.size(); a++) {
@@ -7775,7 +7784,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             return;
         }
 
-        getConnectionsManager().sendRequest(request, (response, error) -> {
+        int reqId = getConnectionsManager().sendRequest(request, (response, error) -> {
             if (error != null && FileRefController.isFileRefError(error.text)) {
                 final int fileRefIndex = FileRefController.getFileRefErrorIndex(error.text);
                 if (parentObjects != null) {
@@ -8067,6 +8076,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 }
             });
         }, null, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter);
+        for (int a = 0, size = msgObjs.size(); a < size; a++) {
+            msgObjs.get(a).messageOwner.reqId = reqId;
+        }
     }
 
     private void performSendMessageRequest(final TLObject req, final MessageObject msgObj, final String originalPath, DelayedMessage delayedMessage, Object parentObject, HashMap<String, String> params, boolean scheduled) {

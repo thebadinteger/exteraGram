@@ -269,6 +269,7 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
         }
 
         int oldParentColumnsCount = currentParentColumnsCount;
+        final int prevMessageId = currentMessageObject == null ? 0 : currentMessageObject.getId();
         currentParentColumnsCount = parentColumnsCount;
         if (currentMessageObject == null && messageObject == null) {
             return;
@@ -287,6 +288,10 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
             return;
         }
         currentMessageObject = messageObject;
+        // viewer may leave the receiver of a recycled cell hidden, the flag belongs to the cell and message pair
+        if (messageObject == null || prevMessageId != messageObject.getId()) {
+            imageReceiver.setVisible(true, false);
+        }
         isStory = currentMessageObject != null && currentMessageObject.isStory();
         isStoryUploading = currentMessageObject != null && currentMessageObject.uploadingStory != null;
         updateSpoilers2();

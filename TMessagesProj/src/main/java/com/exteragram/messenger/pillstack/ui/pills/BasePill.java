@@ -262,7 +262,7 @@ public abstract class BasePill extends FrameLayout {
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
         super.dispatchDraw(canvas);
-        if (loadingDrawable != null && (loadingDrawable.getAlpha() > 0 || !loadingDrawable.isDisappearing())) {
+        if (loadingDrawable != null && (loading || loadingDrawable.isDisappearing())) {
             View target = loadingTargetView != null ? loadingTargetView : this;
             rectF.set(target.getLeft(), target.getTop(), target.getRight(), target.getBottom());
             if (loadingDrawable.stroke) {

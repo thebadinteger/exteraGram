@@ -58,8 +58,8 @@ public class ProfileChannelCell extends FrameLayout implements Theme.Colorable {
     }
 
     public ProfileChannelCell(BaseFragment fragment, Theme.ResourcesProvider resourcesProvider) {
-        super(fragment.getContext());
-        final Context context = fragment.getContext();
+        super(contextOf(fragment));
+        final Context context = getContext();
         this.resourcesProvider = resourcesProvider;
 
         LinearLayout headerLayout = new LinearLayout(context);
@@ -145,6 +145,14 @@ public class ProfileChannelCell extends FrameLayout implements Theme.Colorable {
                 Theme.multAlpha(Theme.getColor(Theme.key_listSelector, resourcesProvider), .8f)
         );
         loadingDrawable.setRadiiDp(8);
+    }
+
+    private static Context contextOf(BaseFragment fragment) {
+        Context context = fragment.getContext();
+        if (context == null && fragment.getFragmentView() != null) {
+            context = fragment.getFragmentView().getContext();
+        }
+        return context;
     }
 
     private boolean loading;

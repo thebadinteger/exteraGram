@@ -44,6 +44,7 @@ import com.exteragram.messenger.debug.HeapMonitor;
 import com.exteragram.messenger.debug.LoadMonitor;
 import com.exteragram.messenger.icons.IconManager;
 import com.exteragram.messenger.plugins.utils.NativeCrashHandler;
+import com.exteragram.messenger.plugins.utils.PluginsWatchdog;
 import com.exteragram.messenger.plugins.PluginsController;
 import com.exteragram.messenger.security.SensitiveRequestConfirmation;
 import com.exteragram.messenger.security.SensitiveRequestSwitch;
@@ -284,6 +285,7 @@ public class ApplicationLoader extends Application implements Provider {
             DownloadController.getInstance(a);
         }
         BillingController.getInstance().startConnection();
+        FileLog.trimLogsDirInBackground();
         // HTML widgets: the isolated engine's process up front, after the app's own start, so that a widget's first
         // frame does not wait for it.
         AndroidUtilities.runOnUIThread(() -> Utilities.globalQueue.postRunnable(
@@ -385,18 +387,15 @@ public class ApplicationLoader extends Application implements Provider {
                     // we cant check crash source, so we just check if plugins engine is enabled
                     if (ExteraConfig.getPluginsEngine()) {
                         var editor = PluginsController.getInstance().getPreferences().edit();
-                        editor.putBoolean("had_crash", true).apply();
+                        editor.putBoolean("had_crash", true);
 
-                        String pluginId = null;
-                        for (String id : PluginsController.getInstance().getPlugins().keySet()) {
-                            if (stackTrace.contains(id)) {
-                                pluginId = id;
-                            }
-                        }
+                        String pluginId = PluginsWatchdog.findPluginInTrace(e, PluginsController.getInstance().getPlugins().keySet());
                         if (pluginId != null) {
-                            editor.putString("crashed_plugin_id", pluginId).apply();
+                            editor.putString("crashed_plugin_id", pluginId);
                             FileLog.e("Plugin crash detected for plugin: " + pluginId);
                         }
+                        // the process is about to die, apply would not reach the disk in time
+                        editor.commit();
                     }
 
                     android.content.ClipboardManager clipboard = (android.content.ClipboardManager) ApplicationLoader.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE);

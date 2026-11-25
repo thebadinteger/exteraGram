@@ -843,9 +843,13 @@ public class ContentPreviewViewer {
                                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.showBulletin, Bulletin.TYPE_STICKER_SAVED);
                             });
                         } else if (actions.get(which) == 7) {
-                            delegate.editSticker(currentDocument);
+                            if (delegate != null) {
+                                delegate.editSticker(currentDocument);
+                            }
                         } else if (actions.get(which) == 8) {
-                            delegate.deleteSticker(currentDocument);
+                            if (delegate != null) {
+                                delegate.deleteSticker(currentDocument);
+                            }
                         }
                         dismissPopupWindow();
                     }

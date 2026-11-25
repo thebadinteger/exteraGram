@@ -35,6 +35,7 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.Utilities;
 import org.telegram.messenger.AnimatedFileDrawableStream;
 import org.telegram.messenger.DispatchQueue;
 import org.telegram.messenger.DispatchQueuePoolBackground;
@@ -176,7 +177,11 @@ public final class AnimatedFileDrawable extends BitmapDrawable implements Animat
             loadFrameTask = null;
             BitmapsCache.incrementTaskCounter();
             RLottieDrawable.lottieCacheGenerateQueue.postRunnable(cacheGenRunnable = () -> {
-                bitmapsCache.createCache();
+                try {
+                    bitmapsCache.createCache();
+                } catch (Throwable e) {
+                    FileLog.e(e);
+                }
                 AndroidUtilities.runOnUIThread(() -> {
                     if (cacheGenRunnable != null) {
                         BitmapsCache.decrementTaskCounter();
@@ -693,9 +698,10 @@ public final class AnimatedFileDrawable extends BitmapDrawable implements Animat
             cacheGenRunnable = null;
         }
         if (loadFrameTask == null) {
-            if (mDecoder != null) {
-                mDecoder.recycle();
+            final AnimatedFileNative decoder = mDecoder;
+            if (decoder != null) {
                 mDecoder = null;
+                Utilities.globalQueue.postRunnable(decoder::recycle);
             }
 
             ArrayList<Bitmap> bitmapToRecycle = new ArrayList<>();

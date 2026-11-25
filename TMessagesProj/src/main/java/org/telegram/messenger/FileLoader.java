@@ -1239,6 +1239,9 @@ public class FileLoader extends BaseController {
             latch.await();
         } catch (Exception e) {
             FileLog.e(e);
+            if (ignoreInterruption) {
+                awaitFileLoadOperation(latch, false);
+            }
         }
     }
 
@@ -1264,9 +1267,9 @@ public class FileLoader extends BaseController {
             return "";
         }
         if (message instanceof TLRPC.TL_messageService) {
-            if (message.action.photo != null) {
+            if (message.action != null && message.action.photo != null) {
                 ArrayList<TLRPC.PhotoSize> sizes = message.action.photo.sizes;
-                if (sizes.size() > 0) {
+                if (sizes != null && !sizes.isEmpty()) {
                     TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize());
                     if (sizeFull != null) {
                         return getAttachFileName(sizeFull);
@@ -1277,19 +1280,19 @@ public class FileLoader extends BaseController {
             if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaDocument) {
                 return getAttachFileName(MessageObject.getMedia(message).document);
             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaPhoto) {
-                ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).photo.sizes;
-                if (sizes.size() > 0) {
+                ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).photo == null ? null : MessageObject.getMedia(message).photo.sizes;
+                if (sizes != null && !sizes.isEmpty()) {
                     TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize(true), false, null, true);
                     if (sizeFull != null) {
                         return getAttachFileName(sizeFull);
                     }
                 }
             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaWebPage) {
-                if (MessageObject.getMedia(message).webpage.document != null) {
+                if (MessageObject.getMedia(message).webpage != null && MessageObject.getMedia(message).webpage.document != null) {
                     return getAttachFileName(MessageObject.getMedia(message).webpage.document);
-                } else if (MessageObject.getMedia(message).webpage.photo != null) {
+                } else if (MessageObject.getMedia(message).webpage != null && MessageObject.getMedia(message).webpage.photo != null) {
                     ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).webpage.photo.sizes;
-                    if (sizes.size() > 0) {
+                    if (sizes != null && !sizes.isEmpty()) {
                         TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize());
                         if (sizeFull != null) {
                             return getAttachFileName(sizeFull);
@@ -1319,9 +1322,9 @@ public class FileLoader extends BaseController {
             return new File("");
         }
         if (message instanceof TLRPC.TL_messageService) {
-            if (message.action.photo != null) {
+            if (message.action != null && message.action.photo != null) {
                 ArrayList<TLRPC.PhotoSize> sizes = message.action.photo.sizes;
-                if (sizes.size() > 0) {
+                if (sizes != null && !sizes.isEmpty()) {
                     TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize());
                     if (sizeFull != null) {
                         return getPathToAttach(sizeFull, null, forceCache, useFileDatabaseQueue);
@@ -1332,19 +1335,19 @@ public class FileLoader extends BaseController {
             if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaDocument) {
                 return getPathToAttach(MessageObject.getMedia(message).document, null, forceCache || MessageObject.getMedia(message).ttl_seconds != 0, useFileDatabaseQueue);
             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaPhoto) {
-                ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).photo.sizes;
-                if (sizes.size() > 0) {
+                ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).photo == null ? null : MessageObject.getMedia(message).photo.sizes;
+                if (sizes != null && !sizes.isEmpty()) {
                     TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize(true), false, null, true);
                     if (sizeFull != null) {
                         return getPathToAttach(sizeFull, null, forceCache || MessageObject.getMedia(message).ttl_seconds != 0, useFileDatabaseQueue);
                     }
                 }
             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaWebPage) {
-                if (MessageObject.getMedia(message).webpage.document != null) {
+                if (MessageObject.getMedia(message).webpage != null && MessageObject.getMedia(message).webpage.document != null) {
                     return getPathToAttach(MessageObject.getMedia(message).webpage.document, null, forceCache, useFileDatabaseQueue);
-                } else if (MessageObject.getMedia(message).webpage.photo != null) {
+                } else if (MessageObject.getMedia(message).webpage != null && MessageObject.getMedia(message).webpage.photo != null) {
                     ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).webpage.photo.sizes;
-                    if (sizes.size() > 0) {
+                    if (sizes != null && !sizes.isEmpty()) {
                         TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize());
                         if (sizeFull != null) {
                             return getPathToAttach(sizeFull, null, forceCache, useFileDatabaseQueue);
